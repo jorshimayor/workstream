@@ -86,8 +86,9 @@ Every cutover chunk enumerates its exact ActionIds before implementation and
 updates current typed/PostgreSQL audit mapping validation in its own migration.
 After AUTH-09A migration `0023`, core reservations are AUTH-10 `0024`, AUTH-11
 `0025`, AUTH-12 `0026`, AUTH-13 `0027`, AUTH-14 `0028`, and AUTH-15 `0029`.
-Blocked cross-initiative additions allocate the next trusted-main head only
-after their complete feature contracts exist.
+Blocked cross-initiative additions allocate the next trusted-main migration head
+only when their complete feature contracts become executable. No migration
+number is reserved or allocated while the work remains blocked.
 
 Chunk 06 preserves task claim/start/submission operability through an explicitly
 named `LegacyWorkflowEligibilityCompatibility` adapter. It reads only
@@ -184,9 +185,9 @@ proving the same issuer role metadata alone no longer authorizes.
 11. Transfer all current ART/REV owner labels to exact AUTH custodians without
     changing availability, then add the prepared mutation authorization
     protocol.
-12. Implement qualification snapshots and exact-project independent
-   contributor grants, including the typed/PostgreSQL clean cut from `both` and
-   replacement evidence.
+12. Implement qualification snapshots and independent contributor grants scoped
+    to the exact project, including the typed/PostgreSQL clean cut from `both`
+    and replacement evidence.
 13. Cut project identity, guide, source, and visibility queries over to local
    permissions.
 14. Cut project policy mutations, approvals, activation, and setup operations

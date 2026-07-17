@@ -84,8 +84,8 @@ as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
 AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
-tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR
-#131 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
+tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR #131
+as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
 reviewed through PR #132. PR #139 then merged the authoritative WS-XINT boundary
 reconciliation as `5d353b6` on 2026-07-17. PR #132 remains open and now
 conflicts with trusted `main`; its fixed service foundation remains valid, but
@@ -167,9 +167,11 @@ blocked on exact identity-to-ActionId contracts. These are deliberate
 registration gates, not reasons to weaken AUTH or invent catch-all authority.
 
 AUTH-10 through AUTH-15 require exact action enumeration before each starts.
-AUTH-10 additionally owns the current typed/PostgreSQL clean cut from `both`
-and replacement evidence; AUTH-11 through AUTH-15 own shifted migrations
-`0025` through `0029` for their action/evidence parity.
+AUTH-10 additionally owns the clean cut across the typed `ProjectRole`, audit,
+and idempotency contracts plus the current PostgreSQL validators recreated by
+migration `0022`, removing obsolete `ProjectRole.BOTH` and replacement evidence.
+AUTH-11 through AUTH-15 own shifted migrations `0025` through `0029` for their
+action/evidence parity.
 
 AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract

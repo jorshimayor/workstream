@@ -114,9 +114,10 @@ The active model has no `both`, replacement field, replacement event, or
 replacement reason. Qualification evidence is bound to the same actor, project,
 and exact requested role. One active row is permitted per
 actor/project/role. Issue idempotency includes the requested role; revoke derives
-the role from the locked grant. Migration `0024` replaces current typed and
-PostgreSQL validators without changing historical migrations, converting
-ambiguous evidence, or deleting incompatible rows.
+the role from the locked grant. Migration `0024` refuses upgrade when obsolete
+combined or replacement evidence exists and never converts or deletes those
+rows. It replaces current typed and PostgreSQL validators without changing
+historical migrations.
 
 ## Permission Catalog
 
@@ -487,7 +488,8 @@ AUTH locks AuthorityControl first when final-admin safety applies
 -> AUTH orders principals by ActorProfile ID
 -> human: ActorProfile -> exact ActorIdentityLink -> exact matched grant
 -> service: ActorProfile -> exact ActorIdentityLink -> code-owned validations
--> AUTH returns one opaque session/action-bound prepared handle
+-> AUTH creates one internal non-Pydantic PreparedAuthorizationHandle bound to
+   session, action, actor reference, idempotency key, and request digest
 -> feature locks its canonical rows and recomposes final typed facts
 -> AUTH consumes the handle, evaluates once, and stages decision evidence
 -> feature participants flush
@@ -500,11 +502,14 @@ link locks; they are not database rows or lock targets. Existing actor-self,
 administrative, and lifecycle mutations must use the same authority-row order
 before any prepared consumer ships.
 
-The handle is single-use and nonserializable. Reuse, wrong action, cross-session
-use, authority loss, evidence failure, participant failure, cancellation, or
-commit failure leaves no feature mutation or partial authority evidence. Reads
-continue to use request-scoped `require()`. AUTH never imports feature
-repositories, and dependency teardown never commits shared feature work.
+The handle is single-use, nonserializable, and never a route schema or caller
+input. Consumption matches the exact session, action, actor reference kind,
+actor reference, idempotency key, and request digest before feature mutation.
+Reuse, same-session/action cross-actor or cross-request substitution, authority
+loss, evidence failure, participant failure, cancellation, or commit failure
+leaves no feature mutation or partial authority evidence. Reads continue to use
+request-scoped `require()`. AUTH never imports feature repositories, and
+dependency teardown never commits shared feature work.
 Crossed PostgreSQL tests cover PREP against link revocation, actor suspension or
 deactivation, exact grant revocation, and final-admin mutation.
 

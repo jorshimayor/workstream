@@ -85,8 +85,11 @@ starting WS-POL-002-04 or another initiative automatically
   ActionId total at execution time. REV-REG contributes exactly four planned
   actions and review-evidence registration contributes exactly one planned
   action, in either order; both contribute zero active actions. It proves every
-  ActionId-to-PermissionId mapping, exact AUTH owner, availability, and static
-  service-matrix row, with no feature-valued activation owner remaining.
+  ActionId-to-PermissionId mapping, exact AUTH owner, and availability. Every
+  fixed-service/service-principal action has exactly its approved static
+  service-matrix membership, while every human-only action has no service-matrix
+  membership. No feature-valued activation owner or broader service authority
+  remains.
 - A generated conformance manifest covers every protected `/api/v1` route and
   asynchronous command with exactly one primary registered action, canonical
   resource type, and owning feature loader/composer. Unknown or missing
@@ -95,10 +98,14 @@ starting WS-POL-002-04 or another initiative automatically
   policy source.
 - PostgreSQL tests cover provisioning, grant, final-admin, revocation/command,
   and idempotency races.
-- Prepared-mutation tests prove AUTH-first lock order, session/action-bound
-  single use, final feature fact recomposition, one evaluation, one caller-owned
-  commit, and complete rollback on authority loss, evidence/participant/commit
-  failure, timeout, and cancellation.
+- Prepared-mutation tests prove AUTH-first lock order and an internal,
+  non-Pydantic `PreparedAuthorizationHandle` bound to the exact session, action,
+  actor reference kind, actor reference, idempotency key, and request digest.
+  They prove same-session/action cross-actor or cross-request substitution and
+  every reuse deny before feature mutation, followed by final feature fact
+  recomposition, one evaluation, one caller-owned commit, and complete rollback
+  on authority loss, evidence/participant/commit failure, timeout, and
+  cancellation.
 - Live drill proves bootstrap, scoped admin grants, separate submitter,
   reviewer, and adjudicator grants and independent revocation,
   admin/contributor separation, same-token revocation, suspension/reactivation,

@@ -501,9 +501,13 @@ external checks before merge.
 
 Status: adopted by the WS-XINT transaction contract; runtime remains proposed.
 
-`WS-AUTH-001-PREP` introduces a session-bound, action-bound, opaque,
-single-use, nonserializable prepared authority handle. When final-admin safety
-applies, AUTH locks `AuthorityControl(id=1)` first. It orders multiple authority
+`WS-AUTH-001-PREP` introduces an internal, opaque, non-Pydantic, single-use
+`PreparedAuthorizationHandle` bound to the exact session, ActionId, actor
+reference kind, actor reference, idempotency key, and canonical request digest.
+It is never a route schema, caller input, or serialized reference. The existing
+`AuthorityClaimHandle` remains a distinct internal idempotency-reservation
+contract and is not the PREP handle. When final-admin safety applies, AUTH locks
+`AuthorityControl(id=1)` first. It orders multiple authority
 principals by `ActorProfile.id`; for each human it locks `ActorProfile`, the exact
 `ActorIdentityLink`, then the exact matched admin or project grant; for each
 service it locks `ActorProfile` then the exact `ActorIdentityLink`. It validates
@@ -512,10 +516,11 @@ availability after those locks; those values are not database lock targets. The
 feature locks its records only after all authority rows, recomposes final typed
 facts, and asks AUTH to evaluate exactly once and stage decision evidence.
 Feature participants flush, and the route or service command commits once.
-Reads retain `require()`.
-Handle reuse, cross-session/action use, authority loss, evidence failure,
-participant failure, cancellation, and commit failure leave no feature mutation
-or partial evidence. AUTH never imports a feature repository.
+Reads retain `require()`. Before any feature mutation, consumption requires an
+exact match on every handle binding. Reuse, cross-session/action use,
+same-session/action cross-actor or cross-request substitution, authority loss,
+evidence failure, participant failure, cancellation, and commit failure leave no
+feature mutation or partial evidence. AUTH never imports a feature repository.
 
 ## D25: ActionOwner is an exact AUTH activation custodian
 

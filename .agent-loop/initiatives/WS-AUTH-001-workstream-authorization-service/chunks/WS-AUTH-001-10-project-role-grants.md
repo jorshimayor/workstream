@@ -12,9 +12,9 @@ runtime prerequisite.
 
 ## Goal
 
-Implement immutable qualification snapshots and exact-project independent
+Implement immutable qualification snapshots and independent
 `ProjectRoleGrant(submitter|reviewer|adjudicator)` create, list, and revoke
-behavior under scoped Project Manager authority.
+behavior scoped to the exact project under Project Manager authority.
 
 ## Why this chunk exists
 
@@ -142,11 +142,11 @@ editing migrations `0018`, `0019`, or `0022`
   direct database access.
 - Migration `0024` enforces exact three-role checks, composite snapshot/grant
   ownership, partial unique/supporting indexes, database-time fields, and
-  immutability. It replaces current audit/idempotency validators without editing
-  historical migrations, refuses upgrade on obsolete combined/replacement
-  evidence instead of converting it, and refuses an unsafe downgrade without
-  mutating evidence. Prior-head, fresh replay, preserved history, and both
-  refusal paths are tested.
+  immutability. Migration `0024` refuses upgrade when obsolete combined or
+  replacement evidence exists and never converts or deletes those rows. It
+  replaces current audit/idempotency validators without editing historical
+  migrations and refuses an unsafe downgrade without mutating evidence.
+  Prior-head, fresh replay, preserved history, and both refusal paths are tested.
 
 ## Verification commands
 

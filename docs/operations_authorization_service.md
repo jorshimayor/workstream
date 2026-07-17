@@ -549,13 +549,18 @@ protocol locks `AuthorityControl(id=1)` first when final-admin safety applies,
 orders multiple principals by ActorProfile ID, then locks each human profile,
 exact link, and exact matched grant or each service profile and exact link.
 Service identity, static matrix membership, and action availability are
-code-owned validations, not database lock targets. Only then does AUTH give the
-feature one session/action-bound single-use handle, let the feature lock rows
-and recompose final facts, and evaluate and stage evidence once before one
-route/service-command commit. Crossed tests must cover link revoke, actor
-suspend/deactivate, exact grant revoke, and final-admin mutations.
-Never serialize or reuse a prepared handle, let dependency teardown commit it,
-or commit AUTH evidence separately from feature state.
+code-owned validations, not database lock targets. Only then does AUTH create an
+internal, non-Pydantic `PreparedAuthorizationHandle` bound to the exact session,
+ActionId, actor reference kind, actor reference, idempotency key, and canonical
+request digest. It is never a route schema or caller input. Consumption matches
+every binding before the feature locks rows and recomposes final facts, then AUTH
+evaluates and stages evidence once before one route/service-command commit.
+Crossed tests must cover link revoke, actor suspend/deactivate, exact grant
+revoke, final-admin mutation, and same-session/action cross-actor or
+cross-request substitution. Never serialize or reuse the handle, let dependency
+teardown commit it, or commit AUTH evidence separately from feature state. The
+existing `AuthorityClaimHandle` is a separate idempotency-reservation contract,
+not this prepared authorization handle.
 
 Downgrade is allowed only while every action ID remains null and no permission
 outside migration `0018`'s historical 49-value set exists in the decision,

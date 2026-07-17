@@ -61,8 +61,10 @@ serializable, reusable, cross-session, or caller-constructible prepared handles
 
 ## Acceptance criteria
 
-- AUTH creates an opaque, session-bound, action-bound, single-use prepared
-  handle only after locking canonical current human or service authority.
+- AUTH creates an internal, opaque, non-Pydantic, single-use
+  `PreparedAuthorizationHandle` only after locking canonical current human or
+  service authority. It is bound to the exact session, ActionId, actor reference
+  kind, actor reference, idempotency key, and canonical request digest.
 - The database lock order is exact: lock `AuthorityControl(id=1)` first when
   final-admin safety applies; order multiple authority principals by
   `ActorProfile.id`; for each human lock `ActorProfile`, its exact
@@ -79,8 +81,11 @@ serializable, reusable, cross-session, or caller-constructible prepared handles
 - The route or service command owns one commit; AUTH and feature participants
   flush only.
 - Reads retain request-scoped `require()`.
-- Stale, reused, wrong-action, cross-session, serialized, or authority-lost
-  handles deny before feature mutation.
+- Before feature mutation, handle consumption requires exact equality for
+  session identity, ActionId, actor reference kind, actor reference, idempotency
+  key, and canonical request digest. Stale, reused, wrong-action, cross-session,
+  same-session/action cross-actor, same-session/action cross-request, serialized,
+  caller-constructed, or authority-lost handles deny before feature mutation.
 - Evidence SQL failure, participant failure, commit failure, timeout, and
   cancellation roll back all staged AUTH and feature state with a stable public
   error and no partial evidence.
@@ -91,6 +96,9 @@ serializable, reusable, cross-session, or caller-constructible prepared handles
   stale authorization, partial evidence, or partial feature state. Any existing
   inverse actor-self/admin/lifecycle lock path is reconciled before a PREP
   consumer is allowed to start.
+- Replay/concurrency proof includes cross-actor and cross-request handle reuse in
+  the same session and for the same action, and proves rejection does not consume
+  a valid handle or stage feature/evidence state.
 
 ## Verification commands
 
