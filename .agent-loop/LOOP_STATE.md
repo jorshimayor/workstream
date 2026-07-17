@@ -20,10 +20,12 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-09B CodeRabbit and Backend repair passes all required
-  internal reviewer tracks at exact code SHA `52d4d07` on PR #143. Replacement
-  GitHub checks and evidence rebinding remain; no service caller becomes
-  executable before AUTH-09E.
+- Current gate: PR #143's replacement Backend run passed all 1,242 tests but
+  exposed 89.75 percent authorization coverage at the new 90 percent gate. The
+  behavior-test repair passes every required reviewer track at exact SHA
+  `127615f` and projects 90.31 percent on the unchanged 1,600-statement
+  denominator. Replacement GitHub checks and evidence rebinding remain; no
+  service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

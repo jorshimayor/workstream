@@ -1,5 +1,19 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Coverage Gate Repair Passed
+
+PR #143's replacement Backend run passed all 1,242 tests and measured 84.92
+percent global coverage, then the newly enforced authorization subsystem gate
+reported 1,600 statements, 164 misses, and 89.75 percent coverage. The bounded
+test-only repair at exact SHA
+`127615fde8f1b5583acf9dbbb3c606db514a455d` proves both successful definition
+read routes authorize the exact typed resource, touch the caller, and commit
+before disclosure. It also proves query and commit SQL failures each roll back
+and map to the stable retryable 503 response. The nine newly exercised
+statements project 155 misses and 90.31 percent on the unchanged denominator.
+All required internal reviewer tracks pass; replacement GitHub checks remain,
+and AUTH-09C is inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B External Review Repair Passed
 
 PR #143 CodeRabbit review reported four valid fresh-row, subject-validation,
