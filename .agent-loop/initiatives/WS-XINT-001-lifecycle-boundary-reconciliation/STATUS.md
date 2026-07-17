@@ -2,16 +2,18 @@
 
 ## Current state
 
-The planning reconciliation and bounded final contract cleanup are implemented.
-No runtime code has changed. AUTH, ART, REV, and CON runtime branches remain
-independently owned; this initiative neither starts nor edits them.
+The planning reconciliation and bounded final contract cleanup are implemented
+and internally reviewed at exact code SHA
+`7bd4a4ee4195812a1b57e2a67d7b78887e7906e6`. All nine required reviewer tracks
+passed with zero findings, all sessions are closed, and no runtime code changed.
+AUTH, ART, REV, and CON runtime branches remain independently owned; this
+initiative neither starts nor edits them.
 
 ## Current gate
 
-Commit the deterministic candidate, run every required internal reviewer against
-that exact SHA, resolve valid findings, write separate internal evidence and PR
-trust-bundle records, then publish one ready planning PR for external and human
-review.
+Validate the exact-SHA internal evidence, publish one ready planning PR, and
+wait for GitHub checks, CodeRabbit, and explicit human review. Do not merge this
+PR without the user's approval.
 
 ## Stop condition
 
