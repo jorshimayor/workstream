@@ -639,6 +639,15 @@ scanner classifier and fixtures, publish exact four-action and six-service
 manifests, reconcile initiative state, and require exact-SHA internal evidence
 plus a changed-path audit. The amended contract then passed plan re-review.
 
+Deterministic evidence later exposed random WeasyPrint font-subset bytes. The
+render scope was amended to include `render_pdf.sh`, fix the PDF identifier,
+and embed full fonts. Plan re-review then found that the renderer rewrote four
+unchanged context PNGs outside Chunk 01 scope. The renderer now compares pixels
+through temporary outputs and preserves existing target bytes when unchanged;
+verification also binds all four paths to trusted base `0302bcf`. Consecutive
+renders produced identical lifecycle PDF and PNG hashes without changing a
+context image. The repaired L1 contract passed final plan review.
+
 Implementation remains specification and gate work only. No runtime endpoint,
 authorization availability, artifact capability, contribution behavior,
 adjudication behavior, or reputation mutation is introduced.

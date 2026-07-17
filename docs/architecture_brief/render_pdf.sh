@@ -8,7 +8,14 @@ mkdir -p images
 convert_diagram() {
   local source="$1"
   local target="$2"
-  convert -background white -density 180 "$source" -resize '2400x2400>' "$target"
+  local rendered
+  rendered="$(mktemp "${target%.png}.tmp.XXXXXX.png")"
+  convert -background white -density 180 "$source" -resize '2400x2400>' "$rendered"
+  if [[ -f "$target" ]] && compare -metric AE "$rendered" "$target" null: >/dev/null 2>&1; then
+    rm -f "$rendered"
+  else
+    mv "$rendered" "$target"
+  fi
 }
 
 convert_diagram ../diagrams/rendered/workstream_context.svg images/workstream_context.png
@@ -31,6 +38,8 @@ pandoc workstream_architecture_brief.md \
   --standalone \
   --from markdown+raw_html \
   --pdf-engine=weasyprint \
+  --pdf-engine-opt=--pdf-identifier=57532d5245562d3030312d3031 \
+  --pdf-engine-opt=--full-fonts \
   --css brief.css \
   --metadata title="Workstream Architecture Brief" \
   --resource-path=".:images" \

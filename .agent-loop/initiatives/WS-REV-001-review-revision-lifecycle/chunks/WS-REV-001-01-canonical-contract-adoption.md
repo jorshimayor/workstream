@@ -43,6 +43,7 @@ docs/architecture_brief/task_lifecycle_sequence.puml
 docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_brief/workstream_architecture_brief.pdf
 docs/architecture_brief/images/task_lifecycle_sequence.png
+docs/architecture_brief/render_pdf.sh
 docs/diagrams/task_lifecycle_sequence.md
 README.md
 scripts/check_stale_review_contracts.py
@@ -170,6 +171,11 @@ frontend work
   now as contract/status documentation, clearly distinguishing planned
   unavailable endpoints from implemented behavior; the scanner has no temporary
   allowlist or exception that can outlive this chunk.
+- The architecture brief render is byte-reproducible for the generated PDF and
+  lifecycle PNG. The render command fixes the PDF identifier and embeds full
+  fonts so repeated WeasyPrint runs do not create random subset names. Its four
+  unchanged context-diagram conversions use pixel equality to preserve their
+  existing bytes and cannot escape this chunk's allowed output scope.
 - Principles, lifecycle-state, and project-operating docs state the same
   deterministic one-guide rebase rule and the WS-CON creation matrix. Every
   valid decision appends an immutable Review; every submitted finding and later
@@ -235,6 +241,7 @@ git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/reference_
 git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" {bad=1} END {exit bad}'
 ./docs/architecture_brief/render_pdf.sh
 git diff --exit-code -- docs/architecture_brief/workstream_architecture_brief.pdf docs/architecture_brief/images/task_lifecycle_sequence.png
+git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/architecture_brief/images/backend_v01_components.png docs/architecture_brief/images/future_identity_payment_reputation.png docs/architecture_brief/images/workstream_context.png docs/architecture_brief/images/workstream_v01_container.png
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
 git diff --name-only 0302bcf854a565d429e232ad6b076a1931ea74e4
