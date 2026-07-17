@@ -49,8 +49,9 @@ reputation scoring
   idempotency key, and canonical request digest; REV locks idempotency, queue,
   lease, task, assignment,
   versioned Submission, predecessor Review, and packet/evidence facts; REV
-  recomposes final context and consumes the exactly matching handle before its
-  first feature mutation; AUTH evaluates once and stages evidence; REV appends
+  recomposes final context and calls AUTH; AUTH validates every binding/current
+  authority, consumes once, evaluates once, and stages evidence before the first
+  feature mutation; REV appends
   the immutable Review, findings, and resolutions; consumes the lease; closes
   the queue entry; and then calls the CON reviewer operation. That operation
   creates `completed_review` and evaluates the reviewer policy. REV then applies
@@ -58,10 +59,11 @@ reputation scoring
   `accepted`, and sets TaskAssignment to `completed` before calling the CON
   submitter operation. That operation creates `accepted_submission` and
   evaluates the submitter policy. REV stages shared audit and outbox rows, and
-  the request route or service command commits once. Reuse, serialization,
-  caller construction, wrong-session/action, or same-session cross-actor/request
-  substitution stages no AuthorizationDecision/evidence, does not consume the
-  original valid handle, and permits its later exact first use. Current-authority
+  the request route or service command commits once. Wrong-binding, serialized,
+  forged, or caller-constructed attempts against an unconsumed handle stage no
+  AuthorizationDecision/evidence, preserve the legitimate handle, and permit its
+  later exact first use. Stale/already-consumed and concurrent duplicate attempts
+  remain invalid and stage no new state. Current-authority
   or policy denial after valid consumption follows AUTH's clean denial-evidence
   protocol and leaves no Review, lifecycle, CON, or feature/shared audit/outbox
   mutation.

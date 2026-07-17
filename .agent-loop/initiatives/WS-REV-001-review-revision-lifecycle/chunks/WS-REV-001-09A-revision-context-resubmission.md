@@ -95,12 +95,14 @@ production `/api/v1` review-router registration
   bound to exact session, ActionId, actor-reference kind and ID, idempotency key,
   and canonical request digest -> REV exact assignment, preparation head, prior
   Submission, finding and evidence-slot locks -> ART candidate/admission/binding
-  locks -> final fact recomposition -> exact handle validation/consumption before
-  the first binding or REV mutation -> one AUTH evaluation -> binding plus
-  ReviewEvidenceArtifact flush. Reuse, serialization, caller construction,
-  or cross-session/action/actor/request substitution fails before canonical
-  mutation, stages no AuthorizationDecision/evidence, does not consume the
-  original valid handle, and permits its later exact first use. Current-authority
+  locks -> final fact recomposition -> AUTH validation of exact bindings/current
+  authority, single consumption, evaluation, and evidence staging before the
+  first binding or REV mutation -> binding plus ReviewEvidenceArtifact flush.
+  Wrong-binding, serialized, forged, or caller-constructed attempts against an
+  unconsumed handle fail before canonical mutation, stage no
+  AuthorizationDecision/evidence, preserve the legitimate handle, and permit its
+  later exact first use. Stale/already-consumed and concurrent duplicate attempts
+  remain invalid and stage no new state. Current-authority
   or policy denial after valid consumption follows AUTH's clean denial-evidence
   protocol. Pre-intake denial creates no ART candidate, binding, or receipt.
 - Contributor and later reviewer see old/new guide/task-execution-policy context

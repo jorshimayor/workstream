@@ -55,13 +55,15 @@ production `/api/v1` review-router registration
   only as `workstream.review.artifact_reference_reconciliation`; projection
   rebuild runs only as `workstream.review.projection`. Each requires its exact
   static ActionId row, provisioned ActorProfile/link, AUTH-09E admission, AUTH
-  prepare for the mutation, final REV facts, exact prepared-handle consumption,
-  and one evaluation. The opaque, non-Pydantic, single-use handle binds exact
+  prepare for the mutation and final REV facts, followed by AUTH-owned exact
+  binding/current-authority validation, single consumption, evaluation, and
+  evidence staging. The opaque, non-Pydantic, single-use handle binds exact
   session, ActionId, service actor-reference kind and ID, idempotency key, and
-  canonical request digest. Reuse, serialization, caller construction,
-  or cross-session/action/actor/request substitution fails before feature
-  mutation, stages no AuthorizationDecision/evidence, does not consume the
-  original valid handle, and permits its later exact first use. Current-authority
+  canonical request digest. Wrong-binding, serialized, forged, or
+  caller-constructed attempts against an unconsumed handle fail before feature
+  mutation, stage no AuthorizationDecision/evidence, preserve the legitimate
+  handle, and permit its later exact first use. Stale/already-consumed and
+  concurrent duplicate attempts remain invalid and stage no new state. Current-authority
   or policy denial after valid consumption follows AUTH's clean denial-evidence
   protocol. Human Operator or reviewer authority cannot substitute.
   Generic AUTH-09E admission creates neither identity; AUTH provisions each exact

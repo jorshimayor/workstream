@@ -71,12 +71,14 @@ production `/api/v1` review-router registration
   `review.lease_expiry.run`. Every mutation uses AUTH's prepared protocol:
   authority first; an opaque, non-Pydantic, single-use handle binds exact
   session, ActionId, actor-reference kind and ID, idempotency key, and canonical
-  request digest; REV locks/recomposes final facts and consumes the matching
-  handle before its first feature mutation; AUTH evaluates once; then participants
-  flush. Reused, serialized, caller-constructed, wrong-session/action, and
-  same-session cross-actor/request handles fail before REV mutation, stage no
-  AuthorizationDecision/evidence, do not consume the original valid handle, and
-  permit its later exact first use. Current-authority or policy denial after
+  request digest; REV locks/recomposes final facts and calls AUTH; AUTH validates
+  every binding/current authority, consumes the handle once, evaluates once, and
+  stages evidence before the first feature mutation; then participants flush.
+  Wrong-session/action/actor/request binding, serialized, forged, or
+  caller-constructed attempts against an unconsumed handle stage no
+  AuthorizationDecision/evidence, preserve the legitimate handle, and permit its
+  later exact first use. Stale/already-consumed and concurrent duplicate attempts
+  remain invalid and stage no new evidence or feature state. Current-authority or policy denial after
   valid consumption leaves no lease/routing or feature audit/outbox effect. The
   request route or service command rolls back the dirty transaction; AUTH
   restages the unchanged bounded denial evidence in a clean transaction; and the

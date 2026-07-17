@@ -40,11 +40,14 @@ Reads use request-scoped `AuthorizationService.require`. Mutations use AUTH's
 prepared protocol: AUTH locks authority and creates an opaque, non-Pydantic,
 single-use handle bound to the exact session, ActionId, actor-reference kind and
 ID, idempotency key, and canonical request digest. REV locks canonical feature
-rows, recomposes final facts, validates and consumes that exact handle before its
-first mutation, AUTH evaluates exactly once, participants flush, and the request
-route or service command commits once. Reuse, serialization, caller construction,
-cross-session/action/actor/request substitution, or authority loss denies before
-feature mutation. REV never registers or activates actions.
+rows and recomposes final facts, then calls AUTH. AUTH validates every binding and
+current authority, consumes the handle exactly once, evaluates exactly once, and
+stages decision evidence before the first feature mutation. Participants flush,
+and the request route or service command commits once. Wrong-binding, forged,
+serialized, or caller-constructed attempts against an unconsumed handle preserve
+it for its later exact first use. Stale/already-consumed and concurrent duplicate
+attempts remain invalid and stage no new state. Authority loss follows the
+evaluated-denial path. REV never registers or activates actions.
 
 REV receives ART v2 typed packet-read and evidence candidate/finalize ports, not
 ArtifactStore, v1 verify/retain/release, ART repositories, provider references,

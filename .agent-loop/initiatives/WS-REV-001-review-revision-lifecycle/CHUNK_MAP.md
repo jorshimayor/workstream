@@ -10,7 +10,7 @@ explicit start signal.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L1 | None | Active; AUTH PR #140 reconciliation in review |
+| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L1 | None | Active; post-PR #140 REV reconciliation in review |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current-main refresh; merged WS-XINT-001 handoffs and AUTH PR #140 planning contracts | Proposed |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH canonical actor foundation; separately reviewed and merged AUTH-owned schema-only contributor-field foundation that breaks the current AUTH-13/14 <-> REV-09A cycle; ART submission commitment contract stable; canonical rejected/cancelled lifecycle amendment; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON ContributionPolicyVersion persistence merged | Proposed |

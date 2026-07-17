@@ -115,25 +115,30 @@ After the exact owning AUTH gates merge, WS-REV consumes:
   non-Pydantic, single-use `PreparedAuthorizationHandle` bound to the exact
   `AsyncSession`, ActionId, actor-reference kind and ID, idempotency key, and
   canonical request digest after locking current authority. REV locks canonical
-  feature rows, recomposes final typed facts, and consumes the exactly matching
-  handle before its first feature mutation; AUTH evaluates exactly once and
-  stages bounded decision evidence; participants flush; and the request route or
-  service command commits once. Reuse, serialization, caller construction,
-  cross-session/action/actor/request substitution, or authority loss denies
-  before feature mutation;
+  feature rows and recomposes final typed facts, then calls AUTH with those facts
+  and the opaque handle. AUTH validates every binding and current authority,
+  consumes the handle exactly once, evaluates exactly once, and stages bounded
+  decision evidence before the first feature mutation; participants flush; and
+  the request route or service command commits once. Binding substitution,
+  serialization, caller construction, already-consumed replay, or authority loss
+  denies before feature mutation;
 - immutable authorization decisions and audit links;
 - revocation invalidation used to recover active review leases.
 
 Prepared-handle protocol rejection and evaluated denial are different outcomes.
-A reused, serialized, caller-constructed, wrong-session/action, or
-same-session cross-actor/request handle stages no AuthorizationDecision or
-evidence, does not consume the original valid handle, and must allow that exact
-valid handle's later first use. When an exactly bound handle reaches evaluation
-but current authority or policy denies, the request route or service command
-rolls back the dirty caller transaction; AUTH restages the unchanged bounded
-denial evidence in a clean transaction; and the request route or service command
-commits that evidence once. No REV/task/ART/CON mutation or feature/shared
-audit/outbox effect survives. If denial-evidence restaging fails, nothing commits.
+An unconsumed handle presented with a wrong session/action/actor/request binding,
+or a serialized, caller-constructed, or forged substitute, stages no
+AuthorizationDecision/evidence, does not consume the legitimate handle, and
+must allow that handle's later exact first use. A stale or already-consumed
+handle, including the losing side of concurrent duplicate use, stages no new
+decision/evidence or feature state, remains consumed, and can never become valid
+again; exactly one concurrent exact consumer may win. When an exactly bound
+handle reaches evaluation but current authority or policy denies, the request
+route or service command rolls back the dirty caller transaction; AUTH restages
+the unchanged bounded denial evidence in a clean transaction; and the request
+route or service command commits that evidence once. No REV/task/ART/CON mutation
+or feature/shared audit/outbox effect survives. If denial-evidence restaging
+fails, nothing commits.
 
 REV owns its typed ResourceContext composers and lifecycle guards. It imports
 the public AUTH service and `ActionId` types only; it never imports AUTH
@@ -608,13 +613,14 @@ foundation change rather than adding review-private storage state.
   atomic conditional updates over canonical rows.
 - Every mutation starts with AUTH locking current actor/link/exact grant or
   service-matrix authority in AUTH-defined order and returning its opaque,
-  single-use prepared handle. Before its first feature mutation, REV must prove
-  exact session, ActionId, actor-reference kind and ID, idempotency key, canonical
-  request digest, and current authority; it then consumes the handle exactly
-  once. Reuse, serialized or caller-constructed handles, wrong action/session,
-  same-session cross-actor or cross-request substitution, and authority loss fail
-  without feature mutation. AUTH evaluates exactly once after final locked-fact
-  recomposition.
+  single-use prepared handle. REV locks feature rows and recomposes final facts,
+  then calls AUTH before the first feature mutation. AUTH proves exact session,
+  ActionId, actor-reference kind and ID, idempotency key, canonical request digest,
+  and current authority; consumes the handle exactly once; evaluates exactly
+  once; and stages decision evidence. Wrong-binding, forged, serialized, and
+  caller-constructed attempts do not consume the legitimate unconsumed handle;
+  stale/already-consumed or concurrent duplicate attempts remain invalid and add
+  no feature or evidence state. Authority loss follows the evaluated-denial path.
 - Before REV-12A, hidden claim order after AUTH is review idempotency, queue,
   Task/Assignment/Submission/CheckerRun, then lease and packet-manifest rows;
   it has no public or background-command entry point. REV-12A inserts the

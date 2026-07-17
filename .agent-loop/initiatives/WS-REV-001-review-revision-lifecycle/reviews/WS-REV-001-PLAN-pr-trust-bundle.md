@@ -33,7 +33,8 @@ starting a successor.
   activation, and `REV-LIFECYCLE` gates without treating planning as runtime.
 - Bound every sensitive mutation consumer to AUTH's opaque single-use handle by
   exact session, action, actor-reference kind/ID, idempotency key, and request
-  digest, with misuse, authority-loss, and clean-denial-evidence proof.
+  digest. REV locks feature rows and recomposes final facts; AUTH alone validates
+  bindings/current authority, consumes once, evaluates once, and stages evidence.
 - Made the request route or service command the sole committer; REV remains the
   lifecycle orchestrator and stages shared audit/outbox rows.
 - Required an AUTH-owned schema-only contributor-field foundation before REV-02
@@ -47,10 +48,15 @@ starting a successor.
   registration/consumer cycle without activating behavior.
 - Added AUTH-14 `submission.create` activation and prepared revision/replay proof
   to the final REV-13 release manifest.
-- Distinguished prepared-handle protocol misuse from evaluated denial: misuse
-  stages no evidence and does not consume the valid handle; evaluated denial uses
-  caller rollback, clean unchanged AUTH evidence restaging, and one route/service
-  evidence commit.
+- Split prepared-handle outcomes: rejected pre-consumption substitution/forgery
+  preserves the legitimate handle for one later exact first use; stale,
+  already-consumed, and concurrent duplicate use remains invalid and stages no
+  new state; evaluated denial uses caller rollback, clean unchanged AUTH evidence
+  restaging, and one route/service evidence commit.
+- Assigned the mandatory preparation-transfer binding, legacy replacement and
+  submission-path removal, and strict revision migration to the amended full
+  AUTH-13/14 cutovers after REV-09A. REV-12A classifies/fences those commands and
+  REV-13 verifies and exposes them without editing AUTH/task-owned behavior.
 - Required exact independent `reviewer` grants, role-specific invalidation, six
   fixed review service identities through AUTH-09E, request-scoped AUTH reads,
   and AUTH-first prepared mutations.

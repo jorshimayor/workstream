@@ -97,16 +97,19 @@ schema/application downgrade after protected post-cutover rows exist
   reversing the global lock order. After commit, new commands acquire the shared
   lock and fail or pass from the persisted phase. Independent-session tests prove
   both orderings, AUTH/fence concurrency without deadlock, and that process-local
-  locks cannot substitute. Protocol misuse fails before feature/shared
-  audit/outbox mutation, stages no AuthorizationDecision or evidence, and does
-  not consume the original valid handle. Authority or policy denial after valid
+  locks cannot substitute. Pre-consumption wrong-binding, serialization, forgery,
+  or caller construction fails before feature/shared audit/outbox mutation,
+  stages no AuthorizationDecision/evidence, and preserves the legitimate
+  unconsumed handle. Authority or policy denial after valid
   consumption also leaves feature/shared audit/outbox state unchanged; its clean
   AUTH evidence follows the denial protocol below. The phase snapshot remains
   held for the transaction.
-- Reused, serialized, caller-constructed, wrong-session/action, and same-session
-  cross-actor/request handles are protocol rejections: they stage no
-  AuthorizationDecision/evidence, do not consume the original valid handle, and
-  permit its later exact first use. For current-authority or policy denial after
+- Wrong-binding, serialized, forged, or caller-constructed attempts against an
+  unconsumed handle are protocol rejections: they stage no
+  AuthorizationDecision/evidence, preserve the legitimate handle, and permit its
+  later exact first use. Stale/already-consumed and concurrent duplicate attempts
+  remain invalid, stage no new evidence or feature state, and can never become
+  valid again; exactly one concurrent exact consumer may win. For current-authority or policy denial after
   valid consumption, the
   request route or service command rolls back the dirty caller transaction; AUTH
   restages the unchanged bounded denial in a clean transaction; and that route
@@ -181,11 +184,13 @@ schema/application downgrade after protected post-cutover rows exist
   extend, or repair a fulfillment obligation cannot be classified as
   completion-only.
 - The replacement-assignment command has a required typed slot for the
-  preparation-transfer participant. Bootstrap `pre_activation(1)` preserves
-  AUTH-13 legacy behavior; generation N>1 never re-enables it. Product release in
-  REV-13 changes the command class to require both the fence and transfer
-  participant atomically. The schema cannot infer or fabricate a preparation
-  before REV-13.
+  preparation-transfer participant. Bootstrap `pre_activation(1)` initially
+  preserves AUTH-13 legacy behavior. After REV-09A supplies the participant, the
+  amended AUTH-13 cutover binds it atomically, removes legacy replacement
+  behavior, and fails startup/command execution when the binding is absent.
+  REV-12A classifies and fences the command; generation N>1 never re-enables the
+  legacy class. REV-13 only verifies the merged binding and exposes the already
+  cut-over command. No schema or release code infers or fabricates preparation.
 - The composition root supplies the shared fence through the exact mandatory
   CON dispatch and callback hooks. Under the shared fence, the shared outbox
   dispatcher claims the event and passes an already-claimed command plus

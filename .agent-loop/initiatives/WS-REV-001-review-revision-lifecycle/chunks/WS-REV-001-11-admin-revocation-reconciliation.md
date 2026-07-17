@@ -189,10 +189,13 @@ production `/api/v1` review-router registration
 - Release, decline, override, force-release, admin closure, recovery, and any
   actor-attributed deferred commit use AUTH's prepared mutation protocol,
   persist the AuthorizationDecision link, follow the command-specific lock order, and
-  reject reused, serialized, caller-constructed, wrong-session/action, or
-  same-session cross-actor/request handles before feature mutation. Protocol
-  rejection stages no AuthorizationDecision/evidence, does not consume the
-  original valid handle, and permits its later exact first use. Current-authority
+  reject wrong-binding, serialized, forged, or caller-constructed attempts
+  against an unconsumed handle before feature mutation. That rejection stages no
+  AuthorizationDecision/evidence, preserves the legitimate handle, and permits
+  its later exact first use. Stale/already-consumed and concurrent duplicate
+  attempts remain invalid and stage no new state. AUTH alone validates bindings,
+  consumes once, evaluates once, and stages evidence after REV recomposes final
+  facts. Current-authority
   or policy denial after valid consumption leaves no REV/task/ART/CON mutation or
   feature audit/outbox event. The request route or service command rolls back the
   dirty transaction; AUTH restages the unchanged bounded denial in a clean

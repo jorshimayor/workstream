@@ -371,9 +371,11 @@ immutable FinalAcceptance. CON creates `accepted_submission` only from that
 fact; `completed_review` remains directly sourced from every Review.
 
 The human also clarified transaction ownership: the review request owns the
-single transaction, CON is a flush-only contribution and award participant, REV
-stages shared audit and outbox rows, and REV commits once. No ART or provider
-call is allowed in the transaction. Adjudication remains disabled for v0.1;
+single transaction, CON is a flush-only contribution and award participant, and
+REV stages shared audit and outbox rows. Later AUTH reconciliation made the
+mechanical owner explicit: the request route or service command owns the caller
+`AsyncSession` and sole commit. No ART or provider call is allowed in the
+transaction. Adjudication remains disabled for v0.1;
 dormant interface compatibility does not authorize adjudication behavior or
 readiness.
 
@@ -492,9 +494,10 @@ pre-FinalAcceptance one-call transaction.
 
 The repair names `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`,
 `WS-AUTH-001-REV-REG`, every exact per-feature REV activation gate, and
-`WS-AUTH-001-REV-LIFECYCLE`. Every sensitive consumer now validates and consumes
-AUTH's opaque single-use handle against exact session, ActionId, actor-reference
-kind/ID, idempotency key, and canonical request digest before feature mutation.
+`WS-AUTH-001-REV-LIFECYCLE`. The initial repair required exact session, ActionId,
+actor-reference kind/ID, idempotency key, and canonical request-digest binding
+before feature mutation; the later review below corrected validation and
+consumption ownership to AUTH.
 Normal denial rolls back feature effects while AUTH may persist only its bounded
 unchanged denial evidence through the clean AUTH-owned restaging protocol. The
 request route or service command owns the one commit; REV remains lifecycle
@@ -537,10 +540,11 @@ behavior exists.
 Security review also found that REV-12A consumed PREP before fence/domain locks
 and final fact recomposition, and several chunks conflated prepared-handle misuse
 with evaluated denial. The repair restores AUTH prepare -> feature locks and final
-facts -> handle validation/consumption -> one AUTH evaluation/evidence stage ->
+facts -> AUTH-owned handle validation/consumption/evaluation/evidence stage ->
 feature mutation -> participant flush -> request-route/service-command commit.
-Protocol misuse stages no decision/evidence, does not consume the original valid
-handle, and permits later exact use. Evaluated authority/policy denial rolls back
+At that snapshot, protocol misuse was still described too broadly; the later
+review below separates rejected pre-consumption substitution from an already-
+consumed replay. Evaluated authority/policy denial rolls back
 the dirty caller transaction, restages unchanged bounded AUTH denial evidence in
 a clean transaction, and commits that evidence once through the request route or
 service command. Feature/shared audit/outbox effects remain absent and restaging
@@ -549,3 +553,30 @@ failure commits nothing.
 Finally, the repair removes remaining REV-owned-commit wording, aligns PLAN risk
 to L1, records the now-passing loop-memory gate, and makes registered/planned
 status consistent in REV-12A.
+
+### Second AUTH reconciliation review of `4084cd4`
+
+Senior engineering, architecture, QA/test, product/ops, security/auth, and docs
+failed the snapshot. Reuse/dedup, test-delta, and CI integrity passed.
+
+The PREP proof incorrectly grouped an already-consumed replay with a rejected
+wrong-binding or forged attempt and then promised that every rejected handle
+could receive a later first use. The repair now proves three separate outcomes:
+pre-consumption substitution/forgery stages no state and preserves the legitimate
+handle for one later exact first use; stale, already-consumed, and concurrent
+duplicate use stages no new state and never becomes valid again, with exactly one
+concurrent winner; evaluated authority/policy denial uses dirty rollback and
+clean unchanged AUTH evidence restaging. REV only locks feature rows and
+recomposes final facts. AUTH alone validates bindings/current authority, consumes
+once, evaluates once, and stages decision evidence.
+
+Architecture review also found that REV-12A/13 still assigned the mandatory
+preparation-transfer binding, legacy replacement removal, strict revision
+migration, and prepared submission cutover to REV-13 even though amended full
+AUTH-13/14 were prerequisites. Those cutovers now own their commands, binding,
+migration, and hidden behavior after REV-09A. REV-12A classifies and fences them;
+REV-13 verifies the exact merged capabilities and only exposes them through the
+joint lifecycle transition. REV-01's last stale commit statement now assigns
+orchestration and shared audit/outbox staging to REV while the request route or
+service command owns the caller session and sole commit. Ambiguous action-table
+and PR #140 status wording is also corrected.

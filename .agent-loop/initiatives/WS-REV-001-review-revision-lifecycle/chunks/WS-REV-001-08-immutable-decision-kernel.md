@@ -43,16 +43,18 @@ reputation or fulfillment logic
 - The command declares planned `review.decision`. Mutation choreography is AUTH
   prepare/authority lock -> opaque, non-Pydantic, single-use handle bound to the
   exact session, ActionId, reviewer actor-reference kind and ID, idempotency key,
-  and canonical request digest -> REV locks and final fact recomposition -> exact
-  handle validation/consumption before the first feature mutation -> one AUTH
-  evaluation -> REV appends the Review, findings, and resolutions -> CON
+  and canonical request digest -> REV locks and final fact recomposition -> AUTH
+  validates exact bindings/current authority, consumes once, evaluates once, and
+  stages evidence before the first feature mutation -> REV appends the Review,
+  findings, and resolutions -> CON
   reviewer operation -> REV decision branch -> CON submitter operation only for
   `accept` -> REV audit and outbox staging -> request route or service command
   commits once. No plain mutation-time `require()` or serialized authorization
-  handle substitutes. Reuse, caller construction, wrong-session/action, or
-  same-session cross-actor/request substitution fails before mutation, stages no
-  AuthorizationDecision/evidence, does not consume the original valid handle,
-  and permits its later exact first use. Current-authority or policy denial after
+  handle substitutes. Wrong-binding, forged, serialized, or caller-constructed
+  attempts against an unconsumed handle fail before mutation, stage no
+  AuthorizationDecision/evidence, preserve the legitimate handle, and permit its
+  later exact first use. Stale/already-consumed and concurrent duplicate attempts
+  remain invalid and stage no new state. Current-authority or policy denial after
   valid consumption follows AUTH's clean denial-evidence protocol and leaves no
   Review, lifecycle, CON, or feature/shared audit/outbox mutation.
 - Decision, finding, evidence, and resolution rules match the canonical spec.

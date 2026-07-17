@@ -18,11 +18,9 @@ backend/tests/test_{reviews,contributions,compensation,authorization,api_contrac
 backend/app/api/router.py only for review and lifecycle-control registration after owner readiness
 backend/app/modules/reviews/router.py only for final product-release conformance
 backend/app/modules/lifecycle_control/router.py only for final Operator control product-release conformance
-backend/app/modules/tasks/{schemas,service,router}.py only for Task Context/preparation acknowledgment and strict canonical revision cutover
+backend/app/modules/tasks/{schemas,service,router}.py only for Task Context and final product-release conformance over the already merged AUTH-14 cutover
 backend/app/composition/review_lifecycle.py only for final fail-closed participant composition
 backend/app/composition/joint_lifecycle_control.py only for final active command-class/binding product release
-backend/alembic/versions/<activation-next>_strict_revision_cutover.py
-backend/tests/test_alembic.py only for final revision-cutover migration proof
 docs/architecture_*.md
 docs/architecture_brief/**
 docs/diagrams/**
@@ -55,6 +53,7 @@ provider or authorization bypass for the drill
 reputation formula or deferred product scope
 CON router, policy, contribution, award, outbox, fulfillment, callback, or projection ownership
 AUTH action registration, ActionOwner/evaluator edit, or availability change
+AUTH-13/14 command, participant-binding, task-submission behavior, or migration ownership
 ```
 
 ## Acceptance criteria
@@ -146,11 +145,13 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   authorization-evidence SQL failures produce a retryable 503 without partial
   state, and successful existing-actor GET/PATCH access matches AUTH's repaired,
   documented verification-timestamp semantics.
-- Live mutation proof rejects reused, serialized, caller-constructed,
-  wrong-session/action, and same-session cross-actor/request
-  `PreparedAuthorizationHandle` inputs before any REV/task/ART/CON mutation. Each
-  misuse stages no AuthorizationDecision/evidence, does not consume the original
-  valid handle, and a subsequent exact first use succeeds. Separate
+- Live mutation proof rejects wrong-binding, serialized, forged, and
+  caller-constructed `PreparedAuthorizationHandle` attempts against an
+  unconsumed legitimate handle before any REV/task/ART/CON mutation. Each such
+  attempt stages no AuthorizationDecision/evidence, preserves that handle, and a
+  subsequent exact first use succeeds. Separate stale/already-consumed and
+  concurrent duplicate-use tests prove no new evidence or feature state, no
+  resurrection, and exactly one winner for concurrent exact use. Separate
   current-authority and policy denials after valid consumption prove dirty
   caller-transaction rollback, unchanged bounded AUTH evidence restaging in a
   clean transaction, one request-route/service-command evidence commit, and no
@@ -189,41 +190,41 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   composers, PM cross-project/not-reached denial, Operator D6 denial,
   non-Operator legacy-close denial, stale/crossed head or finding denial, exact
   replay, and changed-replay conflict.
-- Product release registers only the review-owned evidence-intake routes and installs
-  frozen-preparation acknowledgment as an internal lifecycle guard of the
-  existing canonical task submission command. The same commit unlocks that
-  command's prepared, structured-response branch, removes the legacy
-  direct-revision path, and adds neither a contributor/reviewer preparation
-  route nor a second reviews resubmission route. The only preparation mutation
-  route is the privileged chunk-11 successor-repair command. First submissions
-  remain behaviorally unchanged.
-- The same composition cutover makes the AUTH-13 replacement-assignment command
-  depend on the typed review preparation-transfer participant whenever a
-  Review-rooted revision obligation exists. The binding is non-optional: startup
-  and the command fail closed if it is absent, and assignment plus preparation
-  successor commit or roll back together. Tests cover absent binding, injected
-  failure after each participant, replay, stale head, and concurrent
-  replacement/repair/submission. Rollback first fences replacement assignment
-  and drains in-flight commands; it never removes the participant while the
-  AUTH-13 command can create a target assignment.
-- The same atomic cutover migration adds the named PostgreSQL `NOT VALID` check
-  requiring version 1 or a non-null preparation reference. Existing version>1
-  rows remain immutable/readable, while every new or updated post-cutover row is
-  checked. The service maps missing/stale preparation to a stable domain error;
-  no `IntegrityError` escapes. Migration/API tests prove the pre-cutover legacy
-  branch works before upgrade, the route and database guard switch together,
-  new unprepared revisions fail, prepared revisions succeed, direct SQL cannot
-  forge a legacy exemption, and downgrade is refused once post-cutover rows
-  depend on the rule.
+- Product release registers only the review-owned evidence-intake routes and
+  exposes the already merged AUTH-14 canonical task submission command behind
+  the joint lifecycle controller. The amended AUTH-14 cutover already installed
+  frozen-preparation acknowledgment, the prepared structured-response branch,
+  removal of the legacy direct-revision path, and the strict revision database
+  guard while the surface remained unavailable. REV-13 verifies those exact
+  contracts and changes neither task-owned command nor migration. It adds no
+  contributor/reviewer preparation route or second review resubmission route;
+  the only preparation mutation route is the privileged chunk-11 successor-
+  repair command. First submissions remain behaviorally unchanged.
+- Preflight verifies the already merged amended AUTH-13 replacement-assignment
+  command requires the typed review preparation-transfer participant whenever a
+  Review-rooted revision obligation exists. AUTH-13 owns the non-optional
+  binding, startup/command fail-closed behavior, and atomic assignment plus
+  preparation-successor transaction. REV-13 changes no AUTH-owned command. Live
+  proof covers absent binding, injected failure after each participant, replay,
+  stale head, concurrent replacement/repair/submission, and rollback that never
+  removes the participant while the command is available.
+- Preflight also verifies the amended AUTH-14 cutover's named PostgreSQL
+  `NOT VALID` check requiring version 1 or a non-null preparation reference.
+  Existing version>1 rows remain immutable/readable, while every new or updated
+  post-cutover row is checked. The service maps missing/stale preparation to a
+  stable domain error; no `IntegrityError` escapes. Existing AUTH-14 migration/API
+  evidence plus the REV live drill prove new unprepared revisions fail, prepared
+  revisions succeed, direct SQL cannot forge a legacy exemption, and downgrade
+  is refused once post-cutover rows depend on the rule.
 - Deployment does not pretend Alembic and process replacement are simultaneous.
   The Operator advances `pre_activation -> revision_cutover_fenced`, whose exact
   matrix allows initial submissions and checker admission but denies legacy and
   prepared revisions plus both replacement classes. The runbook drains and
-  verifies no old writer remains, applies the migration, starts and verifies the
-  prepared branch plus mandatory replacement-transfer binding, then advances to
-  `active` to open prepared revision/replacement admission. A live ordering test
-  holds an old writer at the fence and proves it cannot cross the migration/
-  product-release boundary or leak an IntegrityError.
+  verifies no old writer remains, verifies the already applied AUTH-13/14
+  migration and prepared/replacement bindings, then advances to `active` to open
+  prepared revision/replacement admission. A live ordering test holds an old
+  writer at the fence and proves it cannot cross the product-release boundary or
+  leak an IntegrityError.
 - Existing Task Context responses expose the frozen current preparation ID,
   digest, guide/policy versions, and change summary during `needs_revision`.
   The canonical submission request acknowledges preparation ID/digest; neither

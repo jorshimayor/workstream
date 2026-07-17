@@ -111,7 +111,7 @@ frontend work
   `ArtifactScratchManager`, `PreparedArtifact`, or `CommittedArtifactSource`,
   persists scratch state, or treats ART-02A2 as reviewer read/intake readiness.
   Chunk 01 changes no ART implementation.
-- The active action table contains 24 non-executable review-lifecycle
+- The active contract's dependency inventory contains 24 non-executable review-lifecycle
   dependencies: registered planned `submission.create`, 19 registered planned
   review actions, and four approved but unregistered additions. The four
   proposed additions are
@@ -161,9 +161,12 @@ frontend work
   and records exact AUTH-first mutation choreography and REV/CON interleaving.
   It requires the opaque single-use prepared handle to match exact session,
   ActionId, actor-reference kind and ID, idempotency key, and canonical request
-  digest before first feature mutation. Protocol misuse stages no decision or
-  evidence, does not consume the original valid handle, and permits later exact
-  first use. Evaluated authority/policy denial uses dirty-transaction rollback,
+  digest before first feature mutation. AUTH alone validates those bindings,
+  consumes the handle, evaluates, and stages evidence after REV recomposes final
+  facts. Rejected wrong-binding, forged, serialized, or caller-constructed use
+  preserves the legitimate unconsumed handle for one later exact first use;
+  stale/already-consumed and concurrent duplicate use remains invalid and stages
+  no new state. Evaluated authority/policy denial uses dirty-transaction rollback,
   clean unchanged AUTH denial-evidence restaging, and one route/service-command
   evidence commit with no feature/shared audit/outbox effects.
 - The active contract defines REV-owned `ReviewPacketManifest` and
@@ -176,9 +179,9 @@ frontend work
 - Core contribution creation uses frozen `ContributionPolicyVersion`, a CON
   participant with ordered flush-only reviewer and submitter operations, no ART
   call, and no mandatory contribution-evidence projection. REV stages shared
-  audit and outbox records and owns the single
-  decision commit; CON owns its contribution/award behavior, public routes, and
-  fulfillment transitions.
+  audit and outbox records inside the caller transaction; the request route or
+  service command owns the caller `AsyncSession` and sole commit. CON owns its
+  contribution/award behavior, public routes, and fulfillment transitions.
 - Active contracts define FinalAcceptance as an internal immutable REV fact
   created only when a new Review has decision `accept`. It has unique
   task/source-Review/Submission lineage, exact ReviewPolicy and canonical actor
