@@ -3829,6 +3829,10 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The Celery worker accepts the submission.",
         "The background worker rejects project work.",
         "The checker worker requests revision.",
+        "review_lifecycle_live_drill.py --start-api-worker-beat-extra",
+        "review_lifecycle_live_drill.py --require-workers-extra",
+        "maliciousapp/workers/reviews.py",
+        "maliciousapp.workers.reviews",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample

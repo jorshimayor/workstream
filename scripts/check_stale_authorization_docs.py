@@ -377,14 +377,20 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
     token_end = worker_offset + len(token.group(0))
     suffix = text[token_end : token_end + 20]
     exact_code_path = token.group(0).lower() == "workers" and (
-        (prefix.endswith("backend/app/") and suffix.startswith("/"))
-        or (prefix.endswith("app/") and suffix.startswith("/"))
-        or (prefix.endswith("app.") and suffix.startswith("."))
+        (
+            re.search(r"(?:^|[^A-Za-z0-9_.-])(?:backend/)?app/$", prefix)
+            is not None
+            and suffix.startswith("/")
+        )
+        or (
+            re.search(r"(?:^|[^A-Za-z0-9_.-])app\.$", prefix) is not None
+            and suffix.startswith(".")
+        )
     )
     exact_technical_cli_flag = (
         token.group(0).lower() == "worker"
         and prefix.endswith("--start-api-")
-        and suffix.startswith("-beat")
+        and re.match(r"^-beat(?:\s|$)", suffix) is not None
     ) or (
         token.group(0).lower() == "workers"
         and prefix.endswith("--require-")

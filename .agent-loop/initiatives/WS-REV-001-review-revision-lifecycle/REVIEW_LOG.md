@@ -353,3 +353,9 @@ technical forms while continuing to reject human contributor-role vocabulary.
 The planning chunk explicitly owns this CI gate change
 and requires CI-integrity review. The same pass also found and repaired one
 remaining stale lifecycle-fence reference in `CON_INTEGRATION_REVIEW.md`.
+
+Third review of `15c6aa7` passed every product and architecture track but found
+that the exact live-drill CLI classifier accepted a suffixed `-beat` near miss.
+The matcher now requires end-of-token or whitespace after `-beat`, and negative
+regressions reject suffixed variants of both allowed flags. No broader exemption
+or test weakening is permitted.
