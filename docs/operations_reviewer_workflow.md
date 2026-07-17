@@ -31,9 +31,11 @@ Allowed decisions:
 
 Decision rules:
 
-- `accept` means the submission satisfies the project guide and creates the
-  submitter `accepted_submission` contribution. Its frozen contribution award rule
-  independently decides whether that contribution creates an award.
+- `accept` means the submission satisfies the project guide. The same
+  transaction creates internal FinalAcceptance, then creates the submitter
+  `accepted_submission` contribution only from that fact. Its frozen
+  contribution award rule independently decides whether that contribution
+  creates an award.
 - `needs_revision` means the work is fixable and the reviewer can name concrete required changes.
 - `reject` means the work is not reasonably salvageable or violates policy.
 
@@ -79,9 +81,13 @@ Use accept only when:
 Accept must create:
 
 - review decision record
+- one immutable internal FinalAcceptance linked to the exact Review, existing
+  versioned Submission, task, submitter, recording reviewer, and locked
+  ReviewPolicy
 - acceptance audit event
 - reviewer `completed_review` contribution record
-- submitter `accepted_submission` contribution record
+- submitter `accepted_submission` contribution record sourced from
+  FinalAcceptance, not directly from Review.decision
 - any awards required by the separately frozen reviewer and submitter
   contribution policies
 - reputation event
@@ -107,6 +113,10 @@ Each high or medium finding must have:
 - required fix
 - evidence reference or file/section reference
 
+Recording `needs_revision` sets the Task to `needs_revision`, keeps the same
+TaskAssignment `active`, and creates no FinalAcceptance or submitter
+contribution. The reviewer `completed_review` still commits atomically.
+
 ## Reject
 
 Use reject when:
@@ -117,6 +127,11 @@ Use reject when:
 - the contributor submitted prohibited material
 
 Use reject carefully. If the work can be reasonably corrected through one revision cycle, use `needs_revision`.
+
+Recording `reject` sets the Task to canonical `rejected` with the bounded human
+reason and blocks only the same-task TaskAssignment with its source Review. It
+changes no actor grant or unrelated task and creates no FinalAcceptance or
+submitter contribution. `closed/review_rejected` is not a canonical state.
 
 Every valid recorded `needs_revision` or `reject` decision still creates the
 reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
@@ -129,20 +144,21 @@ Track:
 
 - review count
 - decision distribution
-- overturned decisions
+- non-mutating quality-audit findings
 - unclear feedback reports
 - average turnaround
-- agreement with second reviewer
+- quality-audit agreement
 
 Reviewer reputation matters because low-quality review damages the whole system.
 
 Reviewer quality events are generated when:
 
-- review is overturned
 - feedback is marked unclear
-- reviewer accepts work later found non-compliant
-- reviewer rejects work that belonged in revision
+- a non-mutating quality audit finds unsupported acceptance/rejection reasoning
 - reviewer misses unresolved prior findings
+
+These quality signals never reopen or replace Review, FinalAcceptance, task, or
+ContributionRecord truth. V0.1 has no adjudication decision or queue.
 
 ## Reviewer Checklist
 
@@ -153,6 +169,8 @@ Before accepting:
 - evidence supports the claim
 - checker results are acceptable
 - no prior findings are open
+- FinalAcceptance can be created exactly once for this task, source Review, and
+  existing versioned Submission
 - reviewer and submitter contribution lineage can be created atomically
 - both frozen contribution policies can be evaluated; explicit unpaid results
   are valid and create no award
@@ -170,13 +188,15 @@ Before rejection:
 - evidence is cited
 - task is not merely fixable
 
-## Second Review Sampling
+## Non-Mutating Quality Sampling
 
-During the first 30 days, sample at least:
+During the first 30 days, audit at least:
 
 - 25 percent of accepted submissions
 - 25 percent of rejected submissions
 - any submission matching the configured high-value criterion in
   `ReviewPolicy`
 
-Second review checks whether the first reviewer followed the guide, cited evidence, and made the correct decision type.
+Sampling checks whether the reviewer followed the guide and cited evidence. It
+does not create a Review, adjudication result, reopen path, replacement
+FinalAcceptance, or lifecycle mutation.

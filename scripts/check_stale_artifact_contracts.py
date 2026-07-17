@@ -42,6 +42,7 @@ HISTORICAL_PATHS = {
     "docs/internal_reviews/2026-06-13_week1_week2_deterministic_hardening.md",
     "docs/internal_reviews/2026-06-16_submission_artifact_policy_architecture.md",
     "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md",
+    "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md",
     "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md",
     "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md",
     "docs/roadmap_30_day_master_plan.md",

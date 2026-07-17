@@ -44,7 +44,7 @@ Current v0.1 is backend-first and internal-loop-first. External source adapters,
 | Postgres record database | Local, CI, and production-like development use Postgres as the record database. |
 | Object-storage abstraction | Local filesystem storage is allowed only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof. |
 | Async-first execution | Long-running checker work does not block request/response paths. |
-| Contribution before compensation | Every valid human review creates a reviewer contribution; accepted work additionally creates a submitter contribution. Compensation and reputation attach afterward. |
+| Contribution before compensation | Every valid human Review creates a reviewer contribution; accepted work creates REV-owned FinalAcceptance, which alone sources the submitter contribution. Compensation and reputation attach afterward. |
 
 <div class="page-break"></div>
 

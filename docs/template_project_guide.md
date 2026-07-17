@@ -152,17 +152,17 @@ Needs revision requires:
 - required fix per finding
 - severity per finding
 
-Second-review sampling:
+Post-decision non-mutating reviewer-quality audit sampling:
 
-- accepted:
-- rejected:
-- high-value tasks:
-
-Mandatory second review:
-
+- accepted sample rate:
+- rejected sample rate:
 - suspected copied or confidential material:
 - high-value criterion defined by `ReviewPolicy`:
 - reviewer conflict of interest:
+
+These criteria select quality audits only. They do not delay Review,
+FinalAcceptance, contribution creation, or task closure and do not create a
+second decision or adjudication path.
 - registered recovery operation used (permission, actor, reason, evidence):
 
 ## Revision Policy
