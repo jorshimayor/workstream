@@ -26,6 +26,11 @@ review required explicit `NUMERIC(38, 18)` and project-scoped unit semantics,
 bounded/redacted immutable provider receipt facts, plus complete conformance
 rows for adapter binding, lifecycle audit, and ADR 0014. Those findings were
 repaired without changing runtime, CI, tests, dependencies, or archival inputs.
+CodeRabbit then identified two contract ambiguities: the adapter-binding row
+could imply forbidden reverse policy/award identifiers, and the receipt wording
+did not distinguish authentication tokens from bounded non-secret receipt
+identifiers. Both were corrected at `c027a4b`; all eight required internal tracks
+passed the exact repaired SHA with no findings.
 
 ## Corrected boundary
 
@@ -70,7 +75,7 @@ automatically.
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
-| `WS-CON-001-01` | Complete; awaiting human review | Specification and ADR only; stop at the PR checkpoint |
+| `WS-CON-001-01` | Complete; external findings repaired; awaiting human review | Specification and ADR only; stop at the PR checkpoint |
 | `WS-CON-001-02A` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 

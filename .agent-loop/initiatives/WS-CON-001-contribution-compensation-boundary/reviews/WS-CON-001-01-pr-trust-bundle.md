@@ -116,7 +116,7 @@ coverage threshold changed. CI-integrity review passed.
 
 ## Reviewer Results
 
-Exact reviewed SHA: `0b663f38b4a8fc7058e4e71932d72571d2cc2b6a`.
+Exact reviewed SHA: `c027a4bef7b87db0af8bff5af7551c36e671b0bf`.
 
 | Track | Result |
 |---|---|
@@ -129,13 +129,18 @@ Exact reviewed SHA: `0b663f38b4a8fc7058e4e71932d72571d2cc2b6a`.
 | Reuse/dedup | PASS |
 | CI integrity | PASS |
 
-All valid findings were repaired and all tracks passed at the exact SHA with no
-remaining findings. No sub-agent session remains open.
+All valid internal and external findings were repaired and all tracks passed at
+the exact SHA with no remaining findings. No sub-agent session remains open.
 
 ## External Review
 
-Pending GitHub CI, CodeRabbit, and human PR review. They supplement but do not
-replace the completed internal tracks.
+CodeRabbit raised two valid contract-clarity findings. The repaired contract now
+states that policy definitions and awards reference the matching adapter binding
+without reverse policy/award identifiers on the binding, and distinguishes
+allowed bounded non-secret receipt identifiers from prohibited raw secrets,
+authentication tokens, and unbounded provider payloads. Every internal track
+then passed again at the exact repaired SHA. GitHub CI and CodeRabbit reruns are
+required on the pushed evidence commit; human review remains the merge gate.
 
 ## Remaining Risks
 

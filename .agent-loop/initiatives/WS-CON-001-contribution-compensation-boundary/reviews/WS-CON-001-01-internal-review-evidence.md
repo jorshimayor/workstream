@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `0b663f38b4a8fc7058e4e71932d72571d2cc2b6a`
+Reviewed code SHA: `c027a4bef7b87db0af8bff5af7551c36e671b0bf`
 
 Trusted main SHA: `a947b8693a97bdb94c9dc63202a51e197834d613`
 
-Reviewed at: 2026-07-17T21:08:19Z
+Reviewed at: 2026-07-17T21:32:41Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/con01_arch_senior_reuse; QA-test/product-ops/docs=/root/con01_qa_product_docs; security-auth/CI-integrity=/root/con01_security_ci
 
@@ -38,7 +38,8 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/con01_arch_s
 - Preserved dispatcher-only authority, ADR 0014 adapters, and REV-12A's sole
   controller, fence, ordinal, cutoff, and drain behavior.
 - Added `NUMERIC(38, 18)` quantity semantics, exact unit identity, bounded
-  receipt tokens, closed failure codes, and raw provider-data minimization.
+  non-secret receipt identifiers, closed failure codes, and raw provider-data
+  minimization.
 - Added conformance rows for adapter binding, lifecycle audit, ADR 0014,
   quantity/unit copy integrity, receipt redaction, and operations observation.
 - Added exactly one schema-v2 merge intent naming same-initiative successor
@@ -75,6 +76,14 @@ file changed. Existing agent-gate tests were retained and executed unchanged.
   points units.
 - Bound numeric, unit-copy, receipt, redaction, and operations rules to exact
   implementation chunks and release proof.
+- Corrected the adapter-binding conformance row so policy definitions and awards
+  hold forward references to a matching project/instrument binding and the
+  binding stores no reverse policy or award identifiers.
+- Distinguished forbidden raw provider secrets, authentication tokens, and
+  unbounded provider payloads from the bounded non-secret event/reference
+  identifiers allowed only in canonical receipt/status fields.
+- Re-ran every required internal track against the exact repaired SHA after the
+  two CodeRabbit findings; all eight tracks passed with no remaining findings.
 
 ## Commands Run
 
