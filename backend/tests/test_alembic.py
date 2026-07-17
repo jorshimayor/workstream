@@ -808,13 +808,13 @@ def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Never drop a populated v2 artifact table during downgrade."""
+    """Never drop a namespace-only v2 deployment fence during downgrade."""
     config = _alembic_config()
     with migration_lock():
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0023_artifact_store_v2")
-            asyncio.run(_seed_artifact_content(isolated_database_env))
+            asyncio.run(_seed_v2_artifact_namespace(isolated_database_env))
             with pytest.raises(
                 RuntimeError,
                 match="artifact storage clean cut requires empty pre-production tables",
@@ -822,15 +822,17 @@ def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
                 command.downgrade(config, "0022_bootstrap_admin_grants")
             refused_revision = asyncio.run(_current_revision(isolated_database_env))
             refused_columns = asyncio.run(_fetch_columns(isolated_database_env))
-            refused_counts = asyncio.run(_artifact_table_counts(isolated_database_env))
-            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            refused_namespace_count = asyncio.run(
+                _artifact_namespace_count(isolated_database_env)
+            )
+            asyncio.run(_truncate_v2_artifact_namespace(isolated_database_env))
             command.downgrade(config, "0022_bootstrap_admin_grants")
         finally:
-            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            asyncio.run(_truncate_v2_artifact_namespace(isolated_database_env))
             command.downgrade(config, "base")
 
     assert refused_revision == "0023_artifact_store_v2"
-    assert refused_counts["artifact_contents"] == 1
+    assert refused_namespace_count == 1
     assert "artifact_replicas.provider_object_ref" in refused_columns
 
 
@@ -2692,6 +2694,53 @@ async def _seed_artifact_content(database_url: str) -> None:
                 ),
                 {"id": str(uuid4()), "sha256": "sha256:" + "1" * 64},
             )
+    finally:
+        await engine.dispose()
+
+
+async def _seed_v2_artifact_namespace(database_url: str) -> None:
+    """Insert the v2-only namespace fact that downgrade must preserve."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_storage_namespaces "
+                    "(id, backend, adapter, provider_profile, namespace_descriptor, "
+                    "namespace_fingerprint) values "
+                    "('primary', 'local', 'local', 'local-v2', '{}'::json, :fingerprint)"
+                ),
+                {"fingerprint": "sha256:" + "3" * 64},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _artifact_namespace_count(database_url: str) -> int:
+    """Return the current v2 deployment-namespace fact count."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            count = await connection.scalar(
+                text("select count(*) from artifact_storage_namespaces")
+            )
+            return int(count or 0)
+    finally:
+        await engine.dispose()
+
+
+async def _truncate_v2_artifact_namespace(database_url: str) -> None:
+    """Clear the v2 namespace when its table exists during test cleanup."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            exists = await connection.scalar(
+                text("select to_regclass('public.artifact_storage_namespaces') is not null")
+            )
+            if exists:
+                await connection.execute(
+                    text("truncate table artifact_storage_namespaces cascade")
+                )
     finally:
         await engine.dispose()
 

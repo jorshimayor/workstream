@@ -5,22 +5,23 @@
 - This authored file is reviewed planning/history context, not canonical live
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
-- Active initiatives include parallel `WS-AUTH-001`, `WS-ART-001`, and the
-  planning-only `WS-XINT-001` boundary reconciliation.
-- Active planning chunk: `WS-XINT-001-PLAN` on
-  `codex/ws-xint-001-boundary-reconciliation`.
-- Parallel implementation worktrees: reviewed `WS-AUTH-001-09A` fixed service
-  identity foundation at `c4200a7` and reviewed `WS-ART-001-02A3` ArtifactStore
-  v2 Local clean cut at `935b1a2`; neither is part of this planning branch.
-- Start basis: PR #131 merged AUTH-08 into `main` as `aa0fdcd`, and PR #129 then
-  merged ART-02A2 into `main` as `9a04434`.
+- Active initiatives include independently owned `WS-AUTH-001`, `WS-ART-001`,
+  `WS-REV-001`, and `WS-CON-001`. The planning-only `WS-XINT-001` boundary
+  reconciliation merged through PR #139 as `5d353b6` and starts no runtime.
+- Active ART implementation chunk: `WS-ART-001-02A3` on
+  `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
+- Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
+  branch consumes their merged handoff contracts without editing or activating
+  their runtime behavior.
+- Start basis: PR #129 merged ART-02A2 into `main` as `9a04434`, and PR #139
+  then merged the cross-initiative boundary reconciliation as `5d353b6`.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: exact-SHA internal review and evidence for
-  `WS-XINT-001-PLAN`; no downstream runtime starts from this planning branch.
+- Current gate: final exact-SHA internal review and evidence for
+  `WS-ART-001-02A3`; no later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -33,10 +34,10 @@
   AUTH activation-custodian chunks alone integrate evaluators and change action
   availability after that hidden behavior merges; `WS-XINT-001` activates
   nothing.
-- Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
-  merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
-  checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
-  isolated parallel worktree but has no open PR at this checkpoint.
+- Parallel artifact checkpoint: ART-02A1 merged through PR #127 as `f64a8e5`
+  and ART-02A2 merged through PR #129 as `9a04434`. ART-02A3 has completed
+  merged-main deterministic repair and remains behind exact-SHA internal review
+  and its own human-reviewed PR. ART-02B1 remains inactive.
 - Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
   #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
   isolated parallel worktree and remains unmerged at this checkpoint.
