@@ -33,9 +33,9 @@
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: merged main contains 74 PermissionIds and 57
+- Authorization checkpoint: merged main contains 74 PermissionIds and 65
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
+  active. Merged AUTH-09A defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
   AUTH planning requires availability-neutral ART custody transfer, fixed-service
@@ -47,9 +47,8 @@
   repair awaits deterministic proof, exact-SHA internal review, refreshed
   evidence, external checks, and explicit human merge approval. ART-02B1 remains
   inactive.
-- Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
-  #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
-  isolated parallel worktree and remains unmerged at this checkpoint.
+- Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
+  #130, #131, and #132. AUTH-09B remains inactive until explicit user start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
