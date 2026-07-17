@@ -596,8 +596,11 @@ class LocalStorageAdapter:
             mode = stat.S_IMODE(details.st_mode)
             if mode not in {0o400, 0o600} or (details.st_nlink == 2 and mode != 0o400):
                 raise ArtifactIntegrityError("local artifact temporary is unsafe")
-            if details.st_nlink == 2:
-                recovery_links.add((details.st_dev, details.st_ino))
+            if details.st_nlink == 1:
+                raise ArtifactConfigurationError(
+                    "local artifact startup requires orphan temporary cleanup"
+                )
+            recovery_links.add((details.st_dev, details.st_ino))
         return recovery_links
 
     def _validate_lock_entries(self, locks_fd: int) -> None:

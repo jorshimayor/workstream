@@ -650,6 +650,12 @@ exclusive no-overwrite publication, bounded off-event-loop file I/O, no-follow
 path handling, private permissions, full read verification, and sanitized
 failures.
 
+Startup accepts only an empty provider-temporary directory or the exact sealed
+two-link state left after immutable publication and before temporary unlink. A
+single-link writable or sealed provider temporary blocks startup with an
+operator-cleanup error; initialization does not delete it because another live
+process may still own that file.
+
 The v1 local provider metadata for retain/release/provider receipts is removed
 in the v2 clean cut. No compatibility adapter or dual format remains.
 

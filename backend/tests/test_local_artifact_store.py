@@ -280,6 +280,28 @@ def test_local_reopens_one_valid_populated_layout(tmp_path: Path) -> None:
         reopened.close()
 
 
+@pytest.mark.parametrize("mode", [0o600, 0o400])
+def test_local_startup_fails_closed_for_orphan_provider_temporary(
+    tmp_path: Path,
+    mode: int,
+) -> None:
+    """Require explicit cleanup instead of deleting a possibly live provider temp."""
+    root = tmp_path / f"orphan-{mode:o}"
+    initialized = initialize_local_store(root=root)
+    initialized.close()
+    orphan = root / "tmp" / (".put." + "a" * 32 + ".tmp")
+    orphan.write_bytes(b"unpublished")
+    orphan.chmod(mode)
+
+    with pytest.raises(
+        ArtifactConfigurationError,
+        match="startup requires orphan temporary cleanup",
+    ):
+        initialize_local_store(root=root)
+
+    assert orphan.read_bytes() == b"unpublished"
+
+
 @pytest.mark.asyncio
 async def test_v2_operations_reject_unsealed_or_malformed_values(tmp_path: Path) -> None:
     adapter = initialize_local_store(root=tmp_path / "artifacts")

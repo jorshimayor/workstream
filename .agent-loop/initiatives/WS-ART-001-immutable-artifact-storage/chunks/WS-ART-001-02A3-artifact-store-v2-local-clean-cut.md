@@ -42,7 +42,8 @@ configuration. No compatibility path remains after this PR.
 - ArtifactStore exposes only `put(CommittedArtifactSource)`, read-only
   `observe_put_result(ArtifactCommitment)`, `open`, and `head`;
 - LocalStorage implements v2 with exclusive immutable publication, range reads,
-  exact replay, bounded async I/O, and sanitized errors;
+  exact replay, bounded async I/O, and sanitized errors. Startup fails closed
+  on a single-link provider temporary instead of deleting a possibly live file;
 - the migration removes provider retention/receipt semantics, adds immutable
   provider profile/storage namespace, and rebuilds or explicitly refuses
   incompatible pre-production rows;
