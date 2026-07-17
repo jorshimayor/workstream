@@ -75,13 +75,15 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 
 ## Chunk 01 evidence state
 
-Candidate `df098f203fae4982806568dcc25a81043d9f7211` passed all nine required
-tracks against the prior CON main boundary. That evidence is historical after
-AUTH-09B PR #143 advanced main and changed the shared agent-gate suite. The
-merged candidate requires a fresh exact-SHA reviewer pass and evidence binding.
+Candidate `6da45b2765de68dc5a0628024bdfeacb98d1ea85` passed all nine required
+tracks against trusted current main
+`053242b90d927ace3fab92eeca72da27a61cecec`: senior engineering, QA/test,
+security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
+integrity. All 80 current-main agent tests and seven REV additions are retained;
+87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is not yet PR-ready after the AUTH-09B refresh. It activates no review
-action or endpoint and does not authorize merge.
+Chunk 01 is PR-ready for external checks and human review. It activates no
+review action or endpoint and does not authorize merge.
 
 ## Stop condition
 

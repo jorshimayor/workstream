@@ -28,6 +28,9 @@ not v0.1 behavior.
 - Preserved and proved all supplied archival inputs.
 - Added deterministic pinned rendering for the lifecycle and two changed
   context diagrams.
+- Reconciled merged AUTH-09B's controlled provisioning capability and exact
+  `65 / 10 active / 55 planned` catalogue without activating any REV identity
+  or action.
 
 ## Why It Changed
 
@@ -90,8 +93,8 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 All nine required tracks passed exact SHA
-`df098f203fae4982806568dcc25a81043d9f7211` against trusted main
-`a947b8693a97bdb94c9dc63202a51e197834d613`: senior engineering, QA/test,
+`6da45b2765de68dc5a0628024bdfeacb98d1ea85` against trusted main
+`053242b90d927ace3fab92eeca72da27a61cecec`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
 

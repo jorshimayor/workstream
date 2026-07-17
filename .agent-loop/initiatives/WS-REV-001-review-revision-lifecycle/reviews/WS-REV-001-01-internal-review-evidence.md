@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `df098f203fae4982806568dcc25a81043d9f7211`
+Reviewed code SHA: `6da45b2765de68dc5a0628024bdfeacb98d1ea85`
 
-Trusted main SHA: `a947b8693a97bdb94c9dc63202a51e197834d613`
+Trusted main SHA: `053242b90d927ace3fab92eeca72da27a61cecec`
 
-Reviewed at: `2026-07-17T22:56:26Z`
+Reviewed at: `2026-07-17T23:17:19Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -28,12 +28,13 @@ Valid findings addressed: yes
 
 ## Finding Disposition
 
-Earlier exact-SHA reviews are historical after the CON PR #142 main merge and
-the subsequent repair cycles. Every valid finding was repaired before this
-review: FinalAcceptance field/provenance drift, canonical transaction ordering,
-planned availability, automated exact CheckerRun admission, checker versus
-Review-rooted revision lineage, non-mutating reject sampling, and executable
-structural regression coverage. Candidate `df098f20` received a fresh complete
+Earlier exact-SHA reviews are historical after the CON PR #142 and AUTH-09B PR
+#143 main merges and the subsequent repair cycles. Every valid finding was
+repaired before this review: FinalAcceptance field/provenance drift, canonical
+transaction ordering, planned availability, automated exact CheckerRun
+admission, checker versus Review-rooted revision lineage, non-mutating reject
+sampling, executable structural regression coverage, and exact AUTH-09B
+provisioning/action availability. Candidate `6da45b27` received a fresh complete
 review rather than inheriting any earlier approval.
 
 ## Deterministic Evidence
@@ -41,7 +42,7 @@ review rather than inheriting any earlier approval.
 - `python3 scripts/test_agent_gates.py`: 87 passed.
 - All stale artifact, authorization, review-contract, and Workstream wording
   scanners passed.
-- Markdown link validation passed for 49 changed Markdown files.
+- Markdown link validation passed for 53 changed Markdown files.
 - Ruff format and lint passed for both changed Python gate files.
 - All reference-spec checksums passed; the WS-REV and WS-IMP archival pairs are
   byte-identical to trusted base.
