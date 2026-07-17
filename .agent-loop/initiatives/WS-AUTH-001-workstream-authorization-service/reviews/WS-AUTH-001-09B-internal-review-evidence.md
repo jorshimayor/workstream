@@ -1,13 +1,13 @@
 # WS-AUTH-001-09B Internal Review Evidence
 
-Reviewed code SHA: `1b0dc2ec7ab67b8f9f85ea915b00fad0801d72a8`
+Reviewed code SHA: `3a4d042213a555df7f479408ffafc43911296528`
 
-Reviewed implementation SHA: `52d4d076c151bed3f47428b573c014e131096f4a`
+Reviewed implementation SHA: `127615fde8f1b5583acf9dbbb3c606db514a455d`
 
 Reviewed against trusted main:
 `a947b8693a97bdb94c9dc63202a51e197834d613`
 
-Reviewed at: `2026-07-17T20:45:09Z`
+Reviewed at: `2026-07-17T21:42:22Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`,
 `auth_xint_rev_con`
@@ -59,10 +59,18 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
   gates for actors, authorization, and the verifier boundary, each with an
   exact 90 percent floor and regression-protected ordering before isolated
   E2E.
-- Branch-aware coverage is 92.74 percent for the actor boundary, 90.18 percent
-  for authorization, and 92.27 percent for the verifier boundary. The last
-  official repository-wide result remains 79.249908 percent, above the 78
-  percent CI floor; GitHub Backend remains authoritative for the PR head.
+- Branch-aware focused coverage is 92.74 percent for the actor boundary, 90.18
+  percent for authorization, and 92.27 percent for the verifier boundary. The
+  replacement GitHub full suite passed 1,242 tests at 84.92 percent, above the
+  78 percent repository floor.
+- The replacement authorization gate then reported 1,600 statements, 164
+  misses, and 89.75 percent. Two behavior tests prove authorization-before-
+  disclosure, exact typed resource binding, caller touch, route-owned commit,
+  rollback, and stable retryable 503 mapping. They execute nine previously
+  missed statements, projecting 155 misses and 90.31 percent on the unchanged
+  denominator; replacement GitHub Backend remains the authoritative proof.
+- The complete isolated PostgreSQL authorization file passes 85 tests. The two
+  new focused tests also pass directly and under targeted coverage.
 - Migration `0024` upgrade, guarded downgrade, and re-upgrade behavior passed
   against isolated PostgreSQL. Human links remain timestamped while newly
   provisioned service links are explicitly unverified.
@@ -72,8 +80,10 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
 - The first PR Backend run passed evidence, install, lint, docstring, and
   isolated-runner steps, then reported 1 failed and 1,240 passed at 84.87
   percent global coverage because the exact active-action audit expectation
-  omitted `actor.service.provision`. The repaired exact parity test passes;
-  replacement GitHub Backend remains pending.
+  omitted `actor.service.provision`. The next run passed all 1,242 tests and
+  exposed only the new authorization coverage gate described above. The
+  reviewed behavior repair closes that measured gap without changing
+  production code or weakening any threshold; replacement checks remain.
 
 ## Reviewer Results
 
@@ -105,8 +115,9 @@ registration -> hidden behavior -> AUTH activation order.
 External review repairs force locked ORM rows to refresh, reject unusable
 surrounding subject whitespace without normalization, deny replay from inactive
 stored state, enforce all three 90 percent subsystem floors in GitHub Backend,
-and restore the exact active-action audit set. All required tracks passed the
-repair and its final lifecycle state at exact SHA `1b0dc2e`.
+restore the exact active-action audit set, and add behavior proof for the
+authorization coverage gap exposed by the enforced gate. All required tracks
+passed the repair and its final lifecycle state at exact SHA `3a4d042`.
 
 ## Remaining Risk And Gate
 

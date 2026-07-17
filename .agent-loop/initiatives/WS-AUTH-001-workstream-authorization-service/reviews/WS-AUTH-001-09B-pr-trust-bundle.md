@@ -50,17 +50,22 @@ the only future owner of fixed-service token admission.
 - External-review lock/replay selection: two passed in isolated PostgreSQL.
 - External-review provisioning concurrency/privacy selection: one passed.
 - Exact active-action audit parity repair: one passed.
+- Complete isolated PostgreSQL authorization file: 85 passed.
+- New definition-route and SQL-failure behavior tests: two passed.
 - Actor coverage: 92.74 percent.
-- Authorization coverage: 90.18 percent.
+- Prior focused authorization coverage: 90.18 percent.
 - Verifier boundary coverage: 92.27 percent.
-- Last official global coverage: 79.249908 percent against the 78 percent CI
-  floor.
+- Replacement GitHub full suite: 1,242 passed at 84.92 percent against the 78
+  percent CI floor.
+- Replacement authorization gate before the final test repair: 1,600
+  statements, 164 misses, 89.75 percent. Nine newly exercised statements
+  project 155 misses and 90.31 percent; replacement CI remains authoritative.
 - Isolated PostgreSQL migration and real HTTP API contract drills passed.
 - Compileall, Ruff, stale scans, links, merge intent, all 80 agent gates, and
   diff integrity pass.
 
 Exact reviewed code SHA
-`1b0dc2ec7ab67b8f9f85ea915b00fad0801d72a8` passed senior engineering,
+`3a4d042213a555df7f479408ffafc43911296528` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after all valid findings were repaired.
 
@@ -69,10 +74,13 @@ reuse/dedup, and test-delta review after all valid findings were repaired.
 CodeRabbit's four actionable fresh-row, subject-validation, replay-lifecycle,
 and CI coverage findings are fixed. The first Backend run exposed one stale
 exact active-action audit expectation after 1,240 tests passed at 84.87 percent
-global coverage; that exact parity assertion is repaired. Replacement GitHub
-Backend, Agent Gates, and CodeRabbit remain pending on the repaired PR head.
-Backend remains authoritative for the global 78 percent floor and runs the
-destructive HTTP contract drill only against an isolated derived database.
+global coverage; that exact parity assertion is repaired. The next run passed
+all 1,242 tests at 84.92 percent and exposed the authorization gate at 89.75
+percent. The final behavior-test repair projects 90.31 percent without changing
+production code or weakening CI. Replacement GitHub Backend, Agent Gates, and
+CodeRabbit remain pending on the repaired PR head. Backend remains authoritative
+for the global 78 percent floor and runs the destructive HTTP contract drill
+only against an isolated derived database.
 
 ## Follow-up
 

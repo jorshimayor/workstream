@@ -4,9 +4,11 @@ PR: `#143`
 
 CodeRabbit run: `8d818456-089e-4353-87ed-5ca64d53b881`
 
-Reviewed repair code SHA: `52d4d076c151bed3f47428b573c014e131096f4a`
+Reviewed CodeRabbit repair SHA: `52d4d076c151bed3f47428b573c014e131096f4a`
 
-Final reviewed lifecycle SHA: `1b0dc2ec7ab67b8f9f85ea915b00fad0801d72a8`
+Reviewed coverage repair SHA: `127615fde8f1b5583acf9dbbb3c606db514a455d`
+
+Final reviewed lifecycle SHA: `3a4d042213a555df7f479408ffafc43911296528`
 
 ## Actionable Findings
 
@@ -26,6 +28,17 @@ static active ActionId set omitted the deliberately activated
 active action, and the 09B contract explicitly allows the touched test. The
 focused parity test passes.
 
+## Coverage Gate Failure
+
+The replacement Backend run passed all 1,242 tests at 84.92 percent global
+coverage. The new authorization subsystem gate then correctly failed at 1,600
+statements, 164 misses, and 89.75 percent. Two non-isolated behavior tests now
+prove successful definition-read authorization, exact typed resource binding,
+caller touch, route-owned commit, rollback, and stable retryable 503 mapping.
+They execute nine previously missed statements, projecting 155 misses and
+90.31 percent on the unchanged denominator. No production code, include scope,
+threshold, skip, or exclusion changed; replacement CI remains authoritative.
+
 ## Pre-Merge Warnings
 
 The PR description warning is addressed by the full trust-bundle sections in
@@ -42,6 +55,9 @@ failure, and Ruff reports no docstring issue.
 - Isolated provisioning concurrency/privacy test: one passed.
 - API/OpenAPI tests: 16 passed.
 - Exact active-action audit parity test: one passed.
+- Complete isolated PostgreSQL authorization file: 85 passed.
+- New focused route behavior tests: two passed directly and under targeted
+  coverage.
 - Stale Workstream, authorization, and artifact scans: pass.
 - Markdown links, merge intent, internal-review evidence, and diff integrity:
   pass before publication.
@@ -50,7 +66,8 @@ failure, and Ruff reports no docstring issue.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, docs, reuse/dedup, and test-delta tracks pass the exact repair and
-final lifecycle state. No service admission, grant, assignment, ART/REV/CON
-action activation, compatibility path, or AUTH-09C start was introduced.
+final lifecycle state at `3a4d042`. No service admission, grant, assignment,
+ART/REV/CON action activation, compatibility path, or AUTH-09C start was
+introduced.
 
 Replacement GitHub Backend, Agent Gates, and CodeRabbit checks remain required.
