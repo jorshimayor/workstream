@@ -58,9 +58,12 @@ separate human approval -> refreshed ART/AUTH handoff -> 09A -> 09B
 AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/release
 ```
 
-- AUTH-09A through 09E must precede protected fixed-service execution. New CON
-  ServiceIdentity/static-row additions require separate reviewed AUTH contracts;
-  provisioning never activates a feature action.
+- AUTH-09A/09B are merged; AUTH-09B activates only the human administrative
+  provisioning route and grants no service execution. AUTH-09C through 09E must
+  still precede protected fixed-service execution. New CON
+  ServiceIdentity/static-row additions require separate reviewed AUTH contracts
+  before provisioning; no existing ART identity or provisioning result may be
+  reused as CON authority.
 - The outbox dispatcher owns only claim/invoke/finalize under
   `outbox.dispatch`. Each protected handler has independent approved authority.
 - Task claim requires AUTH-PREP and one exact active same-project submitter

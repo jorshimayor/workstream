@@ -663,6 +663,17 @@ release readiness, but MUST NOT prevent application startup or Access
 Administrator provisioning. Startup MAY fail on closed catalogue, matrix,
 context, evaluator, or active-behavior parity drift.
 
+Merged AUTH-09B provides the human-administrator-controlled
+`POST /api/v1/service-actors` provisioning route and activates only
+`actor.service.provision`. Provisioning creates an ActorProfile and exact
+ActorIdentityLink for an already-approved closed ServiceIdentity; it creates no
+role, grant, database action assignment, runtime admission, or executable
+feature authority. The current closed identities and static rows cover ART
+services only. Every future CON dispatcher, delivery, callback, reconciliation,
+or rebuild identity therefore still requires its own human-approved feature
+manifest followed by AUTH-owned identity/matrix registration, provisioning,
+AUTH-09E admission, evaluator integration, and exact action activation.
+
 ### Proposed surface mappings
 
 The following 22 mappings are product proposals, not registered or executable

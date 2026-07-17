@@ -2,10 +2,10 @@
 
 ## Proposed approach
 
-Adopt merged REV PR #128 at trusted main `0302bcf`, including AUTH-09A, AUTH PR
-#140, and the underlying WS-XINT PR #139 boundary before runtime work, then
-deliver WS-CON through hidden, reviewable chunks. The core path is
-PostgreSQL-local and has no ART dependency:
+Adopt merged REV PR #128 plus trusted main `053242b`, including AUTH-09A,
+AUTH-09B PR #143, AUTH PR #140, and the underlying WS-XINT PR #139 boundary
+before runtime work, then deliver WS-CON through hidden, reviewable chunks. The
+core path is PostgreSQL-local and has no ART dependency:
 
 ```text
 AUTH prepares review.decision and locks reviewer authority
@@ -161,12 +161,14 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `0302bcf`, merging REV PR #128 and AUTH-09A after AUTH PR
-#140 and WS-XINT PR #139. Runtime catalogue counts are 74 PermissionIds, 65
-ActionIds, nine active actions, and 56 planned actions. No WS-CON or task-claim
-ActionId is registered. PR #140
-adds reviewed AUTH custody/PREP/activation contracts only; the custody
-transfers and prepared protocol remain proposed runtime work.
+Trusted `main` is `053242b`, merging AUTH-09B PR #143 after REV PR #128,
+AUTH-09A, AUTH PR #140, and WS-XINT PR #139. Runtime catalogue counts are 74
+PermissionIds, 65 ActionIds, ten active actions, and 55 planned actions. No
+WS-CON or task-claim ActionId is registered. AUTH-09B activates only the
+controlled human `actor.service.provision` operation and grants no service
+execution or runtime admission. PR #140 adds reviewed AUTH
+custody/PREP/activation contracts only; the custody transfers and prepared
+protocol remain proposed runtime work.
 
 WS-XINT D1/D2 is final for this plan: `ActionOwner` is the exact AUTH activation
 custodian. Each protected surface follows:

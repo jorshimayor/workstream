@@ -2,13 +2,13 @@
 
 ## Current baseline
 
-Trusted `main` is `0302bcf` from merged REV PR #128. It contains AUTH-09A after
-AUTH PR #140 and the earlier WS-XINT PR #139 boundary. The runtime catalogue now
-contains 74 PermissionIds and 65 ActionIds: nine active and 56 planned. The
-eight added planned actions belong to AUTH-09 service-identity administration;
-no WS-CON-specific or task-claim ActionId below is registered. PR #140 still
-defines the prepared/custody plan; it does not implement AUTH-PREP, transfer
-ART/REV custody, register a CON action, or activate a feature action.
+Trusted `main` is `053242b` from merged AUTH-09B PR #143, layered on merged REV
+PR #128, AUTH-09A/AUTH PR #140, and the earlier WS-XINT PR #139 boundary. The
+runtime catalogue contains 74 PermissionIds and 65 ActionIds: ten active and 55
+planned. AUTH-09B activates only `actor.service.provision`; no WS-CON-specific
+or task-claim ActionId below is registered. PR #140 still defines the
+prepared/custody plan; it does not implement AUTH-PREP, transfer ART/REV custody,
+register a CON action, or activate a CON feature action.
 
 AUTH owns identifiers, stable mappings, activation custody, typed resource and
 principal contexts, grants, fixed ServiceIdentity/static matrix, AUTH-09E
@@ -77,6 +77,16 @@ profile/link and validates unchanged ServiceIdentity, static membership, and
 active action. Human grants cannot satisfy service actions and services cannot
 use human grant candidates. Missing provisioned rows deny the request and block
 release readiness, but do not fail application startup or provisioning.
+
+AUTH-09B now exposes `POST /api/v1/service-actors` to an effective system Access
+Administrator. It binds the configured issuer and opaque subject to one
+already-approved closed ServiceIdentity and creates only the service
+ActorProfile/ActorIdentityLink plus bounded authorization, audit, invalidation,
+and idempotency evidence. It creates no role, grant, assignment, service-token
+admission, or executable service authority. The current seven identities and
+eleven static rows are ART-only. Each proposed CON fixed service requires a
+separate reviewed identity/action/static-row contract before provisioning and
+still waits for AUTH-09E admission and exact action activation.
 
 ## Prepared mutation protocol
 

@@ -18,6 +18,15 @@ pretend the legacy runtime migration has already occurred.
 | `.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**` | Chunk status, evidence, review, and trust artifacts. |
 | `.agent-loop/merge-intents/WS-CON-001-01.json` | Immutable same-initiative successor declaration. |
 
+## Current-main reconciliation
+
+Before the PR human checkpoint, AUTH-09B PR #143 merged as trusted main
+`053242b`. The canonical specification and active CON planning/handoff artifacts
+therefore adopt the 74-permission/65-action/10-active/55-planned baseline and
+the controlled `actor.service.provision` route. Historical review artifacts
+retain their exact earlier SHAs and observations. No AUTH runtime file is
+changed by this CON reconciliation.
+
 ## Inspected and already aligned
 
 The following active documents already describe ContributionPolicy,

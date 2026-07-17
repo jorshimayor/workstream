@@ -31,6 +31,10 @@ could imply forbidden reverse policy/award identifiers, and the receipt wording
 did not distinguish authentication tokens from bounded non-secret receipt
 identifiers. Both were corrected at `c027a4b`; all eight required internal tracks
 passed the exact repaired SHA with no findings.
+Before the human checkpoint, trusted `main` advanced to `053242b` through merged
+AUTH-09B PR #143. CON-01 now adopts its controlled service-provisioning route,
+74/65/10/55 catalogue baseline, and explicit separation between provisioning
+and runtime service admission without changing the contribution lifecycle.
 
 ## Corrected boundary
 
@@ -49,10 +53,12 @@ passed the exact repaired SHA with no findings.
   independent authority.
 - CON-09A/09B are deferred optional successors and do not gate the core release.
 - AUTH PR #140 registers no CON ActionId and activates no feature action. Its
-  exact custody and prepared-protocol contracts are now upstream gates.
-- Current main has 74 PermissionIds and 65 ActionIds: nine active and 56
-  planned. AUTH-09A added eight planned identity-administration actions; no CON
-  or task-claim ActionId exists.
+  exact custody and prepared-protocol contracts remain upstream gates.
+- Current main has 74 PermissionIds and 65 ActionIds: ten active and 55 planned.
+  AUTH-09B activates only `actor.service.provision`; it can provision an
+  approved fixed identity but grants no runtime admission or feature authority.
+  No CON or task-claim ActionId exists, and the current fixed identities are
+  ART-only.
 - `task.claim` activation must follow, not precede, the CON-05A hidden
   TaskAssignment contribution-policy freeze.
 - Merged REV planning requires the CON reviewer operation before the decision
@@ -88,7 +94,7 @@ automatically.
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
 | Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
-| Fixed service runtime | AUTH | Complete AUTH-09A through 09E before protected service calls |
+| Fixed service runtime | AUTH | AUTH-09A/09B are merged; approve/register any new CON identity/static row, then complete AUTH-09C through 09E before protected service calls |
 | Feature handler authority | Human + AUTH + CON | Approve exact identities/actions/static rows; no dispatcher inheritance |
 | AUTH prepared protocol | AUTH | Merge AUTH-PREP after AUTH-09E; all CON-sensitive mutations consume its exact opaque handle contract |
 | task.claim | AUTH + task + CON | Only PermissionId exists; after AUTH-10/PREP and stable task seam, merge CON-05A freeze and task-owned composition; AUTH-13 enumerates/registers/evaluates/activates afterward |

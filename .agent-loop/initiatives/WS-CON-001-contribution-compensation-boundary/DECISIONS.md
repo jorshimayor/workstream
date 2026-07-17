@@ -6,9 +6,9 @@
 
 The supplied reference files are archival inputs. The active implementation
 contract is `docs/spec_contribution_compensation.md` plus ADR 0016, produced by
-CON-01 and reconciled with trusted `main`, including AUTH PR #140 and
-WS-XINT-001 PR #139. Archival files are not edited or treated as runtime
-authority.
+CON-01 and reconciled with trusted `main`, including AUTH PR #140, merged
+AUTH-09B PR #143, and WS-XINT-001 PR #139. Archival files are not edited or
+treated as runtime authority.
 
 ## D2 - ContributionPolicy Is The Only Award-Eligibility Policy
 
@@ -219,16 +219,18 @@ and provider calls remain absent; fulfillment begins asynchronously after
 commit. V0.1 has no adjudication policy, queue, lease, state, decision,
 contribution type, branch, action, readiness check, or initiative dependency.
 
-## D16 - AUTH PR 140 Is Planning Authority, Not Runtime Activation
+## D16 - AUTH Planning And Provisioning Do Not Activate CON
 
-**Status:** accepted by merged AUTH PR #140 on 2026-07-17.
+**Status:** accepted by merged AUTH PR #140 and AUTH-09B PR #143 on 2026-07-17.
 
-Trusted main after AUTH-09A and merged REV PR #128 has 74 PermissionIds, 65
-ActionIds, nine active actions, and 56 planned actions, with no registered CON
-or task-claim ActionId. The eight additional planned actions are AUTH-09
-identity-administration surfaces. PR #140 supplies the exact prepared protocol,
-complete ART/REV custody maps, and feature-manifest activation rule; their
-runtime implementation remains upstream work.
+Trusted main `053242b` after AUTH-09B has 74 PermissionIds, 65 ActionIds, ten
+active actions, and 55 planned actions, with no registered CON or task-claim
+ActionId. AUTH-09B activates only `actor.service.provision`; its controlled
+human-administrator route can create the ActorProfile/ActorIdentityLink for an
+already-approved closed ServiceIdentity but grants no service execution,
+runtime admission, role, grant, or database action assignment. PR #140 supplies
+the exact prepared protocol, complete ART/REV custody maps, and feature-manifest
+activation rule; those runtime implementations remain upstream work.
 
 CON removes speculative `AUTH_CON_*` owner labels. Its proposed action mappings
 remain unregistered and non-final until each complete feature manifest exists
@@ -238,7 +240,9 @@ ActionId before task-owned composition consumes CON-05A's immutable
 TaskAssignment policy freeze. `review.claim` similarly consumes CON-06 through
 REV, and `review.decision` consumes CON-07 through the rollback-safe REV-owned
 transaction. AUTH alone registers/evaluates/activates; CON alone supplies its
-hidden facts and participants.
+hidden facts and participants. Future CON fixed services require new reviewed
+ServiceIdentity/static-matrix additions and later AUTH-09E admission; AUTH-09B
+does not make the current ART-only fixed identity set reusable by CON.
 
 ## D17 - Review Contribution Integration Uses Two Ordered Operations
 
