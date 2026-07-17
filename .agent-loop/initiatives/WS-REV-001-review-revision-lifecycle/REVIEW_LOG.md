@@ -430,3 +430,13 @@ receives FinalAcceptance and TaskAssignment lineage plus the assignment-frozen
 submitter policy. The canonical checks and final drill now require both
 acceptance-source fields to be null on reviewer contributions and both direct
 review-source fields to be null on submitter contributions.
+
+### Final amendment review of `3ef72b9`
+
+Senior engineering, architecture, reuse/dedup, QA/test, product/ops,
+test-delta, security/auth, docs, and CI integrity all passed with no findings.
+The reviewers confirmed that the two operation-specific inputs, all-decision
+immutability, accept-only FinalAcceptance, mutually exclusive contribution
+sources, exact branch effects, guide-context rules, no-ART transaction boundary,
+atomic rollback, and dormant adjudication boundary are consistent across the
+plan and chunk contracts.
