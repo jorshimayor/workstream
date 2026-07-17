@@ -5,38 +5,41 @@
 - This authored file is reviewed planning/history context, not canonical live
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-09A` - Fixed Service Identity
-  Foundation
-- Current branch: `codex/ws-auth-001-09-actor-state-service-actors`
-- Start basis: PR #131 merged AUTH-08 into `main` as `aa0fdcd`; signed schema-v2
-  memory stopped at AUTH-09, and the user explicitly started AUTH-09.
+- Active initiatives include parallel `WS-AUTH-001` and `WS-ART-001`.
+- PR #140 merged `WS-AUTH-001-XINT` into `main` as `d541521` on
+  2026-07-17; signed schema-v2 memory recorded the stopped checkpoint.
+- Active implementation chunk: `WS-AUTH-001-09A` on
+  `codex/ws-auth-001-09-actor-state-service-actors` after explicit user start.
+- PR #132 is being converged from trusted `main`; its fixed service foundation
+  remains bounded to migration `0023`, seven identities, eleven static matrix
+  memberships, and eight planned route actions. AUTH-09B remains inactive.
+- Start basis: trusted `main` at `d541521` after PR #140.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-09A implementation, deterministic evidence, CodeRabbit
-  repairs, and all required exact-head internal reviewer tracks pass. PR #132
-  needs refreshed GitHub checks, CodeRabbit re-review, and explicit human merge
-  approval. AUTH-09B stays inactive.
+- Current gate: resolve PR #132 against merged XINT, run deterministic migration
+  and catalogue proof, repeat exact-head internal review, and rerun external
+  checks. No AUTH-09 action or service caller becomes executable in 09A.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 57
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active. AUTH-09A proposes eight planned actor/link/service route actions and
-  a fixed service identity on service ActorProfile; AUTH-09B provisions fixed
-  service principals, and
-  each owning WS-ART feature chunk activates only its own canonical actions.
-- Parallel artifact checkpoint: `WS-ART-001-02A1` merged through PR #127 as
-  `f64a8e5`, and `WS-ART-001-02A2` merged through PR #129 as `9a04434`.
-  `WS-ART-001-02A3` remains inactive pending its own explicit start.
-- Authorization checkpoint: AUTH-08 merged through PR #131 as `aa0fdcd`; the
-  user explicitly started AUTH-09. Parent AUTH-09 is split into 09A-09D, with
-  only the bounded 09A foundation implemented and under evidence review.
+  active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
+  service identities and eleven exact planned static matrix memberships. The
+  plan now requires availability-neutral ART/REV custody transfer, fixed-service
+  admission, prepared mutation authority, feature-owned hidden behavior, and
+  exact AUTH-only activation chunks. This planning amendment activates nothing.
+- Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
+  merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
+  checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
+  isolated parallel worktree but has no open PR at this checkpoint.
+- Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
+  #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
+  isolated parallel worktree and remains unmerged at this checkpoint.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
@@ -114,8 +117,9 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-06` follow-up cleanup removed stale project-owned payment fields
   and removed construction-state guide checklist fields, preserved server-written activation
   provenance on reads, added fail-closed migration behavior for old
-  guide-source snapshots, and aligned active docs around `PaymentPolicy` as the
-  payment-term authority.
+  guide-source snapshots, and aligned then-active docs around a payment-term
+  model later superseded by `ContributionPolicyVersion` as the sole award-policy
+  authority.
 - `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
 - `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
 - PR #67 merged into `main` as `3cce92c`.

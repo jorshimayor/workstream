@@ -339,10 +339,14 @@ resource drift, or stale execution updates zero rows and writes no terminal
 fact.
 
 AUTH-07 registers the closed artifact permissions, AUTH-08 defines applicable
-Operator grants, and AUTH-09 provisions the fixed service principal. Each
-WS-ART feature chunk activates only its own actions by supplying canonical
-resource composition, guards, surface declarations, and behavior tests. Later
-AUTH-12, AUTH-14, and AUTH-15 are not alternate artifact activation paths.
+Operator grants, AUTH-09A defines the static service-action matrix, AUTH-09B
+provisions fixed service ActorProfiles and ActorIdentityLinks, and AUTH-09E
+admits them at runtime. AUTH registers each planned action and its activation
+custodian; the owning WS-ART chunk then supplies hidden canonical resource
+composition, guards, surface declarations, behavior, and tests while the real
+kernel fails closed; AUTH finally integrates the evaluator and alone changes
+availability to active. Later AUTH-12, AUTH-14, and AUTH-15 are not alternate
+artifact activation paths.
 
 Complete reads have an end-to-end verification deadline derived from the 512
 MiB maximum and minimum supported throughput. The deadline is shorter than the

@@ -1,13 +1,19 @@
 # Task Lifecycle Sequence
 
-This sequence shows the v0.1 operating loop from project guide to accepted contribution and payment/reputation records.
+This sequence shows the v0.1 operating loop from project guide to reviewer and
+submitter contributions, conditional compensation awards, fulfillment, and
+reputation records.
 
-It is intentionally separate from the future identity and settlement diagram. v0.1 records payment status and reputation events internally; it does not execute on-chain settlement or write portable agent reputation.
+It is intentionally separate from the future identity and settlement diagram.
+v0.1 records immutable awards, fulfillment receipts/projections, and reputation
+events internally; it does not execute on-chain settlement or write portable
+agent reputation.
 
 ```mermaid
 sequenceDiagram
   autonumber
   actor PM as Project Manager
+  actor Finance as Finance Authority
   actor Contributor as Human-Agent Contributor
   actor Reviewer as Reviewer
   participant UI as React UI
@@ -18,14 +24,22 @@ sequenceDiagram
   participant Storage as Storage Abstraction
   participant Checks as Checker Runner
 
-  PM->>UI: Create project, guide, and policies
-  UI->>API: POST project / guide / policies
+  PM->>UI: Create project, guide, tasks, and setup/checker/review/revision configuration
+  UI->>API: POST project / guide / configuration
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and local grants
   Authorization->>Authorization: require(project.create/configure, candidates, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched Project Manager grant
-  API->>DB: Persist draft guide and checker/review/revision/payment policy context
+  API->>DB: Persist draft guide and checker/review/revision policy context
+
+  Finance->>UI: Publish contribution policy
+  UI->>API: POST contribution policy version
+  API->>Auth: Verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: require(contribution_policy.publish, candidates, project/resource/lifecycle guards)
+  Authorization-->>API: Allowed with matched Finance Authority grant
+  API->>DB: Publish project contribution policy version independently
 
   PM->>UI: Activate guide
   UI->>API: POST activate guide
@@ -48,7 +62,7 @@ sequenceDiagram
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
   Authorization->>Authorization: require(task.claim, candidates, assignment/resource/lifecycle guards)
-  Authorization-->>API: Allowed AuthorizationContext with matched submitter/both grant
+  Authorization-->>API: Allowed AuthorizationContext with matched submitter grant
   API->>DB: Validate visibility, qualification, skill tags, and READY status
   API->>DB: Create assignment and move READY -> CLAIMED -> IN_PROGRESS
 
@@ -57,7 +71,7 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: require(submission.create, candidates, ownership/resource/lifecycle guards)
-  Authorization-->>API: Allowed with matched submitter/both grant
+  Authorization-->>API: Allowed with matched submitter grant
   API->>Storage: Store or reference artifacts through storage abstraction
   API->>DB: Create immutable submission version
   API->>DB: Lock submission version and audit submitter-owned finalization
@@ -74,8 +88,9 @@ sequenceDiagram
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
   Authorization->>Authorization: require(review.decision, candidates, assignment/resource/lifecycle guards)
-  Authorization-->>API: Allowed AuthorizationContext with matched reviewer/both grant
+  Authorization-->>API: Allowed AuthorizationContext with matched reviewer grant
   API->>DB: Store decision: accept, needs_revision, or reject
+  API->>DB: Create reviewer completed_review contribution and applicable award
 
   alt needs_revision
     API->>DB: Create revision requirements from findings
@@ -84,22 +99,25 @@ sequenceDiagram
     API->>DB: Link replay to prior findings
     API->>Checks: Run checks again
   else accept
-    API->>DB: Create contribution record
-    API->>DB: Create payment record with PENDING status
+    API->>DB: Create submitter accepted_submission contribution
+    API->>DB: Create applicable submitter CompensationAward
     API->>DB: Create reputation event
     API->>DB: Audit acceptance
   else reject
     API->>DB: Store rejection decision and findings
-    API->>DB: Apply payment and reputation policy effects
+    API->>DB: Apply reviewer reputation effects; no submitter contribution
     API->>DB: Audit rejection
   end
 ```
 
 ## Lifecycle Invariants
 
-- A task cannot enter `READY` without locked guide, checker, review, revision, and payment policy context.
+- New TaskAssignments and ReviewLeases require an active published
+  `ContributionPolicyVersion` to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
-- Accepted work creates a contribution record before payment or reputation records.
-- Payment status is separate from task acceptance.
+- Every valid human review creates a reviewer contribution. Accepted work
+  additionally creates a submitter contribution before compensation or
+  reputation records.
+- Compensation fulfillment status is separate from task acceptance.

@@ -76,10 +76,11 @@ adds terminal deactivation attribution; deactivation is irreversible.
 ## Atomic lock and evidence contract
 
 Final-admin-affecting mutations use one order in the route-owned transaction:
-idempotency reservation; `AuthorityControl(id=1) FOR UPDATE`; acting link then
-profile; matched Access Administrator grant; target identity link before target
-profile; effective-admin count after the proposed transition; state, success
-event, exactly one invalidation obligation, and idempotency completion; commit.
+idempotency reservation; `AuthorityControl(id=1) FOR UPDATE`; all acting and
+target principals ordered by ActorProfile ID; for each human, ActorProfile then
+exact ActorIdentityLink and exact matched grant; effective-admin count after the
+proposed transition; state, success event, exactly one invalidation obligation,
+and idempotency completion; commit.
 The effective count requires an active human profile, active identity link, and
 active system-scoped Access Administrator grant. Self-suspend,
 self-deactivate, final-admin loss, and unsafe concurrent different-target
@@ -132,5 +133,5 @@ invalidation without consumer-state mutation.
 ## Stop condition
 
 Stop if any consumer lifecycle must be mutated or service authority must be
-treated as a human grant. Stop after merge and signed memory; AUTH-10 requires a
-new explicit start.
+treated as a human grant. Stop after merge and signed memory; AUTH-09E requires
+a new explicit start.

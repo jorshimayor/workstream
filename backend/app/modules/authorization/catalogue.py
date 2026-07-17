@@ -191,7 +191,7 @@ class ActionOwner(StrEnum):
 
 @unique
 class ActionAvailability(StrEnum):
-    """Whether an owning feature has activated an action."""
+    """Whether AUTH has activated an action after merged feature proof."""
 
     PLANNED = "planned"
     ACTIVE = "active"

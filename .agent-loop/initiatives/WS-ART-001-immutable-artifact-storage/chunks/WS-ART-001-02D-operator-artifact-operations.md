@@ -1,14 +1,16 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3 and AUTH-09
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and AUTH custody registration
 
 Artifact contract phase: `artifact_store_cutover`
 
 ## Goal
 
-Expose exact authorized Operator read/retry/recovery/audit APIs and static
-production-readiness status without activating a provider profile or product
-cutover. Chunk 07 owns every live AWS provider inspection.
+Implement exact hidden Operator read/retry/recovery/audit APIs, internal resource
+composition, and static production-readiness status while every affected action
+remains planned. AUTH activates the exact actions only after this behavior
+merges. This chunk activates neither authorization, a provider profile, nor a
+product cutover. Chunk 07 owns every live AWS provider inspection.
 
 ## Allowed Files
 
@@ -43,11 +45,14 @@ cutover. Chunk 07 owns every live AWS provider inspection.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, artifact audit
   listing, and read-only admission usage.
-- AUTH-07, AUTH-08, and AUTH-09 are merged before this chunk starts, providing
-  the complete typed/SQL action registry, Operator grants, and fixed service
-  principals. This paired feature chunk supplies canonical artifact resources,
-  guards, surfaces, and decision calls; it registers no permission and creates
-  no authority fallback.
+- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and the reviewed
+  custody-registration checkpoint are merged before this chunk starts. They
+  provide the complete typed/SQL planned action registry, Operator grants,
+  static service-action matrix, provisioned service ActorProfiles and
+  ActorIdentityLinks, fixed service runtime admission, and AUTH activation
+  custodians. This feature chunk supplies hidden canonical artifact resources,
+  guards, surfaces, and decision calls; it registers no permission, evaluator,
+  or availability change and creates no fallback.
 - binding, replica, receipt, verification-job, and recovery-attempt reads use,
   respectively, `artifact.binding.read`, `artifact.replica.read`,
   `artifact.receipt.read`, `artifact.verification_job.read`, and
@@ -93,9 +98,11 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   environments. AWS S3 production remains uninstantiable with
   `artifact_provider_live_proof_required`; the activation schema and production
   composition guard do not exist until Chunk 07. Invalid profiles fail closed.
-- exact internal service-principal authorization activates every verification
-  provider read, periodic scan publication, and recovery job; no 02C1, 02C2,
-  or 02C3 mechanic runs before this gate.
+- after this hidden behavior merges, separate AUTH activation checkpoints make
+  the three internal service actions and eight Operator actions executable.
+  `artifact.verification_job.retry` remains independently evaluated and is not
+  implied by internal service activation. No 02C1, 02C2, or 02C3 mechanic runs
+  before the internal AUTH gate.
 - readiness exposes static configured prerequisites and remains inactive.
   Chunk 07's deployment-only harness owns bucket-policy/principal-boundary,
   credential, anonymous-read-negative, completed-prefix lifecycle, and AWS

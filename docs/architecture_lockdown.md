@@ -4,7 +4,10 @@ Last updated: 2026-07-14
 
 ## Purpose
 
-This note locks the Workstream v0.1 architecture around source-agnostic intake, project guide discipline, task contracts, human accountability for agent-assisted work, contribution records, payment records, and reputation consequences.
+This note locks the Workstream v0.1 architecture around source-agnostic intake,
+project guide discipline, task contracts, human accountability for agent-assisted
+work, contribution records, conditional compensation awards and fulfillment,
+and reputation consequences.
 
 The ADR files under `docs/decision_*.md` are the decision record for this lockdown. When a locked rule changes, update or add an ADR before changing implementation specs.
 
@@ -23,7 +26,7 @@ Project guide
 -> revision replay
 -> review decision: accept / needs_revision / reject
 -> contribution record
--> payment record
+-> compensation award / fulfillment when payable
 -> reputation event
 ```
 
@@ -53,8 +56,8 @@ Workstream uses three separate quality gates:
 
 Workstream verifies external Flow tokens and owns product authorization through
 local ActorProfile/ActorIdentityLink records, administrative grants,
-exact-project submitter/reviewer grants, registered permissions, resource and
-lifecycle guards, revocation, and append-only authority evidence.
+exact-project submitter/reviewer/adjudicator grants, registered permissions,
+resource and lifecycle guards, revocation, and append-only authority evidence.
 
 Token roles and typed workflow profiles are not product authority. All public
 routes remain under `/api/v1`. ADR 0012 and the canonical authorization service
@@ -87,7 +90,6 @@ Every active guide version must also have approved machine-readable policies:
 - post-submit checker policy
 - review policy
 - revision policy
-- payment policy
 
 The guide may summarize or link to those policies, but the policies are the enforcement source.
 
@@ -114,7 +116,8 @@ Tasks lock to the active guide version at creation or screening time before ente
 
 ### Task Contract
 
-Every task must carry enough information to make claiming, checking, reviewing, and payment auditable:
+Every task must carry enough information to make claiming, checking, and
+reviewing auditable:
 
 - project id
 - locked guide version
@@ -127,11 +130,13 @@ Every task must carry enough information to make claiming, checking, reviewing, 
 - difficulty
 - skill tags
 - estimated time when known
-- locked payment policy amount
-- locked payment policy currency
-- locked payment policy payout type
 - deadline or SLA when applicable
 - source type and source reference when imported
+
+Compensation is not task-guide context. TaskAssignment freezes the active
+published submitter `ContributionPolicyVersion`; ReviewLease independently
+freezes the reviewer version. Either rule may be explicitly unpaid and therefore
+create no award.
 
 ### Human Accountability
 
@@ -174,9 +179,16 @@ separate deferred adapter initiatives and are not v0.1 runtime dependencies.
 
 ### Contribution Records
 
-Accepted work must create a durable contribution record separate from payment status.
+Every valid recorded human Review creates an immutable reviewer
+`completed_review` contribution record, regardless of whether the decision is
+`accept`, `needs_revision`, or `reject`. An `accept` decision additionally
+creates one submitter `accepted_submission` contribution record. Automated
+checker outcomes create neither type.
 
-The contribution record is the evidence-backed certification that a contributor completed accepted work under a locked project guide. Payment records and reputation events attach to this contribution record, but do not replace it.
+Contribution records are separate from compensation status. Each record freezes
+its exact review, submission, actor, policy, and artifact-hash lineage.
+Compensation awards and reputation events may attach to a contribution record,
+but do not replace it.
 
 ## Deferred
 
@@ -199,6 +211,10 @@ Use these names consistently:
 
 - `check_acceptance_criteria_present`
 - `ContributionRecord`
+- `ContributionPolicyVersion`
+- `CompensationAward`
+- `CompensationFulfillmentReceipt`
+- `CompensationStatusProjection`
 - `SubmissionArtifactPolicy`
 - `EffectiveProjectSubmissionArtifactPolicy`
 - `PreSubmitCheckerPolicy`

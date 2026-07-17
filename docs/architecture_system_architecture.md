@@ -2,7 +2,8 @@
 
 ## Summary
 
-Workstream is organized around projects, tasks, submissions, checks, reviews, revisions, payments, and reputation.
+Workstream is organized around projects, tasks, submissions, checks, reviews,
+revisions, contributions, compensation, and reputation.
 
 The architecture stays modular enough to support different project types without becoming abstract to the point that no project can use it.
 
@@ -19,7 +20,7 @@ Frontend
   Checker results
   Review queue
   Review page
-  Payment dashboard
+  Compensation dashboard
   Reputation dashboard
 
 Backend API
@@ -32,9 +33,8 @@ Backend API
   Checker service
   Review service
   Revision service
-  Contribution service
+  Contribution and compensation service
   Evidence service
-  Payment service
   Reputation service
 
 Storage
@@ -81,7 +81,9 @@ Frontend policy:
 - The UI stays dashboard/form/workflow focused, not a marketing site.
 - Next.js is deferred unless server rendering, public pages, or full-stack React routing becomes a real requirement.
 
-The architecture avoids framework coupling in the domain model. Project, task, submission, checker, review, revision, contribution, payment, reputation, and audit behavior remain portable.
+The architecture avoids framework coupling in the domain model. Project, task,
+submission, checker, review, revision, contribution, compensation, reputation,
+and audit behavior remain portable.
 
 Auth policy:
 
@@ -119,7 +121,6 @@ Owns:
 - post-submit checker policy
 - review policy
 - revision policy
-- payment policy
 - skill taxonomy
 
 Project setup visibility APIs expose the latest setup run, sufficiency reports,
@@ -195,18 +196,6 @@ Owns:
 - issue closure
 - resubmission linkage
 
-### Contribution Service
-
-Owns:
-
-- contribution record creation after acceptance
-- accepted submission linkage
-- accepted review linkage
-- acceptance evidence references
-- artifact hash manifest references
-- export status
-- payment and reputation attachment point
-
 ### Evidence Service
 
 Owns:
@@ -219,16 +208,17 @@ Owns:
 - reviewer notes
 - artifact immutability after checker execution begins
 
-### Payment Service
+### Contribution And Compensation Service
 
 Owns:
 
-- payment records derived from locked payment policy context
-- accepted amount
-- pending payout
-- paid amount
-- payment status
-- payment references
+- immutable reviewer `completed_review` and submitter `accepted_submission`
+  ContributionRecords
+- project ContributionPolicy and immutable published versions
+- independently frozen TaskAssignment and ReviewLease policy-version references
+- immutable CompensationAwards for payable contribution rules only
+- immutable fulfillment receipts and rebuildable status projections
+- contribution and compensation outbox events
 
 ### Reputation Service
 
@@ -248,7 +238,7 @@ Owns:
 - checker run events
 - review decision events
 - revision submission events
-- payment transition events
+- compensation-award and fulfillment events
 - manual overrides
 - guide and policy version references
 
@@ -283,7 +273,7 @@ GET /submissions/:id/checker-runs
 POST /reviews/:id/decision
 POST /submissions/:id/revision-replay
 POST /contributions/:id/export
-POST /payments/:id/mark-paid
+POST /compensation-awards/:id/fulfillment-receipts
 ```
 
 ## v0.1 Gates
@@ -308,7 +298,7 @@ Audit events cover:
 - checker runs
 - review decisions
 - revision replay closure
-- payment status transitions
+- compensation award, delivery, and fulfillment transitions
 - reputation events
 - admin overrides
 

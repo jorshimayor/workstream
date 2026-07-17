@@ -12,9 +12,11 @@ The first risk is not settlement. The first risk is whether the evaluation and c
 
 ## Decision
 
-Use Postgres-backed contribution, payment, and reputation records for v0.1.
+Use Postgres-backed contribution, compensation-award, fulfillment, and
+reputation records for v0.1.
 
-Blockchain settlement comes later as an adapter behind the payment ledger.
+Blockchain settlement comes later as an adapter behind compensation
+fulfillment.
 
 ## Consequences
 

@@ -69,6 +69,8 @@ client-authored ActionIds, PermissionIds, assignments, or policy
 AdminRoleGrant, ProjectRoleGrant, or Contributor authority for services
 artifact resource composers, guards, adapters, or call-site activation
 actor/link state mutation or lifecycle reconciliation consumption
+compatibility aliases, fallback constructors, dual authority paths, or token-role authority
+legacy human `worker` profile, role, grant, or API behavior
 ```
 
 ## Exact planned route actions
@@ -86,6 +88,13 @@ actor/link state mutation or lifecycle reconciliation consumption
 
 The catalogue therefore contains exactly 65 actions after this chunk: nine
 active and 56 planned. This chunk does not change the active count.
+
+The trusted entry state from PR #140 is 74 PermissionIds and 57 ActionIds: nine
+active and 48 planned. AUTH-09A adds zero permissions, eight planned actions,
+seven fixed service identities, and eleven static matrix memberships. The 25
+ART and 19 REV actions retain their historical feature-owner enum values in this
+pre-custody state; only the later availability-neutral ART/REV custody chunks
+may replace those values with exact AUTH activation owners.
 
 ## Fixed service ActorProfile contract
 
@@ -153,8 +162,17 @@ evidence; raw mapping content is not persisted.
 The matrix is frozen typed code. It stores no database assignment rows and
 computes no permission union. Changing an identity or row requires a reviewed
 specification and code change. Every listed artifact action remains planned and
-therefore non-executable until its owning WS-ART chunk activates its resource
-composer, guards, surface, and behavior proof.
+therefore non-executable until its resource-owning WS-ART behavior and manifest
+have merged and its dedicated AUTH activation custodian integrates the evaluator
+and changes availability.
+
+## Clean-cut rule
+
+This foundation adds only the canonical fixed-service model. It must not add or
+preserve a compatibility alias, fallback service constructor, dynamic service
+grant, database assignment path, token-role path, or second identity model.
+Existing unrelated legacy human intake code is not expanded by this chunk and
+remains deletion-only in its already assigned resource-family cutovers.
 
 ## Acceptance criteria
 

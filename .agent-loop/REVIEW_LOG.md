@@ -1,69 +1,36 @@
 # Review Log
 
-## 2026-07-16 - WS-AUTH-001-09A CodeRabbit Findings Repaired
+## 2026-07-17 - WS-AUTH-001-09A Convergence Started
 
-CodeRabbit's first PR #132 review found two valid issues: revision `0023`
-depended on mutable application mapping helpers, and the operator CLI disposed
-its async engine on a second event loop. The repair moves all historical replay
-inputs into the packaged versioned `migration_contracts.service_identity_0023`
-module and runs execution plus cleanup on one loop with explicit error
-precedence. Security re-review then caught two valid edge cases before push:
-installed-wheel location could not identify the deployment repository, and
-cleanup cancellation could mask an earlier bounded failure. Revision `0023`
-now supplies its repository root explicitly to the location-independent frozen
-custody contract, and cleanup error precedence covers `BaseException`.
-Frozen-import, wheel-location, loop-identity, cancellation-priority, and mapped
-migration tests pass. The bot's separate docstring warning conflicts with the
-enforced repository result: GitHub Backend passes and configured local coverage
-is 92.1 percent. Exact-head internal re-review remains required before pushing
-the repair.
+After PR #140 merged as `d541521` and signed memory stopped, the user explicitly
+started the bounded PR #132 repair. The branch is converging migration `0023`,
+seven fixed service identities, eleven exact static matrix memberships, and
+eight planned actions onto current XINT without restoring feature-owned
+activation, combined-role, token-role, or compatibility authority. Prior
+SHA-bound evidence is stale until deterministic proof and required exact-head
+review repeat.
 
-## 2026-07-16 - WS-AUTH-001-09A Implementation Repaired For Re-review
+## 2026-07-17 - WS-AUTH-001-XINT External Review Repair Passed
 
-AUTH-09A implements only the fixed service identity foundation: migration
-`0023`, eight planned AUTH route actions, and the static seven-identity/eleven-
-action matrix. Initial implementation review found four valid fail-closed gaps.
-Repair `6b1c6c8` now validates each exact service row plus PermissionId, owner,
-and planned state; requires strict canonical private JSON; applies one linked-
-worktree path guard in both CLI and Alembic; and makes retained migration
-evidence format-constrained and immutable against update/delete/truncate.
+CodeRabbit posted nine actionable comments on PR #140. Eight valid contract,
+least-privilege, migration, and Markdown findings were repaired at exact SHA
+`c4c4f2e`; the requested runtime `AuthorityClaimHandle` rewrite was rejected as
+a conflation with the distinct future PREP handle and as planning-scope creep.
+Senior, QA, security, product, architecture, CI, docs, and reuse tracks pass the
+repair. Earlier Agent Gates failures were repaired by the null schema-v2
+successor, and replacement Agent Gates and Backend runs pass. Evidence rebinding
+and replacement external checks remain; no AUTH runtime successor is active.
 
-The repaired full actor/auth/audit/API-control/Alembic suite passed 379 tests.
-An additive 47-test confidential mapping and path-custody run passed. Combined
-branch-aware coverage is 90.55 percent for actors and 91.50 percent for
-authorization; the mapping module is 95.91 percent. Ruff, merge-intent
-validation, stale scans, Markdown links, 71 agent-gate tests, docstring
-coverage, and diff integrity pass. Exact-head internal re-review remains the
-publication gate; AUTH-09B is inactive.
+## 2026-07-17 - WS-AUTH-001-XINT Internal Review Passed
 
-## 2026-07-16 - WS-AUTH-001-09A Repaired Plan Passed
-
-Exact-head `b44ef8ae1e1b4532d7af9477d688113057ff34cb` passed senior
+Exact planning SHA `2acabdac0658c3f0109db4235458827b8a06bf31` passed senior
 engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
-docs, reuse/dedup, and test-delta review. The approved foundation adds one fixed
-service identity field, eight planned AUTH-09 actions, one static
-seven-identity/eleven-action matrix, and private exact legacy mapping. It adds no
-route, actor provisioning, service-token admission, assignment table, grant, or
-executable action. Bounded implementation may begin; AUTH-09B remains inactive.
-
-## 2026-07-16 - WS-AUTH-001-09 Combined Plan Rejected And Split
-
-PR #131 merged AUTH-08 as `aa0fdcd`, signed merge memory stopped at AUTH-09,
-and the user explicitly started AUTH-09. Required senior/architecture/CI/docs,
-QA/product/test, and security/auth preimplementation tracks all returned
-`FAIL / SPLIT REQUIRED` before runtime edits. The inherited contract combined
-schema, service provisioning, administrative reads, five lifecycle mutations,
-final-admin concurrency, and ART service authority; omitted required files;
-conflicted with canonical routes; and made startup depend on rows provisioned by
-the running API.
-
-The user accepted the simpler ServiceAccount-style model: a service
-ActorProfile is the fixed local principal, its identity link carries the opaque
-external issuer subject, and one static typed matrix supplies exact internal
-actions. There are no service registration or action-assignment tables. Parent
-AUTH-09 is split into 09A fixed identity foundation, 09B service provisioning,
-09C bounded actor/link reads, and 09D lifecycle mutations. Repaired 09A remains
-in required exact-head review; no runtime implementation has started.
+docs, and reuse/dedup review after all valid findings were repaired. The final
+plan preserves merged XINT's eight ART custody owners, exact 25 ART / 19 REV
+action map, uninterrupted AUTH-09A through 09E sequence, delta-based future
+registrations, dormant adjudicator invalidation, and exact PREP lock order. All
+80 agent-gate tests, stale wording, authorization-doc, Markdown-link, and diff
+checks passed. PR publication is pending; no runtime successor is active.
 
 ## 2026-07-16 - WS-AUTH-001-08 Internal Review Passed
 
@@ -2072,3 +2039,20 @@ Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-serv
 
 Current gate: validate evidence, publish one ready PR, and stop for external
 checks and explicit human review. Do not merge or start `WS-AUTH-001-03`.
+
+## 2026-07-16 - WS-XINT-001-PLAN Discovery Complete
+
+Read-only discovery compared trusted main and the isolated AUTH-09, ART-02A3,
+REV, and CON worktrees. Three parallel explorer agents audited AUTH/ART custody,
+ART/REV artifact semantics, and REV/AUTH/CON atomic contribution behavior; all
+sessions were closed after their findings were incorporated.
+
+The planning draft establishes AUTH-only activation custody, transfers all 25
+current ART action mappings conceptually without changing runtime, preserves
+seven exact artifact service identities, separates REV semantics from ART byte
+custody, and removes synchronous ART/provider work from core contribution
+creation while preserving the stabilized submission artifact digest as lineage.
+
+Current gate: commit the planning baseline, run required internal plan review,
+repair valid findings, publish one planning PR, and stop. No runtime chunk starts
+from this record.

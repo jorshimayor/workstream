@@ -84,27 +84,24 @@ as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
 AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
-tracks at `cbe7c6c`; bounded AUTH-08 implementation passed and PR #131 merged as
-`aa0fdcd`. The user then explicitly started AUTH-09. Required L1 review rejected
-the combined contract before runtime edits. The accepted repair splits AUTH-09
-into 09A-09D and makes the service ActorProfile the fixed local service
-principal with a static typed action matrix and no assignment tables. Repaired
-09A passed every required exact-head plan-review track at `b44ef8a`. Its fixed
-identity schema, exact private migration mapping, eight planned actions, and
-static seven-identity/eleven-action matrix are implemented within contract;
-deterministic evidence passes after repairing the initial internal-review
-findings. Exact-head re-review passes with no remaining finding; publication
-and external checks remain.
+tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR #131
+as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
+reviewed through PR #132. PR #140 then merged the authoritative AUTH XINT
+reconciliation as `d541521` on 2026-07-17 and signed memory stopped. The user
+explicitly started PR #132 convergence from that trusted head. Prior review
+evidence is stale until exact-head review repeats. No AUTH-09 runtime action or
+feature action is active.
 
 ## Active planning chunk
 
-None.
+None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
+`WS-AUTH-001-09A` - Fixed Service Identity Foundation convergence and exact-head
+re-review. This chunk activates no route, action, or service admission path.
 
-## Current implementation branch
+## Current review branch
 
 `codex/ws-auth-001-09-actor-state-service-actors`
 
@@ -128,20 +125,48 @@ None.
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
-| `WS-AUTH-001-09` | Split | `codex/ws-auth-001-09-actor-state-service-actors` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09A` | External review | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | CodeRabbit repairs and exact-head internal re-review pass; refreshed external checks pending. |
-| `WS-AUTH-001-09B` | Proposed | - | - | Controlled fixed service ActorProfile provisioning. |
-| `WS-AUTH-001-09C` | Proposed | - | - | Privacy-bounded actor/link administration reads. |
-| `WS-AUTH-001-09D` | Proposed | - | - | Actor/link lifecycle mutation and final-admin concurrency. |
+| `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
+| `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
+| `WS-AUTH-001-09A` | In progress | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Converging from merged PR #140; deterministic proof and exact-head re-review required. |
+| `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning after 09A. |
+| `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
+| `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
+| `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
+| `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
+| `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |
+| `WS-AUTH-001-PREP` | Proposed | - | - | AUTH-first prepared mutation protocol after 09E. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |
 | `WS-AUTH-001-12` | Proposed | - | - | Project policy/setup mutation cutover. |
 | `WS-AUTH-001-13` | Proposed | - | - | Task management and assignment cutover. |
 | `WS-AUTH-001-14` | Proposed | - | - | Submission/checker/audit visibility cutover. |
-| `WS-AUTH-001-15` | Proposed | - | - | Remaining system worker and obsolete authority removal. |
+| `WS-AUTH-001-15` | Proposed | - | - | Remaining internal service and obsolete authority removal. |
 | `WS-AUTH-001-16` | Proposed | - | - | Conformance and live proof. |
 
+Feature-gated registration and activation chunks are enumerated in
+`CHUNK_MAP.md` and `ACTIVATION_CUSTODY.md`. They remain inactive until exact
+merged feature manifests and separate human starts exist.
+
 ## Blockers
+
+PR #132 cannot merge until its current convergence preserves XINT
+role/service/activation wording, repeats required internal review on the exact
+head, and reruns external checks. The convergence must also
+preserve PR #132's packaged frozen migration contract, zero mutable migration
+imports, script-owned repository root, built-wheel location-independent replay,
+same-event-loop CLI cleanup, and original-exception/cancellation behavior.
+
+The four proposed REV lifecycle actions and review-evidence binding action are
+blocked on complete feature-owned typed manifests. REV fixed services are also
+blocked on exact identity-to-ActionId contracts. These are deliberate
+registration gates, not reasons to weaken AUTH or invent catch-all authority.
+
+AUTH-10 through AUTH-15 require exact action enumeration before each starts.
+AUTH-10 additionally owns the clean cut across the typed `ProjectRole`, audit,
+and idempotency contracts plus the current PostgreSQL validators recreated by
+migration `0022`, removing obsolete `ProjectRole.BOTH` and replacement evidence.
+AUTH-11 through AUTH-15 own shifted migrations `0025` through `0029` for their
+action/evidence parity.
 
 AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract

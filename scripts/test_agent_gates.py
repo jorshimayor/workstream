@@ -319,6 +319,89 @@ def test_evidence_requires_completed_yes_statements() -> None:
 def test_evidence_must_reference_changed_chunk() -> None:
     """Evidence must mention the changed chunk contract when one exists."""
     gate = load_module("review_gate_chunk", "scripts/check_internal_review_evidence.py")
+    headings = {
+        "# Chunk Contract: WS-XINT-001-PLAN Boundary Reconciliation": (
+            "ws-xint-001-plan"
+        ),
+        "# Chunk Contract: WS-ART-001-02A3 - ArtifactStore v2 Local Clean Cut": (
+            "ws-art-001-02a3"
+        ),
+        "# Chunk Contract: WS-QUAL-001-01B1A-R1 Normalization Closure": (
+            "ws-qual-001-01b1a-r1"
+        ),
+        "# Chunk Contract: WS-QUAL-001-01B1A-R2 Canonical Coverage Grammar": (
+            "ws-qual-001-01b1a-r2"
+        ),
+        "# Chunk Contract: WS-AUTH-001-CAT - Action Catalogue": "ws-auth-001-cat",
+        "# Chunk Contract: WS-ART-001-OBJECT-STORAGE-AMENDMENT": (
+            "ws-art-001-object-storage-amendment"
+        ),
+        "# Parent Chunk: WS-AUTH-001-07 - Authorization Kernel": "ws-auth-001-07",
+        "# WS-ART-001-01: Artifact Domain And Local Adapter": "ws-art-001-01",
+        "# Chunk Contract: WS-XINT-001-PLAN2 Distinct Chunk": "ws-xint-001-plan2",
+        "# Chunk Contract: WS-XINT-001-PLANNER Distinct Chunk": ("ws-xint-001-planner"),
+    }
+    assert {
+        heading: gate.chunk_id_from_heading(heading) for heading in headings
+    } == headings
+    assert gate.chunk_id_from_heading("# WS-XINT-001-PLAN without colon") is None
+    assert gate.required_chunk_ids(
+        [
+            ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/"
+            "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
+            ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
+            "chunks/WS-ART-001-02A3-artifact-store-v2-local-clean-cut.md",
+            ".agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/"
+            "chunks/WS-QUAL-001-01B1A-R1-normalization-closure.md",
+            ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
+            "chunks/WS-AUTH-001-CAT-action-resource-catalogue-reconciliation.md",
+            ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
+            "chunks/WS-ART-001-OBJECT-STORAGE-AMENDMENT.md",
+        ]
+    ) == [
+        "ws-xint-001-plan",
+        "ws-art-001-02a3",
+        "ws-qual-001-01b1a-r1",
+        "ws-auth-001-cat",
+        "ws-art-001-object-storage-amendment",
+    ]
+    original_root = gate.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gate.ROOT = Path(tmpdir)
+            chunks = gate.ROOT / ".agent-loop/initiatives/example/chunks"
+            chunks.mkdir(parents=True)
+            invalid_contracts = {
+                "missing.md": None,
+                "empty.md": b"",
+                "malformed.md": b"# Contract without a lifecycle id\n",
+                "invalid-utf8.md": b"\xff",
+            }
+            for filename, content in invalid_contracts.items():
+                relative_path = ".agent-loop/initiatives/example/chunks/" + filename
+                if content is not None:
+                    (chunks / filename).write_bytes(content)
+                try:
+                    gate.required_chunk_ids([relative_path])
+                except RuntimeError:
+                    pass
+                else:
+                    raise AssertionError(
+                        f"invalid changed contract did not fail closed: {filename}"
+                    )
+
+            unreadable_path = chunks / "unreadable.md"
+            unreadable_path.mkdir()
+            try:
+                gate.required_chunk_ids(
+                    [".agent-loop/initiatives/example/chunks/unreadable.md"]
+                )
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError("unreadable changed contract did not fail closed")
+    finally:
+        gate.ROOT = original_root
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: [
         ".agent-loop/initiatives/WS-ENG-001-codex-zero-trust-loop-bootstrap/"
@@ -356,6 +439,46 @@ def test_evidence_must_reference_changed_chunk() -> None:
                 )
                 == []
             )
+
+            collision_template = (
+                "{chunk_id}\n"
+                "| Reviewer | Result | Blocking findings |\n"
+                "|---|---:|---|\n"
+                "| senior engineering | PASS | None |\n"
+                "open sub-agent sessions: none\nvalid findings addressed: yes\n"
+            )
+            for collision in (
+                "WS-XINT-001-PLAN2",
+                "WS-XINT-001-PLANNER",
+            ):
+                evidence.write_text(
+                    collision_template.format(chunk_id=collision),
+                    encoding="utf-8",
+                )
+                assert "chunk id: one of ws-xint-001-plan" in gate.validate_evidence(
+                    evidence,
+                    required,
+                    chunk_ids=["ws-xint-001-plan"],
+                    enforce_reviewed_revision=False,
+                )
+
+            evidence.write_text(
+                collision_template.format(chunk_id="WS-QUAL-001-01B1A-R10"),
+                encoding="utf-8",
+            )
+            assert "chunk id: one of ws-qual-001-01b1a-r1" in gate.validate_evidence(
+                evidence,
+                required,
+                chunk_ids=["ws-qual-001-01b1a-r1"],
+                enforce_reviewed_revision=False,
+            )
+            assert gate.evidence_chunk_ids(
+                "WS-XINT-001-PLAN WS-XINT-001-PLAN2 WS-QUAL-001-01B1A-R1"
+            ) == {
+                "ws-xint-001-plan",
+                "ws-xint-001-plan2",
+                "ws-qual-001-01b1a-r1",
+            }
     finally:
         gate.changed_files = original_changed_files
 
@@ -936,6 +1059,18 @@ def test_stale_wording_patterns_catch_variants() -> None:
             "project checker " + "hash",
             "PreSubmitCheckerPolicy " + "hash",
             "PreSubmitCheckerPolicy snapshot/" + "hash",
+            "NEEDS_REVISION: no payment owed " + "yet",
+            "no accepted task without payment " + "record",
+            "accepted work creates a pending payment " + "record",
+            "contribution record is created when work is " + "accepted",
+            "the evidence-backed record that accepted " + "work was completed",
+            "accepted task must create a payment " + "record",
+            "payment record attached to accepted " + "tasks",
+            "acceptance creates a pending payment " + "record",
+            "accepted transition creates payment " + "record",
+            "payment record moves to " + "pending",
+            "payment NONE -> PAID without accepted " + "task",
+            "every accepted task updates " + "payment",
         ]
     )
     matches = [
@@ -972,6 +1107,18 @@ def test_stale_wording_patterns_catch_variants() -> None:
         "project checker " + "hash(?:es)?",
         "PreSubmitCheckerPolicy " + "hash(?:es)?",
         "PreSubmitCheckerPolicy snapshot/" + "hash(?:es)?",
+        "needs_revision:\\s+no payment owed yet",
+        "no accepted task without payment " + "record",
+        "accepted work creates (?:a )?pending payment " + "record",
+        "contribution record is created when work is " + "accepted",
+        "the evidence-backed record that accepted " + "work",
+        "accepted tasks?.{0,80}payment " + "records?",
+        "payment records?.{0,80}accepted " + "tasks?",
+        "acceptance.{0,80}payment " + "records?",
+        "accepted transition.{0,80}payment " + "records?",
+        "payment record (?:moves to pending|can be generated)",
+        "payment\\s+NONE\\s*->\\s*PAID.{0,80}accepted task",
+        "every accepted task updates " + "payment",
     }
     case_variant_sample = "\n".join(
         [
@@ -994,6 +1141,226 @@ def test_stale_wording_patterns_catch_variants() -> None:
         [Path(".claude/settings.json"), Path("CLAUDE.md")]
     )
     assert len(failures) == 2
+
+
+def test_active_shared_contract_rejects_retired_contracts() -> None:
+    """Live shared docs cannot revive retired roles or compensation models."""
+    stale = load_module(
+        "stale_wording_active_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+    pattern_samples = (
+        "Operator / Access Administrator",
+        "contribution/payment/reputation records",
+        "Project Manager manages guides and policies",
+        "PM -> UI: publish contribution policy",
+        "submitter/both",
+        "reviewer/both",
+        "Submitter or Both grant",
+        "Reviewer or Both grant",
+        "ProjectRoleGrant(submitter|reviewer|both)",
+        "`submitter`, `reviewer`, or `both`",
+        "| Both | exact project",
+        "Active submitter, reviewer, and both grants",
+        "ProjectRoleGrant values are exactly `submitter` and `reviewer`.",
+        "Project issue roles are exactly `submitter` or `reviewer`.",
+        "independent `submitter` and `reviewer` ProjectRoleGrants",
+        "Adjudicator actions remain unavailable until their lifecycle is activated",
+        "adjudication actions unavailable until separately activated",
+        "locks actor/link/grant/assignment rows",
+        "service-assignment authority",
+        "service-actor assignment",
+        "fixed service principals/assignments",
+        "service assignments",
+        "service principals and exact planned assignments",
+        "identity/action assignment source",
+        "service-action assignments",
+        "service identities and exact assignments",
+        "service identities, exact assignments",
+        "AUTH-09 assigns",
+        "planned assignment remains inert",
+        "PermissionId mapping, or exact assignment",
+        "AUTH-09 persists these exact service actors and assignments",
+        "do not become normal ActorProfiles",
+        "Proposed after 02C3, AUTH-09, and AUTH custody registration",
+        "worker, reviewer, or project manager",
+        "operators, workers, reviewers",
+        "reviews, and payments",
+        "owning compensation authority",
+        "Finance reconciles",
+        "compensation publication",
+        "published compensation definition",
+        "CompensationPolicyVersion",
+        "CompensationPolicy",
+        "CompensationRule",
+        "CompensationAwardDefinition",
+        "Compensation\n  PolicyVersion",
+        "Compensation\n  Policy",
+        "Compensation\n  Rule",
+        "Compensation\n  AwardDefinition",
+        "compensation_policy",
+        "compensation_rule_id",
+        "compensation\n  policy",
+        "compensation\n  version",
+        "compensation\n  rule",
+        "PaymentPolicy",
+        "PaymentRecord",
+        "PaymentAdjustment",
+        "Payment\n  Policy",
+        "Payment\n  Record",
+        "Payment\n  Adjustment",
+        "payment-policy",
+        "payment-record",
+        "payment_ledger",
+        "payment_adjustment",
+        "locked_payment_policy_version",
+        "payment_reconciliation",
+        "payment truth",
+        "Payment And Reputation",
+        "compensation fulfillment/payment status",
+        "payment status",
+        "payment\n  policy",
+        "payment\n  records",
+        "payment\n  ledger",
+        "payment exposure",
+        "payment follow-up",
+        "payment adjustment record",
+        "accepted-unpaid",
+        "accepted but unpaid",
+        "contribution record generated on acceptance",
+        "contribution record creation after acceptance",
+        "accepted paid output",
+        "award/payment record",
+        "PAYOUT_SUBMITTED",
+        "PAID",
+        "DISPUTED",
+    )
+    sample = " ".join(pattern_samples)
+    active_patterns = stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+
+    assert len(pattern_samples) == len(active_patterns)
+    for pattern, pattern_sample in zip(active_patterns, pattern_samples, strict=True):
+        assert pattern.search(pattern_sample), pattern.pattern
+
+    additional_pattern_samples = {
+        r"\badjudicat(?:ion|or) actions\s+(?:remain\s+)?unavailable\s+until\s+separately\s+activated": (
+            "Adjudicator actions remain unavailable until separately activated",
+        ),
+        r"\bFinance\s+(?:reconciles|follows)\b": ("Finance follows",),
+        r"\bCompensation\s+Policy\s*Version\b": ("Compensation\n  Policy\n  Version",),
+        r"\bCompensation\s+Award\s*Definition\b": (
+            "Compensation\n  Award\n  Definition",
+        ),
+    }
+    active_pattern_by_source = {pattern.pattern: pattern for pattern in active_patterns}
+    assert additional_pattern_samples.keys() <= active_pattern_by_source.keys()
+    for pattern_source, extra_samples in additional_pattern_samples.items():
+        assert all(
+            active_pattern_by_source[pattern_source].search(extra_sample)
+            for extra_sample in extra_samples
+        )
+
+    required_patterns = {
+        r"\bcompensation\s+publication\b",
+        r"\bpublished\s+compensation\s+definition\b",
+    }
+    assert required_patterns <= {pattern.pattern for pattern in active_patterns}
+    assert all(pattern.search(sample) for pattern in active_patterns)
+    assert all(
+        pattern.search("compensation\n  publication")
+        for pattern in active_patterns
+        if pattern.pattern == r"\bcompensation\s+publication\b"
+    )
+    assert all(
+        pattern.search("published\n  compensation\n  definition")
+        for pattern in active_patterns
+        if pattern.pattern == r"\bpublished\s+compensation\s+definition\b"
+    )
+    assert stale.is_active_shared_contract_path(Path("README.md"))
+    assert stale.is_active_shared_contract_path(Path("AGENTS.md"))
+    assert stale.is_active_shared_contract_path(Path(".agent-loop/LOOP_STATE.md"))
+    assert stale.is_active_shared_contract_path(Path(".agent-loop/WORK_QUEUE.md"))
+    assert stale.is_active_shared_contract_path(
+        Path(".agent-loop/policies/security-boundaries.md")
+    )
+    assert stale.is_active_shared_contract_path(
+        Path(".agent-loop/initiatives/example/PLAN.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path(".agent-loop/initiatives/example/reviews/evidence.md")
+    )
+    assert stale.is_active_shared_contract_path(Path("docs/architecture_data_model.md"))
+    assert stale.is_active_shared_contract_path(
+        Path("docs/current_system_data_flow.html")
+    )
+    assert stale.is_active_shared_contract_path(
+        Path("docs/architecture_brief/workstream_architecture_brief.md")
+    )
+
+
+def test_historical_docs_do_not_define_live_compensation_contract() -> None:
+    """Historical/reference files may state explicitly what the clean cut removed."""
+    stale = load_module(
+        "stale_wording_historical_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/reference_specs/example.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/internal_reviews/example.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/spec_chunk_3_project_guide_foundation.md")
+    )
+    assert stale.is_active_shared_contract_path(Path("docs/spec_chunk_5_example.md"))
+    assert stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
+
+    auth_gate = load_module(
+        "stale_authorization_docs_historical_compensation",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    artifact_gate = load_module(
+        "stale_artifact_contracts_historical_compensation",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    assert stale.HISTORICAL_PATHS == set(auth_gate.HISTORICAL_PATHS)
+    assert stale.HISTORICAL_PATHS == artifact_gate.HISTORICAL_PATHS
+
+
+def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records() -> (
+    None
+):
+    """The current-backend walkthrough cannot claim target compensation runtime."""
+    stale = load_module(
+        "stale_wording_current_runtime_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+    sample = " ".join(
+        (
+            "CompensationPolicyVersion",
+            "ReviewLease",
+            "CompensationAward",
+            "CompensationFulfillmentReceipt",
+            "CompensationStatusProjection",
+        )
+    )
+
+    assert {
+        pattern.pattern
+        for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
+    } == {
+        r"\bCompensationPolicyVersion\b",
+        r"\bReviewLease\b",
+        r"\bCompensationAward\b",
+        r"\bCompensationFulfillmentReceipt\b",
+        r"\bCompensationStatusProjection\b",
+    }
+    assert all(
+        pattern.search(sample)
+        for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
+    )
 
 
 def test_stale_wording_skips_only_docs_internal_reviews_prefix() -> None:
@@ -1340,8 +1707,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         contract = (
-            root
-            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            root / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         contract.parent.mkdir(parents=True)
@@ -1366,8 +1732,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "exactly one chunk contract",
         )
         foreign_contract = (
-            root
-            / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
+            root / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         foreign_contract.parent.mkdir(parents=True)
@@ -1382,8 +1747,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         )
         foreign_contract.unlink()
         spoof_contract = (
-            root
-            / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
+            root / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         spoof_contract.parent.mkdir(parents=True)
@@ -1414,9 +1778,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "another initiative directory",
         )
         foreign_contract.unlink()
-        duplicate = (
-            contract.parent / "WS-AUTH-001-07-copy.md"
-        )
+        duplicate = contract.parent / "WS-AUTH-001-07-copy.md"
         duplicate.write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
         assert_loop_error(
             updater,
@@ -1456,9 +1818,9 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         "WS-AUTH-001-example", "WS-AUTH-001-spoof"
     )
     non_contract_tree_item = dict(tree_item)
-    non_contract_tree_item["path"] = non_contract_tree_item["path"].removesuffix(
-        ".md"
-    ) + ".txt"
+    non_contract_tree_item["path"] = (
+        non_contract_tree_item["path"].removesuffix(".md") + ".txt"
+    )
     valid_tree = {
         "truncated": False,
         "tree": [non_contract_tree_item, tree_item],
@@ -1473,7 +1835,11 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         metadata,
     )
     remote_cases = (
-        ({"truncated": True, "tree": [tree_item]}, "Authorization Kernel", "incomplete"),
+        (
+            {"truncated": True, "tree": [tree_item]},
+            "Authorization Kernel",
+            "incomplete",
+        ),
         ({"truncated": False, "tree": []}, "Authorization Kernel", "exactly one"),
         (
             {"truncated": False, "tree": [foreign_tree_item]},
@@ -2241,9 +2607,9 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         assert updater.apply_merge_record(root, no_successor_record) is True
         assert updater.apply_merge_record(root, no_successor_record) is False
         updater.validate_generated_state(root)
-        assert "Next chunk: none recorded" in (
-            root / updater.RENDERED_PATH
-        ).read_text(encoding="utf-8")
+        assert "Next chunk: none recorded" in (root / updater.RENDERED_PATH).read_text(
+            encoding="utf-8"
+        )
         assert checker.generated_state_failures(root) == []
 
         private_key = root / "private.pem"
@@ -2273,22 +2639,20 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         is None
     )
     assert (
-        updater._contract_title(
-            "# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07"
-        )
+        updater._contract_title("# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07")
         is None
     )
     assert (
         updater._initiative_directory_from_path(
-        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
-        "WS-AUTH-001",
+            ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+            "WS-AUTH-001",
         )
         == "WS-AUTH-001-example"
     )
     assert (
         updater._initiative_directory_from_path(
-        ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
-        "WS-AUTH-001",
+            ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
+            "WS-AUTH-001",
         )
         is None
     )
@@ -2387,20 +2751,21 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
     )
     assert_loop_error(
         updater,
-        lambda: updater._is_ancestor(
-            Path("/not/a/repository"), "a" * 40, "b" * 40
-        ),
+        lambda: updater._is_ancestor(Path("/not/a/repository"), "a" * 40, "b" * 40),
         "cannot resolve main commit ancestry",
     )
-    assert updater._latest_named(
-        [
-            {},
-            {"name": "gate", "started_at": "2026-01-02"},
-            {"name": "gate", "started_at": "2026-01-01"},
-        ],
-        "name",
-        "started_at",
-    )["gate"]["started_at"] == "2026-01-02"
+    assert (
+        updater._latest_named(
+            [
+                {},
+                {"name": "gate", "started_at": "2026-01-02"},
+                {"name": "gate", "started_at": "2026-01-01"},
+            ],
+            "name",
+            "started_at",
+        )["gate"]["started_at"]
+        == "2026-01-02"
+    )
     for value, expected in (
         (None, "ISO timestamp"),
         ("not-a-time", "ISO timestamp"),
@@ -2444,9 +2809,7 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
             "kind is invalid",
         ),
         (
-            lambda row: row["checks"]["required"]["agent-gates"].update(
-                conclusion=7
-            ),
+            lambda row: row["checks"]["required"]["agent-gates"].update(conclusion=7),
             "conclusion is invalid",
         ),
         (
@@ -2567,7 +2930,7 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
     assert workflow.count("LOOP_MEMORY_SIGNING_KEY:") == 1
     assert "LOOP_MEMORY_PRIVATE_KEY" not in workflow
-    assert 'trap \'rm -f "${private_key}"\' EXIT' in workflow
+    assert "trap 'rm -f \"${private_key}\"' EXIT" in workflow
     assert "prepare-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
     assert 'git -C "${state_dir}" add -f --' in workflow
@@ -3039,8 +3402,7 @@ def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
         intent_path.parent.mkdir(parents=True)
         intent_path.write_text(valid_loop_intent(), encoding="utf-8")
         contract_path = (
-            intent_repo
-            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            intent_repo / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         contract_path.parent.mkdir(parents=True)
@@ -3284,8 +3646,8 @@ def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
         malformed_envelope["schema_version"] = malformed_schema_version
         assert_loop_error(
             updater,
-            lambda malformed_envelope=malformed_envelope: updater._validate_ledger_entries(
-                [malformed_envelope]
+            lambda malformed_envelope=malformed_envelope: (
+                updater._validate_ledger_entries([malformed_envelope])
             ),
             "invalid schema",
         )
@@ -3358,6 +3720,15 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "TECHNICAL_WORKER_HUMAN_AUTHORITY": (
             "The checker worker submits a contributor packet."
         ),
+        "ACCESS_ADMIN_CATALOG_ADMINISTRATION": (
+            "Access Administrator manages the permission catalog."
+        ),
+        "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY": (
+            "Operator reconciles contribution policy and compensation-adapter binding."
+        ),
+        "OPERATOR_COMPENSATION_MUTATION": (
+            "Operator reconciles contribution records and compensation awards."
+        ),
     }
     for code, sample in fixtures.items():
         failures = gate.scan_text("docs/new_active_doc.md", sample)
@@ -3368,6 +3739,8 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Bearer-token role metadata is identity provenance only.",
         "Typed workflow profiles are eligibility metadata only.",
         "An Access Administrator may grant administrative roles.",
+        "AUTH owns the closed permission/action catalog and action availability.",
+        "Operator invokes an exact registered recovery action; WS-CON mutates state.",
     )
     for sample in unambiguous_canonical_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
@@ -3458,6 +3831,198 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
 
 
+def test_feature_owned_authorization_activation_is_rejected() -> None:
+    """Current AUTH/ART/REV contracts cannot assign activation to features."""
+    gate = load_module(
+        "activation_custody_contract_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    stale_statements = (
+        "Actions remain non-executable until their owning chunks activate them.",
+        "Later owner chunks activate catalogue rows in typed code.",
+        "An owning cutover chunk activates an action after behavior proof.",
+        "Planned metadata is separate from later feature activation blueprints.",
+        "Artifact service actions are activated by their owning WS-ART chunks.",
+        "Each owning WS-REV chunk activates its review action.",
+        "The WS-ART feature chunk owns the actions it activates.",
+        "| Owning WS-ART chunk | Actions activated by that chunk |",
+        "This is the owning WS-ART activation blueprint.",
+        "The paired owning feature activates each action.",
+        "Runtime activation remain with the listed owner.",
+        "Route-owning chunks may promote an action to active after tests pass.",
+    )
+    for statement in stale_statements:
+        failures = gate.scan_activation_custody_text("contract.md", statement)
+        assert failures == ["contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"], statement
+
+    planning_activation_statements = (
+        "AUTH activates artifact actions under WS-XINT-001.",
+        "WS-XINT-001 is the AUTH activation custodian.",
+    )
+    for statement in planning_activation_statements:
+        failures = gate.scan_activation_custody_text("contract.md", statement)
+        assert failures == ["contract.md:1: PLANNING_INITIATIVE_AUTH_ACTIVATION"], (
+            statement
+        )
+
+    canonical_statements = (
+        "AUTH activates the action after hidden ART behavior merges.",
+        "ART activates API-startup scratch cleanup.",
+        "This chunk neither activates its artifact action nor grants provider access.",
+        "The feature owner supplies hidden behavior while AUTH owns availability.",
+    )
+    for statement in canonical_statements:
+        assert gate.scan_activation_custody_text("contract.md", statement) == []
+
+
+def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
+    """The fail-closed scan covers every canonical WS-XINT handoff."""
+    gate = load_module(
+        "activation_custody_contract_discovery",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    required = {
+        "ART_REV_HANDOFF.md",
+        "AUTH_ART_HANDOFF.md",
+        "AUTH_ROLE_SERVICE_HANDOFF.md",
+        "AUTH_REV_HANDOFF.md",
+        "DISCOVERY.md",
+        "INTENT.md",
+        "REV_CON_HANDOFF.md",
+        "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        initiative = (
+            root
+            / ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation"
+        )
+        for relative_path in required | {"reviews/closed.md"}:
+            path = initiative / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("current contract\n", encoding="utf-8")
+
+        con_contract = (
+            root
+            / ".agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary"
+            / "PLAN.md"
+        )
+        con_contract.parent.mkdir(parents=True, exist_ok=True)
+        con_text = "Later owner chunks activate catalogue rows in typed code.\n"
+        con_contract.write_text(con_text, encoding="utf-8")
+
+        public_contract = root / "docs/review_current_contract.md"
+        public_contract.parent.mkdir(parents=True, exist_ok=True)
+        public_text = "The paired owning feature activates each action.\n"
+        public_contract.write_text(public_text, encoding="utf-8")
+
+        policy_contract = root / ".agent-loop/policies/security-boundaries.md"
+        policy_contract.parent.mkdir(parents=True, exist_ok=True)
+        policy_text = "Later owner chunks activate catalogue rows in typed code.\n"
+        policy_contract.write_text(policy_text, encoding="utf-8")
+
+        intent_contract = initiative / "INTENT.md"
+        intent_text = "The paired owning feature activates each action.\n"
+        intent_contract.write_text(intent_text, encoding="utf-8")
+
+        historical_contracts = {root / path for path in gate.HISTORICAL_PATHS}
+        for historical_contract in historical_contracts:
+            historical_contract.parent.mkdir(parents=True, exist_ok=True)
+            historical_contract.write_text(
+                "The paired owning feature activates each action.\n",
+                encoding="utf-8",
+            )
+
+        all_discovered = gate.discover_activation_custody_documents(root)
+        discovered = {
+            path.relative_to(initiative).as_posix()
+            for path in all_discovered
+            if path.is_relative_to(initiative)
+        }
+
+    assert required <= discovered
+    assert "reviews/closed.md" not in discovered
+    assert con_contract in all_discovered
+    assert public_contract in all_discovered
+    assert policy_contract in all_discovered
+    assert intent_contract in all_discovered
+    assert historical_contracts.isdisjoint(all_discovered)
+    assert gate.scan_activation_custody_text(
+        con_contract.relative_to(root).as_posix(),
+        con_text,
+    ) == [
+        ".agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/"
+        "PLAN.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
+    assert gate.scan_activation_custody_text(
+        public_contract.relative_to(root).as_posix(),
+        public_text,
+    ) == ["docs/review_current_contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"]
+    assert gate.scan_activation_custody_text(
+        policy_contract.relative_to(root).as_posix(),
+        policy_text,
+    ) == [
+        ".agent-loop/policies/security-boundaries.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
+    assert gate.scan_activation_custody_text(
+        intent_contract.relative_to(root).as_posix(),
+        intent_text,
+    ) == [
+        ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/"
+        "INTENT.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
+
+
+def test_auth_spec_orders_service_admission_before_project_roles() -> None:
+    """AUTH-09A through 09E precede project contributor grants."""
+    spec = Path("docs/spec_authorization_service.md").read_text(encoding="utf-8")
+    order = spec.split("## Migration And Compatibility", maxsplit=1)[1].split(
+        "## Error And Privacy Contract",
+        maxsplit=1,
+    )[0]
+    chunk_ids = (
+        "WS-AUTH-001-09A",
+        "WS-AUTH-001-09B",
+        "WS-AUTH-001-09C",
+        "WS-AUTH-001-09D",
+        "WS-AUTH-001-09E",
+        "WS-AUTH-001-10",
+    )
+    positions = [order.index(f"`{chunk_id}`:") for chunk_id in chunk_ids]
+    assert positions == sorted(positions)
+    assert "without human grant\n    evaluation or feature action activation" in order
+
+
+def test_parallel_initiative_status_matches_trusted_main() -> None:
+    """Auth and artifact maps cannot regress already merged prerequisites."""
+    auth_map = Path(
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
+        "CHUNK_MAP.md"
+    ).read_text(encoding="utf-8")
+    auth_status = Path(
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/STATUS.md"
+    ).read_text(encoding="utf-8")
+    artifact_map = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/CHUNK_MAP.md"
+    ).read_text(encoding="utf-8")
+    artifact_status = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/STATUS.md"
+    ).read_text(encoding="utf-8")
+
+    assert "Merged through PR #131 as `aa0fdcd`" in auth_map
+    assert "None. `WS-AUTH-001-09A` has completed implementation" in auth_status
+    assert "| `WS-AUTH-001-08` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
+    assert "Merged through PR #129 as `9a04434`" in artifact_map
+    assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
+    assert "No artifact implementation chunk is active." in artifact_status
+    assert (
+        "`WS-ART-001-02A3` implementation\nand review are complete" in artifact_status
+    )
+    assert "PR #129 merged `WS-ART-001-02A2` as `9a04434`" in artifact_status
+
+
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
     gate = load_module(
@@ -3468,14 +4033,26 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         root = Path(tmp_dir)
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         (root / "docs").mkdir()
+        initiative = root / ".agent-loop/initiatives/WS-CON-001-example"
+        initiative.mkdir(parents=True)
+        policy = root / ".agent-loop/policies/security-boundaries.md"
+        policy.parent.mkdir(parents=True)
         active = root / "docs" / "new_active_doc.md"
         diagram = root / "docs" / "new_active_diagram.puml"
+        initiative_contract = initiative / "PLAN.md"
+        initiative_state = initiative / "STATE.json"
         active.write_text("POST /v1/projects\n", encoding="utf-8")
         diagram.write_text(
             "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
         )
+        initiative_contract.write_text("current contract\n", encoding="utf-8")
+        initiative_state.write_text('{"status": "current"}\n', encoding="utf-8")
+        policy.write_text("current policy\n", encoding="utf-8")
         assert active in gate.discover_documents(root)
         assert diagram in gate.discover_documents(root)
+        assert initiative_contract in gate.discover_documents(root)
+        assert initiative_state in gate.discover_documents(root)
+        assert policy in gate.discover_documents(root)
         assert gate.scan(root) == ["docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"]
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
@@ -3498,6 +4075,20 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
             "docs/new_active_diagram.puml:1: NON_CANONICAL_API_PREFIX"
         ]
 
+        diagram.write_text(
+            "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
+        )
+        initiative_contract.write_text("POST /v1/projects\n", encoding="utf-8")
+        policy.write_text(
+            "A token also carries an authorized Workstream role.\n",
+            encoding="utf-8",
+        )
+        assert gate.scan(root) == [
+            ".agent-loop/initiatives/WS-CON-001-example/PLAN.md:1: "
+            "NON_CANONICAL_API_PREFIX",
+            ".agent-loop/policies/security-boundaries.md:1: TOKEN_CARRIES_PRODUCT_ROLE",
+        ]
+
 
 def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
     """The active archive marker exempts one line, not its entire document."""
@@ -3514,6 +4105,113 @@ def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
     assert failures == ["docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"]
 
 
+def test_stale_authorization_initiative_ratchet_is_position_scoped() -> None:
+    """A copied stale line fails even when identical history remains unchanged."""
+    gate = load_module(
+        "stale_authorization_docs_initiative_baseline",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    stale_line = "POST /v1/projects"
+    text = f"{stale_line}\n{stale_line}\n"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        root = Path(tmp_dir)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
+        relative_path = ".agent-loop/initiatives/example/PLAN.md"
+        contract = root / relative_path
+        contract.parent.mkdir(parents=True)
+        contract.write_text(f"{stale_line}\n", encoding="utf-8")
+        subprocess.run(["git", "add", relative_path], cwd=root, check=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.com",
+                "commit",
+                "-qm",
+                "baseline",
+            ],
+            cwd=root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "update-ref", "refs/remotes/origin/main", "HEAD"],
+            cwd=root,
+            check=True,
+        )
+        contract.write_text(text, encoding="utf-8")
+        changed_lines = gate.initiative_changed_line_numbers(root, relative_path)
+
+    assert changed_lines == frozenset({2})
+
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        text,
+        enforced_line_numbers=changed_lines,
+    ) == [".agent-loop/initiatives/example/PLAN.md:2: NON_CANONICAL_API_PREFIX"]
+
+    multiline_text = "ActorProfile(\nprofile_type"
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        multiline_text,
+        enforced_line_numbers=frozenset({2}),
+    ) == [".agent-loop/initiatives/example/PLAN.md:1: TYPED_PROFILE_AUTHORITY"]
+
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        "A token role grants project access.",
+        enforced_line_numbers=frozenset(),
+    ) == [".agent-loop/initiatives/example/PLAN.md:1: TOKEN_ROLE_PRODUCT_AUTHORITY"]
+    assert (
+        gate.scan_text(
+            ".agent-loop/initiatives/example/PLAN.md",
+            "A worker submits the packet.",
+            enforced_line_numbers=frozenset(),
+        )
+        == []
+    )
+
+
+def test_stale_authorization_full_initiative_rules_ignore_changed_line_filter() -> None:
+    """Every authority-bearing initiative rule scans the complete document."""
+    gate = load_module(
+        "stale_authorization_docs_full_initiative_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    samples = {
+        "ACCESS_ADMIN_CATALOG_ADMINISTRATION": (
+            "Access Administrator manages the permission catalog."
+        ),
+        "CURRENT_TOKEN_ROLE_AUTHORITY": "role in the current verified token",
+        "NAMED_ROLE_TOKEN_AUTHORITY": "admin token can approve this operation",
+        "OBSOLETE_ROLE_ASSIGNMENT_MODEL": "WorkstreamRoleAssignment",
+        "OPERATOR_COMPENSATION_MUTATION": ("Operator reconciles compensation awards."),
+        "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY": (
+            "Operator publishes contribution policy."
+        ),
+        "TOKEN_CARRIES_PRODUCT_ROLE": (
+            "token also carries an authorized Workstream role"
+        ),
+        "TOKEN_ROLE_PRODUCT_AUTHORITY": "A token role grants project access.",
+        "TRUSTED_ROLE_CLAIM_AUTHORITY": "trusted role claims",
+        "TYPED_PROFILE_AUTHORITY": "ActorProfile(profile_type",
+        "TYPED_PROFILE_PRODUCT_AUTHORITY": (
+            "ActorProfile profile_type grants project access"
+        ),
+    }
+
+    assert set(samples) == gate.FULL_INITIATIVE_RULE_CODES
+    for code, sample in samples.items():
+        failures = gate.scan_text(
+            ".agent-loop/initiatives/example/PLAN.md",
+            sample,
+            enforced_line_numbers=frozenset(),
+        )
+        assert any(failure.endswith(f": {code}") for failure in failures), code
+
+
 def test_stale_authorization_history_allowlist_is_exact() -> None:
     """Only reviewed exact history paths bypass active-document scanning."""
     gate = load_module(
@@ -3521,6 +4219,15 @@ def test_stale_authorization_history_allowlist_is_exact() -> None:
         "scripts/check_stale_authorization_docs.py",
     )
     assert "docs/spec_chunk_3_project_guide_foundation.md" in gate.HISTORICAL_PATHS
+    assert (
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md"
+        in gate.HISTORICAL_PATHS
+    )
+    assert (
+        ".agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md"
+        in gate.HISTORICAL_PATHS
+    )
+    assert "docs/review_architecture_review.md" not in gate.HISTORICAL_PATHS
     assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
 
 
@@ -4549,6 +5256,9 @@ def main() -> int:
         test_static_sensor_flags_backend_config_as_ci_surface,
         test_markdown_link_checker_collects_base_cached_dirty_and_untracked,
         test_stale_wording_patterns_catch_variants,
+        test_active_shared_contract_rejects_retired_contracts,
+        test_historical_docs_do_not_define_live_compensation_contract,
+        test_current_runtime_walkthrough_rejects_unimplemented_compensation_records,
         test_stale_wording_skips_only_docs_internal_reviews_prefix,
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
@@ -4581,8 +5291,14 @@ def main() -> int:
         test_full_merge_ledger_hash_chain_detects_history_tampering,
         test_merge_ledger_rejects_schema_record_and_ancestry_corruption,
         test_stale_authorization_rule_examples_are_rejected,
+        test_feature_owned_authorization_activation_is_rejected,
+        test_activation_custody_discovery_includes_canonical_handoffs,
+        test_auth_spec_orders_service_admission_before_project_roles,
+        test_parallel_initiative_status_matches_trusted_main,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
+        test_stale_authorization_initiative_ratchet_is_position_scoped,
+        test_stale_authorization_full_initiative_rules_ignore_changed_line_filter,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,

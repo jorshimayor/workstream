@@ -182,40 +182,33 @@ actor kind or authority.
 A provisioned service ActorProfile is the stable Workstream principal, similar
 to a Kubernetes ServiceAccount. Its immutable `service_identity` is one of the
 closed registered internal services; its identity link separately stores the
-configured issuer and opaque subject used to verify credentials. Operators must
-never use display name, email, subject syntax, token role, or adapter provenance
-as the service identity.
+configured issuer and opaque subject used to verify credentials. Display name,
+email, subject syntax, token role, and adapter provenance are never service
+identity evidence.
 
-Service authority is not administered as database assignment rows. The exact
-service-to-ActionId matrix is reviewed static code. Services receive no
-Contributor domain, AdminRoleGrant, or ProjectRoleGrant, and every artifact
-action remains unavailable until its owning WS-ART feature activates the
-resource facts and guards. A clean database may start without provisioned
-services; an unprovisioned or mismatched service request fails closed.
+Service authority is a reviewed static service-to-ActionId matrix, not a grant
+or database assignment table. A service receives no Contributor,
+AdminRoleGrant, or ProjectRoleGrant authority. Every matrix action remains
+unavailable until merged feature behavior exists and the dedicated AUTH
+activation custodian integrates its evaluator and changes only that action's
+availability.
 
 ### Existing Service Identity Mapping Custody
 
-This procedure applies only when pre-`0023` service ActorProfiles exist. The
-data-migration owner prepares a private draft containing the exact existing
-ActorProfile ID, issuer, opaque subject, and proposed fixed service identity for
-each row. A security reviewer confirms every choice from authoritative service
-ownership records. Neither the tool nor an operator may infer a value from
-subject syntax, email, display name, token role, or adapter provenance.
+This procedure applies only when service ActorProfiles already exist before
+migration `0023`. The data-migration owner prepares a private draft containing
+the exact existing ActorProfile ID, issuer, opaque subject, and proposed fixed
+service identity for every row. A security reviewer verifies each choice from
+authoritative ownership records. Neither the tool nor an operator may infer a
+value from subject syntax, email, display name, token role, or adapter
+provenance.
 
-Run the supported mapping tool first in dry-run mode against the exact target
-database and draft, then generate the database-bound envelope. The output must
-be a regular non-symlink file owned by the invoking operator with mode `0600` in
-an access-controlled directory outside the main checkout, every linked
-worktree, and shared Git metadata. Both draft and envelope use one strict,
-key-sorted compact JSON object followed by exactly one newline; boolean,
-floating-point, pretty-printed, reordered, or otherwise noncanonical schema
-input is rejected. Verify the envelope against the unchanged target database
-before migration. Zero existing service rows require no file; otherwise the
-envelope must cover exactly every existing service row and may select any
-unique subset of the seven closed identities.
-
-Using a deployment-secret environment for `WORKSTREAM_DATABASE_URL`, the
-supported sequence is:
+Run the supported tool against the exact target database. Draft and envelope
+files must be regular, non-symlink, owner-only mode `0600` files in a controlled
+directory outside the checkout, every linked worktree, and shared Git metadata.
+Zero existing service rows require no file; otherwise the envelope must cover
+the complete locked service projection and select unique values from the seven
+closed identities.
 
 ```bash
 chmod 600 /secure/workstream/service-identity-draft-v1.json
@@ -229,30 +222,19 @@ chmod 600 /secure/workstream/service-identity-envelope-v1.json
   --envelope /secure/workstream/service-identity-envelope-v1.json
 ```
 
-`validate` and `verify` never modify the database. `bind` writes only the
-confidential canonical envelope and refuses an existing output path. The tool
-prints stable codes, bounded counts, and non-secret digests only.
+`validate` and `verify` never modify PostgreSQL. `bind` refuses an existing
+output path. The tool prints only stable codes, bounded counts, and non-secret
+digests. Inject `WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE` only into the
+migration process immediately before `alembic upgrade head`; never commit or
+log the path or confidential contents.
 
-Inject `WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE` through the deployment
-secret runner only in the migration process environment immediately before
-`alembic upgrade head`. Do not place the path or file content in interactive
-shell history, CI logs, application configuration, containers, images, tickets,
-or repository files. Remove the injection after the migration. Stable failures
-expose only a code and bounded count; inspect the private tool report locally
-rather than adding issuer subjects to logs.
-
-Revision `0023` consumes the envelope through its packaged, versioned
-migration-only contract. Later application schema or helper changes do not
-change historical fresh-install replay.
-
-After database verification, retain the reviewed change record plus the
-non-secret source, manifest, envelope, and database-binding digests stored by
-the migration. PostgreSQL format constraints and update/delete/truncate guards
-make that singleton evidence immutable. Securely delete the confidential draft
-and bound envelope under the operator's storage policy. If any existing service
-cannot truthfully map to the fixed registry, stop the deployment on the prior
-release and open a separately reviewed remediation; do not delete history,
-guess a mapping, or use manual SQL.
+Migration `0023` consumes the packaged versioned contract, locks the complete
+actor/link source projection, and refuses missing, extra, stale, duplicate, or
+ambiguous mappings atomically. It retains only bounded counts and non-secret
+source, manifest, envelope, and database-binding digests. After database
+verification and the approved rollback window, securely delete the draft and
+envelope. If any row cannot truthfully map, remain on `0022` and open a reviewed
+data-remediation decision; never guess, delete history, or use manual SQL.
 
 The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
 records the exact deprecated compatibility identifier. That temporary,
@@ -565,7 +547,8 @@ For each chunk:
 2. Run focused tests plus the full backend suite/API drill required by the
    contract.
 3. Run migration upgrade, downgrade-one, and re-upgrade where applicable.
-4. Confirm the temporary compatibility allowlist only shrinks.
+4. Confirm the obsolete-path allowlist only shrinks and no compatibility path
+   was added or restored.
 5. Run required internal reviewers and repair valid findings.
 6. Publish one chunk-sized PR and stop for human merge approval.
 7. Update post-merge memory before activating the next chunk.
@@ -575,14 +558,28 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-The catalogue contains exactly 74 PermissionIds and 65 ActionIds after AUTH-09A.
-The two AUTH-07B actor-self actions and seven AUTH-08 administrative actions are
-active; the other 56 entries remain planned and non-executable. Planned entries
-contain only action, permission, owner, and availability and must not receive
-deployment configuration, resource facts, or guards. The separate fixed
-service-action matrix is static candidate policy, not action activation.
-Startup validation failure is a release blocker, not a reason to relax
-catalogue checks.
+The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
+AUTH-09A. The two
+AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
+the other 56 entries remain planned and non-executable. Eight of those planned
+rows are the AUTH-09B through AUTH-09D actor/link/service actions introduced by
+`0023`. The target post-custody
+invariant is that planned runtime entries contain only action, permission, exact
+AUTH activation owner, and availability. Until the availability-neutral custody
+transfers merge, the 25 ART and 19 REV rows retain their historical feature
+owner values as an explicitly blocked exception.
+Their owning feature must publish the approved principal/resource/guard/surface/
+transaction contract before registration or activation, but those foreign facts
+do not become free-form catalogue fields. Startup validation failure is a release
+blocker, not a reason to relax catalogue checks.
+
+PR #139 requires availability-neutral transfer of all 25 ART and 19 REV owner
+rows to exact AUTH chunks before feature activation. Counts and mappings remain
+unchanged. Catalogue totals are derived from the trusted entry head: four later
+REV registrations add exactly four planned and zero active actions, while the
+review-evidence binding registration adds exactly one planned and zero active
+action, in either order. Neither addition is operational until its complete
+feature contract and separate reviewed AUTH registration exist.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
@@ -598,7 +595,7 @@ historical status from identifier prefixes. All submission/review rows remain
 planned. Initial and revision submission share `submission.create`, and no
 revision-specific permission or preparation action exists.
 
-Review code must consume the request-scoped public
+Review reads consume the request-scoped public
 `AuthorizationService.require(action_id, typed_resource_context)` boundary.
 The service's bound caller-owned `AsyncSession` is the only transaction source;
 the method accepts no session or `uow` argument. Review code must not query
@@ -607,6 +604,24 @@ PermissionIds, or implement permission unions. Artifact recovery remains the
 ART-owned `artifact.verification_job.retry` action through
 `ArtifactOperatorRecoveryPort`; shared outbox dispatch/retry remains outside
 REV ownership.
+
+Review and other sensitive mutations must wait for `WS-AUTH-001-PREP`. That
+protocol locks `AuthorityControl(id=1)` first when final-admin safety applies,
+orders multiple principals by ActorProfile ID, then locks each human profile,
+exact link, and exact matched grant or each service profile and exact link.
+Service identity, static matrix membership, and action availability are
+code-owned validations, not database lock targets. Only then does AUTH create an
+internal, non-Pydantic `PreparedAuthorizationHandle` bound to the exact session,
+ActionId, actor reference kind, actor reference, idempotency key, and canonical
+request digest. It is never a route schema or caller input. Consumption matches
+every binding before the feature locks rows and recomposes final facts, then AUTH
+evaluates and stages evidence once before one route/service-command commit.
+Crossed tests must cover link revoke, actor suspend/deactivate, exact grant
+revoke, final-admin mutation, and same-session/action cross-actor or
+cross-request substitution. Never serialize or reuse the handle, let dependency
+teardown commit it, or commit AUTH evidence separately from feature state. The
+existing `AuthorityClaimHandle` is a separate idempotency-reservation contract,
+not this prepared authorization handle.
 
 Downgrade is allowed only while every action ID remains null and no permission
 outside migration `0018`'s historical 49-value set exists in the decision,
@@ -618,6 +633,28 @@ discarding it.
 Canonical actor self-read/self-update and the seven AUTH-08 administrative
 actions are active. Project capability context waits for AUTH-10 exact-project
 grants and canonical project composition.
+
+AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
+`adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
+idempotency records, and PostgreSQL validators for `both`, replacement fields,
+replacement events, and replacement reasons. Migration `0024` must stop on any
+incompatible evidence; operators must remediate through a separately approved
+data decision, never an automatic conversion. A safe downgrade also refuses
+rather than deleting adjudicator or new exact-role evidence.
+
+Project-role revocation is routed by exact role. Submitter invalidation may
+reach task assignment; reviewer invalidation reaches only REV; adjudicator
+invalidation remains dormant until that lifecycle exists. Verify grant ID,
+actor, project, role, and cause event before a consumer changes product state.
+Revoking one role must leave the other project roles and all AdminRoleGrants
+unchanged.
+
+The first fixed-service set remains seven artifact identities and eleven matrix
+memberships from AUTH-09A. Missing provisioned rows deny without stopping the
+application. New REV/CON service identities require an exact owning-feature
+manifest followed by AUTH-owned enum/constraint/matrix, provisioning, admission,
+and cross-service denial proof. Do not create a shared review service or a
+database service-grant table.
 
 ## Actor Self Decision Operations
 
@@ -690,8 +727,8 @@ Stop rollout when:
 - an intermediate release cannot execute the established intake lifecycle;
 - tests, CI, privacy, or auth defaults would need weakening.
 
-Do not restore deleted authority through direct SQL or re-enable an obsolete
-token-role path outside its reviewed compatibility owner.
+Do not restore deleted authority through direct SQL or re-enable any obsolete
+token-role path.
 
 ## Recovery Permission Inventory
 
@@ -706,7 +743,7 @@ token-role path outside its reviewed compatibility owner.
 Conceptual historical “admin override” statements are not operations. No
 recovery permission may erase checker evidence, create a review decision,
 alter an immutable submission, create/alter a contribution record, or bypass
-compensation policy.
+contribution policy.
 
 ## Monitoring And Alerts
 
@@ -814,7 +851,7 @@ The final release owner coordinates a supported API/command drill proving:
 - first human access;
 - one-time bootstrap and concurrent conflict;
 - scoped administrative grants;
-- exact-project submitter/reviewer grants;
+- exact-project submitter/reviewer/adjudicator grants;
 - admin/contributor separation and self-action denial;
 - same-unexpired-token revocation;
 - suspension/reactivation and link revocation;
