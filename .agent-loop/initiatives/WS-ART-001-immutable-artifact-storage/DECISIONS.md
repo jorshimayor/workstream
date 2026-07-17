@@ -102,7 +102,11 @@ access mutation are denied. Static credentials are local/CI MinIO only.
 ## D14 - Clean Cut
 
 The `flow_node` backend value and ArtifactStore v1 contract are removed in
-02A3. Pre-production data may be rebuilt. No backward compatibility is retained.
+02A3. Migration `0024` refuses populated v1 artifact tables before DDL and
+preserves their prior schema and rows. An empty pre-production environment may
+be reprovisioned out of band and authoritative bytes reingested through v2; the
+migration performs no fabricated backfill. No backward compatibility is
+retained.
 
 ## D15 - Route Deployment Claims
 

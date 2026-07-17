@@ -1040,7 +1040,12 @@ Implementation is a clean cut:
   normal submission creation still enters evaluation automatically;
 - no dual write, nullable shadow field, fake verified backfill, fallback
   adapter, compatibility constructor, or second factory remains;
-- pre-production data is rebuilt when authoritative bytes are unavailable.
+- migration `0024` refuses every populated v1 artifact table before DDL and
+  leaves the prior schema and rows unchanged. It performs no automated rebuild
+  or fabricated backfill. Because this is a pre-production clean cut, the
+  Operator must reprovision an empty database/storage namespace out of band and
+  reingest authoritative bytes through v2; records whose authoritative bytes
+  are unavailable are not migrated.
 
 Every migration proves fresh upgrade, prior-head upgrade, populated-state
 preservation or explicit refusal, empty downgrade/re-upgrade, and no artifact

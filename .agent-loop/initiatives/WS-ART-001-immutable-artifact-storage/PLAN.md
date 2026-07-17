@@ -417,8 +417,10 @@ atomicity.
 
 ## Migration Rules
 
-- Pre-production data is rebuilt when an old caller-URI/hash record cannot be
-  converted from authoritative stored bytes.
+- Migration `0024` refuses populated v1 artifact tables before DDL and preserves
+  the prior schema and rows. Pre-production reprovisioning happens out of band
+  into an empty database/storage namespace, followed by v2 reingest from
+  authoritative bytes; unavailable bytes are not fabricated or migrated.
 - `flow_node` configuration is rejected after the clean-cut settings migration.
 - ArtifactStore v1 methods are removed in the same chunk that migrates all
   LocalStorage callers and tests.

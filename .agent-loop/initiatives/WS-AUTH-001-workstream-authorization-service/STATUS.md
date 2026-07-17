@@ -127,7 +127,7 @@ re-review. This chunk activates no route, action, or service admission path.
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
-| `WS-AUTH-001-09A` | In progress | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Converging from merged PR #140; deterministic proof and exact-head re-review required. |
+| `WS-AUTH-001-09A` | Merged | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Fixed service identity foundation merged as `299363a`; signed memory passed. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning after 09A. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
