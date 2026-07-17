@@ -24,6 +24,22 @@ Bearer token
 
 Token roles are never included as product authority.
 
+Sensitive mutations use a second phase after authentication and candidate
+resolution:
+
+```text
+AUTH locks current authority and returns one prepared handle
+-> feature locks canonical rows and recomposes final typed facts
+-> AUTH evaluates once and stages evidence
+-> feature participants flush
+-> route or service command commits once
+```
+
+Fixed services use a structurally separate context resolved from an active
+identity link, active service ActorProfile, immutable `service_identity`, exact
+static ActionId row, and active action. They never enter human first access or
+grant evaluation.
+
 ## Migration strategy
 
 ### Legacy classification and actor identity
@@ -60,6 +76,20 @@ grants and to prove authorization before separately starting `WS-POL-002-04`.
 This initiative does not own or advance PR #90. Task/submission/checker access
 follows after exact-project contributor grants and resource loaders exist.
 
+Project contributor grants are independent immutable `submitter`, `reviewer`,
+and `adjudicator` rows. AUTH-10 removes current `both` and replacement paths
+from typed and PostgreSQL validation in a clean cut. It does not rewrite old
+migrations, convert ambiguous evidence, or let one revocation alter another
+project role or an AdminRoleGrant.
+
+Every cutover chunk enumerates its exact ActionIds before implementation and
+updates current typed/PostgreSQL audit mapping validation in its own migration.
+After AUTH-09A migration `0023`, core reservations are AUTH-10 `0024`, AUTH-11
+`0025`, AUTH-12 `0026`, AUTH-13 `0027`, AUTH-14 `0028`, and AUTH-15 `0029`.
+Blocked cross-initiative additions allocate the next trusted-main migration head
+only when their complete feature contracts become executable. No migration
+number is reserved or allocated while the work remains blocked.
+
 Chunk 06 preserves task claim/start/submission operability through an explicitly
 named `LegacyWorkflowEligibilityCompatibility` adapter. It reads only
 classified legacy workflow metadata, grants no product permission, and is
@@ -90,6 +120,12 @@ system permissions. Requester identity serialized into a job remains audit
 evidence only. Actor-attributed mutations reload current profile and grant
 state before commit.
 
+AUTH-09A's seven artifact identities and eleven exact matrix memberships remain
+the first closed service set. New REV or CON services are not inferred or
+grouped into a catch-all: each owning feature must first publish an exact
+identity-to-ActionId manifest, followed by a reviewed AUTH constraint, matrix,
+provisioning, admission, and cross-service denial extension.
+
 ### Ownership and transaction boundaries
 
 - The existing `AuthVerifier` port/factory evolves in place; there is no second
@@ -106,8 +142,12 @@ state before commit.
   authorization does not duplicate project/task queries.
 - Existing `AuditEvent` and `AuditRepository` evolve into the shared authority
   evidence path; no parallel authority-event ledger is added.
-- The injected AsyncSession is the UnitOfWork boundary. Services own
-  commit/rollback; no generic parallel transaction wrapper is introduced.
+- The injected AsyncSession is the UnitOfWork boundary. The request route or
+  service command owns commit/rollback; AUTH and feature participants flush
+  only. Dependency teardown never commits an arbitrary shared transaction.
+- Sensitive cross-module mutations use the opaque prepared protocol from
+  `WS-AUTH-001-PREP`; AUTH locks authority first but never imports feature
+  repositories or commits feature state.
 
 ### Test preservation rule
 
@@ -138,21 +178,31 @@ proving the same issuer role metadata alone no longer authorizes.
    then implement the minimal AuthorizationService kernel and canonical actor
    self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
-9. Implement actor/link state administration and controlled service actors,
-   then add fixed service runtime admission without activating feature actions.
-10. Implement qualification snapshots and exact-project contributor grants.
-11. Cut project identity, guide, source, and visibility queries over to local
+9. Reconcile merged WS-XINT boundaries and converge AUTH-09A on trusted `main`.
+10. Complete the uninterrupted AUTH-09B through 09E sequence: controlled
+    provisioning, actor/link administration, lifecycle mutations, and fixed
+    service runtime admission without activating feature actions.
+11. Transfer all current ART/REV owner labels to exact AUTH custodians without
+    changing availability, then add the prepared mutation authorization
+    protocol.
+12. Implement qualification snapshots and independent contributor grants scoped
+    to the exact project, including the typed/PostgreSQL clean cut from `both`
+    and replacement evidence.
+13. Cut project identity, guide, source, and visibility queries over to local
    permissions.
-12. Cut project policy mutations, approvals, activation, and setup operations
+14. Cut project policy mutations, approvals, activation, and setup operations
     over to local permissions.
-13. Cut task management, queue, assignment, claim, and start operations over.
-14. Cut submission, pre-submit, checker trigger/read, and task audit visibility
+15. Cut task management, queue, assignment, claim, and start operations over.
+16. Cut submission, pre-submit, checker trigger/read, and task audit visibility
     over.
-15. Cut remaining internal workers over, verify the project-setup cutover,
+17. Cut remaining internal services over, verify the project-setup cutover,
     remove old runtime authority, and enforce a
     deterministic stale-authority scanner.
-16. Complete privacy/observability, full conformance, concurrency, and live
-    proof.
+18. As ART, REV, and CON hidden manifests merge, run only their exact AUTH
+    registration and activation chunks from `ACTIVATION_CUSTODY.md`.
+19. Complete privacy/observability, full conformance, concurrency, and live
+    proof after every exposed protected surface has matching activation and all
+    unimplemented planned actions still deny.
 
 ## Alternatives rejected
 
@@ -162,7 +212,9 @@ proving the same issuer role metadata alone no longer authorizes.
 - Adding a generic policy-language engine.
 - Caching authorization decisions across requests.
 - Changing to `/v1` or exposing permanent `/v1` aliases.
-- Implementing review lifecycle work before auth proof.
+- Activating review lifecycle work before its AUTH, ART, and CON proof. Hidden
+  feature behavior may be built in parallel while the real kernel denies the
+  planned action.
 
 ## Boundaries preserved
 
@@ -214,9 +266,13 @@ git diff --check
 
 The auth live drill must prove first human access, one-time bootstrap, scoped
 admin grants, independent project submitter/reviewer/adjudicator grants,
-separation of duties,
-revocation using the same unexpired token, suspension/reactivation, service
-subject handling, cross-project denial, and final-admin concurrency safety.
+concurrent three-role issue, independent revoke/regrant in every direction,
+wrong-grant denial, submitter-only assignment invalidation, separation of
+duties, revocation using the same unexpired token, transaction-time authority
+loss, suspension/reactivation, fixed-service admission and cross-service denial,
+prepared-handle rollback, action-owner/mapping/availability parity,
+feature-manifest-before-activation ordering, cross-project denial, and
+final-admin concurrency safety.
 
 ## Documentation strategy
 

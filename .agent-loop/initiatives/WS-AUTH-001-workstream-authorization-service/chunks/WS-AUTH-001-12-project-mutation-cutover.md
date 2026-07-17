@@ -1,5 +1,10 @@
 # Chunk Contract: WS-AUTH-001-12 - Project Policy And Setup Mutation Cutover
 
+## Status
+
+Proposed and inactive. Exact ActionIds and migration `0026` mapping/provenance
+delta must be enumerated before implementation; AUTH-PREP is required.
+
 ## Parent initiative
 
 `WS-AUTH-001` - Workstream Authorization Service
@@ -37,13 +42,14 @@ backend/app/modules/projects/**
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/project_setup.py
-backend/alembic/versions/0025_*.py
+backend/alembic/versions/0026_*.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
+.agent-loop/merge-intents/WS-AUTH-001-12.json
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
@@ -62,6 +68,9 @@ unscoped project-manager access or token role fallback
 
 - System-scoped Project Manager can create projects; scoped managers mutate
   only covered projects.
+- Submitter, reviewer, or adjudicator grants never substitute for Project
+  Manager authority, separately or together. Admin roles do not gain project
+  mutation outside their defined system/scoped permissions.
 - Project policy actions use registered permissions and transaction-local grant
   revalidation.
 - Project-guide source ingestion behavior and resource facts remain owned by
@@ -80,12 +89,15 @@ unscoped project-manager access or token role fallback
   declaration.
 - Approval provenance records matched local grant/actor/scope while preserving
   historical bootstrap provenance.
-- Migration `0025` adds matched local grant/scope provenance and ownership
+- Migration `0026` adds exact action-evidence parity plus matched local
+  grant/scope provenance and ownership
   constraints to project policy approval records without rewriting historical
   bootstrap values; prior-head upgrade, downgrade, and re-upgrade preserve
   readable history.
 - Internal setup worker uses explicit system permission and current context.
-- State, idempotency, audit, and invalidation effects remain atomic.
+- Every sensitive mutation consumes AUTH-PREP after locking and recomposing
+  final project facts. State, idempotency, audit, and invalidation effects remain
+  atomic under one route/service-command commit.
 - No project mutation uses `require_any_role()` or token roles.
 - Full backend suite and API contract drill pass.
 
@@ -125,5 +137,6 @@ worker behavior, and strict exclusion of WS-POL product changes.
 
 ## Stop conditions
 
-Stop if project scope cannot be derived canonically or post-submit approval
-behavior must change.
+Stop if project scope cannot be derived canonically, post-submit approval
+behavior must change, wrong project roles must substitute for management, or a
+mutation would bypass AUTH-PREP.
