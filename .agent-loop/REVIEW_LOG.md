@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09A Convergence Started
+
+After PR #140 merged as `d541521` and signed memory stopped, the user explicitly
+started the bounded PR #132 repair. The branch is converging migration `0023`,
+seven fixed service identities, eleven exact static matrix memberships, and
+eight planned actions onto current XINT without restoring feature-owned
+activation, combined-role, token-role, or compatibility authority. Prior
+SHA-bound evidence is stale until deterministic proof and required exact-head
+review repeat.
+
 ## 2026-07-17 - WS-AUTH-001-XINT External Review Repair Passed
 
 CodeRabbit posted nine actionable comments on PR #140. Eight valid contract,

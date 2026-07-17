@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Planning-only AUTH owner response to merged PR #139 |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 convergence and exact-head re-review from merged PR #140 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 remains unmerged/conflicting; converge on merged XINT and re-review after this plan merges |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Reviewed in isolated parallel worktree; pending its own PR and merge |
@@ -82,10 +82,10 @@ output. This authored queue records the separately approved parallel chunks.
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
-merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139.
-`WS-AUTH-001-XINT` now reconciles AUTH's owner plan. AUTH-09A remains open
-and conflicting in PR #132; converge and re-review it only after this planning
-amendment merges. Do not start an AUTH-09 successor or POL-002-04 automatically.
+merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
+and its AUTH owner reconciliation merged through PR #140 as `d541521`.
+AUTH-09A convergence and exact-head re-review are active on PR #132. Do not
+start AUTH-09B or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
