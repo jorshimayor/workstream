@@ -6,7 +6,10 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.interfaces.external_services import ExternalServiceAdapter
+from app.interfaces.external_services import (
+    ExternalServiceAdapter,
+    ExternalServiceAdapterIdentity,
+)
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 
 
@@ -89,6 +92,60 @@ class ArtifactObjectHead:
             raise ValueError("missing artifact head cannot contain object metadata")
         if self.media_type is not None:
             ArtifactCommitment.validate_media_type(self.media_type)
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactStoreNamespaceIdentity:
+    """Provider-owned, non-secret identity for one immutable byte namespace."""
+
+    provider_profile: str
+    descriptor_items: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        """Require a canonical closed descriptor without duplicate keys."""
+        if not self.provider_profile or len(self.provider_profile) > 100:
+            raise ValueError("artifact provider profile is invalid")
+        keys: list[str] = []
+        for item in self.descriptor_items:
+            if (
+                type(item) is not tuple
+                or len(item) != 2
+                or not all(isinstance(value, str) and value for value in item)
+            ):
+                raise ValueError("artifact namespace descriptor is invalid")
+            keys.append(item[0])
+        if keys != sorted(keys) or len(keys) != len(set(keys)):
+            raise ValueError("artifact namespace descriptor is not canonical")
+
+    def as_dict(self) -> dict[str, str]:
+        """Return a fresh JSON-compatible descriptor projection."""
+        return dict(self.descriptor_items)
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactStoreNamespaceClaim:
+    """Proof that PostgreSQL accepted one exact adapter namespace identity."""
+
+    adapter_identity: ExternalServiceAdapterIdentity
+    namespace_identity: ArtifactStoreNamespaceIdentity
+    namespace_fingerprint: str
+
+    def __post_init__(self) -> None:
+        """Reject malformed or mismatched startup proof values."""
+        if type(self.adapter_identity) is not ExternalServiceAdapterIdentity:
+            raise ValueError("artifact namespace adapter identity is invalid")
+        if type(self.namespace_identity) is not ArtifactStoreNamespaceIdentity:
+            raise ValueError("artifact namespace identity is invalid")
+        if (
+            not isinstance(self.namespace_fingerprint, str)
+            or not self.namespace_fingerprint.startswith("sha256:")
+            or len(self.namespace_fingerprint) != 71
+            or any(
+                character not in "0123456789abcdef"
+                for character in self.namespace_fingerprint[7:]
+            )
+        ):
+            raise ValueError("artifact namespace fingerprint is invalid")
 
 
 class ArtifactStoreError(Exception):
@@ -184,3 +241,20 @@ class ArtifactStore(ExternalServiceAdapter, Protocol):
 
     async def head(self, provider_object_ref: str) -> ArtifactObjectHead:
         """Return a safe existing or missing object observation."""
+
+
+class ArtifactStoreBootstrap(ExternalServiceAdapter, Protocol):
+    """Composition-only lifecycle that cannot publish bytes before DB claim."""
+
+    @property
+    def namespace_identity(self) -> ArtifactStoreNamespaceIdentity:
+        """Return the identity of the already-open provider namespace."""
+
+    def initialize_after_namespace_claim(
+        self,
+        claim: ArtifactStoreNamespaceClaim,
+    ) -> ArtifactStore:
+        """Initialize provider layout only after accepting the exact DB claim."""
+
+    def close(self) -> None:
+        """Release provider startup and operation resources."""

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-import os
-import stat
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +17,9 @@ from app.interfaces.artifacts import (
     ArtifactIntegrityError,
     ArtifactPutResult,
     ArtifactStore,
+    ArtifactStoreBootstrap,
     ArtifactStoreError,
+    ArtifactStoreNamespaceClaim,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.models import (
@@ -66,60 +66,27 @@ class ProviderAttemptFence:
 
 def artifact_storage_namespace_spec(
     settings: Settings,
-    store: ArtifactStore,
+    store: ArtifactStoreBootstrap,
 ) -> ArtifactStorageNamespaceSpec:
-    """Build the canonical namespace descriptor without retaining a local path."""
-    return artifact_storage_namespace_spec_for_identity(settings, store.identity)
-
-
-def artifact_storage_namespace_spec_for_identity(
-    settings: Settings,
-    identity: ExternalServiceAdapterIdentity,
-) -> ArtifactStorageNamespaceSpec:
-    """Build a namespace descriptor before constructing its provider adapter."""
+    """Build the canonical descriptor from one already-pinned provider root."""
+    identity = store.identity
     if type(identity) is not ExternalServiceAdapterIdentity:
         raise ArtifactStorageNamespaceError("artifact adapter identity is invalid")
     if settings.artifact_store_backend != identity.provider_key:
         raise ArtifactStorageNamespaceError("artifact adapter identity does not match configuration")
-    if settings.artifact_store_backend != "local" or settings.artifact_local_root is None:
-        raise ArtifactStorageNamespaceError("artifact namespace profile is unavailable")
-
-    root_identity = _local_root_identity(settings.artifact_local_root)
+    namespace_identity = store.namespace_identity
     descriptor: dict[str, object] = {
-        "backend": "local",
+        "backend": settings.artifact_store_backend,
         "adapter": identity.provider_key,
-        "provider_profile": "local-v2",
-        "private_root_identity": root_identity,
-        "private_prefix": "objects/sha256",
+        "provider_profile": namespace_identity.provider_profile,
+        **namespace_identity.as_dict(),
     }
     return ArtifactStorageNamespaceSpec(
-        backend="local",
+        backend=settings.artifact_store_backend,
         adapter=identity.provider_key,
-        provider_profile="local-v2",
+        provider_profile=namespace_identity.provider_profile,
         namespace_descriptor=descriptor,
         namespace_fingerprint=canonical_json_hash(descriptor),
-    )
-
-
-def _local_root_identity(root: object) -> str:
-    """Hash one pre-provisioned private root's path and filesystem identity."""
-    if not isinstance(root, os.PathLike):
-        raise ArtifactStorageNamespaceError("artifact namespace root is invalid")
-    path = os.fspath(root)
-    try:
-        details = os.lstat(path)
-    except OSError:
-        raise ArtifactStorageNamespaceError(
-            "artifact namespace root is unavailable"
-        ) from None
-    if not stat.S_ISDIR(details.st_mode) or stat.S_IMODE(details.st_mode) & 0o077:
-        raise ArtifactStorageNamespaceError("artifact namespace root is unsafe")
-    return canonical_json_hash(
-        {
-            "private_root": os.path.abspath(path),
-            "device": details.st_dev,
-            "inode": details.st_ino,
-        }
     )
 
 
@@ -376,17 +343,22 @@ class ArtifactStorageOrchestrator:
 
 
 async def validate_artifact_storage_namespace_at_startup(
-    identity: ExternalServiceAdapterIdentity,
+    store: ArtifactStoreBootstrap,
     settings: Settings,
-) -> None:
-    """Claim the namespace before constructing a provider adapter."""
-    namespace = artifact_storage_namespace_spec_for_identity(settings, identity)
+) -> ArtifactStoreNamespaceClaim:
+    """Claim one pinned namespace and return its exact initialization proof."""
+    namespace = artifact_storage_namespace_spec(settings, store)
     async with get_session_factory()() as session:
         async with session.begin():
             await _claim_and_validate_storage_namespace(
                 ArtifactRepository(session),
                 namespace,
             )
+    return ArtifactStoreNamespaceClaim(
+        adapter_identity=store.identity,
+        namespace_identity=store.namespace_identity,
+        namespace_fingerprint=namespace.namespace_fingerprint,
+    )
 
 
 async def _claim_and_validate_storage_namespace(

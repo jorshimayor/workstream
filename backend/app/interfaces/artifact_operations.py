@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterable
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 from uuid import UUID
 
 from app.modules.artifacts.sources import ArtifactCommitment
 from app.modules.authorization.runtime import AuthorizationContext
 
 __all__ = (
+    "ArtifactAuditResourceType",
+    "ArtifactBindingResourceType",
     "ArtifactBindingCreateRequest",
     "ArtifactBindingPort",
     "ArtifactMaterializationPort",
@@ -25,6 +27,25 @@ __all__ = (
     "GuideArtifactIngestRequest",
     "ReadyUploadSetRequest",
 )
+
+ArtifactBindingResourceType = Literal[
+    "project",
+    "project_guide",
+    "guide_source_snapshot",
+    "guide_source_snapshot_item",
+    "task",
+    "submission",
+    "checker_run",
+    "review",
+]
+ArtifactAuditResourceType = Literal[
+    "artifact_binding",
+    "artifact_content",
+    "artifact_replica",
+    "artifact_receipt",
+    "artifact_verification_job",
+    "artifact_recovery_attempt",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,7 +217,7 @@ class ArtifactOperatorReadPort(Protocol):
         self,
         *,
         authorization_context: AuthorizationContext,
-        resource_type: str,
+        resource_type: ArtifactBindingResourceType,
         resource_id: UUID,
         cursor: str | None,
         limit: int,
@@ -243,7 +264,7 @@ class ArtifactOperatorReadPort(Protocol):
         self,
         *,
         authorization_context: AuthorizationContext,
-        resource_type: str,
+        resource_type: ArtifactAuditResourceType,
         resource_id: UUID,
         cursor: str | None,
         limit: int,

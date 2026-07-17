@@ -23,9 +23,10 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: publish the evidence-bound `WS-ART-001-02A3` head for GitHub
-  Actions, CodeRabbit, and explicit human review; no later ART chunk starts
-  automatically.
+- Current gate: complete deterministic proof and all nine exact-SHA internal
+  reviewer tracks for the ART-02A3 startup-claim repair, then refresh evidence
+  before publishing PR #141 for GitHub Actions, CodeRabbit, and explicit human
+  review. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -40,9 +41,10 @@
   neither reconciliation PR activates feature behavior.
 - Parallel artifact checkpoint: ART-02A1 merged through PR #127 as `f64a8e5`
   and ART-02A2 merged through PR #129 as `9a04434`. ART-02A3 completed
-  merged-main deterministic repair and internal review; PR #141 is open and
-  awaits refreshed exact-SHA evidence, external checks, and explicit human merge
-  approval. ART-02B1 remains inactive.
+  merged-main deterministic repair. PR #141 is open; the latest startup-claim
+  repair awaits deterministic proof, exact-SHA internal review, refreshed
+  evidence, external checks, and explicit human merge approval. ART-02B1 remains
+  inactive.
 - Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
   #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
   isolated parallel worktree and remains unmerged at this checkpoint.

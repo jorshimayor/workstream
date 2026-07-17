@@ -6,7 +6,7 @@ from app.core.config import Settings
 from app.interfaces.artifacts import (
     ARTIFACT_STORE_CAPABILITY_KEY,
     ArtifactConfigurationError,
-    ArtifactStore,
+    ArtifactStoreBootstrap,
 )
 from app.interfaces.external_services import ExternalServiceAdapterFactory
 from app.modules.artifacts.preparation import (
@@ -15,30 +15,34 @@ from app.modules.artifacts.preparation import (
 )
 
 
-def create_artifact_store(settings: Settings) -> ArtifactStore:
-    """Construct the selected store through one instance-local typed factory.
+def create_artifact_store_bootstrap(settings: Settings) -> ArtifactStoreBootstrap:
+    """Construct the selected store bootstrap through one typed factory.
 
     Args:
         settings: Validated application settings.
 
     Returns:
-        Configured artifact store.
+        Non-mutating configured artifact store bootstrap.
 
     Raises:
         ExternalServiceConfigurationError: If the provider is not registered.
     """
-    from app.adapters.artifacts.local import LocalStorageAdapter
+    from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
 
-    factory = ExternalServiceAdapterFactory[ArtifactStore](ARTIFACT_STORE_CAPABILITY_KEY)
+    factory = ExternalServiceAdapterFactory[ArtifactStoreBootstrap](
+        ARTIFACT_STORE_CAPABILITY_KEY
+    )
 
-    def create_local_store() -> ArtifactStore:
-        """Construct the configured development-only LocalStorage provider."""
+    def create_local_store() -> ArtifactStoreBootstrap:
+        """Pin the configured development-only LocalStorage provider root."""
         if settings.artifact_local_root is None:
             raise ArtifactConfigurationError("local artifact root is not configured")
-        return LocalStorageAdapter(
-            root=settings.artifact_local_root,
-            buffer_bytes=settings.artifact_stream_buffer_bytes,
-            lock_timeout_seconds=settings.artifact_operation_lock_timeout_seconds,
+        return LocalStorageBootstrap(
+            LocalStorageAdapter(
+                root=settings.artifact_local_root,
+                buffer_bytes=settings.artifact_stream_buffer_bytes,
+                lock_timeout_seconds=settings.artifact_operation_lock_timeout_seconds,
+            )
         )
 
     factory.register("local", create_local_store)

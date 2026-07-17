@@ -12,7 +12,7 @@ from typing import cast
 
 import pytest
 
-from app.adapters.artifacts.local import LocalStorageAdapter
+from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
 from app.interfaces.artifacts import (
     ArtifactByteRange,
     ArtifactConfigurationError,
@@ -20,9 +20,11 @@ from app.interfaces.artifacts import (
     ArtifactIntegrityError,
     ArtifactOperationConflictError,
     ArtifactStoreUnavailableError,
+    ArtifactStoreNamespaceClaim,
 )
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 from tests.test_artifact_store_conformance import minted_source
+from tests.artifact_store_helpers import initialize_local_store, local_namespace_claim
 
 
 def object_path(root: Path, provider_object_ref: str) -> Path:
@@ -35,7 +37,7 @@ def test_local_layout_is_private_content_derived_and_v2_only(tmp_path: Path) -> 
 
     async def exercise() -> str:
         root = tmp_path / "artifacts"
-        adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+        adapter = initialize_local_store(root=root, buffer_bytes=2)
         try:
             async with minted_source(tmp_path / "scratch", b"private bytes") as source:
                 return (await adapter.put(source)).provider_object_ref
@@ -67,7 +69,7 @@ def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     root.mkdir(mode=0o700)
     (root / "intents").mkdir(mode=0o700)
     with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
-        LocalStorageAdapter(root=root)
+        initialize_local_store(root=root)
 
     marker_root = tmp_path / "bad-marker"
     marker_root.mkdir(mode=0o700)
@@ -75,7 +77,7 @@ def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     marker.write_bytes(b"wrong\n")
     marker.chmod(0o600)
     with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
-        LocalStorageAdapter(root=marker_root)
+        initialize_local_store(root=marker_root)
 
 
 def test_local_sanitizes_root_initialization_oserror(
@@ -87,7 +89,7 @@ def test_local_sanitizes_root_initialization_oserror(
     def fail(_self: object, _root: Path) -> None:
         raise OSError(secret)
 
-    monkeypatch.setattr(LocalStorageAdapter, "_initialize_root", fail)
+    monkeypatch.setattr(LocalStorageAdapter, "_open_root", fail)
     with pytest.raises(ArtifactConfigurationError) as raised:
         LocalStorageAdapter(root=tmp_path / "artifacts")
     assert secret not in str(raised.value)
@@ -130,9 +132,52 @@ def test_local_rejects_invalid_lock_timeout(tmp_path: Path, timeout: object) -> 
         )
 
 
+def test_local_requires_claim_and_rejects_same_path_replacement_before_mutation(
+    tmp_path: Path,
+) -> None:
+    """Bind layout mutation to the root descriptor admitted by PostgreSQL."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    bootstrap = LocalStorageBootstrap(LocalStorageAdapter(root=root))
+    claim = local_namespace_claim(bootstrap)
+
+    with pytest.raises(ArtifactConfigurationError, match="namespace is not initialized"):
+        asyncio.run(bootstrap._adapter.head("sha256/00/" + "0" * 62))
+
+    original = tmp_path / "original-artifacts"
+    root.rename(original)
+    root.mkdir(mode=0o700)
+    with pytest.raises(ArtifactConfigurationError, match="root changed"):
+        bootstrap.initialize_after_namespace_claim(claim)
+
+    assert list(root.iterdir()) == []
+    assert list(original.iterdir()) == []
+
+
+def test_local_rejects_nonmatching_namespace_claim_before_layout_mutation(
+    tmp_path: Path,
+) -> None:
+    """Do not accept a proof for any fingerprint other than this root."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    bootstrap = LocalStorageBootstrap(LocalStorageAdapter(root=root))
+    claim = local_namespace_claim(bootstrap)
+    mismatched = ArtifactStoreNamespaceClaim(
+        adapter_identity=claim.adapter_identity,
+        namespace_identity=claim.namespace_identity,
+        namespace_fingerprint="sha256:" + "f" * 64,
+    )
+
+    with pytest.raises(ArtifactConfigurationError, match="claim does not match"):
+        bootstrap.initialize_after_namespace_claim(mismatched)
+
+    assert list(root.iterdir()) == []
+    bootstrap.close()
+
+
 @pytest.mark.asyncio
 async def test_v2_operations_reject_unsealed_or_malformed_values(tmp_path: Path) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     try:
         with pytest.raises(ArtifactInputMismatchError, match="not sealed"):
             await adapter.put(cast(CommittedArtifactSource, object()))
@@ -154,7 +199,7 @@ async def test_exact_replay_rejects_corrupt_existing_bytes_without_overwrite(
 ) -> None:
     """Treat a pre-existing deterministic path as untrusted until fully hashed."""
     root = tmp_path / "artifacts"
-    adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+    adapter = initialize_local_store(root=root, buffer_bytes=2)
     try:
         async with minted_source(tmp_path / "scratch", b"expected") as source:
             commitment = source.commitment
@@ -180,7 +225,7 @@ async def test_head_rejects_symlink_nonregular_and_nonprivate_objects(
 ) -> None:
     """Fail closed when private immutable object invariants are violated."""
     root = tmp_path / replacement
-    adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+    adapter = initialize_local_store(root=root, buffer_bytes=2)
     try:
         async with minted_source(tmp_path / f"scratch-{replacement}", b"object") as source:
             result = await adapter.put(source)
@@ -205,7 +250,7 @@ async def test_head_rejects_symlink_nonregular_and_nonprivate_objects(
 async def test_put_rejects_symlink_digest_directory(tmp_path: Path) -> None:
     """Never follow an attacker-controlled digest-prefix directory."""
     root = tmp_path / "artifacts"
-    adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+    adapter = initialize_local_store(root=root, buffer_bytes=2)
     try:
         async with minted_source(tmp_path / "scratch", b"prefix") as source:
             prefix = source.commitment.sha256[7:9]
@@ -229,7 +274,7 @@ async def test_provider_failures_are_sanitized_without_paths_or_causes(
 ) -> None:
     """Do not retain raw provider path details in stable adapter failures."""
     root = tmp_path / "private-secret-root"
-    adapter = LocalStorageAdapter(root=root)
+    adapter = initialize_local_store(root=root)
     provider_object_ref = "sha256/00/" + "0" * 62
 
     def fail(_: str) -> int:
@@ -251,7 +296,7 @@ async def test_put_and_open_map_raw_oserrors_to_sanitized_failures(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
 
     async def fail_lock(_digest: str) -> tuple[object, int]:
         raise OSError("secret lock path")
@@ -287,7 +332,7 @@ async def test_put_defends_against_broken_sealed_source_streams(
     monkeypatch: pytest.MonkeyPatch,
     stream_values: tuple[object, ...],
 ) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    adapter = initialize_local_store(root=tmp_path / "artifacts", buffer_bytes=2)
     try:
         async with minted_source(tmp_path / "scratch", b"content") as source:
             async def broken_stream(_self: CommittedArtifactSource) -> AsyncIterator[object]:
@@ -306,7 +351,7 @@ async def test_put_handles_exclusive_publication_race_as_exact_replay(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    adapter = initialize_local_store(root=tmp_path / "artifacts", buffer_bytes=2)
     original_publish = adapter._publish_exclusive
 
     def publish_then_report_race(temporary_name: str, provider_ref: str) -> bool:
@@ -328,7 +373,7 @@ async def test_head_recovers_crash_after_link_before_temporary_unlink(
 ) -> None:
     """Repair the only valid two-link state while owning the digest lock."""
     root = tmp_path / "artifacts"
-    adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+    adapter = initialize_local_store(root=root, buffer_bytes=2)
     try:
         async with minted_source(tmp_path / "scratch", b"crash recovery") as source:
             commitment = source.commitment
@@ -372,7 +417,7 @@ async def test_head_recovers_crash_after_link_before_temporary_unlink(
 async def test_head_rejects_unowned_second_hard_link(tmp_path: Path) -> None:
     """Never treat an arbitrary external hard link as interrupted publication."""
     root = tmp_path / "artifacts"
-    adapter = LocalStorageAdapter(root=root)
+    adapter = initialize_local_store(root=root)
     try:
         async with minted_source(tmp_path / "scratch", b"linked") as source:
             result = await adapter.put(source)
@@ -392,7 +437,7 @@ async def test_new_digest_prefix_is_fsynced_before_publication(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Persist the new digest-directory entry before acknowledging publication."""
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     fsynced: list[int] = []
     original_fsync = os.fsync
 
@@ -415,7 +460,7 @@ async def test_lost_prefix_creation_race_fsyncs_parent_before_link(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Durably observe a concurrently created prefix before publishing into it."""
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     original_mkdir = os.mkdir
     original_fsync = os.fsync
     original_link = os.link
@@ -462,7 +507,7 @@ async def test_invalid_provider_refs_fail_before_filesystem_io(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Reject traversal and v1 opaque IDs without touching provider storage."""
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     called = False
 
     def unexpected(_: str) -> int:
@@ -487,7 +532,7 @@ async def test_put_cancellation_finishes_write_cleanup_and_lock_release(
 ) -> None:
     """Preserve caller cancellation after off-loop I/O and owned cleanup finish."""
     root = tmp_path / "artifacts"
-    adapter = LocalStorageAdapter(root=root, buffer_bytes=2)
+    adapter = initialize_local_store(root=root, buffer_bytes=2)
     started = threading.Event()
     finish = threading.Event()
     original_write = adapter._write_all
@@ -519,7 +564,7 @@ async def test_put_cancellation_finishes_write_cleanup_and_lock_release(
 @pytest.mark.asyncio
 async def test_lock_wait_has_a_bounded_deadline(tmp_path: Path) -> None:
     """Fail retryably instead of blocking forever behind another writer."""
-    adapter = LocalStorageAdapter(
+    adapter = initialize_local_store(
         root=tmp_path / "artifacts",
         lock_timeout_seconds=0.05,
     )
@@ -539,7 +584,7 @@ async def test_all_operation_file_io_runs_off_the_event_loop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Keep object writes, publication, head, and reads off the event-loop thread."""
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    adapter = initialize_local_store(root=tmp_path / "artifacts", buffer_bytes=2)
     event_loop_thread = threading.get_ident()
     observed_threads: list[int] = []
 
@@ -574,7 +619,7 @@ async def test_open_rejects_truncated_or_oversized_provider_reads(
     monkeypatch: pytest.MonkeyPatch,
     read_result: bytes,
 ) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    adapter = initialize_local_store(root=tmp_path / "artifacts", buffer_bytes=2)
     try:
         async with minted_source(tmp_path / "scratch", b"content") as source:
             result = await adapter.put(source)
@@ -591,7 +636,7 @@ def test_short_write_and_idempotent_cleanup_fail_safely(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     try:
         monkeypatch.setattr(os, "write", lambda *_args: 0)
         with pytest.raises(OSError, match="short artifact write"):
@@ -606,7 +651,7 @@ def test_cleanup_attempts_lock_release_after_temporary_unlink_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Contain cleanup errors without leaking the owned digest lock."""
-    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    adapter = initialize_local_store(root=tmp_path / "artifacts")
     released: list[tuple[object, int]] = []
     lock = (object(), -1)
 

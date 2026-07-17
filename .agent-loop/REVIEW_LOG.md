@@ -2098,3 +2098,23 @@ Deterministic proof passed 81 ART/PostgreSQL/conformance tests plus 177
 preparation/config/application tests with 93.35 percent combined changed-scope
 coverage. The first review results are superseded; fresh exact-SHA review and
 evidence remain mandatory before PR #141 is republished.
+
+## 2026-07-17 - WS-ART-001-02A3 Startup Claim Repair
+
+The first exact-SHA review of `ddc9dad` found a residual LocalStorage startup
+race and a typed-factory sequencing mismatch. Namespace validation observed a
+root before adapter construction, so a same-path replacement could still
+receive layout mutation. Real `s3_compatible` startup also failed in local-only
+namespace preflight instead of through the canonical typed unavailable-provider
+error. Product/ops additionally found that the planned Operator port retained
+free-form resource-type strings and one stale generic method summary.
+
+The repair keeps `ArtifactStore` byte-only and introduces a separate
+composition-only bootstrap. The typed factory first opens and holds the existing
+private root without layout mutation, PostgreSQL admits that exact namespace
+identity, and initialization rechecks the configured path before writing only
+through the held descriptor. `s3_compatible` now fails at the single typed
+factory boundary before namespace work. Operator binding and audit lookups use
+closed resource vocabularies and exact method names. All prior reviewer sessions
+were closed; this candidate requires fresh deterministic coverage and all nine
+exact-SHA reviewer tracks before evidence can be refreshed.

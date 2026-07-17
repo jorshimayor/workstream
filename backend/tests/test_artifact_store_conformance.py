@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-from app.adapters.artifacts.local import LocalStorageAdapter
 from app.interfaces.artifacts import (
     ArtifactByteRange,
     ArtifactObjectHead,
@@ -21,6 +20,8 @@ from app.interfaces.artifacts import (
     ArtifactPutResult,
     ArtifactRangeInvalidError,
     ArtifactStore,
+    ArtifactStoreNamespaceClaim,
+    ArtifactStoreNamespaceIdentity,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.preparation import (
@@ -30,6 +31,7 @@ from app.modules.artifacts.preparation import (
     ArtifactScratchManager,
 )
 from app.modules.artifacts.sources import CommittedArtifactSource
+from tests.artifact_store_helpers import initialize_local_store
 
 
 async def byte_stream(*chunks: bytes) -> AsyncIterator[bytes]:
@@ -270,7 +272,7 @@ class TestLocalArtifactStoreConformance(ArtifactStoreConformanceTests):
 
     def make_store(self, root: Path) -> ArtifactStore:
         """Construct one small-buffer local provider."""
-        return LocalStorageAdapter(root=root, buffer_bytes=2)
+        return initialize_local_store(root, buffer_bytes=2)
 
 
 def test_v2_value_types_are_immutable_and_range_values_are_exact() -> None:
@@ -288,6 +290,45 @@ def test_v2_value_types_are_immutable_and_range_values_are_exact() -> None:
         ArtifactPutResult("sha256/00/" + "0" * 62, replayed=1)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="put observation"):
         ArtifactPutObservation("sha256/00/" + "0" * 62, committed=1)  # type: ignore[arg-type]
+
+
+def test_namespace_startup_values_are_closed_and_immutable() -> None:
+    """Reject malformed provider descriptors and namespace admission proofs."""
+    identity = ArtifactStoreNamespaceIdentity(
+        provider_profile="local-v2",
+        descriptor_items=(("private_prefix", "objects/sha256"),),
+    )
+    claim = ArtifactStoreNamespaceClaim(
+        adapter_identity=ExternalServiceAdapterIdentity("artifact_store", "local"),
+        namespace_identity=identity,
+        namespace_fingerprint="sha256:" + "0" * 64,
+    )
+    with pytest.raises(FrozenInstanceError):
+        claim.namespace_fingerprint = "sha256:" + "1" * 64  # type: ignore[misc]
+    assert identity.as_dict() == {"private_prefix": "objects/sha256"}
+
+    for profile, items in (
+        ("", (("private_prefix", "objects/sha256"),)),
+        ("local-v2", (("z", "1"), ("a", "2"))),
+        ("local-v2", (("a", "1"), ("a", "2"))),
+        ("local-v2", (("", "1"),)),
+    ):
+        with pytest.raises(ValueError):
+            ArtifactStoreNamespaceIdentity(profile, items)
+    for kwargs in (
+        {"adapter_identity": object()},
+        {"namespace_identity": object()},
+        {"namespace_fingerprint": "sha256:bad"},
+        {"namespace_fingerprint": "sha256:" + "G" * 64},
+    ):
+        values = {
+            "adapter_identity": claim.adapter_identity,
+            "namespace_identity": identity,
+            "namespace_fingerprint": claim.namespace_fingerprint,
+            **kwargs,
+        }
+        with pytest.raises(ValueError):
+            ArtifactStoreNamespaceClaim(**values)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="existence observation"):
         ArtifactObjectHead("sha256/00/" + "0" * 62, exists=1)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="exact byte count"):

@@ -27,6 +27,10 @@ CANONICAL_REQUESTS = {
     "CheckerOutputArtifactRequest",
     "ArtifactRecoveryRequest",
 }
+CANONICAL_TYPE_ALIASES = {
+    "ArtifactAuditResourceType",
+    "ArtifactBindingResourceType",
+}
 RAW_TYPES = {"ArtifactStore", "ArtifactStorageOrchestrator"}
 PROVIDER_METHODS = {"put", "observe_put_result", "open", "head"}
 CONCRETE_ADAPTER_MODULES = {
@@ -179,7 +183,7 @@ def test_artifact_operations_exports_only_canonical_closed_contracts() -> None:
         for element in node.value.elts
         if isinstance(element, ast.Constant) and isinstance(element.value, str)
     }
-    assert exported_names == CLOSED_PORTS | CANONICAL_REQUESTS
+    assert exported_names == CLOSED_PORTS | CANONICAL_REQUESTS | CANONICAL_TYPE_ALIASES
 
     forbidden_fields = {
         "adapter",
@@ -215,6 +219,19 @@ def test_artifact_operations_exports_only_canonical_closed_contracts() -> None:
         "get_recovery_attempt",
         "list_audit_events",
         "admission_usage",
+    }
+    resource_type_annotations = {
+        annotation.id
+        for method in operator_read.body
+        if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef))
+        for argument in method.args.kwonlyargs
+        if argument.arg == "resource_type"
+        for annotation in [argument.annotation]
+        if isinstance(annotation, ast.Name)
+    }
+    assert resource_type_annotations == {
+        "ArtifactAuditResourceType",
+        "ArtifactBindingResourceType",
     }
 
 

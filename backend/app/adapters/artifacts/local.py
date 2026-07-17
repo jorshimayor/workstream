@@ -35,9 +35,12 @@ from app.interfaces.artifacts import (
     ArtifactPutResult,
     ArtifactRangeInvalidError,
     ArtifactStoreError,
+    ArtifactStoreNamespaceClaim,
+    ArtifactStoreNamespaceIdentity,
     ArtifactStoreUnavailableError,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
+from app.core.hashing import canonical_json_hash
 from app.modules.artifacts.preparation import HARD_MAXIMUM_ARTIFACT_BYTES
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 
@@ -47,6 +50,36 @@ _LAYOUT_MARKER = ".workstream-artifact-store-v2"
 _LAYOUT_MARKER_BYTES = b"workstream-artifact-store-v2\n"
 _PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
 _TEMPORARY_NAME = re.compile(r"^\.put\.[0-9a-f]{32}\.tmp$")
+
+
+class LocalStorageBootstrap:
+    """Composition-only namespace lifecycle for one pinned local store."""
+
+    def __init__(self, adapter: LocalStorageAdapter) -> None:
+        if type(adapter) is not LocalStorageAdapter:
+            raise ValueError("local artifact bootstrap adapter is invalid")
+        self._adapter = adapter
+
+    @property
+    def identity(self) -> ExternalServiceAdapterIdentity:
+        """Return the canonical artifact-store/local adapter identity."""
+        return self._adapter.identity
+
+    @property
+    def namespace_identity(self) -> ArtifactStoreNamespaceIdentity:
+        """Return the namespace identity of the pinned local root."""
+        return self._adapter._namespace_identity
+
+    def initialize_after_namespace_claim(
+        self,
+        claim: ArtifactStoreNamespaceClaim,
+    ) -> LocalStorageAdapter:
+        """Return the byte store only after exact namespace admission."""
+        return self._adapter._initialize_after_namespace_claim(claim)
+
+    def close(self) -> None:
+        """Release the pinned local store resources."""
+        self._adapter.close()
 
 
 class LocalStorageAdapter:
@@ -59,7 +92,7 @@ class LocalStorageAdapter:
         buffer_bytes: int = 1024 * 1024,
         lock_timeout_seconds: float = 1800.0,
     ) -> None:
-        """Create or validate one private v2-only local storage root."""
+        """Pin one pre-provisioned private root without mutating its layout."""
         if type(buffer_bytes) is not int or not 1 <= buffer_bytes <= 1024 * 1024:
             raise ValueError("artifact buffer must be between 1 byte and 1 MiB")
         if (
@@ -76,8 +109,12 @@ class LocalStorageAdapter:
         self._sha256_fd = -1
         self._tmp_fd = -1
         self._locks_fd = -1
+        self._configured_root = os.path.abspath(os.fspath(root)) if isinstance(root, Path) else ""
+        self._root_device = -1
+        self._root_inode = -1
+        self._initialized = False
         try:
-            self._initialize_root(root)
+            self._open_root(root)
         except (ArtifactConfigurationError, ValueError):
             self.close()
             raise
@@ -90,6 +127,58 @@ class LocalStorageAdapter:
         """Return the canonical artifact-store/local adapter identity."""
         return _IDENTITY
 
+    @property
+    def _namespace_identity(self) -> ArtifactStoreNamespaceIdentity:
+        """Return the canonical identity of the pinned local namespace."""
+        root_identity = canonical_json_hash(
+            {
+                "private_root": self._configured_root,
+                "device": self._root_device,
+                "inode": self._root_inode,
+            }
+        )
+        return ArtifactStoreNamespaceIdentity(
+            provider_profile="local-v2",
+            descriptor_items=(
+                ("private_prefix", "objects/sha256"),
+                ("private_root_identity", root_identity),
+            ),
+        )
+
+    def _initialize_after_namespace_claim(
+        self,
+        claim: ArtifactStoreNamespaceClaim,
+    ) -> LocalStorageAdapter:
+        """Create or validate layout through the same root accepted by PostgreSQL."""
+        if (
+            type(claim) is not ArtifactStoreNamespaceClaim
+            or claim.adapter_identity != self.identity
+            or claim.namespace_identity != self._namespace_identity
+            or claim.namespace_fingerprint
+            != canonical_json_hash(
+                {
+                    "backend": "local",
+                    "adapter": self.identity.provider_key,
+                    "provider_profile": self._namespace_identity.provider_profile,
+                    **self._namespace_identity.as_dict(),
+                }
+            )
+        ):
+            raise ArtifactConfigurationError("artifact namespace claim does not match provider")
+        if self._initialized:
+            raise ArtifactConfigurationError("local artifact storage is already initialized")
+        try:
+            self._assert_pinned_root_is_current()
+            self._initialize_layout()
+            self._initialized = True
+            return self
+        except (ArtifactConfigurationError, ValueError):
+            self.close()
+            raise
+        except OSError:
+            self.close()
+            raise ArtifactConfigurationError("local artifact storage is unavailable") from None
+
     def close(self) -> None:
         """Release pinned private directory descriptors."""
         for attribute in ("_locks_fd", "_tmp_fd", "_sha256_fd", "_root_fd"):
@@ -100,6 +189,7 @@ class LocalStorageAdapter:
                 except OSError:
                     pass
                 setattr(self, attribute, -1)
+        self._initialized = False
 
     def __del__(self) -> None:
         """Best-effort descriptor cleanup."""
@@ -107,6 +197,7 @@ class LocalStorageAdapter:
 
     async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
         """Publish sealed bytes exclusively or verify an exact immutable replay."""
+        self._require_initialized()
         if type(source) is not CommittedArtifactSource:
             raise ArtifactInputMismatchError("artifact source is not sealed")
         commitment = source.commitment
@@ -196,6 +287,7 @@ class LocalStorageAdapter:
         commitment: ArtifactCommitment,
     ) -> ArtifactPutObservation:
         """Read and validate the complete deterministic object when it exists."""
+        self._require_initialized()
         if type(commitment) is not ArtifactCommitment:
             raise ArtifactOperationConflictError("artifact commitment is invalid")
         provider_object_ref = self._provider_object_ref(commitment)
@@ -211,6 +303,7 @@ class LocalStorageAdapter:
         byte_range: ArtifactByteRange | None = None,
     ) -> AsyncIterator[bytes]:
         """Stream a full object or range through bounded off-loop reads."""
+        self._require_initialized()
         self._parse_provider_object_ref(provider_object_ref)
         if byte_range is not None and type(byte_range) is not ArtifactByteRange:
             raise ArtifactOperationConflictError("artifact byte range is invalid")
@@ -263,6 +356,7 @@ class LocalStorageAdapter:
 
     async def head(self, provider_object_ref: str) -> ArtifactObjectHead:
         """Return an existing or missing observation without exposing paths."""
+        self._require_initialized()
         self._parse_provider_object_ref(provider_object_ref)
         try:
             try:
@@ -351,18 +445,36 @@ class LocalStorageAdapter:
             await await_cancellation_resistant(asyncio.to_thread(os.close, descriptor))
             raise cancellation
 
-    def _initialize_root(self, configured_root: Path) -> None:
-        """Initialize only an empty or already-valid v2 private root."""
+    def _open_root(self, configured_root: Path) -> None:
+        """Open and pin one existing owner-private root without mutation."""
         if not isinstance(configured_root, Path):
             raise ValueError("artifact root must be a path")
         if configured_root.is_symlink():
             raise ArtifactConfigurationError("local artifact root is unsafe")
-        configured_root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self._root_fd = os.open(
             configured_root,
             os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
         )
         self._assert_private_directory(self._root_fd)
+        details = os.fstat(self._root_fd)
+        self._root_device = details.st_dev
+        self._root_inode = details.st_ino
+
+    def _assert_pinned_root_is_current(self) -> None:
+        """Reject same-path replacement before any layout mutation."""
+        try:
+            current = os.lstat(self._configured_root)
+        except OSError:
+            raise ArtifactConfigurationError("local artifact root changed after validation") from None
+        if (
+            not stat.S_ISDIR(current.st_mode)
+            or current.st_dev != self._root_device
+            or current.st_ino != self._root_inode
+        ):
+            raise ArtifactConfigurationError("local artifact root changed after validation")
+
+    def _initialize_layout(self) -> None:
+        """Initialize only an empty or already-valid v2 layout on the pinned root."""
 
         entries = set(os.listdir(self._root_fd))
         if _LAYOUT_MARKER not in entries:
@@ -393,6 +505,11 @@ class LocalStorageAdapter:
             os.close(objects_fd)
         self._tmp_fd = self._ensure_directory(self._root_fd, "tmp")
         self._locks_fd = self._ensure_directory(self._root_fd, "locks")
+
+    def _require_initialized(self) -> None:
+        """Reject provider operations before PostgreSQL namespace admission."""
+        if not self._initialized:
+            raise ArtifactConfigurationError("artifact store namespace is not initialized")
 
     def _validate_marker(self) -> None:
         """Require the exact private v2 layout marker."""

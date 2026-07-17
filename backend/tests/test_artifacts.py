@@ -16,16 +16,18 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.adapters.artifacts.local import LocalStorageAdapter
+from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.interfaces.artifacts import (
     ArtifactByteRange,
+    ArtifactConfigurationError,
     ArtifactInputMismatchError,
     ArtifactObjectHead,
     ArtifactPutObservation,
     ArtifactPutResult,
     ArtifactStoreUnavailableError,
+    ArtifactStoreNamespaceIdentity,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.models import (
@@ -54,6 +56,7 @@ from app.modules.artifacts.service import (
 import app.modules.artifacts.service as artifact_service_module
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 from app.modules.projects.models import Project
+from tests.artifact_store_helpers import local_namespace_claim
 
 
 def _alembic_config() -> Config:
@@ -225,12 +228,16 @@ async def test_put_acknowledgement_stops_at_pending_verification(
     content = b"artifact-v2"
     engine = create_async_engine(artifact_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
-    store = LocalStorageAdapter(root=tmp_path / "store", buffer_bytes=2)
+    settings = _settings(tmp_path)
+    bootstrap = LocalStorageBootstrap(
+        LocalStorageAdapter(root=tmp_path / "store", buffer_bytes=2)
+    )
+    namespace = artifact_storage_namespace_spec(settings, bootstrap)
+    store = bootstrap.initialize_after_namespace_claim(local_namespace_claim(bootstrap))
     try:
         async with _minted_source(tmp_path / "scratch", content) as source:
             async with factory() as session:
                 item_id = await _seed_reserved_item(session, source.commitment)
-                namespace = artifact_storage_namespace_spec(_settings(tmp_path), store)
                 result = await ArtifactStorageOrchestrator(
                     session, store, namespace
                 ).put_reserved_item(item_id, source)
@@ -283,6 +290,13 @@ class _UnavailableStore:
     """Count provider calls and fail with one sanitized retryable error."""
 
     identity = ExternalServiceAdapterIdentity("artifact_store", "local")
+    namespace_identity = ArtifactStoreNamespaceIdentity(
+        provider_profile="local-v2",
+        descriptor_items=(
+            ("private_prefix", "objects/sha256"),
+            ("private_root_identity", "sha256:" + "0" * 64),
+        ),
+    )
 
     def __init__(self) -> None:
         self.put_calls = 0
@@ -749,45 +763,31 @@ def test_namespace_descriptor_is_canonical_and_does_not_store_local_path(
 
 def test_namespace_descriptor_changes_when_local_root_is_replaced(tmp_path: Path) -> None:
     settings = _settings(tmp_path)
-    store = _UnavailableStore()
-    original = artifact_storage_namespace_spec(settings, store)
+    first_store = LocalStorageBootstrap(LocalStorageAdapter(root=settings.artifact_local_root))
+    original = artifact_storage_namespace_spec(settings, first_store)
+    first_store.close()
 
     root = settings.artifact_local_root
     assert root is not None
     root.rename(tmp_path / "replaced-store")
     root.mkdir(mode=0o700)
 
-    replacement = artifact_storage_namespace_spec(settings, store)
+    replacement_store = LocalStorageBootstrap(LocalStorageAdapter(root=root))
+    replacement = artifact_storage_namespace_spec(settings, replacement_store)
+    replacement_store.close()
     assert replacement.namespace_descriptor != original.namespace_descriptor
     assert replacement.namespace_fingerprint != original.namespace_fingerprint
 
 
-def test_namespace_descriptor_requires_preprovisioned_private_root(tmp_path: Path) -> None:
-    settings = Settings(
-        environment="test",
-        artifact_store_backend="local",
-        artifact_local_root=tmp_path / "missing-store",
-        artifact_scratch_root=tmp_path / "scratch",
-    )
-    with pytest.raises(ArtifactStorageNamespaceError, match="root is unavailable"):
-        artifact_storage_namespace_spec(settings, _UnavailableStore())
+def test_store_bootstrap_requires_preprovisioned_private_root(tmp_path: Path) -> None:
+    with pytest.raises(ArtifactConfigurationError, match="storage is unavailable"):
+        LocalStorageAdapter(root=tmp_path / "missing-store")
 
 
-def test_namespace_spec_rejects_adapter_drift_and_nonlocal_profile(tmp_path: Path) -> None:
+def test_namespace_spec_rejects_adapter_drift(tmp_path: Path) -> None:
     local_store = _UnavailableStore()
     with pytest.raises(ArtifactStorageNamespaceError, match="identity"):
         artifact_storage_namespace_spec(Settings(), local_store)
-
-    class _S3Store(_UnavailableStore):
-        identity = ExternalServiceAdapterIdentity("artifact_store", "s3_compatible")
-
-    s3_settings = Settings(
-        environment="test",
-        artifact_store_backend="s3_compatible",
-        artifact_scratch_root=tmp_path / "scratch",
-    )
-    with pytest.raises(ArtifactStorageNamespaceError, match="profile"):
-        artifact_storage_namespace_spec(s3_settings, _S3Store())
 
 
 @pytest.mark.asyncio
@@ -904,9 +904,10 @@ async def test_startup_namespace_validation_uses_canonical_session_factory(
         ensured,
     )
 
-    await validate_artifact_storage_namespace_at_startup(store.identity, settings)
+    claim = await validate_artifact_storage_namespace_at_startup(store, settings)
     assert isinstance(ensured.await_args.args[1], ArtifactStorageNamespaceSpec)
     assert ensured.await_args.args[0] is repository
+    assert claim.namespace_identity == store.namespace_identity
 
 
 def test_models_remove_v1_provider_retention_and_receipt_fields() -> None:

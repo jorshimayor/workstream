@@ -52,7 +52,11 @@ configuration. No compatibility path remains after this PR.
   writers prove one winner and one pre-I/O failure. Every replica references it.
   LocalStorage startup requires a pre-provisioned owner-private durable root and
   hashes its normalized path plus filesystem identity, so same-path replacement
-  fails before adapter layout mutation. v0.1 uses one deployment fence, not a
+  fails before adapter layout mutation. One composition-only bootstrap pins the
+  root without layout mutation, PostgreSQL returns a claim for that exact
+  namespace identity, and initialization rechecks the path before writing
+  through the pinned descriptor. The byte-only `ArtifactStore` does not expose
+  this startup lifecycle. v0.1 uses one deployment fence, not a
   per-operation router or hot switch;
 - upload state includes `replay_required`; provider acknowledgement creates
   `stored_pending_verification` and `pending/unknown/unknown`, never bindability;

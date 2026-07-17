@@ -10,7 +10,7 @@ import pytest
 from pydantic import SecretStr, ValidationError
 from pydantic_settings import BaseSettings
 
-from app.adapters.artifacts import create_artifact_store
+from app.adapters.artifacts import create_artifact_store_bootstrap
 from app.adapters.auth.flow import FlowAuthVerifier
 from app.api.deps.auth import get_application_auth_verifier
 from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
@@ -503,18 +503,19 @@ def test_local_artifact_settings_and_factory(tmp_path: Path) -> None:
         artifact_stream_buffer_bytes=64,
         artifact_operation_lock_timeout_seconds=17,
     )
-    adapter = create_artifact_store(settings)
+    (tmp_path / "artifacts").mkdir(mode=0o700)
+    adapter = create_artifact_store_bootstrap(settings)
     assert adapter.identity.capability_key == "artifact_store"
     assert adapter.identity.provider_key == "local"
-    assert adapter._lock_timeout_seconds == 17
+    assert adapter._adapter._lock_timeout_seconds == 17
     adapter.close()
     incomplete = settings.model_copy(update={"artifact_local_root": None})
     with pytest.raises(UnknownExternalServiceProviderError) as disabled:
-        create_artifact_store(Settings())
+        create_artifact_store_bootstrap(Settings())
     assert disabled.value.identity is not None
     assert disabled.value.identity.provider_key == "disabled"
     with pytest.raises(ExternalServiceConfigurationError):
-        create_artifact_store(incomplete)
+        create_artifact_store_bootstrap(incomplete)
 
 
 def test_artifact_scratch_settings_are_bounded_and_separate(tmp_path) -> None:
@@ -558,7 +559,7 @@ def test_s3_compatible_factory_fails_typed_until_adapter_chunk(tmp_path: Path) -
         artifact_scratch_root=tmp_path / "scratch",
     )
     with pytest.raises(UnknownExternalServiceProviderError) as caught:
-        create_artifact_store(settings)
+        create_artifact_store_bootstrap(settings)
 
     assert caught.value.identity is not None
     assert caught.value.identity.provider_key == "s3_compatible"

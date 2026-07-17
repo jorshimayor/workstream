@@ -207,10 +207,16 @@ For LocalStorage, the durable root must already exist with owner-private
 permissions before application startup. Its descriptor stores only a hash over
 the normalized path plus filesystem device/inode identity. Replacing or
 remounting that root at the same configured path therefore changes the
-fingerprint and fails before adapter construction can create layout files.
+fingerprint. The typed factory constructs a non-mutating bootstrap that pins
+the root descriptor. PostgreSQL admits that exact namespace identity, then the
+bootstrap rechecks that the configured path still names the pinned descriptor
+before it creates layout files through that descriptor. Replacement before
+initialization fails without mutating either root; replacement after the final
+check cannot redirect descriptor-relative writes into the replacement root.
 
-Startup and every provider operation transactionally insert-or-validate this
-singleton before I/O. A concurrent first writer claims the namespace; a loser
+Startup inspects and pins only the configured namespace identity before the
+transaction. It and every provider operation transactionally insert-or-validate
+the singleton before layout mutation or artifact-byte I/O. A concurrent first writer claims the namespace; a loser
 with a different fingerprint fails before provider access. Replicas and put
 attempts reference the namespace row and fingerprint. A populated deployment
 cannot change it without a separately reviewed maintenance migration.
@@ -339,7 +345,8 @@ ArtifactBindingPort.bind_verified(ArtifactBindingCreateRequest)
 ArtifactMaterializationPort.materialize_ready_upload_set(ReadyUploadSetRequest)
 ArtifactMaterializationPort.materialize_bindings(BindingMaterializationRequest)
 CheckerArtifactOutputPort.store(CheckerOutputArtifactRequest)
-ArtifactOperatorReadPort.list/get/admission_usage(...)
+ArtifactOperatorReadPort.list_bindings/list_replicas/list_receipts/
+get_verification_job/get_recovery_attempt/list_audit_events/admission_usage(...)
 ArtifactOperatorRecoveryPort.retry_verification(ArtifactRecoveryRequest)
 ```
 
@@ -359,9 +366,18 @@ admission-usage request contains only bounded scope filters and pagination. It
 returns current reserved/completed byte usage and configured limits; it cannot
 release charges or mutate capacity.
 
+The binding lookup resource vocabulary is exactly `project`, `project_guide`,
+`guide_source_snapshot`, `guide_source_snapshot_item`, `task`, `submission`,
+`checker_run`, or `review`. The audit resource vocabulary is exactly
+`artifact_binding`, `artifact_content`, `artifact_replica`, `artifact_receipt`,
+`artifact_verification_job`, or `artifact_recovery_attempt`. Adding a product or
+artifact resource requires an explicit contract change; callers cannot submit
+an unregistered string.
+
 None accepts an adapter, provider object reference, storage namespace, caller-
-assembled quota scopes, arbitrary resource type, or caller-selected server
-content ID. The implementation resolves canonical relationships, authorization
+assembled quota scopes, a resource type outside the closed binding/audit
+vocabularies, or caller-selected server content ID. The implementation resolves
+canonical relationships, authorization
 resources, producer identity, and admission scopes inside artifact
 orchestration. The internal orchestrator is not itself a product capability.
 Operator routes receive the read or recovery capability they require, never the

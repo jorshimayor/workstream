@@ -11,6 +11,7 @@ import pytest
 from app.adapters.artifacts import artifact_preparation_limits
 from app.core.config import Settings, get_settings
 from app.main import create_app
+from app.interfaces.external_services import UnknownExternalServiceProviderError
 
 
 def _enabled_settings(tmp_path: Path, **changes: object) -> Settings:
@@ -31,6 +32,11 @@ class _Store:
     def close(self) -> None:
         self.events.append("close")
 
+    def initialize_after_namespace_claim(self, claim: object) -> _Store:
+        assert claim == "claim"
+        self.events.append("initialize")
+        return self
+
 
 async def test_enabled_startup_validates_namespace_then_cleans_before_yield(
     monkeypatch: pytest.MonkeyPatch,
@@ -41,9 +47,11 @@ async def test_enabled_startup_validates_namespace_then_cleans_before_yield(
     events: list[str] = []
     store = _Store(events)
 
-    async def validate(settings: Settings) -> None:
+    async def validate(settings: Settings, candidate: object) -> str:
         assert settings.artifact_store_backend == "local"
+        assert candidate is store
         events.append("namespace")
+        return "claim"
 
     def create(_settings: Settings) -> _Store:
         events.append("construct")
@@ -54,7 +62,7 @@ async def test_enabled_startup_validates_namespace_then_cleans_before_yield(
         events.append("cleanup")
         return 0
 
-    monkeypatch.setattr(main_module, "create_artifact_store", create)
+    monkeypatch.setattr(main_module, "create_artifact_store_bootstrap", create)
     monkeypatch.setattr(main_module, "_validate_artifact_storage_namespace_at_startup", validate)
     monkeypatch.setattr(main_module, "cleanup_stale_artifact_scratch", cleanup)
     app = create_app(_enabled_settings(tmp_path))
@@ -62,7 +70,7 @@ async def test_enabled_startup_validates_namespace_then_cleans_before_yield(
     async with app.router.lifespan_context(app):
         events.append("yield")
 
-    assert events == ["namespace", "construct", "cleanup", "close", "yield"]
+    assert events == ["construct", "namespace", "initialize", "cleanup", "close", "yield"]
 
 
 async def test_production_auth_validation_precedes_artifact_startup(
@@ -83,9 +91,11 @@ async def test_production_auth_validation_precedes_artifact_startup(
     def validate_auth(_settings: Settings) -> None:
         events.append("auth")
 
-    async def validate_namespace(candidate_settings: Settings) -> None:
+    async def validate_namespace(candidate_settings: Settings, candidate: object) -> str:
         assert candidate_settings is settings
+        assert candidate is store
         events.append("namespace")
+        return "claim"
 
     def create(_settings: Settings) -> _Store:
         events.append("construct")
@@ -96,7 +106,7 @@ async def test_production_auth_validation_precedes_artifact_startup(
         return 0
 
     monkeypatch.setattr(main_module, "build_auth_verifier", validate_auth)
-    monkeypatch.setattr(main_module, "create_artifact_store", create)
+    monkeypatch.setattr(main_module, "create_artifact_store_bootstrap", create)
     monkeypatch.setattr(
         main_module,
         "_validate_artifact_storage_namespace_at_startup",
@@ -107,7 +117,15 @@ async def test_production_auth_validation_precedes_artifact_startup(
     async with app.router.lifespan_context(app):
         events.append("yield")
 
-    assert events == ["auth", "namespace", "construct", "cleanup", "close", "yield"]
+    assert events == [
+        "auth",
+        "construct",
+        "namespace",
+        "initialize",
+        "cleanup",
+        "close",
+        "yield",
+    ]
 
 
 async def test_disabled_startup_does_not_construct_or_clean_artifacts(
@@ -118,12 +136,32 @@ async def test_disabled_startup_does_not_construct_or_clean_artifacts(
     def unexpected(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("disabled artifact storage activated")
 
-    monkeypatch.setattr(main_module, "create_artifact_store", unexpected)
+    monkeypatch.setattr(main_module, "create_artifact_store_bootstrap", unexpected)
     monkeypatch.setattr(main_module, "cleanup_stale_artifact_scratch", unexpected)
     app = create_app(Settings(environment="test"))
 
     async with app.router.lifespan_context(app):
         pass
+
+
+async def test_unimplemented_s3_startup_fails_through_typed_factory(
+    tmp_path: Path,
+) -> None:
+    """Keep real startup on the one ADR 0014 unavailable-provider path."""
+    app = create_app(
+        Settings(
+            environment="test",
+            artifact_store_backend="s3_compatible",
+            artifact_scratch_root=tmp_path / "scratch",
+        )
+    )
+
+    with pytest.raises(UnknownExternalServiceProviderError) as caught:
+        async with app.router.lifespan_context(app):
+            pass
+
+    assert caught.value.identity is not None
+    assert caught.value.identity.provider_key == "s3_compatible"
 
 
 async def test_namespace_failure_is_fail_closed_and_skips_cleanup(
@@ -133,17 +171,21 @@ async def test_namespace_failure_is_fail_closed_and_skips_cleanup(
     import app.main as main_module
 
     events: list[str] = []
-    async def fail_namespace(_settings: Settings) -> None:
+    store = _Store(events)
+
+    async def fail_namespace(_settings: Settings, candidate: object) -> None:
+        assert candidate is store
         events.append("namespace")
         raise RuntimeError("namespace mismatch")
 
-    def unexpected_store(_settings: Settings) -> None:
-        raise AssertionError("provider constructed before namespace validation")
+    def create(_settings: Settings) -> _Store:
+        events.append("construct")
+        return store
 
     async def unexpected_cleanup(_settings: Settings) -> int:
         raise AssertionError("cleanup ran after namespace failure")
 
-    monkeypatch.setattr(main_module, "create_artifact_store", unexpected_store)
+    monkeypatch.setattr(main_module, "create_artifact_store_bootstrap", create)
     monkeypatch.setattr(
         main_module,
         "_validate_artifact_storage_namespace_at_startup",
@@ -156,7 +198,7 @@ async def test_namespace_failure_is_fail_closed_and_skips_cleanup(
         async with app.router.lifespan_context(app):
             pass
 
-    assert events == ["namespace"]
+    assert events == ["construct", "namespace", "close"]
     assert not (tmp_path / "store").exists()
 
 
@@ -169,8 +211,10 @@ async def test_cleanup_failure_prevents_startup_and_closes_store(
     events: list[str] = []
     store = _Store(events)
 
-    async def validate(_settings: Settings) -> None:
+    async def validate(_settings: Settings, candidate: object) -> str:
+        assert candidate is store
         events.append("namespace")
+        return "claim"
 
     def create(_settings: Settings) -> _Store:
         events.append("construct")
@@ -180,7 +224,7 @@ async def test_cleanup_failure_prevents_startup_and_closes_store(
         events.append("cleanup")
         raise RuntimeError("cleanup failed")
 
-    monkeypatch.setattr(main_module, "create_artifact_store", create)
+    monkeypatch.setattr(main_module, "create_artifact_store_bootstrap", create)
     monkeypatch.setattr(main_module, "_validate_artifact_storage_namespace_at_startup", validate)
     monkeypatch.setattr(main_module, "cleanup_stale_artifact_scratch", fail_cleanup)
     app = create_app(_enabled_settings(tmp_path))
@@ -189,7 +233,7 @@ async def test_cleanup_failure_prevents_startup_and_closes_store(
         async with app.router.lifespan_context(app):
             pass
 
-    assert events == ["namespace", "construct", "cleanup", "close"]
+    assert events == ["construct", "namespace", "initialize", "cleanup", "close"]
 
 
 def test_preparation_limit_mapping_uses_every_canonical_setting(tmp_path: Path) -> None:
