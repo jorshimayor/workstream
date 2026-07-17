@@ -100,8 +100,9 @@ outcomes.
 1. Approved provider direction: LocalStorage for development, MinIO for local/CI
    conformance, AWS S3 for production; Flow Node remains deferred.
 2. ADR 0010 is retained with the clarified one-Project-Guide task pipeline,
-   same-version keep, rebase to any different currently active version including
-   backward rebase, Task Context visibility, and no reviewer-side guide.
+   exact stamped guide identity/activation-sequence match keeps, any different
+   currently active identity/sequence rebases forward or backward, Task Context
+   visibility uses the frozen preparation, and no reviewer-side guide exists.
 3. D6's recommendation is approved: limit/deadline blocks further submission while
    leaving `needs_revision` active, with only the covered Project Manager's
    explicit reason-bound revision-obligation closure and never a fabricated

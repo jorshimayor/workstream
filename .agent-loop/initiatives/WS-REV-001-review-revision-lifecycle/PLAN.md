@@ -539,8 +539,9 @@ evidence but no Review, contribution, award, payment, or reputation effect.
 The task pipeline owns the only guide binding. TaskAssignment stores only
 `task_id`; it carries no duplicate guide/context field. Each Submission stamps
 its resolved context immutably. During `needs_revision`, the Task Context API resolves
-the prepared next-attempt context so the submitter sees the currently active guide
-before resubmission. The reviewer never rebases: it consumes the guide and
+the prepared next-attempt context so the submitter sees the guide context selected
+from the active guide and frozen during preparation before resubmission. The
+reviewer never rebases: it consumes the guide and
 task-execution policy context stamped on the single Submission covered by its
 active lease.
 Preparation freezes exact guide/source-snapshot and task-execution policy IDs,

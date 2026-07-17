@@ -82,9 +82,10 @@ frontend work
   precedence point to the active contract while retaining all archival hashes.
 - ADR 0010 remains explicitly additive to revised submissions and is reconciled
   to the confirmed one-Project-Guide task pipeline: assignment binds to the
-  task's initial lock, same guide keeps the prior context, any different
-  currently active guide prepares the next attempt's complete context including
-  an intentional backward rebase, and the reviewer consumes
+  task's initial lock; exact prior-Submission stamped guide identity/activation-
+  sequence match with the currently active guide keeps context; any different
+  active identity or sequence prepares the next attempt's complete context,
+  including an intentional backward rebase; and the reviewer consumes
   the context stamped on the leased Submission without a separate guide/rebase.
 - The active contract supersedes archival combined-role wording with independent
   `submitter`, `reviewer`, and `adjudicator` grants; review requires exact active

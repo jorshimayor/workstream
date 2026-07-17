@@ -138,13 +138,15 @@ sequence is allocated exactly once while locking the project. Task, preparation,
 and Submission contexts stamp guide ID, version, and activation sequence. Equal
 identity/sequence keeps. Any different currently active guide identity/sequence
 rebases, including an intentional backward rebase to an older activation
-sequence. A mismatched identity/sequence pair or incomplete/unsafe context blocks
-for manager repair.
+sequence. An internally inconsistent pair whose identity and activation sequence
+do not belong to the same guide record, or incomplete/unsafe context, blocks for
+manager repair.
 
-**Human confirmed 2026-07-15:** one Project Guide, same-version keep,
-any-different-active-version rebase including backward rebase, Task Context
-visibility, and no reviewer-side rebase. The currently active Project Guide is
-the authority for the next task attempt.
+**Human confirmed 2026-07-15:** one Project Guide; exact stamped guide identity/
+activation-sequence match keeps; any different currently active identity or
+sequence rebases forward or backward; Task Context returns the frozen
+preparation; and the reviewer performs no guide rebase. The Project Guide active
+during preparation is the authority frozen for the next task attempt.
 
 Normal blocked/revoked/invalid preparation is recoverable only by a reason-bound,
 idempotent covered Project Manager repair command that acknowledges the current
