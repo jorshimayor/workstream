@@ -1,7 +1,7 @@
 # WS-AUTH-001-XINT Internal Review Evidence
 
-Reviewed code SHA: `223a15b7c7de15b1a7bd38a0718f951ba5c89734`
-Reviewed at: `2026-07-17T05:48:00Z`
+Reviewed code SHA: `bac3073b147a923a4f8d6479cf4ce8710df2ed49`
+Reviewed at: `2026-07-17T06:13:00Z`
 Reviewer run IDs: auth_xint_roles, auth_xint_art_service,
 auth_xint_rev_con
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
@@ -15,6 +15,13 @@ architecture, CI integrity, docs, and reuse/dedup
 - Merge-intent validation passes with a null successor because trusted `main`
   does not contain an exact AUTH-09A contract; runtime priority remains a human
   work-queue decision.
+- CodeRabbit's nine comments were triaged individually: eight valid contract,
+  least-privilege, migration, and Markdown findings are fixed; the requested
+  runtime `AuthorityClaimHandle` rewrite was rejected because it conflated the
+  current idempotency proof with the future PREP capability.
+- Exact external-repair review proves the future non-Pydantic
+  `PreparedAuthorizationHandle` is bound to session/action/actor/idempotency/
+  request identity without introducing a runtime change in this planning PR.
 - A typed catalogue comparison proved the custody map contains exactly all 25
   current ART actions and all 19 current REV actions, with the canonical eight
   ART custody groups.
@@ -51,6 +58,13 @@ split into a ninth ART owner even though merged XINT assigns it to the Operator
 custodian. The final head restores eight owners while requiring retry's own
 evaluator, guards, behavior tests, and explicit availability assertion. It also
 clarifies the current historical-owner exception in the operations runbook.
+
+External review then tightened fixed-service versus human-only matrix proof,
+PREP actor/request binding and substitution tests, blocked migration allocation,
+exact-project role wording, migration `0024` refusal parity, and Markdown PR
+references. The distinct future `PreparedAuthorizationHandle` is now explicit;
+the existing runtime `AuthorityClaimHandle` remains the separate idempotency
+reservation contract.
 
 Valid findings addressed: yes
 

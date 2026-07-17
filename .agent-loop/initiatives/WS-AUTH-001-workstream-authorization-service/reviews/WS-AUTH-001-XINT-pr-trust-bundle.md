@@ -19,6 +19,9 @@ affected ART, REV, or CON authorization work continues.
 - Repaired AUTH-10 through AUTH-16 for independent project roles, exact-role
   invalidation, dormant adjudicator lifecycle, action/migration custody, and
   final conformance proof.
+- Addressed external review with exact service-matrix least privilege, complete
+  PREP actor/request binding, non-reservation of blocked migration numbers, and
+  normative migration `0024` refusal behavior.
 - Preserved the exact migration packaging, wheel replay, event-loop cleanup,
   and exception-precedence guarantees that PR #132 must retain when converged.
 
@@ -36,7 +39,7 @@ action availability, service provisioning, or feature behavior.
 - Direct typed comparison proved the exact 25 ART / 19 REV custody map and eight
   canonical ART owner groups.
 - Required senior, QA, security, product, architecture, CI, docs, and reuse
-  tracks passed exact reviewed state SHA `223a15b` after all findings were fixed.
+  tracks passed exact reviewed state SHA `bac3073` after all findings were fixed.
 
 Coverage is not recalculated for a documentation-only change. No threshold or
 exclusion changed; future activation contracts require at least 90 percent for
