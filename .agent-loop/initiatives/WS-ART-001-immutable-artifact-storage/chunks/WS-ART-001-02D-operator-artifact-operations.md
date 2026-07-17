@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and AUTH custody registration
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and `WS-AUTH-001-ART-CUSTODY`
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -45,8 +45,8 @@ product cutover. Chunk 07 owns every live AWS provider inspection.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, artifact audit
   listing, and read-only admission usage.
-- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and the reviewed
-  custody-registration checkpoint are merged before this chunk starts. They
+- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and
+  `WS-AUTH-001-ART-CUSTODY` are merged before this chunk starts. They
   provide the complete typed/SQL planned action registry, Operator grants,
   static service-action matrix, provisioned service ActorProfiles and
   ActorIdentityLinks, fixed service runtime admission, and AUTH activation

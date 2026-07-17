@@ -9,6 +9,11 @@ PR #127 as `f64a8e5`, and committed-source preparation merged through PR #129
 as `9a04434` on 2026-07-16. The user explicitly started
 `WS-ART-001-02A3` on 2026-07-16.
 
+The planning-only cross-initiative boundary reconciliation merged through PR
+#139 as `5d353b6`, and AUTH's owner reconciliation merged through PR #140 as
+`d541521`. ART now consumes AUTH's canonical activation-custody and prepared
+mutation contracts without editing or activating AUTH runtime behavior.
+
 The Flow Node-focused amendment candidate `6cc422d` passed deterministic checks
 but failed internal review on recovery/API completeness. Before repair, the user
 approved a first-principle change on 2026-07-14:
@@ -26,9 +31,9 @@ approval or reusable evidence. Its source remains on branch
 
 ## Current Work
 
-`WS-ART-001-02A3` implementation, merged-main deterministic repair, and
-exact-SHA internal review are complete at
-`441d39230a341f2c43dd548776a2437ae6b2395d`. Its approved boundary atomically replaces
+`WS-ART-001-02A3` implementation and merged-main deterministic repair are
+complete. PR #141 is open; its exact-SHA evidence and reviewer fanout are being
+refreshed against `d541521` before external review resumes. Its approved boundary atomically replaces
 ArtifactStore v1 with byte-only v2, migrates LocalStorage and the empty
 pre-production artifact schema, installs the immutable storage-namespace fence,
 removes dormant `flow_node` configuration, and activates startup plus periodic
@@ -43,9 +48,9 @@ Flow Node chunk.
 
 ## Gate
 
-All nine required internal tracks passed with no remaining findings and every
-session is closed. The current gate is publication for GitHub Actions,
-CodeRabbit, and explicit human review. Durable admission, put attempts,
-verification publication, and recovery remain in their later owning chunks.
-No later artifact chunk starts automatically, and only the user may approve
-merge.
+The previous exact-SHA review passed before PR #140 merged and is retained as
+history, not reused as final provenance. The current gate is refreshed
+deterministic proof and all nine exact-SHA internal tracks, followed by GitHub
+Actions, CodeRabbit, and explicit human review. Durable admission, put attempts,
+verification publication, and recovery remain in their later owning chunks. No
+later artifact chunk starts automatically, and only the user may approve merge.

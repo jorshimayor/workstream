@@ -244,8 +244,8 @@ must not invent a service principal, inspect AUTH grants or static matrix
 membership, or activate an authorization action.
 
 The seven fixed service identities and complete 25-action custody transfer are
-defined in
-`../WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_ART_HANDOFF.md`. Operator
-verification retry remains an independently authorized human action. Service
-identity, Celery executor identity, and execution-generation fencing never
-substitute for one another.
+defined canonically in
+`../WS-AUTH-001-workstream-authorization-service/ACTIVATION_CUSTODY.md` and its
+`WS-AUTH-001-ART-CUSTODY` chunk contract. Operator verification retry remains
+an independently authorized human action. Service identity, Celery executor
+identity, and execution-generation fencing never substitute for one another.

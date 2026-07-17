@@ -341,12 +341,13 @@ fact.
 AUTH-07 registers the closed artifact permissions, AUTH-08 defines applicable
 Operator grants, AUTH-09A defines the static service-action matrix, AUTH-09B
 provisions fixed service ActorProfiles and ActorIdentityLinks, and AUTH-09E
-admits them at runtime. AUTH registers each planned action and its activation
-custodian; the owning WS-ART chunk then supplies hidden canonical resource
+admits them at runtime. `WS-AUTH-001-ART-CUSTODY` transfers every current ART
+action to the exact AUTH activation custodian without changing mappings or
+availability. The owning WS-ART chunk then supplies hidden canonical resource
 composition, guards, surface declarations, behavior, and tests while the real
-kernel fails closed; AUTH finally integrates the evaluator and alone changes
-availability to active. Later AUTH-12, AUTH-14, and AUTH-15 are not alternate
-artifact activation paths.
+kernel fails closed; the named AUTH activation chunk finally integrates the
+evaluator and alone changes availability to active. Later AUTH-12, AUTH-14, and
+AUTH-15 are not alternate artifact activation paths.
 
 Complete reads have an end-to-end verification deadline derived from the 512
 MiB maximum and minimum supported throughput. The deadline is shorter than the

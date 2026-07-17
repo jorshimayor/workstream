@@ -253,14 +253,15 @@ declarations during its feature cutover, and
 AUTH-16 owns the aggregate generated route/command completeness manifest and
 final no-bypass proof.
 
-Reserved planned metadata contains only stable `ActionId`, approved
-`PermissionId`, owning specification/chunk, and availability. It cannot
-authorize and does not predefine a foreign-domain target, facts, guards, or
-composer. An owning feature cutover supplies its adopted domain contract,
-canonical resource composer, route or command declaration, allow/deny behavior
-proof, and generated manifest delta. A dedicated AUTH activation custodian alone
-integrates the evaluator and changes action availability after that hidden
-behavior has merged.
+Reserved planned runtime metadata contains only stable `ActionId`, approved
+`PermissionId`, exact AUTH activation custodian, and availability. It cannot
+authorize and does not make AUTH the owner of foreign-domain facts or behavior.
+Before a new planned action is registered, however, its owning feature must
+publish a jointly approved typed contract naming principal class, canonical
+resource type and facts, guards, surface, transaction owner, revalidation, and
+hidden-behavior dependency. Registration records the four-field runtime row and
+typed/PostgreSQL evidence mapping; activation later integrates the evaluator
+only after hidden behavior merges. A feature chunk never changes availability.
 
 `ActionId` is security-significant evidence. AUTH-07A adds typed/PostgreSQL
 audit parity; AUTH-07B adds it to `AuthorizationDecision`, bounded logs/metrics,
@@ -288,9 +289,13 @@ resources and state transitions.
 
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
 solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
-AUTH-08 uses `0022`, the AUTH-09A fixed-service identity foundation uses `0023`,
-AUTH-10 uses `0024`, AUTH-12 uses `0025`, AUTH-13 uses `0026`, and AUTH-14 uses
-`0027`.
+AUTH-08 uses `0022`, and the AUTH-09A fixed-service identity foundation uses
+`0023`. After `0023` merges, AUTH-10 uses `0024`, AUTH-11 uses `0025`, AUTH-12
+uses `0026`, AUTH-13 uses `0027`, AUTH-14 uses `0028`, and AUTH-15 uses `0029`
+so every new protected surface receives typed/PostgreSQL ActionId evidence
+parity in its owning cutover. Feature-gated REV/ART additive registrations use
+the next trusted-main migration head when their complete contracts become
+executable; they do not reserve a number while blocked.
 
 ## D16: Split AUTH-07 at the catalogue and executable-kernel boundary
 
@@ -320,12 +325,14 @@ architecture, docs/security, and test/migration review.
 AUTH-07A expands the closed catalogue to exactly 74 PermissionIds and 50
 planned ActionIds. `review.queue.override` is the only additive PermissionId and
 is explicitly the 25th post-`0020` permission; the historical 49-value set does
-not change. Twenty planned actions are added: canonical `submission.create`
-owned by `WS-AUTH-001-14`, plus 19 review actions owned by exact
-`WS-REV-001-05`, `06`, `07`, `08`, `09A`, `11`, and `12` chunks. All additions
-remain four-field planned metadata and cannot authorize until their owner
-supplies resource composition, guards, candidates, surface declarations,
-revalidation, and behavior tests.
+not change. Twenty planned actions were added: canonical `submission.create`
+under `WS-AUTH-001-14`, plus 19 review actions initially labelled with exact
+`WS-REV-001-05`, `06`, `07`, `08`, `09A`, `11`, and `12` feature chunks. All
+additions remain four-field planned metadata and cannot authorize. D25
+supersedes those feature labels as activation custody: REV still supplies
+resource composition, guards, candidates, surface declarations, revalidation,
+and behavior tests, while exact AUTH chunks own evaluator integration and
+availability.
 
 Initial and revision submissions share the same `submission.create` action,
 permission, and route. There is no `submission.revise`, `review.assign`,
@@ -433,9 +440,29 @@ clause.
 The v0.1 ProjectRoleGrant values are exactly `submitter`, `reviewer`, and
 `adjudicator`. A human may hold all three capabilities through independent
 immutable rows. Each role is independently issued, revoked, regranted,
-invalidated, and revalidated. There is no cross-role replacement. The
-adjudicator grant provides no adjudication operation until WS-REV defines the
-lifecycle and AUTH activates exact actions.
+invalidated, and revalidated. There is no `both`, cross-role replacement,
+replacement event, replacement reason, or replacement/supersession field.
+
+Qualification evidence is bound by composite constraints to the same actor,
+project, and exact requested role. One partial unique constraint permits only
+one active row per actor/project/role while different roles can be issued
+concurrently. Regrant after revocation creates new immutable history. Issue
+idempotency hashes the requested role; revoke derives the role from the locked
+grant. Same key/different role mismatches, new-key duplicate same-role issue is
+a stable audited conflict, and replay reauthorizes before disclosure.
+
+AUTH-10 replaces current typed and PostgreSQL validators in migration `0024`
+without editing `0018`, `0019`, or `0022`. It fails closed if obsolete combined
+or replacement evidence exists and refuses an unsafe downgrade rather than
+converting or deleting evidence. Only issued and revoked success events remain.
+Linked invalidation preserves exact grant, actor, project, role, and cause.
+Submitter revocation alone can enter AUTH-13 assignment reconciliation;
+reviewer revocation may create only its exact REV-owned review obligation.
+Adjudicator revocation persists exact invalidation only: it creates or consumes
+no adjudication obligation until WS-REV separately defines that lifecycle and
+AUTH activates its exact actions. No role revocation changes another project
+role or an AdminRoleGrant. The adjudicator grant provides only exact-project
+visibility until that separate activation.
 
 ## D22: Fixed service runtime admission is separate from human admission
 
@@ -447,3 +474,100 @@ active identity link and service ActorProfile, validates the fixed
 `service_identity`, and selects only its exact static ActionId row. It never
 enters human first-access provisioning or human grant evaluation. AUTH-09E owns
 this admission path but activates no feature operation.
+
+## D23: Merged WS-XINT handoffs supersede stale AUTH boundary wording
+
+Status: accepted through merged PR #139 on 2026-07-17.
+
+The canonical AUTH/ART, AUTH/REV, AUTH role/service, ART/REV, and REV/CON
+handoffs are binding planning inputs. AUTH owns grants, decision evidence,
+evaluator integration, and action availability. Feature owners retain resource
+facts, guards, hidden behavior, and product state. Request routes or service
+commands own one transaction. Older combined-role, feature-owned activation,
+or service-admission wording is not an alternate contract.
+
+PR #132's fixed service foundation remains technically valid: seven artifact
+service identities, eleven exact static ActionId memberships, no database
+assignment rows, and migration `0023`. Its branch must converge from trusted
+`main` without restoring pre-XINT planning text. Convergence must preserve the
+packaged frozen migration contract, zero mutable `app.modules` imports from the
+migration, explicit Alembic-script-owned repository root, location-independent
+built-wheel custody/replay proof, same-event-loop CLI execution and engine
+disposal, and original `BaseException` precedence with cancellation/cleanup
+tests. The exact converged head then repeats required internal review and
+external checks before merge.
+
+## D24: Sensitive cross-module mutations use prepared authorization
+
+Status: adopted by the WS-XINT transaction contract; runtime remains proposed.
+
+`WS-AUTH-001-PREP` introduces an internal, opaque, non-Pydantic, single-use
+`PreparedAuthorizationHandle` bound to the exact session, ActionId, actor
+reference kind, actor reference, idempotency key, and canonical request digest.
+It is never a route schema, caller input, or serialized reference. The existing
+`AuthorityClaimHandle` remains a distinct internal idempotency-reservation
+contract and is not the PREP handle. When final-admin safety applies, AUTH locks
+`AuthorityControl(id=1)` first. It orders multiple authority
+principals by `ActorProfile.id`; for each human it locks `ActorProfile`, the exact
+`ActorIdentityLink`, then the exact matched admin or project grant; for each
+service it locks `ActorProfile` then the exact `ActorIdentityLink`. It validates
+the code-owned `service_identity`, static matrix membership, and action
+availability after those locks; those values are not database lock targets. The
+feature locks its records only after all authority rows, recomposes final typed
+facts, and asks AUTH to evaluate exactly once and stage decision evidence.
+Feature participants flush, and the route or service command commits once.
+Reads retain `require()`. Before any feature mutation, consumption requires an
+exact match on every handle binding. Reuse, cross-session/action use,
+same-session/action cross-actor or cross-request substitution, authority loss,
+evidence failure, participant failure, cancellation, and commit failure leave no
+feature mutation or partial evidence. AUTH never imports a feature repository.
+
+## D25: ActionOwner is an exact AUTH activation custodian
+
+Status: accepted through merged PR #139; runtime transfer remains proposed.
+
+`ActionOwner` no longer names a resource-owning feature chunk. The exact
+availability-neutral transfers and future activation groups are canonical in
+`ACTIVATION_CUSTODY.md`. `WS-AUTH-001-ART-CUSTODY` atomically transfers all 25
+current ART rows to eight AUTH groups and removes seven ART owner values.
+`WS-AUTH-001-REV-CUSTODY` atomically transfers all 19 current REV rows to seven
+AUTH groups and removes seven REV owner values. Counts, mappings, and planned
+availability remain unchanged; no migration is required for owner metadata.
+
+Every activation requires an immutable merged feature manifest, real-kernel
+unavailable proof before activation, exact evaluator integration, and one exact
+availability delta afterward. ART/REV/CON cannot activate actions, and AUTH-12,
+AUTH-14, and AUTH-15 are not fallback activation paths.
+
+## D26: Proposed cross-initiative actions register only after complete contracts
+
+Status: exact identifiers approved by PR #139; registration remains blocked.
+
+The four proposed REV lifecycle actions and
+`artifact.review_evidence.binding.create` are not current runtime actions. AUTH
+registers them only in separate reviewed chunks after feature owners publish
+principal, typed context, facts, guards, surfaces, transaction ownership, and
+hidden dependency manifests. Registration is planned and availability-neutral,
+uses existing PermissionIds, and adds typed/PostgreSQL evidence parity.
+
+The review-evidence binding action extends only
+`workstream.artifact.binding`, making 12 exact matrix memberships across the
+same seven identities. Its activation requires separate human and service
+decisions, two evidence records, explicit lock order, and one transaction; a
+human request is never silently converted to service authority. REV timer,
+expiry, reconciliation, projection, artifact-reference, and release-control
+services require later exact identity-specific contracts. No catch-all service
+identity is pre-created.
+
+## D27: Each remaining AUTH surface owns exact action and migration parity
+
+Status: planning repair required before each future chunk starts.
+
+AUTH-10 through AUTH-15 must enumerate every new ActionId, retained
+PermissionId mapping, canonical target, principal class, candidates, guards,
+surface, and revalidation rule before runtime edits. Each owning migration
+updates current typed and PostgreSQL audit validation; no chunk may promise an
+active surface whose ActionId is absent. AUTH-11 therefore owns migration
+`0025`, and later migration reservations shift through AUTH-15 as recorded in
+D15. AUTH-16 aggregates proof; it does not discover or backfill missing
+registrations.

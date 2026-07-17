@@ -110,6 +110,15 @@ never replaces another. Regrant after revocation creates a new immutable row.
 No observed token role, typed profile, skill, qualification, or reputation
 value creates a grant automatically.
 
+The active model has no `both`, replacement field, replacement event, or
+replacement reason. Qualification evidence is bound to the same actor, project,
+and exact requested role. One active row is permitted per
+actor/project/role. Issue idempotency includes the requested role; revoke derives
+the role from the locked grant. Migration `0024` refuses upgrade when obsolete
+combined or replacement evidence exists and never converts or deletes those
+rows. It replaces current typed and PostgreSQL validators without changing
+historical migrations.
+
 ## Permission Catalog
 
 AUTH owns the closed PermissionId/ActionId catalog, exact mappings, and action
@@ -235,6 +244,14 @@ required, and its dedicated AUTH activation custodian has integrated the exact
 evaluator and changed availability. Both halves are mandatory; registry or
 feature presence alone never grants authority.
 
+The four proposed REV lifecycle actions and
+`artifact.review_evidence.binding.create` are not part of the current runtime
+registry. Catalogue totals are derived from trusted `main` when each gate runs:
+REV registration adds exactly four planned and zero active actions, while the
+review-evidence registration adds exactly one planned and zero active action, in
+either order. Both retain 74 PermissionIds and stay blocked until complete
+feature-owned typed and transaction manifests exist.
+
 AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
 AUTH-08 activates exactly seven administrative actions through migration
 `0022`; all other registered actions remain planned.
@@ -244,10 +261,10 @@ four stable planned fields shown here; resource facts, candidates, guards, and
 hidden behavior remain with the listed feature owner. The current owner values
 are planned pre-transfer catalogue state, not permission for a feature chunk to
 activate. Before any review action activates, AUTH must transfer activation
-custody according to the reviewed
+custody according to `ACTIVATION_CUSTODY.md` and the reviewed
 `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_REV_HANDOFF.md`.
 
-| ActionId | PermissionId | Current planned feature owner |
+| ActionId | PermissionId | Historical pre-transfer owner value |
 |---|---|---|
 | `submission.create` | `submission.create` | `WS-AUTH-001-14` |
 | `review.queue.read` | `review.queue.read` | `WS-REV-001-05` |
@@ -314,7 +331,7 @@ dynamically, or changes availability.
 The following table is the single source of truth for artifact ActionId-to-
 PermissionId mappings, principal/resource facts, and ART hidden-behavior
 ownership. AUTH-07A registers only each row's stable `ActionId`, approved
-`PermissionId`, current planned feature owner, and `planned`
+  `PermissionId`, historical pre-transfer owner value, and `planned`
 availability. Its principal-class and canonical-resource columns are not AUTH
 registry fields and are not executable authority; the owning WS-ART chunk adopts
 them with its hidden canonical resource composer, guards, surface declaration,
@@ -463,6 +480,39 @@ Each decision carries a bounded SHA-256 digest of its complete typed resource
 context so feature code cannot reuse it with substituted role, scope, target,
 or replay facts. List filtering occurs before counts and pagination cursors.
 
+Sensitive mutations use the prepared protocol instead of evaluating final
+authority against unlocked feature facts:
+
+```text
+AUTH locks AuthorityControl first when final-admin safety applies
+-> AUTH orders principals by ActorProfile ID
+-> human: ActorProfile -> exact ActorIdentityLink -> exact matched grant
+-> service: ActorProfile -> exact ActorIdentityLink -> code-owned validations
+-> AUTH creates one internal non-Pydantic PreparedAuthorizationHandle bound to
+   session, action, actor reference, idempotency key, and request digest
+-> feature locks its canonical rows and recomposes final typed facts
+-> AUTH consumes the handle, evaluates once, and stages decision evidence
+-> feature participants flush
+-> route or service command commits once
+```
+
+Service identity, static service-action matrix membership, and action
+availability are immutable code-owned validations after the service profile and
+link locks; they are not database rows or lock targets. Existing actor-self,
+administrative, and lifecycle mutations must use the same authority-row order
+before any prepared consumer ships.
+
+The handle is single-use, nonserializable, and never a route schema or caller
+input. Consumption matches the exact session, action, actor reference kind,
+actor reference, idempotency key, and request digest before feature mutation.
+Reuse, same-session/action cross-actor or cross-request substitution, authority
+loss, evidence failure, participant failure, cancellation, or commit failure
+leaves no feature mutation or partial authority evidence. Reads continue to use
+request-scoped `require()`. AUTH never imports feature repositories, and
+dependency teardown never commits shared feature work.
+Crossed PostgreSQL tests cover PREP against link revocation, actor suspension or
+deactivation, exact grant revocation, and final-admin mutation.
+
 For the two active self actions, the default human authority source is
 `actor_self`; token roles and client-supplied permissions never enter the
 context. Self-read requires an active link and an active or suspended actor.
@@ -526,6 +576,13 @@ human grant evaluation. Feature actions remain unavailable until their owning
 feature supplies canonical resource facts, guards, hidden behavior, and proof
 and AUTH separately activates them.
 
+New fixed services are added only after the owning feature publishes an exact
+identity-to-ActionId manifest. AUTH then owns one closed enum/constraint/matrix
+extension, controlled provisioning, admission reuse, and all-pairs
+cross-service denial. REV timer, expiry, reconciliation, projection,
+artifact-reference, and release-control identities are not pre-created, and no
+catch-all review service exists.
+
 ## Bootstrap And Final-Administrator Safety
 
 The first Access Administrator is created through a local management command
@@ -551,6 +608,13 @@ Assignment reconciliation preserves immutable work history. A revoked actor's
 ordinary claimed/in-progress assignment may be released by the owning later
 chunk. A `needs_revision` task retains a durable revision obligation and cannot
 be returned as ordinary ready work.
+
+Project-role invalidation is exact-role-specific. Submitter revocation alone can
+enter task-assignment reconciliation. Reviewer revocation creates only the
+REV-owned review obligation; adjudicator invalidation remains dormant until its
+lifecycle is enabled. Revoking any one project role leaves the other roles and
+all AdminRoleGrants unchanged. Consumers verify the cause event, grant ID,
+actor, project, and role before changing product state.
 
 ## Idempotency And Authority Evidence
 

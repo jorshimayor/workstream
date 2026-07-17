@@ -8,6 +8,9 @@
 - Active initiatives include independently owned `WS-AUTH-001`, `WS-ART-001`,
   `WS-REV-001`, and `WS-CON-001`. The planning-only `WS-XINT-001` boundary
   reconciliation merged through PR #139 as `5d353b6` and starts no runtime.
+- AUTH's owner reconciliation merged through PR #140 as `d541521`; it defines
+  fixed-service admission, prepared mutation authority, and activation custody
+  without activating ART, REV, or CON feature behavior.
 - Active ART implementation chunk: `WS-ART-001-02A3` on
   `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
 - Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
@@ -31,15 +34,15 @@
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
   active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
-  feature chunks supply hidden canonical behavior/resource composition. Future
-  AUTH activation-custodian chunks alone integrate evaluators and change action
-  availability after that hidden behavior merges; `WS-XINT-001` activates
-  nothing.
+  feature chunks supply hidden canonical behavior/resource composition. Merged
+  AUTH planning requires availability-neutral ART custody transfer, fixed-service
+  admission, prepared mutation authority, and exact AUTH-only activation chunks;
+  neither reconciliation PR activates feature behavior.
 - Parallel artifact checkpoint: ART-02A1 merged through PR #127 as `f64a8e5`
   and ART-02A2 merged through PR #129 as `9a04434`. ART-02A3 completed
-  merged-main deterministic repair and all nine exact-SHA reviewer tracks at
-  `441d39230a341f2c43dd548776a2437ae6b2395d`; it now awaits external checks and
-  its own human-reviewed PR. ART-02B1 remains inactive.
+  merged-main deterministic repair and internal review; PR #141 is open and
+  awaits refreshed exact-SHA evidence, external checks, and explicit human merge
+  approval. ART-02B1 remains inactive.
 - Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
   #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
   isolated parallel worktree and remains unmerged at this checkpoint.

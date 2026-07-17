@@ -4017,10 +4017,15 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Internal review and deterministic evidence passed; external checks pending" in artifact_map
     assert (
-        "`WS-ART-001-02A3` implementation, merged-main deterministic repair, and\n"
-        "exact-SHA internal review are complete" in artifact_status
+        "AUTH's owner reconciliation merged through PR #140 as\n"
+        "`d541521`" in artifact_status
     )
-    assert "The current gate is publication for GitHub Actions" in artifact_status
+    assert (
+        "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
+        "complete" in artifact_status
+    )
+    assert "The current gate is refreshed\ndeterministic proof" in artifact_status
+    assert "No\nlater artifact chunk starts automatically" in artifact_status
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
