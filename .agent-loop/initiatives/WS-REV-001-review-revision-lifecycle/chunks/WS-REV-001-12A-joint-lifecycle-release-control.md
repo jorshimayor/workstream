@@ -184,13 +184,15 @@ schema/application downgrade after protected post-cutover rows exist
   extend, or repair a fulfillment obligation cannot be classified as
   completion-only.
 - The replacement-assignment command has a required typed slot for the
-  preparation-transfer participant. Bootstrap `pre_activation(1)` initially
-  preserves AUTH-13 legacy behavior. After REV-09A supplies the participant, the
-  amended AUTH-13 cutover binds it atomically, removes legacy replacement
-  behavior, and fails startup/command execution when the binding is absent.
-  REV-12A classifies and fences the command; generation N>1 never re-enables the
-  legacy class. REV-13 only verifies the merged binding and exposes the already
-  cut-over command. No schema or release code infers or fabricates preparation.
+  preparation-transfer participant in prepared mode. REV-12A does not prescribe
+  whether its fence foundation or amended AUTH-13 merges first: it classifies and
+  fences the exact owner-installed legacy or prepared mode from the merged
+  manifest, never from a caller label. After REV-09A supplies the participant,
+  amended AUTH-13 atomically binds it, removes legacy replacement behavior, and
+  fails startup/command execution when the binding is absent. Active generation
+  and every generation N>1 require prepared mode and never re-enable the legacy
+  class. REV-13 only verifies the merged binding and exposes the already cut-over
+  command. No schema or release code infers or fabricates preparation.
 - The composition root supplies the shared fence through the exact mandatory
   CON dispatch and callback hooks. Under the shared fence, the shared outbox
   dispatcher claims the event and passes an already-claimed command plus

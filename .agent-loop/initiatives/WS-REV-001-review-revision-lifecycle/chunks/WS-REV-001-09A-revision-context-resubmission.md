@@ -171,18 +171,22 @@ production `/api/v1` review-router registration
   `WS-ART-001-REV-EVIDENCE` port and AUTH-active
   `artifact.review_evidence.binding.create` service action as REV-07; human
   `submission.create` authority cannot execute that ART action.
-- Revision preparation, evidence-intake, structured response fields, and the
-  strict revision guard remain absent from production OpenAPI/composition.
+- Revision preparation, evidence-intake, and structured response behavior remain
+  hidden and unavailable from production OpenAPI/composition in this chunk.
   Existing first-submission and legacy revision behavior is unchanged until the
-  coherent chunk-13 cutover; internal composition/tests prove the new path.
+  later amended AUTH-14 cutover installs the prepared branch and strict guard
+  behind unavailable `submission.create`; internal composition/tests prove the
+  new path before that owner cutover.
 - This chunk changes no AUTH availability. It supplies hidden behavior and a
   feature-manifest delta for later `WS-AUTH-001-REV-09A` activation; route
   exposure waits for REV-13.
 - Preparation-reference columns and conditional lineage constraints land here,
   but the global rule requiring every newly written version greater than one to
-  reference a preparation does not. REV-13 installs that `NOT VALID` check in
-  the same migration/PR that replaces the legacy route branch, so no deployment
-  exposes an IntegrityError or an accidental early public block.
+  reference a preparation does not. After REV-09A merges, amended AUTH-14 owns
+  the `NOT VALID` check and replaces the legacy submission branch in one reviewed
+  cutover while `submission.create` remains unavailable. REV-13 later verifies
+  and exposes that already merged cutover, so no deployment exposes an
+  `IntegrityError` or an accidental early public block.
 - Import-boundary and rollback tests prohibit a parallel resubmission route,
   commit-owning participant, repository cycle, or duplicate post-commit enqueue.
 - Real-Postgres tests cover same-guide keep, forward changed-guide rebase,
@@ -228,8 +232,8 @@ production `/api/v1` review-router registration
 - Migration fixtures cover existing initial/revision rows, the non-forgeable
   preparation-reference schema, preserved historical task-equal contexts, and
   a prepared rebased N+1 whose context differs from the original task lock.
-  They prove unprepared legacy rows remain possible only until REV-13's atomic
-  route/schema cutover. Direct SQL rejects cross-project
+  They prove unprepared legacy rows remain possible only until amended AUTH-14's
+  atomic route/schema cutover. Direct SQL rejects cross-project
   guide/policy/source/preparation references, prior-Submission mismatch, and
   preparation digest mismatch. Upgrade proof documents that rollback is blocked
   once rebased rows depend on the new constraints.
@@ -244,8 +248,8 @@ production `/api/v1` review-router registration
   than prior version plus one, a second root, and a branched/skipped successor;
   each failed transaction leaves no root or head. Migration proof also shows
   historical unprepared revisions remain immutable/readable, names the
-  conditions for REV-13 enforcement/validation, and blocks migration downgrade
-  once prepared rows exist.
+  conditions for amended AUTH-14 enforcement/validation and later REV-13
+  verification/exposure, and blocks migration downgrade once prepared rows exist.
 
 ## Verification
 

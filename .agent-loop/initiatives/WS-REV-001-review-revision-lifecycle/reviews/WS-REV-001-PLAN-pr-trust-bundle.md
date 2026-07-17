@@ -57,6 +57,9 @@ starting a successor.
   submission-path removal, and strict revision migration to the amended full
   AUTH-13/14 cutovers after REV-09A. REV-12A classifies/fences those commands and
   REV-13 verifies and exposes them without editing AUTH/task-owned behavior.
+- Made REV-12A behavior-neutral about whether its fence foundation or amended
+  AUTH-13 merges first: it classifies the exact owner-installed command mode;
+  active and later generations require prepared mode and never revive legacy.
 - Required exact independent `reviewer` grants, role-specific invalidation, six
   fixed review service identities through AUTH-09E, request-scoped AUTH reads,
   and AUTH-first prepared mutations.

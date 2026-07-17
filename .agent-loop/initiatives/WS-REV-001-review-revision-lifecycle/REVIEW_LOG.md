@@ -580,3 +580,21 @@ joint lifecycle transition. REV-01's last stale commit statement now assigns
 orchestration and shared audit/outbox staging to REV while the request route or
 service command owns the caller session and sole commit. Ambiguous action-table
 and PR #140 status wording is also corrected.
+
+### First re-review of `2146b8c`
+
+QA/test, product/ops, and test-delta passed. Senior engineering, architecture,
+security/auth, and docs found one deeper AUTH-14 ownership contradiction in
+REV-09A and an unstated ordering assumption in REV-12A; reuse/dedup and CI
+integrity remained passing.
+
+The repaired REV-09A contract now lands only nullable/conditional preparation
+schema and hidden preparation behavior. Amended AUTH-14 owns the strict
+`NOT VALID` guard, legacy submission-branch removal, prepared branch, and their
+atomic route/schema cutover while `submission.create` remains unavailable;
+REV-13 only verifies and exposes the merged result. Risk R30 states the same
+owner split. REV-12A is behavior-neutral about whether its fence foundation or
+amended AUTH-13 merges first: it classifies the exact owner-installed command
+mode, while active and later generations require prepared mode. REV-11's early
+choreography now also names AUTH as the sole binding validator, handle consumer,
+evaluator, and evidence stager.

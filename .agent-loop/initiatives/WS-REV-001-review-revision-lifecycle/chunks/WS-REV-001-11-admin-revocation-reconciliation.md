@@ -47,9 +47,10 @@ production `/api/v1` review-router registration
   `review.reconcile.run`. Human mutations use AUTH prepare/authority lock and an
   opaque, non-Pydantic, single-use handle bound to exact session, ActionId,
   actor-reference kind and ID, idempotency key, and canonical request digest;
-  REV canonical row locks and final fact recomposition; exact handle consumption
-  before first feature mutation; one AUTH evaluation; then participant flush and
-  one request-route/service-command commit. They require exact covered scope and mandatory
+  REV canonical row locks and final fact recomposition; then AUTH validates every
+  binding/current authority, consumes once, evaluates once, and stages evidence
+  before first feature mutation; participant flush and one request-route/service-
+  command commit follow. They require exact covered scope and mandatory
   reasons; queue closure,
   correction, and force release remain Operator-only.
 - `POST /api/v1/tasks/{task_id}/revision-obligation/close` declares the additive
