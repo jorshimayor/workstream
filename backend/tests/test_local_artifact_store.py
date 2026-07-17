@@ -111,6 +111,30 @@ def test_local_rejects_symlink_and_nonprivate_roots(tmp_path: Path) -> None:
         LocalStorageAdapter(root=public)
 
 
+def test_local_rejects_root_and_files_not_owned_by_runtime_user(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Apply the canonical scratch ownership rule to every local descriptor."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    regular = tmp_path / "object"
+    regular.write_bytes(b"bytes")
+    regular.chmod(0o600)
+    regular_descriptor = os.open(regular, os.O_RDONLY)
+    actual_euid = os.geteuid()
+    monkeypatch.setattr(os, "geteuid", lambda: actual_euid + 1)
+    try:
+        with pytest.raises(ArtifactConfigurationError, match="directory is unsafe"):
+            LocalStorageAdapter(root=root)
+        with pytest.raises(ArtifactIntegrityError, match="object is unsafe"):
+            LocalStorageAdapter._assert_private_regular(regular_descriptor)
+        with pytest.raises(ArtifactIntegrityError, match="object is unsafe"):
+            LocalStorageAdapter._assert_recoverable_object(regular_descriptor)
+    finally:
+        os.close(regular_descriptor)
+
+
 @pytest.mark.parametrize("buffer_bytes", [True, 0, -1, 1024 * 1024 + 1, 1.5])
 def test_local_rejects_invalid_buffer_configuration(
     tmp_path: Path,

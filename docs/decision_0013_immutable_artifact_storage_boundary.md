@@ -206,11 +206,13 @@ contribution, compensation-award, or reputation effect.
 ## Shared Adapter Convention
 
 Artifact storage follows ADR 0014. `LocalStorageAdapter` and
-`S3CompatibleArtifactStore` are explicitly registered through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Only artifact-storage
-orchestration receives the writable port through composition-root dependency
-injection. Product modules and Celery jobs receive typed artifact
-ingest/read/materialization operations instead.
+`S3CompatibleArtifactStore` are reached through explicitly registered,
+non-mutating `ArtifactStoreBootstrap` implementations in
+`ExternalServiceAdapterFactory[ArtifactStoreBootstrap]`. The composition root
+claims the bootstrap's exact namespace in PostgreSQL before initialization
+yields the byte-only `ArtifactStore`. Only artifact-storage orchestration
+receives that writable port. Product modules and Celery jobs receive typed
+artifact ingest/read/materialization operations instead.
 
 There is no service locator, runtime plugin discovery, concrete-adapter import
 in product services, fallback constructor, compatibility alias, or dual factory

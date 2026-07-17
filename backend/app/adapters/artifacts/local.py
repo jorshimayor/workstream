@@ -469,6 +469,8 @@ class LocalStorageAdapter:
             raise ArtifactConfigurationError("local artifact root changed after validation") from None
         if (
             not stat.S_ISDIR(current.st_mode)
+            or current.st_uid != os.geteuid()
+            or stat.S_IMODE(current.st_mode) != 0o700
             or current.st_dev != self._root_device
             or current.st_ino != self._root_inode
         ):
@@ -809,7 +811,11 @@ class LocalStorageAdapter:
     def _assert_private_directory(descriptor: int) -> os.stat_result:
         """Require one owner-private directory descriptor."""
         details = os.fstat(descriptor)
-        if not stat.S_ISDIR(details.st_mode) or details.st_mode & 0o077:
+        if (
+            not stat.S_ISDIR(details.st_mode)
+            or details.st_uid != os.geteuid()
+            or stat.S_IMODE(details.st_mode) != 0o700
+        ):
             raise ArtifactConfigurationError("local artifact directory is unsafe")
         return details
 
@@ -819,6 +825,7 @@ class LocalStorageAdapter:
         details = os.fstat(descriptor)
         if (
             not stat.S_ISREG(details.st_mode)
+            or details.st_uid != os.geteuid()
             or details.st_mode & 0o077
             or details.st_nlink != 1
         ):
@@ -831,6 +838,7 @@ class LocalStorageAdapter:
         details = os.fstat(descriptor)
         if (
             not stat.S_ISREG(details.st_mode)
+            or details.st_uid != os.geteuid()
             or details.st_mode & 0o077
             or details.st_nlink not in {1, 2}
         ):

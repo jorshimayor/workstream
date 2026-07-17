@@ -385,8 +385,11 @@ orchestration. The internal orchestrator is not itself a product capability.
 Operator routes receive the read or recovery capability they require, never the
 raw store or broad orchestrator.
 
-FastAPI and Celery composition roots construct the selected `ArtifactStore`,
-then construct one internal orchestrator, then expose only the required narrow
+FastAPI and Celery composition roots construct the selected non-mutating
+`ArtifactStoreBootstrap` through
+`ExternalServiceAdapterFactory[ArtifactStoreBootstrap]`, claim its exact
+namespace in PostgreSQL, and only then initialize the byte-only `ArtifactStore`.
+They construct one internal orchestrator and expose only the required narrow
 port to each route/service/task. Architecture tests parse imports, constructor
 annotations, dependency providers, and Celery task parameters; checking only
 textual `put` call sites is insufficient.

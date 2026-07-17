@@ -108,6 +108,8 @@ class ArtifactStoreNamespaceIdentity:
         """Require a canonical closed descriptor without duplicate keys."""
         if not self.provider_profile or len(self.provider_profile) > 100:
             raise ValueError("artifact provider profile is invalid")
+        if type(self.descriptor_items) is not tuple:
+            raise ValueError("artifact namespace descriptor is not immutable")
         keys: list[str] = []
         for item in self.descriptor_items:
             if (

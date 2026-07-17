@@ -316,6 +316,11 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
     ):
         with pytest.raises(ValueError):
             ArtifactStoreNamespaceIdentity(profile, items)
+    with pytest.raises(ValueError, match="not immutable"):
+        ArtifactStoreNamespaceIdentity(
+            "local-v2",
+            [("private_prefix", "objects/sha256")],  # type: ignore[arg-type]
+        )
     for kwargs in (
         {"adapter_identity": object()},
         {"namespace_identity": object()},

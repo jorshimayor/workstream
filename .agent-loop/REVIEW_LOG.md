@@ -2135,3 +2135,13 @@ put-acknowledgement fields, resolve adapter/namespace identity through the
 linked replica, and explicitly forbid a response digest or provider receipt.
 All reviewer sessions were closed, and this documentation repair requires one
 final exact-SHA review round.
+
+That review found one High and one Medium implementation issue plus one Low
+documentation mismatch. LocalStorage enforced private mode but not runtime-user
+ownership, and `ArtifactStoreNamespaceIdentity` accepted a mutable list despite
+being frozen. Local directory, marker, and object descriptor checks now require
+the current effective UID; root revalidation also requires exact `0700` mode.
+Namespace descriptor containers must be tuples, with regression tests for both
+rules. ADR 0013 and the artifact specification now describe the actual
+factory-bootstrap, PostgreSQL-claim, byte-store initialization sequence. All
+reviewer sessions were closed; the repaired SHA requires fresh review.
