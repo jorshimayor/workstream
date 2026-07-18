@@ -91,9 +91,10 @@ AUTH-09A merged through PR #132 as `299363a`, and signed schema-v2 memory
 stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
 started AUTH-09C. PR #146 merged it as `0ffdabf`; signed memory at `eeb3dc2`
 stopped. The user explicitly started AUTH-09D, and required review split it
-before runtime edits. Only 09D-A implementation is active after exact-SHA
-preimplementation review passed. Do not start 09D-B,
-09E, or POL-002-04 automatically.
+before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
+`cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B, whose
+exact contract review is active. 09E and POL-002-04 remain inactive pending
+their own gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

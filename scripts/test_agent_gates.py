@@ -4145,6 +4145,15 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "Active implementation chunk\n\n`WS-AUTH-001-09D-B`" in auth_status
     assert "`codex/ws-auth-001-09d-b-identity-link-lifecycle`" in auth_status
     assert "PR #148 is open" not in auth_status
+    stale_auth_09d_state = (
+        "Only 09D-A implementation is active",
+        "Only 09D-A may proceed",
+        "AUTH-09D-A's repaired contract passed required L1",
+    )
+    for stale_text in stale_auth_09d_state:
+        assert stale_text not in auth_status
+        assert stale_text not in auth_map
+        assert stale_text not in work_queue
     assert (
         "| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | "
         "Explicitly started; exact contract and L1 preimplementation review in progress"

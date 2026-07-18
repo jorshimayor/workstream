@@ -195,6 +195,7 @@ explicitly started AUTH-09B. PR #143 merged it as `053242b`; signed memory
 stopped, and the user explicitly started AUTH-09C. PR #146 merged it as
 `0ffdabf`; signed memory at `eeb3dc2` stopped. The user explicitly started
 AUTH-09D. Required preimplementation review rejected the combined lifecycle
-contract before runtime edits, so it is split into 09D-A and 09D-B. Only 09D-A
-may proceed after its repaired contract passes exact review. Do not start
-09D-B, 09E, or POL-002-04 automatically.
+contract before runtime edits, so it was split into 09D-A and 09D-B. PR #148
+merged 09D-A as `99ae4c9`; signed memory `cf8a3e8` stopped and named 09D-B. The
+user explicitly started 09D-B, whose exact contract review is active. 09E and
+POL-002-04 remain inactive pending their own gates and explicit starts.

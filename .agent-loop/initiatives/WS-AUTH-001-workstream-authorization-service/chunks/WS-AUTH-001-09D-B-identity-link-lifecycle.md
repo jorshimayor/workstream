@@ -122,7 +122,10 @@ fixed service, restore any grant, or advance target verification timestamps.
 Self-link revoke returns 403 `resource_guard_denied` before target disclosure.
 A caller whose own link is revoked fails authentication and cannot reactivate
 itself. An authorized missing link returns the existing privacy-safe 404
-`resource_not_found` code after exact permission match.
+`resource_not_found` code after exact permission match. It rolls back the
+reservation and staged allow, commits one privacy-safe denial in a clean
+transaction, leaves no pending claim, advances no timestamp, and leaves the key
+reusable.
 
 Each domain conflict rolls back the pending reservation and staged allow, then
 commits one `SensitiveAuthorizationDenied` row in a clean transaction with the
@@ -224,14 +227,18 @@ not take the authority singleton.
 | two effective admins A/B; A link-revokes B before B grant-revokes A | link revoke 200; B then denies `identity_link_revoked`; one link success/invalidation pair and one authorization denial; A remains sole effective admin; success key completed and denied key reusable |
 | two effective admins A/B; B grant-revokes A before A link-revokes B | grant revoke 200; A then denies `permission_not_granted`; one grant success/invalidation pair and one authorization denial; B remains sole effective admin; success key completed and denied key reusable |
 | three effective admins A/B/C; A profile-disables B, B link-revokes C, C grant-revokes A, with A then C holding the singleton first | A and C return 200, B denies the exact current-authority code; exactly two success/invalidation pairs and one authorization denial; B profile and A grant carry the two losses, C link remains active, and C is the sole effective admin; success keys completed and denied key reusable |
-| active target link; target self GET or PATCH holds profile lock first | self request commits, lifecycle waits, then revoke returns 200; final link revoked; one link success/invalidation pair; lifecycle key completed; no deadlock |
-| active target link; revoke holds target profile lock first | revoke returns 200, target self GET/PATCH waits then denies `identity_link_revoked`; final link revoked; one link success/invalidation pair plus one authorization denial; lifecycle key completed; no deadlock |
+| active target link; target self GET holds profile lock first | GET returns 200 and advances the target/self profile and link verification timestamps exactly once; revoke waits, then returns 200 and advances only its separate admin caller; final target link revoked; one link success/invalidation pair; lifecycle key completed; no deadlock |
+| active target link; target self PATCH holds profile lock first | PATCH returns 200 and advances the target/self profile and link verification timestamps exactly once; revoke waits, then returns 200 and advances only its separate admin caller; final target link revoked; one link success/invalidation pair; lifecycle key completed; no deadlock |
+| active target link; revoke holds target profile lock before target self GET | revoke returns 200 and advances only its admin caller; GET waits then denies `identity_link_revoked` and advances neither target timestamp; final target link revoked; one link success/invalidation pair plus one authorization denial; lifecycle key completed; no deadlock |
+| active target link; revoke holds target profile lock before target self PATCH | revoke returns 200 and advances only its admin caller; PATCH waits then denies `identity_link_revoked` and advances neither target timestamp; final target link revoked; one link success/invalidation pair plus one authorization denial; lifecycle key completed; no deadlock |
 
 Every race asserts no deadlock, no pending claim, exact success/invalidation/
 denial counts, completed or reusable key disposition, and final profile/link/
 grant state. Blocker-controlled PostgreSQL sessions establish order, and the
 test must observe the waiter in `pg_stat_activity` with
 `wait_event_type = 'Lock'`; timing sleeps are not lock evidence.
+The actor-self rows are one parameterized matrix over both GET and PATCH and
+both blocker orders; proving only one endpoint or one order fails acceptance.
 
 - Responses, errors, logs, OpenAPI, and evidence exclude issuer, subject, email,
   token data, raw reason, attribution IDs, matched-grant internals, and digests.

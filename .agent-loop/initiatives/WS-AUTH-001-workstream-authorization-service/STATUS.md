@@ -163,10 +163,11 @@ merged feature manifests and separate human starts exist.
 ## Blockers
 
 AUTH-09C has no remaining blocker. PR #146 merged as `0ffdabf` and signed
-memory passed at `eeb3dc2`. AUTH-09D-A's repaired contract passed required L1
-preimplementation review at `7f941a5`; no planning blocker remains. It must not
-add identity-link mutation, service grants, dynamic assignments,
-token-role authority, service admission, or feature-action activation.
+memory passed at `eeb3dc2`. PR #148 merged AUTH-09D-A as `99ae4c9`; signed
+memory `cf8a3e8` passed and stopped. The user explicitly started AUTH-09D-B,
+whose exact contract review is the current gate. It must not add service grants,
+dynamic assignments, token-role authority, service admission, or consumer
+feature-action activation. AUTH-09E remains inactive.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also
