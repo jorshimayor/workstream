@@ -267,7 +267,7 @@ ACTION_DEFINITIONS = (
         PermissionId.ADMIN_ROLE_GRANT,
         ActionOwner.AUTH_08,
     ),
-    _planned(
+    _active(
         ActionId.ACTOR_PROFILE_READ,
         PermissionId.ACTOR_PROFILE_READ_ANY,
         ActionOwner.AUTH_09C,
@@ -287,7 +287,7 @@ ACTION_DEFINITIONS = (
         PermissionId.ACTOR_PROFILE_DEACTIVATE,
         ActionOwner.AUTH_09D,
     ),
-    _planned(
+    _active(
         ActionId.ACTOR_IDENTITY_LINK_READ,
         PermissionId.ACTOR_IDENTITY_LINK_READ,
         ActionOwner.AUTH_09C,
@@ -578,6 +578,8 @@ def _index_actions(
         ActionId.ADMIN_ROLE_GRANT_ISSUE,
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        ActionId.ACTOR_PROFILE_READ,
+        ActionId.ACTOR_IDENTITY_LINK_READ,
         ActionId.ACTOR_SERVICE_PROVISION,
     }
     if {

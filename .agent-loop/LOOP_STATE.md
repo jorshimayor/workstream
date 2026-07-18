@@ -16,42 +16,43 @@
 - AUTH-09B merged through PR #143 as `053242b`; it adds controlled service
   actor provisioning and leaves service runtime admission plus feature actions
   inactive.
-- Active ART implementation chunk: `WS-ART-001-02A3` on
-  `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
-- Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
-  branch consumes their merged handoff contracts without editing or activating
-  their runtime behavior.
-- Start basis: PR #129 merged ART-02A2 into `main` as `9a04434`, and PR #139
-  then merged the cross-initiative boundary reconciliation as `5d353b6`.
+- PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on
+  2026-07-18; ART-02B1 remains inactive pending a separate explicit start.
+- Active implementation chunk: `WS-AUTH-001-09C` on
+  `codex/ws-auth-001-09c-actor-identity-admin-reads`.
+- AUTH-09C is bounded to two exact administrative read routes and activates
+  only `actor.profile.read` and `actor.identity_link.read`. AUTH-09D remains
+  inactive.
+- Start basis: trusted `main` at `a10d901` after PR #141.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit
-  human review after reconciling merged AUTH-09B and rebinding exact-SHA ART
-  evidence. No later ART chunk starts automatically.
+- Current gate: PR #146's original Backend, Agent Gates, and CodeRabbit checks
+  passed. All five valid CodeRabbit proof findings are repaired at `c64bcc7`,
+  trusted `main` through PR #141 is integrated, and focused unit, real
+  PostgreSQL, and Agent Gates proof passes. All required exact integrated-head
+  internal repair tracks pass at `c47d627`; push and replacement external
+  checks remain. No service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 65
-  ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active, plus the AUTH-09B `actor.service.provision` action. Merged AUTH-09A
-  defines seven fixed artifact
+  ActionIds, with the two actor-self actions, seven AUTH-08 administrative
+  actions, and AUTH-09B `actor.service.provision` active. Merged AUTH-09A defines
+  seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
   AUTH planning requires availability-neutral ART custody transfer, fixed-service
   admission, prepared mutation authority, and exact AUTH-only activation chunks;
   neither reconciliation PR activates feature behavior.
-- Parallel artifact checkpoint: ART-02A1 merged through PR #127 as `f64a8e5`
-  and ART-02A2 merged through PR #129 as `9a04434`. ART-02A3 completed
-  merged-main deterministic repair, deterministic proof, and exact-SHA internal
-  review. PR #141 is open; refreshed evidence, external checks, and explicit
-  human merge approval remain. ART-02B1 remains inactive.
-- Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
-  #130, #131, and #132; AUTH-09B merged through PR #143 as `053242b`.
-  AUTH-09C remains inactive until a separate explicit user start.
+- Parallel artifact checkpoint: ART-02A1, ART-02A2, and ART-02A3 merged through
+  PRs #127, #129, and #141. ART-02B1 remains inactive.
+- Authorization checkpoint: AUTH-07B through AUTH-09B merged through PRs #130,
+  #131, #132, and #143. Signed memory stopped after 09B, and the user explicitly
+  started AUTH-09C.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

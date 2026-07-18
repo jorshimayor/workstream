@@ -19,6 +19,8 @@ from app.modules.actors.models import (
 )
 from app.modules.actors.repository import ActorRepository
 from app.modules.actors.schemas import (
+    ActorIdentityLinkAdminResponse,
+    ActorProfileAdminResponse,
     ActorProfileSelfResponse,
     ActorProfileUpdateRequest,
     LegacyWorkflowEligibilityActivationRequest,
@@ -242,6 +244,47 @@ class ActorService:
         await self._session.refresh(resolved.profile)
         await self._session.refresh(resolved.identity_link)
         return resolved
+
+    async def read_admin_profile(
+        self,
+        actor_profile_id: UUID,
+    ) -> ActorProfileAdminResponse | None:
+        """Return one bounded actor view without changing target state."""
+        profile = await self._repo.get_actor_profile(str(actor_profile_id))
+        if profile is None:
+            return None
+        return ActorProfileAdminResponse(
+            actor_profile_id=UUID(profile.id),
+            actor_kind=profile.actor_kind,
+            status=profile.status,
+            provisioning_method=profile.provisioning_method,
+            service_identity=profile.service_identity,
+            display_name=profile.display_name,
+            created_at=profile.created_at,
+            updated_at=profile.updated_at,
+            last_seen_at=profile.last_seen_at,
+            suspended_at=profile.suspended_at,
+            deactivated_at=profile.deactivated_at,
+        )
+
+    async def read_admin_identity_link(
+        self,
+        actor_profile_id: UUID,
+    ) -> ActorIdentityLinkAdminResponse | None:
+        """Return one bounded link view selected by its canonical actor."""
+        link = await self._repo.get_identity_link_for_actor(str(actor_profile_id))
+        if link is None:
+            return None
+        return ActorIdentityLinkAdminResponse(
+            identity_link_id=UUID(link.id),
+            actor_profile_id=UUID(link.actor_profile_id),
+            subject_kind=link.subject_kind,
+            status=link.status,
+            linked_at=link.linked_at,
+            last_verified_at=link.last_verified_at,
+            revoked_at=link.revoked_at,
+            reactivated_at=link.reactivated_at,
+        )
 
     @staticmethod
     def actor_self_resource(

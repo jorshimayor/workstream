@@ -1010,6 +1010,30 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         )
         assert replayed_service.status_code == 201, replayed_service.text
         assert replayed_service.json() == provisioned_body
+        service_actor_id = provisioned_body["actor_profile_id"]
+        service_admin_profile = await request_json(
+            client,
+            "GET",
+            f"/api/v1/actors/{service_actor_id}",
+            manager_token,
+        )
+        service_admin_link = await request_json(
+            client,
+            "GET",
+            f"/api/v1/actors/{service_actor_id}/identity-links",
+            manager_token,
+        )
+        assert service_admin_profile["service_identity"] == service_payload["service_identity"]
+        assert service_admin_profile["actor_kind"] == "service"
+        assert service_admin_profile["last_seen_at"] is None
+        assert service_admin_link["subject_kind"] == "service"
+        assert service_admin_link["last_verified_at"] is None
+        serialized_service_reads = json.dumps(
+            [service_admin_profile, service_admin_link],
+            sort_keys=True,
+        )
+        assert service_payload["subject"] not in serialized_service_reads
+        assert flow_issuer not in serialized_service_reads
 
         project = await request_json(
             client,
@@ -1139,6 +1163,27 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         assert "issuer" not in canonical_actor
         assert "subject" not in canonical_actor
         assert "roles" not in canonical_actor
+        worker_admin_profile = await request_json(
+            client,
+            "GET",
+            f"/api/v1/actors/{canonical_actor['actor_profile_id']}",
+            manager_token,
+        )
+        worker_admin_link = await request_json(
+            client,
+            "GET",
+            f"/api/v1/actors/{canonical_actor['actor_profile_id']}/identity-links",
+            manager_token,
+        )
+        assert worker_admin_profile["actor_kind"] == "human"
+        assert worker_admin_profile["service_identity"] is None
+        assert worker_admin_link["subject_kind"] == "human"
+        serialized_worker_reads = json.dumps(
+            [worker_admin_profile, worker_admin_link],
+            sort_keys=True,
+        )
+        assert worker_subject not in serialized_worker_reads
+        assert flow_issuer not in serialized_worker_reads
         updated_actor = await request_json(
             client,
             "PATCH",

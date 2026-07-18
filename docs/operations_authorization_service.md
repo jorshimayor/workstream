@@ -564,10 +564,11 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 ### Catalogue And Action-Evidence Staging
 
 The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
-AUTH-09B. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
-actions, and `actor.service.provision` are active; the other 55 entries remain
-planned and non-executable. Seven of those planned rows are the AUTH-09C and
-AUTH-09D actor/link actions introduced by `0023`. The target post-custody
+AUTH-09C. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
+actions, `actor.service.provision`, `actor.profile.read`, and
+`actor.identity_link.read` are active; the other 53 entries remain planned and
+non-executable. Five of those planned rows are AUTH-09D actor/link mutations
+introduced by `0023`. The target post-custody
 invariant is that planned runtime entries contain only action, permission, exact
 AUTH activation owner, and availability. Until the availability-neutral custody
 transfers merge, the 25 ART and 19 REV rows retain their historical feature
@@ -634,10 +635,10 @@ exclusive audit-table lock before these checks and keeps it through destructive
 DDL. If any forward evidence exists, stop and recover forward rather than
 discarding it.
 
-Canonical actor self-read/self-update and the seven AUTH-08 administrative
-actions plus AUTH-09B controlled service provisioning are active. Project
-capability context waits for AUTH-10 exact-project grants and canonical project
-composition.
+Canonical actor self-read/self-update, the seven AUTH-08 administrative
+actions, AUTH-09B controlled service provisioning, and the two AUTH-09C
+actor-registry reads are active. Project capability context waits for AUTH-10
+exact-project grants and canonical project composition.
 
 AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
 `adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
@@ -694,6 +695,29 @@ grant issue/revoke. Access Administrator is the only role that can issue or
 revoke. Audit Authority is read-only and sees only the system or exact-project
 scope covered by its current grant; filtering occurs before totals and cursors.
 Requested target role/scope is mutation data, never caller authority.
+
+AUTH-09C adds `GET /api/v1/actors/{actor_profile_id}` and `GET
+/api/v1/actors/{actor_profile_id}/identity-links`. Both require an effective
+system-scoped Access Administrator or Audit Authority grant; a project-scoped
+Audit Authority grant never covers the global actor registry. The link route
+returns the one v0.1 link object, not a collection. Suspended/deactivated target
+actors and revoked target links remain readable for lifecycle diagnosis.
+
+The profile response includes only canonical lifecycle state, timestamps,
+display name, provisioning method, and the closed local `service_identity` for
+a service actor (`null` for a human). The link response includes only its local
+IDs, subject kind, lifecycle state, and timestamps. Neither response includes
+issuer, subject, contact email, reason, lifecycle actor, token/claim, grant,
+assignment, or service-action-matrix data.
+
+The kernel locks and revalidates the human caller profile, exact link, and
+matched system grant before target lookup and holds those locks through
+disclosure and commit. It does not acquire `AuthorityControl` or lock a distinct
+target. Unauthorized callers are denied before lookup. Missing actor and link
+targets both roll back the staged allow and return the same
+`actor_resource_not_found` 404; they do not advance caller timestamps or leave
+allow evidence. SQL/evidence/touch/commit failure rolls back and returns the
+retryable `service_unavailable` 503.
 
 Each protected route owns one caller-session transaction. A successful read,
 exact replay, issue, or revoke commits its decision evidence and advances the
