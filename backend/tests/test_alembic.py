@@ -133,7 +133,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             command.upgrade(config, "head")
             schema = asyncio.run(_outbox_schema(isolated_database_env))
             assert schema == {
-                "revision": "0025_shared_transactional_outbox",
+                "revision": "0026_shared_transactional_outbox",
                 "columns": {
                     "aggregate_id",
                     "aggregate_type",
@@ -193,10 +193,10 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             )
             assert committed == "refused_after_commit"
             assert asyncio.run(_current_revision(isolated_database_env)) == (
-                "0025_shared_transactional_outbox"
+                "0026_shared_transactional_outbox"
             )
             asyncio.run(_remove_outbox_migration_row(isolated_database_env, committed_project_id))
-            command.downgrade(config, "0024_service_link_verification")
+            command.downgrade(config, "0025_artifact_store_v2")
             assert "outbox_events" not in asyncio.run(_fetch_table_names(isolated_database_env))
 
             command.upgrade(config, "head")
@@ -210,7 +210,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             )
             assert rolled_back == "succeeded_after_rollback"
             assert asyncio.run(_current_revision(isolated_database_env)) == (
-                "0024_service_link_verification"
+                "0025_artifact_store_v2"
             )
         finally:
             command.upgrade(config, "head")
@@ -1828,7 +1828,7 @@ async def _outbox_downgrade_writer_race(
                 },
             )
             downgrade = asyncio.create_task(
-                asyncio.to_thread(command.downgrade, config, "0024_service_link_verification")
+                asyncio.to_thread(command.downgrade, config, "0025_artifact_store_v2")
             )
             await asyncio.sleep(0.1)
             assert not downgrade.done()

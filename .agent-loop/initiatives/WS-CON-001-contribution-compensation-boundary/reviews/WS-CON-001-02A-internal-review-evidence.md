@@ -8,10 +8,11 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
+Trusted main SHA: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
-The implementation is limited to one linear PostgreSQL migration, the generic
-outbox persistence/append module, shared metadata registration, focused tests,
+The implementation is limited to one linear PostgreSQL migration after
+ART-owned revision 0025, the generic outbox persistence/append module, shared
+metadata registration, focused tests,
 initiative evidence, and exactly one merge intent. It adds no dispatcher,
 delivery executor, Celery registration, broker, route, feature handler, AUTH
 identifier, contribution, compensation, review, task, project, audit, or ART
@@ -43,19 +44,19 @@ outside the chunk and is excluded from every commit and review.
 ## Verification Results
 
 ```text
-33 passed in 26.28s
+33 passed in 151.73s on the ART 0025 -> CON 0026 chain
 outbox coverage: 95.43% (required: at least 90%)
-8 passed, 47 deselected in 36.37s (exact contract selector)
-1 passed, 21 deselected in 30.70s (migration/downgrade guard)
-16 passed in 139.18s (isolated database runner self-tests with required admin URL)
+8 passed, 51 deselected in 125.42s (exact contract selector)
+1 passed, 25 deselected in 96.33s (migration/downgrade guard)
+16 passed in 180.79s (isolated database runner self-tests in a quiet window)
 real API contract end-to-end: passed
-80 passed in 8.37s (agent-loop gates)
+80 passed in 46.15s (agent-loop gates)
 Ruff: passed
-Docstring coverage: passed at 91.5%
+Docstring coverage: passed at 91.6%
 Markdown links: passed for 8 changed Markdown files
 Workstream stale wording: passed
 AUTH stale documentation: passed
-ART stale contract: passed at phase foundation
+ART stale contract: passed at phase artifact_store_cutover
 git diff --check: passed
 local roadmap workbook: absent, so the one-sheet export check is not applicable
 ```
@@ -73,19 +74,23 @@ Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Required Internal Review
 
-Exact reviewed SHA: pending
+Reviewed code SHA: pending
 
-| Track | Result | Findings |
-|---|---|---|
-| Senior engineering | Pending | Pending exact-SHA review |
-| QA/test | Pending | Pending exact-SHA review |
-| Security/auth | Pending | Pending exact-SHA review |
-| Product/ops | Pending | Pending exact-SHA review |
-| Architecture | Pending | Pending exact-SHA review |
-| Docs | Pending | Pending exact-SHA review |
-| Reuse/dedup | Pending | Pending exact-SHA review |
-| Test-delta | Pending | Pending exact-SHA review |
-| CI integrity | Pending | Pending exact-SHA review |
+Reviewed at: pending
+
+Reviewer run IDs: pending
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| Senior engineering | Pending | Pending | Pending exact-SHA review |
+| QA/test | Pending | Pending | Pending exact-SHA review |
+| Security/auth | Pending | Pending | Pending exact-SHA review |
+| Product/ops | Pending | Pending | Pending exact-SHA review |
+| Architecture | Pending | Pending | Pending exact-SHA review |
+| Docs | Pending | Pending | Pending exact-SHA review |
+| Reuse/dedup | Pending | Pending | Pending exact-SHA review |
+| Test delta | Pending | Pending | Pending exact-SHA review |
+| CI integrity | Pending | Pending | Pending exact-SHA review |
 
 ## Remaining Human Gates
 

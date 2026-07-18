@@ -17,7 +17,8 @@ feature chunks own execution behavior.
 
 ## What Changed
 
-- Added one linear `0025_shared_transactional_outbox` migration.
+- Added one linear `0026_shared_transactional_outbox` migration after the
+  ART-owned `0025_artifact_store_v2` revision.
 - Added the generic outbox model, strict append schemas, reservation repository,
   and flush-only service.
 - Registered the model in shared SQLAlchemy metadata.

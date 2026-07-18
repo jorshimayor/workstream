@@ -7,9 +7,12 @@ generated post-merge state on `automation/loop-memory` was signature-verified
 against that exact main SHA. The human explicitly started `WS-CON-001-02A` on
 2026-07-18. CON-02A is now the only active chunk and is limited to generic
 PostgreSQL outbox persistence plus append/replay in a caller-owned transaction.
-It introduces no route, dispatcher, delivery executor, Celery registration, protected
-handler, feature authority, contribution, compensation, review, or artifact
-behavior.
+It introduces no route, dispatcher, delivery executor, Celery registration,
+protected handler, feature authority, contribution, compensation, review, or
+artifact behavior. Trusted `main` then advanced to `a10d901` through ART PR
+#141. CON-02A now follows ART-owned `0025_artifact_store_v2` with linear
+`0026_shared_transactional_outbox`; ART's adapter, storage, startup, and
+delivery-executor changes do not add an outbox seam or change this boundary.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation

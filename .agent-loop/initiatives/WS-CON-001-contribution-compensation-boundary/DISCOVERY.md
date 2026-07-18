@@ -49,8 +49,9 @@
 
 ## CON-02A focused discovery
 
-- The current Alembic head is `0024_service_link_verification`; CON-02A owns
-  the next linear revision and must import its model through
+- Trusted `main` at `a10d901` now ends at ART-owned
+  `0025_artifact_store_v2`; CON-02A owns linear revision
+  `0026_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
 - `app.core.hashing.canonical_json_hash` is the only repository canonical JSON
   encoder. It sorts object keys, rejects non-finite numbers, uses compact UTF-8
@@ -75,9 +76,10 @@
   session but never commit or publish. PostgreSQL triggers are already used for
   append-only/immutable custody and guarded downgrade checks; the shared outbox
   should follow those repository conventions.
-- There is no existing outbox module, delivery executor, route, dispatcher registry,
-  broker publication seam, or permission to reuse. CON-02A therefore remains
-  feature-neutral and authorization-neutral.
+- ART PR #141 adds artifact adapters, startup wiring, and an artifact delivery
+  executor but no shared outbox module, outbox route, dispatcher registry,
+  broker publication seam, or outbox permission. CON-02A therefore remains
+  feature-neutral and authorization-neutral and does not call ART.
 
 ## Canonical merged changes affecting CON
 

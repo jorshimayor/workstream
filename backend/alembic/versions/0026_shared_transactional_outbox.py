@@ -1,7 +1,7 @@
 """add shared transactional outbox persistence
 
-Revision ID: 0025_shared_transactional_outbox
-Revises: 0024_service_link_verification
+Revision ID: 0026_shared_transactional_outbox
+Revises: 0025_artifact_store_v2
 Create Date: 2026-07-18
 """
 
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0025_shared_transactional_outbox"
-down_revision = "0024_service_link_verification"
+revision = "0026_shared_transactional_outbox"
+down_revision = "0025_artifact_store_v2"
 branch_labels = depends_on = None
 
 

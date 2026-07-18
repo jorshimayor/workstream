@@ -2,7 +2,7 @@
 
 ## Exact baseline and scope
 
-- Baseline: trusted `origin/main` at `e118e33`.
+- Baseline: trusted `origin/main` at `a10d901` after ART PR #141 merged.
 - Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 - Delivery priority: P1 active-sprint prerequisite for REV/CON composition.
 - Human checkpoint: required before merge.
@@ -21,7 +21,8 @@
    below, database-owned occurrence time, closed delivery-state shapes,
    immutable envelope/payload custody, permanent physical delete/truncate
    denial, terminal archival-in-place, and a nonempty-table downgrade guard in
-   revision `0025_shared_transactional_outbox`.
+   linear revision `0026_shared_transactional_outbox` after ART-owned
+   `0025_artifact_store_v2`.
 3. Add strict typed append input/output schemas. The caller supplies stable
    event identity and canonical event facts but not occurrence or delivery
    state. The service hashes only the validated payload with
@@ -209,7 +210,7 @@ unrelated operational facts.
 
 ## Migration and transaction proof details
 
-- Upgrade from exact revision `0024_service_link_verification` and verify
+- Upgrade from exact revision `0025_artifact_store_v2` and verify
   columns, constraints, indexes, triggers, metadata, and head identity.
 - Attempt direct SQL mutation of every immutable column and physical delete/
   truncate; each must fail. Exercise every operational column through at least
@@ -243,3 +244,11 @@ were underspecified. The frozen schema, operational transition matrix, privacy
 contract, collision matrix, and proof details above resolve every finding.
 Architecture, senior engineering, reuse/dedup, QA/test, product/ops, docs,
 security/auth, and CI integrity all returned PASS before implementation began.
+
+After implementation began, ART PR #141 advanced trusted `main` and took
+revision 0025. The human explicitly requested a pull. Reconciliation preserves
+the reviewed schema and behavior while moving only CON's revision identity and
+parent to linear `0026_shared_transactional_outbox` after
+`0025_artifact_store_v2`. ART adds no shared outbox or authorization seam, so
+no implementation boundary or non-goal changes. Final exact-SHA review must
+cover this current-main reconciliation.
