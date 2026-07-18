@@ -4142,7 +4142,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "Merged through PR #148 as `99ae4c9`" in auth_map
     assert "| `WS-AUTH-001-09D-A` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09D-B` | Ready for PR |" in auth_status
-    assert "Active implementation chunk\n\n`WS-AUTH-001-09D-B`" in auth_status
+    assert "PR-ready implementation chunk\n\n`WS-AUTH-001-09D-B`" in auth_status
     assert "`codex/ws-auth-001-09d-b-identity-link-lifecycle`" in auth_status
     assert "PR #148 is open" not in auth_status
     stale_auth_09d_state = (
@@ -4150,6 +4150,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "Only 09D-A may proceed",
         "AUTH-09D-A's repaired contract passed required L1",
         "bounded implementation is active",
+        "Bounded implementation is the current gate",
     )
     for stale_text in stale_auth_09d_state:
         assert stale_text not in auth_status
@@ -4161,7 +4162,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "ready PR publication"
         in work_queue
     )
-    assert "Active implementation chunk: `WS-AUTH-001-09D-B`" in loop_state
+    assert "PR-ready implementation chunk: `WS-AUTH-001-09D-B`" in loop_state
+    assert "Current gate: ready 09D-B PR publication and external checks" in loop_state
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And "
         "Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and "

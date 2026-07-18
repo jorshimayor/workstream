@@ -107,7 +107,7 @@ consumer feature action is active.
 
 None. `WS-AUTH-001-XINT` merged through PR #140.
 
-## Active implementation chunk
+## PR-ready implementation chunk
 
 `WS-AUTH-001-09D-B` - Identity-Link Lifecycle And Race Closure. Exact contract
 `9ec6390b` passed required L1 preimplementation review. Implementation,

@@ -22,18 +22,17 @@
   2026-07-18; ART-02B1 remains inactive pending a separate explicit start.
 - AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory at
   `cf8a3e8` recorded the stopped gate and exact 09D-B successor.
-- Active implementation chunk: `WS-AUTH-001-09D-B` on
+- PR-ready implementation chunk: `WS-AUTH-001-09D-B` on
   `codex/ws-auth-001-09d-b-identity-link-lifecycle`, started from trusted
   `main` at `99ae4c9` after the user's explicit start signal. Contract repair
   passed required L1 preimplementation review at exact contract `9ec6390b`.
-  Bounded implementation is the current gate.
+  Implementation, deterministic proof, and required internal review pass.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: 09D-B implementation, deterministic proof, and required
-  internal review pass; ready PR publication and external checks remain. The inactive
+- Current gate: ready 09D-B PR publication and external checks. The inactive
   `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` is the next same-initiative gate; it
   changes no action availability. No service caller becomes executable before
   AUTH-09E.
