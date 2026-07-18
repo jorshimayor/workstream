@@ -11,8 +11,10 @@ def assert_secret_not_retained(
     value: object,
     secret: str,
     seen: set[int] | None = None,
+    *,
+    traceback_module_prefixes: tuple[str, ...] = (),
 ) -> None:
-    """Assert a secret is unreachable through an error's public object graph."""
+    """Assert a secret is unreachable through selected error state."""
     if seen is None:
         seen = set()
     if id(value) in seen:
@@ -24,15 +26,49 @@ def assert_secret_not_retained(
         assert secret not in value.get_secret_value()
     elif isinstance(value, BaseException):
         if isinstance(value, ValidationError):
-            assert_secret_not_retained(value.errors(), secret, seen)
-        assert_secret_not_retained(value.args, secret, seen)
-        assert_secret_not_retained(vars(value), secret, seen)
-        assert_secret_not_retained(value.__cause__, secret, seen)
-        assert_secret_not_retained(value.__context__, secret, seen)
+            assert_secret_not_retained(
+                value.errors(),
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+        for related in (value.args, vars(value), value.__cause__, value.__context__):
+            assert_secret_not_retained(
+                related,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+        traceback = value.__traceback__
+        while traceback is not None:
+            module_name = str(traceback.tb_frame.f_globals.get("__name__", ""))
+            if module_name.startswith(traceback_module_prefixes):
+                assert_secret_not_retained(
+                    dict(traceback.tb_frame.f_locals),
+                    secret,
+                    seen,
+                    traceback_module_prefixes=traceback_module_prefixes,
+                )
+            traceback = traceback.tb_next
     elif isinstance(value, Mapping):
         for key, item in value.items():
-            assert_secret_not_retained(key, secret, seen)
-            assert_secret_not_retained(item, secret, seen)
+            assert_secret_not_retained(
+                key,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+            assert_secret_not_retained(
+                item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
     elif isinstance(value, (list, tuple, set)):
         for item in value:
-            assert_secret_not_retained(item, secret, seen)
+            assert_secret_not_retained(
+                item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )

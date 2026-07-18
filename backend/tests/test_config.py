@@ -668,6 +668,37 @@ def test_minio_secret_values_are_absent_from_repr_and_validation_errors(
 
 @pytest.mark.parametrize(
     "method_name",
+    ["constructor", "model_validate", "model_validate_json", "model_validate_strings"],
+)
+def test_invalid_minio_secret_is_absent_from_application_traceback(
+    tmp_path: Path,
+    method_name: str,
+) -> None:
+    """Rejected credentials must not remain in Workstream traceback locals."""
+    secret = "invalid-minio-secret\n"
+    payload = _minio_setting_values(
+        tmp_path,
+        artifact_scratch_root=str(tmp_path / "scratch"),
+        artifact_s3_secret_access_key=secret,
+    )
+
+    with pytest.raises(ValueError, match="invalid artifact storage secret") as caught:
+        if method_name == "constructor":
+            Settings(**payload)
+        elif method_name == "model_validate_json":
+            Settings.model_validate_json(json.dumps(payload))
+        else:
+            getattr(Settings, method_name)(payload)
+
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+
+@pytest.mark.parametrize(
+    "method_name",
     ["model_validate", "model_validate_json", "model_validate_strings"],
 )
 def test_alternate_validation_loads_minio_secrets_without_retaining_them(

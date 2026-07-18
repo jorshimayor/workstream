@@ -208,6 +208,8 @@ class Settings(BaseSettings):
             or _ARTIFACT_S3_SECRET_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
+            supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
+            obj = None
             secret = (
                 _extract_api_rate_limit_key_secret(sanitized)
                 if "api_rate_limit_key_secret" in sanitized
@@ -216,9 +218,8 @@ class Settings(BaseSettings):
             s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
             if secret is not None:
                 sanitized["api_rate_limit_key_secret"] = None
-            for field_name in _ARTIFACT_S3_SECRET_FIELDS:
-                if field_name in obj:
-                    sanitized[field_name] = None
+            for field_name in supplied_s3_fields:
+                sanitized[field_name] = None
             restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
             try:
                 settings = super().model_validate(sanitized, **kwargs)
@@ -250,7 +251,12 @@ class Settings(BaseSettings):
             "api_rate_limit_key_secret" in parsed
             or _ARTIFACT_S3_SECRET_FIELDS.intersection(parsed)
         ):
-            return cls.model_validate(parsed, **kwargs)
+            try:
+                return cls.model_validate(parsed, **kwargs)
+            except ValueError:
+                parsed = None
+                json_data = b""
+                raise
         return super().model_validate_json(json_data, **kwargs)
 
     @classmethod
@@ -261,6 +267,8 @@ class Settings(BaseSettings):
             or _ARTIFACT_S3_SECRET_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
+            supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
+            obj = None
             secret = (
                 _extract_api_rate_limit_key_secret(sanitized)
                 if "api_rate_limit_key_secret" in sanitized
@@ -269,9 +277,8 @@ class Settings(BaseSettings):
             s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
             if secret is not None:
                 sanitized["api_rate_limit_key_secret"] = None
-            for field_name in _ARTIFACT_S3_SECRET_FIELDS:
-                if field_name in obj:
-                    sanitized[field_name] = None
+            for field_name in supplied_s3_fields:
+                sanitized[field_name] = None
             restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
             try:
                 settings = super().model_validate_strings(sanitized, **kwargs)
@@ -473,18 +480,27 @@ def _extract_artifact_s3_static_secrets(
     values: dict[str, object],
 ) -> tuple[SecretStr | None, SecretStr | None, SecretStr | None]:
     """Remove optional MinIO credentials from structured settings input."""
-    return tuple(
-        _extract_optional_secret(
-            values,
-            field_name=field_name,
-            environment_name=f"WORKSTREAM_{field_name.upper()}",
-        )
-        for field_name in (
-            "artifact_s3_access_key_id",
-            "artifact_s3_secret_access_key",
-            "artifact_s3_session_token",
-        )
-    )  # type: ignore[return-value]
+    field_names = (
+        "artifact_s3_access_key_id",
+        "artifact_s3_secret_access_key",
+        "artifact_s3_session_token",
+    )
+    secrets: list[SecretStr | None] = []
+    try:
+        for field_name in field_names:
+            secrets.append(
+                _extract_optional_secret(
+                    values,
+                    field_name=field_name,
+                    environment_name=f"WORKSTREAM_{field_name.upper()}",
+                )
+            )
+    except ValueError:
+        secrets.clear()
+        for field_name in field_names:
+            values.pop(field_name, None)
+        raise
+    return secrets[0], secrets[1], secrets[2]
 
 
 def _extract_optional_secret(
@@ -504,8 +520,10 @@ def _extract_optional_secret(
             env_encoding = values.get("_env_file_encoding", "utf-8")
             env_files = (env_file,) if isinstance(env_file, (str, os.PathLike)) else tuple(env_file)
             for path in env_files:
-                dotenv = dotenv_values(path, encoding=env_encoding)
-                raw_value = dotenv.get(environment_name, raw_value)
+                raw_value = dotenv_values(path, encoding=env_encoding).get(
+                    environment_name,
+                    raw_value,
+                )
     if raw_value is missing or raw_value is None:
         return None
     if isinstance(raw_value, SecretStr):
@@ -513,6 +531,7 @@ def _extract_optional_secret(
     elif isinstance(raw_value, str):
         secret = SecretStr(raw_value)
     else:
+        del raw_value
         raise ValueError("invalid artifact storage secret")
     revealed = secret.get_secret_value()
     if (
@@ -520,6 +539,7 @@ def _extract_optional_secret(
         or len(revealed) > 4096
         or any(ord(character) < 32 or ord(character) == 127 for character in revealed)
     ):
+        del raw_value, secret, revealed
         raise ValueError("invalid artifact storage secret")
     return secret
 
