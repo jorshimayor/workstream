@@ -36,6 +36,11 @@ _ARTIFACT_S3_SECRET_FIELDS = frozenset(
         "artifact_s3_session_token",
     }
 )
+_EMPTY_ARTIFACT_S3_SECRETS: tuple[SecretStr | None, SecretStr | None, SecretStr | None] = (
+    None,
+    None,
+    None,
+)
 _ALTERNATE_VALIDATION_RESTORES_SECRETS: ContextVar[bool] = ContextVar(
     "alternate_validation_restores_secrets",
     default=False,
@@ -192,13 +197,22 @@ class Settings(BaseSettings):
 
     def __init__(self, **values: object) -> None:
         """Remove rate-control secret material before structured validation."""
-        secret = _extract_api_rate_limit_key_secret(values)
-        s3_secrets = _extract_artifact_s3_static_secrets(values)
-        super().__init__(**values)
-        self._api_rate_limit_key_secret = secret
-        self._set_artifact_s3_static_secrets(s3_secrets)
-        if not _ALTERNATE_VALIDATION_RESTORES_SECRETS.get():
-            self._validate_artifact_s3_secret_contract()
+        secret: SecretStr | None = None
+        s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+        try:
+            secret = _extract_api_rate_limit_key_secret(values)
+            s3_secrets = _extract_artifact_s3_static_secrets(values)
+            super().__init__(**values)
+            self._api_rate_limit_key_secret = secret
+            self._set_artifact_s3_static_secrets(s3_secrets)
+            if not _ALTERNATE_VALIDATION_RESTORES_SECRETS.get():
+                self._validate_artifact_s3_secret_contract()
+        except ValueError:
+            _clear_settings_private_secrets(self)
+            values.clear()
+            secret = None
+            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+            raise
 
     @classmethod
     def model_validate(cls, obj: object, **kwargs: object) -> Self:
@@ -210,26 +224,38 @@ class Settings(BaseSettings):
             sanitized = dict(obj)
             supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
             obj = None
-            secret = (
-                _extract_api_rate_limit_key_secret(sanitized)
-                if "api_rate_limit_key_secret" in sanitized
-                else None
-            )
-            s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
-            if secret is not None:
-                sanitized["api_rate_limit_key_secret"] = None
-            for field_name in supplied_s3_fields:
-                sanitized[field_name] = None
-            restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+            secret: SecretStr | None = None
+            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+            settings: Settings | None = None
             try:
-                settings = super().model_validate(sanitized, **kwargs)
-            finally:
-                _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
-            if secret is not None:
-                settings._api_rate_limit_key_secret = secret
-            settings._set_artifact_s3_static_secrets(s3_secrets)
-            settings._validate_artifact_s3_secret_contract()
-            return settings
+                secret = (
+                    _extract_api_rate_limit_key_secret(sanitized)
+                    if "api_rate_limit_key_secret" in sanitized
+                    else None
+                )
+                s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
+                if secret is not None:
+                    sanitized["api_rate_limit_key_secret"] = None
+                for field_name in supplied_s3_fields:
+                    sanitized[field_name] = None
+                restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+                try:
+                    settings = super().model_validate(sanitized, **kwargs)
+                finally:
+                    _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
+                if secret is not None:
+                    settings._api_rate_limit_key_secret = secret
+                settings._set_artifact_s3_static_secrets(s3_secrets)
+                settings._validate_artifact_s3_secret_contract()
+                return settings
+            except ValueError:
+                if settings is not None:
+                    _clear_settings_private_secrets(settings)
+                sanitized.clear()
+                secret = None
+                s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+                settings = None
+                raise
         return super().model_validate(obj, **kwargs)
 
     @classmethod
@@ -269,26 +295,38 @@ class Settings(BaseSettings):
             sanitized = dict(obj)
             supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
             obj = None
-            secret = (
-                _extract_api_rate_limit_key_secret(sanitized)
-                if "api_rate_limit_key_secret" in sanitized
-                else None
-            )
-            s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
-            if secret is not None:
-                sanitized["api_rate_limit_key_secret"] = None
-            for field_name in supplied_s3_fields:
-                sanitized[field_name] = None
-            restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+            secret: SecretStr | None = None
+            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+            settings: Settings | None = None
             try:
-                settings = super().model_validate_strings(sanitized, **kwargs)
-            finally:
-                _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
-            if secret is not None:
-                settings._api_rate_limit_key_secret = secret
-            settings._set_artifact_s3_static_secrets(s3_secrets)
-            settings._validate_artifact_s3_secret_contract()
-            return settings
+                secret = (
+                    _extract_api_rate_limit_key_secret(sanitized)
+                    if "api_rate_limit_key_secret" in sanitized
+                    else None
+                )
+                s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
+                if secret is not None:
+                    sanitized["api_rate_limit_key_secret"] = None
+                for field_name in supplied_s3_fields:
+                    sanitized[field_name] = None
+                restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+                try:
+                    settings = super().model_validate_strings(sanitized, **kwargs)
+                finally:
+                    _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
+                if secret is not None:
+                    settings._api_rate_limit_key_secret = secret
+                settings._set_artifact_s3_static_secrets(s3_secrets)
+                settings._validate_artifact_s3_secret_contract()
+                return settings
+            except ValueError:
+                if settings is not None:
+                    _clear_settings_private_secrets(settings)
+                sanitized.clear()
+                secret = None
+                s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+                settings = None
+                raise
         return super().model_validate_strings(obj, **kwargs)
 
     @classmethod
@@ -348,15 +386,18 @@ class Settings(BaseSettings):
         if self.artifact_store_backend != "s3_compatible" and any(
             value is not None for value in secrets
         ):
+            secrets = _EMPTY_ARTIFACT_S3_SECRETS
             raise ValueError("static artifact credentials require MinIO storage")
         if self.artifact_s3_provider_profile == "minio" and (
             self.artifact_s3_access_key_id is None
             or self.artifact_s3_secret_access_key is None
         ):
+            secrets = _EMPTY_ARTIFACT_S3_SECRETS
             raise ValueError("MinIO artifact storage requires complete static credentials")
         if self.artifact_s3_provider_profile == "aws_s3" and any(
             value is not None for value in secrets
         ):
+            secrets = _EMPTY_ARTIFACT_S3_SECRETS
             raise ValueError("native AWS S3 rejects static credentials")
 
     @model_validator(mode="after")
@@ -448,6 +489,17 @@ def get_settings() -> Settings:
         Settings resolved from environment variables and optional ``.env``.
     """
     return Settings()
+
+
+def _clear_settings_private_secrets(settings: object) -> None:
+    """Remove secret values from a partially or fully initialized Settings object."""
+    private_values = getattr(settings, "__pydantic_private__", None)
+    if not isinstance(private_values, dict):
+        return
+    private_values["_api_rate_limit_key_secret"] = None
+    private_values["_artifact_s3_access_key_id"] = None
+    private_values["_artifact_s3_secret_access_key"] = None
+    private_values["_artifact_s3_session_token"] = None
 
 
 def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr | None:

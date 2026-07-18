@@ -663,7 +663,39 @@ def test_minio_secret_values_are_absent_from_repr_and_validation_errors(
 
     assert secret not in repr(caught.value.errors())
     assert secret not in caught.value.json()
-    assert_secret_not_retained(caught.value, secret)
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    ["model_validate", "model_validate_json", "model_validate_strings"],
+)
+def test_valid_minio_secret_is_absent_from_unrelated_application_traceback(
+    tmp_path: Path,
+    method_name: str,
+) -> None:
+    """Later configuration errors must not retain an accepted credential."""
+    secret = "valid-minio-secret-for-traceback"
+    payload = _minio_setting_values(
+        tmp_path,
+        artifact_scratch_root=str(tmp_path / "scratch"),
+        artifact_s3_secret_access_key=secret,
+        artifact_s3_region="US-east-1",
+    )
+    method = getattr(Settings, method_name)
+
+    with pytest.raises(ValueError) as caught:
+        method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize(

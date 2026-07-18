@@ -64,6 +64,13 @@ def assert_secret_not_retained(
                 seen,
                 traceback_module_prefixes=traceback_module_prefixes,
             )
+    elif isinstance(getattr(value, "__pydantic_private__", None), Mapping):
+        assert_secret_not_retained(
+            getattr(value, "__pydantic_private__"),
+            secret,
+            seen,
+            traceback_module_prefixes=traceback_module_prefixes,
+        )
     elif isinstance(value, (list, tuple, set)):
         for item in value:
             assert_secret_not_retained(
