@@ -37,6 +37,11 @@ the canonical review specification without changing the backend migration head
 or the CON-02A outbox boundary.
 REV-02 PR #147 then advanced trusted main to `f18b620` with planning-only chunk
 decomposition and no backend, migration, or 02A boundary change.
+AUTH-09D-A PR #148 then advanced trusted main to `99ae4c96`, activated only
+three actor-profile lifecycle actions, and added AUTH-owned
+`0026_actor_profile_lifecycle`. CON-02A therefore rebases its linear migration
+to `0027_shared_transactional_outbox`; the merge adds no CON/outbox action,
+permission, evaluator, service identity, or runtime admission.
 
 ## Inspected and already aligned
 

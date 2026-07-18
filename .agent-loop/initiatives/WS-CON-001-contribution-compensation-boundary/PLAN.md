@@ -2,10 +2,10 @@
 
 ## Proposed approach
 
-Adopt merged REV-02 PR #147, REV-01 PR #145, and the underlying REV planning PR
-#128 plus trusted main `f18b620`, including AUTH-09C PR #146, ART PR #141,
-AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and the underlying WS-XINT PR #139
-boundary before runtime work, then deliver WS-CON through
+Adopt AUTH-09D-A PR #148, merged REV-02 PR #147, REV-01 PR #145, and the
+underlying REV planning PR #128 plus trusted main `99ae4c96`, including
+AUTH-09C PR #146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and
+the underlying WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
 hidden, reviewable chunks. The
 core path is PostgreSQL-local and has no ART dependency:
 
@@ -163,15 +163,15 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `f18b620`, merging REV-02 PR #147 after REV-01 PR #145,
-AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, REV planning PR #128,
-AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
-Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 12 active actions,
-and 53 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
+Trusted `main` is `99ae4c96`, merging AUTH-09D-A PR #148 after REV-02 PR #147,
+REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, REV planning
+PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
+Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 15 active actions,
+and 50 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
 activates only the controlled human `actor.service.provision` operation;
 AUTH-09C activates only administrative `actor.profile.read` and
-`actor.identity_link.read`. Neither grants service execution or runtime
-admission. PR #140 adds reviewed AUTH
+`actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
+lifecycle actions. None grants service execution or runtime admission. PR #140 adds reviewed AUTH
 custody/PREP/activation contracts only; the custody transfers and prepared
 protocol remain proposed runtime work.
 

@@ -15,7 +15,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 | `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
 | `WS-CON-001-PLAN3` | AUTH/REV Current-Main Reconciliation | L0/L1 | Merged AUTH PR #140 plus AUTH-09A and REV PR #128 at `0302bcf` | Complete; unpublished |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Complete; merged in PR #144 |
-| `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01 merged at `e118e33`; trusted head refreshed through ART PR #141, AUTH-09C PR #146, REV-01 PR #145, and REV-02 PR #147 at `f18b620`; explicitly started by human | Implementation complete; review pending |
+| `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01 merged at `e118e33`; trusted head refreshed through ART PR #141, AUTH-09C PR #146, REV-01 PR #145, REV-02 PR #147, and AUTH-09D-A PR #148 at `99ae4c96`; explicitly started by human | Reconciled implementation; evidence rerun pending |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
 | `WS-CON-001-02C` | Shared Lifecycle Audit Participant | L1 | 02B; current AuditEvent contract refreshed | Proposed |
 | `WS-CON-001-03A` | Project Compensation Adapter-Binding Persistence | L1 | 02C; migration head refreshed | Proposed |
@@ -58,10 +58,11 @@ separate human approval -> refreshed ART/AUTH handoff -> 09A -> 09B
 AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/release
 ```
 
-- AUTH-09A through 09C are merged; AUTH-09B activates only the human
-  administrative provisioning route and AUTH-09C activates only actor/profile
-  administrative reads. Neither grants service execution. AUTH-09D/09E must
-  still precede protected fixed-service execution. New CON
+- AUTH-09A through 09D-A are merged; AUTH-09B activates only the human
+  administrative provisioning route, AUTH-09C activates only actor/profile
+  administrative reads, and AUTH-09D-A activates only actor-profile lifecycle.
+  None grants service execution. AUTH-09D-B/09E must still precede protected
+  fixed-service execution. New CON
   ServiceIdentity/static-row additions require separate reviewed AUTH contracts
   before provisioning; no existing ART identity or provisioning result may be
   reused as CON authority.

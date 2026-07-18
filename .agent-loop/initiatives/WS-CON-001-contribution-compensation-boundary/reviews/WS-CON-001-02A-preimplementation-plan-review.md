@@ -1,5 +1,15 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
+## AUTH-09D-A Current-Main Reconciliation
+
+Trusted main advanced to `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
+through AUTH-09D-A PR #148 before publication. AUTH now owns
+`0026_actor_profile_lifecycle`, so CON-02A's reviewed linear migration is
+`0027_shared_transactional_outbox` with parent
+`0026_actor_profile_lifecycle`. AUTH-09D-A activates only three actor-profile
+lifecycle actions; it adds no CON/outbox identifier, evaluator, service
+identity, static row, fixed-service admission, or product behavior.
+
 ## Exact baseline and scope
 
 - Baseline: trusted `origin/main` at `a10d901` after ART PR #141 merged.
@@ -37,8 +47,8 @@
    below, database-owned occurrence time, closed delivery-state shapes,
    immutable envelope/payload custody, permanent physical delete/truncate
    denial, terminal archival-in-place, and a nonempty-table downgrade guard in
-   linear revision `0026_shared_transactional_outbox` after ART-owned
-   `0025_artifact_store_v2`.
+   linear revision `0027_shared_transactional_outbox` after AUTH-owned
+   `0026_actor_profile_lifecycle`.
 3. Add strict typed append input/output schemas. The caller supplies stable
    event identity and canonical event facts but not occurrence or delivery
    state. The service hashes only the validated payload with
@@ -264,7 +274,7 @@ security/auth, and CI integrity all returned PASS before implementation began.
 After implementation began, ART PR #141 advanced trusted `main` and took
 revision 0025. The human explicitly requested a pull. Reconciliation preserves
 the reviewed schema and behavior while moving only CON's revision identity and
-parent to linear `0026_shared_transactional_outbox` after
-`0025_artifact_store_v2`. ART adds no shared outbox or authorization seam, so
+parent to linear `0027_shared_transactional_outbox` after
+`0026_actor_profile_lifecycle`. AUTH-09D-A adds no shared outbox or authorization seam, so
 no implementation boundary or non-goal changes. Final exact-SHA review must
 cover this current-main reconciliation.

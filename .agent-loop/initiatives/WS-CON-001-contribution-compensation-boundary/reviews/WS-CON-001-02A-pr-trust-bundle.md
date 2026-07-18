@@ -17,8 +17,8 @@ feature chunks own execution behavior.
 
 ## What Changed
 
-- Added one linear `0026_shared_transactional_outbox` migration after the
-  ART-owned `0025_artifact_store_v2` revision.
+- Added one linear `0027_shared_transactional_outbox` migration after the
+  AUTH-owned `0026_actor_profile_lifecycle` revision.
 - Added the generic outbox model, strict append schemas, reservation repository,
   and flush-only service.
 - Registered the model in shared SQLAlchemy metadata.
@@ -54,20 +54,27 @@ feature chunks own execution behavior.
 
 ## Proof
 
-- Exact contract selector: 8 passed, 51 deselected.
-- Complete outbox suite: 33 passed with 95.43% focused coverage.
-- Migration/downgrade guard: 1 passed, 25 deselected.
-- Isolated database runner self-tests: 16 passed with the required admin URL.
-- Real API contract end-to-end: passed.
-- Exact isolated PostgreSQL full suite: 1347 passed in 17741.96 seconds
+- Reconciled exact contract selector: 8 passed, 56 deselected.
+- Reconciled complete outbox plus migration suite: 34 passed with 95.43%
+  focused coverage.
+- Affected AUTH lifecycle downgrade tests: 2 passed, including atomic rollback
+  to the full `0027` head when AUTH refuses `0026 -> 0025`.
+- Alembic reports exactly one head: `0027_shared_transactional_outbox`.
+- Isolated database runner self-tests: 16 passed in 102.10 seconds with the
+  required admin URL.
+- Real API contract end-to-end on the `0027` chain: passed.
+- Pre-reconciliation exact isolated PostgreSQL full suite: 1347 passed in 17741.96 seconds
   (4:55:41), with 85.35% repository coverage against the 78% floor.
-- The isolated evidence records tree `f72bb6e`, database
-  `workstream_test_d513fb2f03b1`, and Alembic head
-  `0026_shared_transactional_outbox`.
+- The pre-reconciliation isolated evidence records tree `f72bb6e`, database
+  `workstream_test_d513fb2f03b1`, and the superseded Alembic head
+  `0026_shared_transactional_outbox`; exact `0027` evidence must replace it
+  before publication.
 - Agent-loop gates: 87 passed.
-- Ruff, 91.5% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
+- Ruff, 90.9% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
-- Exact-SHA internal reviewer results will be frozen before publication.
+- AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
+  above is current, while full-suite evidence and exact-SHA internal reviewer
+  results must rerun before publication.
 
 ## Test And CI Integrity
 

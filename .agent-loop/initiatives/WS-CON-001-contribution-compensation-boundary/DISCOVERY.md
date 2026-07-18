@@ -2,10 +2,10 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `f18b620`, including merged REV-02 PR #147,
-  REV-01 PR #145, AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR
-  #143, REV planning PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT
-  PR #139 boundary;
+- trusted `origin/main` refreshed to `99ae4c96`, including AUTH-09D-A PR #148,
+  REV-02 PR #147, REV-01 PR #145, AUTH-09C PR #146, ART PR #141, CON-01 PR
+  #144, AUTH-09B PR #143, REV planning PR #128, AUTH-09A, AUTH PR #140, and the
+  earlier WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -31,10 +31,11 @@
 - No FinalAcceptance runtime exists yet. Merged REV PR #128 is reviewed planning
   authority and defines the exact schema/transaction, but CON-03C still waits
   for the REV-04 runtime target.
-- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Twelve
-  actions are active and 53 are planned. AUTH-09B activates only
+- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Fifteen
+  actions are active and 50 are planned. AUTH-09B activates only
   `actor.service.provision`; AUTH-09C activates only `actor.profile.read` and
-  `actor.identity_link.read`. No WS-CON or task-claim ActionId is registered.
+  `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
+  lifecycle actions. No WS-CON or task-claim ActionId is registered.
 - Current AUTH supports actor-self, AdminRoleGrant evaluation, and controlled
   human-administrator provisioning of an approved fixed service
   ActorProfile/ActorIdentityLink. Independent ProjectRoleGrant runtime,
@@ -51,9 +52,9 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `f18b620` still ends its migration chain at ART-owned
-  `0025_artifact_store_v2`; CON-02A owns linear revision
-  `0026_shared_transactional_outbox` and must import its model through
+- Trusted `main` at `99ae4c96` ends its migration chain at AUTH-owned
+  `0026_actor_profile_lifecycle`; CON-02A owns linear revision
+  `0027_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
 - `app.core.hashing.canonical_json_hash` is the only repository canonical JSON
   encoder. It sorts object keys, rejects non-finite numbers, uses compact UTF-8

@@ -10,9 +10,8 @@ PostgreSQL outbox persistence plus append/replay in a caller-owned transaction.
 It introduces no route, dispatcher, delivery executor, Celery registration,
 protected handler, feature authority, contribution, compensation, review, or
 artifact behavior. Trusted `main` then advanced through ART PR #141 at
-`a10d901` and AUTH-09C PR #146 at `0ffdabf`. CON-02A now follows ART-owned
-`0025_artifact_store_v2` with linear
-`0026_shared_transactional_outbox`; ART's adapter, storage, startup, and
+`a10d901` and AUTH-09C PR #146 at `0ffdabf`. CON-02A initially followed
+ART-owned `0025_artifact_store_v2`; ART's adapter, storage, startup, and
 delivery-executor changes do not add an outbox seam or change this boundary.
 AUTH-09C activates only the canonical administrative
 `actor.profile.read`/`actor.identity_link.read` actions; it adds no CON or
@@ -27,6 +26,11 @@ planning-only merge splits future guide activation, ReviewPolicy/task
 lifecycle, and submission attribution work into explicit REV chunks. It adds no
 backend runtime, migration, or shared outbox behavior and leaves CON-02A
 unchanged.
+Trusted `main` then advanced to `99ae4c96` through AUTH-09D-A PR #148. That
+merge activates only three actor-profile lifecycle actions and adds AUTH-owned
+`0026_actor_profile_lifecycle`; it adds no CON/outbox identifier, evaluator,
+service identity, static row, or fixed-service admission. CON-02A is therefore
+rebased as linear `0027_shared_transactional_outbox` after AUTH's revision.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -82,10 +86,11 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 - CON-09A/09B are deferred optional successors and do not gate the core release.
 - AUTH PR #140 registers no CON ActionId and activates no feature action. Its
   exact custody and prepared-protocol contracts remain upstream gates.
-- Current main has 74 PermissionIds and 65 ActionIds: 12 active and 53 planned.
+- Current main has 74 PermissionIds and 65 ActionIds: 15 active and 50 planned.
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
-  `actor.profile.read` and `actor.identity_link.read`. These administrative
-  capabilities grant no fixed-service runtime admission or feature authority.
+  `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates only
+  the three actor-profile lifecycle actions. These administrative capabilities
+  grant no fixed-service runtime admission or feature authority.
   No CON or task-claim ActionId exists, and the current fixed identities are
   ART-only.
 - `task.claim` activation must follow, not precede, the CON-05A hidden
@@ -99,13 +104,13 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation and deterministic evidence are complete after
-the explicit human start. It adds one linear migration, the shared outbox
+`WS-CON-001-02A` implementation is reconciled with AUTH-09D-A after the
+explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
-migration/append tests. The exact isolated full suite passed 1347 tests in
-4:55:41 with 85.35 percent repository coverage, and the outbox subsystem
-reached 95 percent focused coverage. Required exact-SHA internal review and
-external PR checks remain. It stops before dispatcher mechanics and CON-02B.
+migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
+but AUTH-09D-A changed backend runtime, tests, and the migration head, so focused
+and repository-wide evidence must rerun on the `0027` chain before exact-SHA
+internal review. It stops before dispatcher mechanics and CON-02B.
 
 | Chunk | Status | Notes |
 |---|---|---|
@@ -113,7 +118,7 @@ external PR checks remain. It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Deterministic evidence complete; review pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
+| `WS-CON-001-02A` | Reconciled implementation; evidence rerun pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -126,7 +131,7 @@ external PR checks remain. It stops before dispatcher mechanics and CON-02B.
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
 | Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
-| Fixed service runtime | AUTH | AUTH-09A through 09C are merged; approve/register any new CON identity/static row, then complete AUTH-09D/09E before protected service calls |
+| Fixed service runtime | AUTH | AUTH-09A through 09D-A are merged; approve/register any new CON identity/static row, then complete AUTH-09D-B/09E before protected service calls |
 | Feature handler authority | Human + AUTH + CON | Approve exact identities/actions/static rows; no dispatcher inheritance |
 | AUTH prepared protocol | AUTH | Merge AUTH-PREP after AUTH-09E; all CON-sensitive mutations consume its exact opaque handle contract |
 | task.claim | AUTH + task + CON | Only PermissionId exists; after AUTH-10/PREP and stable task seam, merge CON-05A freeze and task-owned composition; AUTH-13 enumerates/registers/evaluates/activates afterward |

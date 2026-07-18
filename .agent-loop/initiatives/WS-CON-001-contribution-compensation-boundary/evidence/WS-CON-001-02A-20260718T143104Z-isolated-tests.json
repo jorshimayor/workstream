@@ -1,6 +1,0 @@
-{
-  "alembic_head": "0026_shared_transactional_outbox",
-  "database_name": "workstream_test_d513fb2f03b1",
-  "schema_version": 1,
-  "tree_sha": "f72bb6e6dc71cb38dcb397b34caf9db6f916db4c"
-}

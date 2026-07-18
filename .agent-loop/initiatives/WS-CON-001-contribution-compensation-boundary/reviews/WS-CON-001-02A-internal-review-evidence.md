@@ -8,10 +8,10 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `f18b620932bb257dc1dc355bc0504271813dc6b1`
+Trusted main SHA: `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
 
 The implementation is limited to one linear PostgreSQL migration after
-ART-owned revision 0025, the generic outbox persistence/append module, shared
+AUTH-owned revision 0026, the generic outbox persistence/append module, shared
 metadata registration, focused tests,
 initiative evidence, and exactly one merge intent. It adds no dispatcher,
 delivery executor, Celery registration, broker, route, feature handler, AUTH
@@ -41,10 +41,34 @@ outside the chunk and is excluded from every commit and review.
 - Exact replay preserves database occurrence time; any immutable drift or split
   event/idempotency identity raises `outbox_idempotency_conflict`.
 
-## Verification Results
+## Current Reconciliation Verification Results
 
 ```text
-33 passed in 151.73s on the ART 0025 -> CON 0026 chain
+34 passed in 77.21s on the ART 0025 -> AUTH 0026 -> CON 0027 chain
+outbox coverage: 95.43% (required: at least 90%)
+8 passed, 56 deselected in 50.92s (exact contract selector)
+2 passed in 88.51s (affected AUTH lifecycle downgrade tests)
+16 passed in 102.10s (isolated database runner self-tests with admin URL)
+real API contract end-to-end on 0027: passed
+87 passed (agent-loop gates)
+Ruff: passed
+Docstring coverage: passed at 90.9%
+Markdown links: passed for 15 changed Markdown files
+Workstream/AUTH/ART/REV stale-contract scans: passed
+merge intent and git diff --check: passed
+Alembic heads: one head, 0027_shared_transactional_outbox
+repository-wide isolated PostgreSQL suite: pending on frozen reconciled SHA
+```
+
+## Pre-Reconciliation Verification Results
+
+These results were produced on the former `f18b620` / outbox-0026 chain. They
+prove the implementation before AUTH-09D-A but are not publication evidence for
+the reconciled `99ae4c96` / outbox-0027 chain. Exact focused and full-suite
+evidence must rerun before reviewer fanout.
+
+```text
+33 passed in 151.73s on the former ART 0025 -> CON 0026 chain
 outbox coverage: 95.43% (required: at least 90%)
 8 passed, 51 deselected in 125.42s (exact contract selector)
 1 passed, 25 deselected in 96.33s (migration/downgrade guard)
@@ -54,7 +78,7 @@ real API contract end-to-end: passed
 repository coverage: 85.35% (required: at least 78%)
 isolated evidence database: workstream_test_d513fb2f03b1
 isolated evidence tree: f72bb6e6dc71cb38dcb397b34caf9db6f916db4c
-isolated evidence Alembic head: 0026_shared_transactional_outbox
+isolated evidence Alembic head: 0026_shared_transactional_outbox (superseded)
 87 passed (agent-loop gates)
 Ruff: passed
 Docstring coverage: passed at 91.5%
@@ -71,8 +95,7 @@ The full suite used the unchanged test command, isolation rule, assertions, and
 coverage thresholds. Its measured 4:55:41 runtime completed under the repaired
 18,000-second fail-closed safety ceiling; the earlier 12,600-second ceiling had
 terminated the same clean suite at approximately 90 percent. Exact-SHA reviewer
-results remain pending until this deterministic evidence is committed as the
-frozen review candidate.
+results were superseded when AUTH-09D-A changed the backend and migration head.
 
 ## Test Delta
 
