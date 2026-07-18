@@ -30,8 +30,8 @@ stopped.
 | `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Merged through PR #140 as `d541521` |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
 | `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Merged through PR #132 as `299363a` |
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Active after explicit user start from signed 09A memory |
-| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Merged through PR #143 as `053242b` |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Active after explicit user start from signed 09B memory |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D merge/memory and explicit start |
 | `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
@@ -188,5 +188,7 @@ through PR #131 as `aa0fdcd`. Parent AUTH-09 was split before implementation.
 PR #140 merged the required XINT planning reconciliation as `d541521`. PR #132
 then merged seven identities, eleven static matrix memberships, eight planned
 actions, and migration `0023` as `299363a`; signed memory stopped. The user
-explicitly started AUTH-09B. It must pass exact-head review and checks, then
-stop for human merge. Do not start AUTH-09C or POL-002-04 automatically.
+explicitly started AUTH-09B. PR #143 merged it as `053242b`; signed memory
+stopped, and the user explicitly started AUTH-09C. It must pass exact-head
+review and checks, then stop for human merge. Do not start AUTH-09D or
+POL-002-04 automatically.

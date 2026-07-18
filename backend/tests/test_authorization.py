@@ -94,7 +94,9 @@ from app.modules.authorization.admin_service import (
 from app.modules.authorization.policy import ADMIN_ROLE_PERMISSIONS, ADMIN_ROLE_SCOPES
 from app.modules.authorization.runtime import (
     ActorAdminRoleGrantHistoryResourceContext,
+    ActorIdentityLinkAdminReadResourceContext,
     ActorKind,
+    ActorProfileAdminReadResourceContext,
     ActorSelfResourceContext,
     ActorStatus,
     AdminRoleDefinitionsResourceContext,
@@ -276,6 +278,8 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         ActionId.ADMIN_ROLE_GRANT_ISSUE,
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        ActionId.ACTOR_PROFILE_READ,
+        ActionId.ACTOR_IDENTITY_LINK_READ,
         ActionId.ACTOR_SERVICE_PROVISION,
     }
     assert {
@@ -491,6 +495,162 @@ async def test_definition_reads_authorize_touch_and_commit_before_disclosure(
     assert roles.total == len(AdminRole)
 
 
+@pytest.mark.parametrize(
+    ("route", "action_id", "resource_type", "read_method"),
+    [
+        (
+            authorization_router.read_actor_profile,
+            ActionId.ACTOR_PROFILE_READ,
+            ActorProfileAdminReadResourceContext,
+            "read_admin_profile",
+        ),
+        (
+            authorization_router.read_actor_identity_link,
+            ActionId.ACTOR_IDENTITY_LINK_READ,
+            ActorIdentityLinkAdminReadResourceContext,
+            "read_admin_identity_link",
+        ),
+    ],
+)
+@pytest.mark.parametrize("self_target", [False, True])
+async def test_actor_admin_routes_authorize_before_lookup_touch_and_commit(
+    monkeypatch: pytest.MonkeyPatch,
+    route,
+    action_id: ActionId,
+    resource_type,
+    read_method: str,
+    self_target: bool,
+) -> None:
+    target_id = uuid4()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(target_id if self_target else uuid4()),
+            updated_at=datetime.now(UTC),
+            last_seen_at=datetime.now(UTC),
+        ),
+        identity_link=SimpleNamespace(last_verified_at=datetime.now(UTC)),
+    )
+    events: list[tuple[str, object]] = []
+
+    class Response:
+        def __init__(self) -> None:
+            self.updates: list[dict] = []
+
+        def model_copy(self, *, update):
+            self.updates.append(update)
+            return self
+
+    response = Response()
+
+    class Session:
+        async def commit(self) -> None:
+            events.append(("commit", None))
+
+        async def rollback(self) -> None:
+            events.append(("rollback", None))
+
+    class Authorization:
+        async def require(self, requested_action, resource):
+            events.append(("authorize", (requested_action, resource)))
+
+    class ActorService:
+        def __init__(self, session) -> None:
+            assert session is test_session
+
+        async def read_admin_profile(self, actor_profile_id):
+            assert read_method == "read_admin_profile"
+            events.append(("lookup", actor_profile_id))
+            return response
+
+        async def read_admin_identity_link(self, actor_profile_id):
+            assert read_method == "read_admin_identity_link"
+            events.append(("lookup", actor_profile_id))
+            return response
+
+        async def touch_after_authorization(self, actor) -> None:
+            assert actor is resolved
+            events.append(("touch", actor))
+
+    test_session = Session()
+    monkeypatch.setattr(authorization_router, "ActorService", ActorService)
+
+    result = await route(target_id, resolved, Authorization(), test_session)
+
+    requested_action, resource = events[0][1]
+    assert requested_action is action_id
+    assert isinstance(resource, resource_type)
+    assert resource.resource_id == target_id
+    assert result is response
+    assert [event for event, _ in events] == ["authorize", "lookup", "touch", "commit"]
+    if not self_target:
+        assert response.updates == []
+    elif action_id is ActionId.ACTOR_PROFILE_READ:
+        assert response.updates == [
+            {
+                "updated_at": resolved.profile.updated_at,
+                "last_seen_at": resolved.profile.last_seen_at,
+            }
+        ]
+    else:
+        assert response.updates == [
+            {"last_verified_at": resolved.identity_link.last_verified_at}
+        ]
+
+
+@pytest.mark.parametrize(
+    "route",
+    [
+        authorization_router.read_actor_profile,
+        authorization_router.read_actor_identity_link,
+    ],
+)
+async def test_actor_admin_missing_resource_rolls_back_without_touch_or_commit(
+    monkeypatch: pytest.MonkeyPatch,
+    route,
+) -> None:
+    events: list[str] = []
+
+    class Session:
+        async def commit(self) -> None:
+            events.append("commit")
+
+        async def rollback(self) -> None:
+            events.append("rollback")
+
+    class Authorization:
+        async def require(self, _action_id, _resource):
+            events.append("authorize")
+
+    class ActorService:
+        def __init__(self, _session) -> None:
+            pass
+
+        async def read_admin_profile(self, _actor_profile_id):
+            events.append("lookup")
+            return None
+
+        async def read_admin_identity_link(self, _actor_profile_id):
+            events.append("lookup")
+            return None
+
+        async def touch_after_authorization(self, _resolved) -> None:
+            events.append("touch")
+
+    monkeypatch.setattr(authorization_router, "ActorService", ActorService)
+
+    with pytest.raises(StructuredHTTPException) as missing:
+        await route(
+            uuid4(),
+            SimpleNamespace(),
+            Authorization(),
+            Session(),
+        )
+
+    assert missing.value.status_code == 404
+    assert missing.value.error_code == "actor_resource_not_found"
+    assert events == ["authorize", "lookup", "rollback"]
+
+
 async def test_authorization_route_database_failures_rollback_and_map_to_retryable_503() -> None:
     class Session:
         def __init__(self) -> None:
@@ -662,6 +822,7 @@ class _AdminPolicyFacts:
         )
         self.request_actor_is_present = True
         self.control_locked = False
+        self.find_calls: list[tuple[tuple, dict]] = []
 
     async def lock_control(self):
         self.control_locked = True
@@ -675,7 +836,8 @@ class _AdminPolicyFacts:
             SimpleNamespace(id=str(actor_profile_id), actor_kind="human", status="active"),
         )
 
-    async def find_effective_grant(self, *_args, **_kwargs):
+    async def find_effective_grant(self, *args, **kwargs):
+        self.find_calls.append((args, kwargs))
         return self.matched
 
     async def has_effective_permission_any_scope(self, *_args, **_kwargs):
@@ -723,6 +885,83 @@ async def test_admin_kernel_allows_only_a_matched_registered_grant() -> None:
     with pytest.raises(AuthorizationDenied) as denied:
         await service.require(ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ, resource)
     assert denied.value.public_code == "permission_not_granted"
+
+
+@pytest.mark.parametrize(
+    ("action_id", "resource_type"),
+    [
+        (ActionId.ACTOR_PROFILE_READ, ActorProfileAdminReadResourceContext),
+        (ActionId.ACTOR_IDENTITY_LINK_READ, ActorIdentityLinkAdminReadResourceContext),
+    ],
+)
+async def test_actor_admin_reads_serialize_system_authority_without_control_lock(
+    action_id: ActionId,
+    resource_type,
+) -> None:
+    context = _runtime_context()
+    service, evidence, facts = _admin_runtime_service(context)
+    read_kind = "profile" if action_id is ActionId.ACTOR_PROFILE_READ else "identity_link"
+    resource = resource_type(
+        resource_type="actor_profile",
+        resource_id=uuid4(),
+        read_kind=read_kind,
+    )
+
+    decision = await service.require(action_id, resource)
+
+    assert decision.allowed is True
+    assert decision.revalidated is True
+    assert decision.matched_grant_id == facts.matched.id
+    assert decision.matched_scope_project_id is None
+    assert facts.control_locked is False
+    assert facts.find_calls == [
+        (
+            (context.actor_profile_id, ACTION_BY_ID[action_id].permission_id),
+            {
+                "scope_project_id": None,
+                "system_scope_only": True,
+                "for_update": True,
+            },
+        )
+    ]
+    assert decision.resource_context_digest == authorization_resource_digest(resource)
+    assert evidence.events[0].resource_id == str(resource.resource_id)
+
+
+@pytest.mark.parametrize(
+    ("action_id", "resource"),
+    [
+        (
+            ActionId.ACTOR_PROFILE_READ,
+            ActorIdentityLinkAdminReadResourceContext(
+                resource_type="actor_profile",
+                resource_id=uuid4(),
+                read_kind="identity_link",
+            ),
+        ),
+        (
+            ActionId.ACTOR_IDENTITY_LINK_READ,
+            ActorProfileAdminReadResourceContext(
+                resource_type="actor_profile",
+                resource_id=uuid4(),
+                read_kind="profile",
+            ),
+        ),
+    ],
+)
+async def test_actor_admin_reads_reject_cross_paired_resource_contexts(
+    action_id: ActionId,
+    resource,
+) -> None:
+    service, evidence, facts = _admin_runtime_service(_runtime_context())
+
+    with pytest.raises(AuthorizationDenied) as denied:
+        await service.require(action_id, resource)
+
+    assert denied.value.public_code == "resource_guard_denied"
+    assert facts.find_calls == []
+    assert evidence.events[0].after_facts == {"allowed": False}
+    assert evidence.events[0].denial_code == "resource_guard_denied"
 
 
 async def test_admin_kernel_conceals_targets_until_permission_and_scope_match() -> None:

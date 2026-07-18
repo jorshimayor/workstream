@@ -1,5 +1,40 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09C External Repair Evidence Passed
+
+PR #146's original Backend, Agent Gates, and CodeRabbit checks passed.
+CodeRabbit then identified five valid proof gaps: exact transition-backend lock
+correlation, exact self-target timestamp payloads, exact authorization-kernel
+facts, both missing-resource rollback routes, and both project-scoped Audit
+Authority denials. Test-only repair `c64bcc7` closes all five. Trusted `main`
+through PR #141 at `a10d901` is integrated, including migration `0025`; 10
+focused unit tests, 2 fresh real PostgreSQL lifecycle/race tests, Ruff, and all
+Agent Gates pass. All required exact integrated-head internal repair tracks pass
+at `c47d627`; replacement external checks remain. AUTH-09D is inactive.
+
+## 2026-07-18 - WS-AUTH-001-09C Internal Review Passed
+
+Current `main` at `e118e33` is integrated without reverting WS-CON. Every
+required implementation review track passes at exact SHA `4331a6a` after
+repairing self-target response freshness, stage-specific rollback evidence,
+deterministic PostgreSQL lock-wait proof, exact persisted request evidence, and
+log-privacy canaries. Focused actor and authorization branch coverage remain
+91.06 and 92.04 percent. PR publication, external checks, and explicit human
+merge approval remain; AUTH-09D is inactive.
+
+## 2026-07-18 - WS-AUTH-001-09C Deterministic Evidence Passed
+
+PR #143 merged AUTH-09B as `053242b`, signed memory stopped, and the user
+explicitly started AUTH-09C. The repaired L1 contract passed every required
+preimplementation review track at exact SHA `76c5427`. The bounded
+implementation activates only `actor.profile.read` and
+`actor.identity_link.read` for exact targets under effective system authority.
+Real PostgreSQL lifecycle, two-session disabling races, rollback/privacy tests,
+and the live HTTP contract drill pass. Focused branch coverage is 91.06 percent
+for actors and 92.04 percent for authorization. Exact-head implementation
+review, PR publication, external checks, and explicit human merge approval
+remain; AUTH-09D is inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B Coverage Repair Internal Review Passed
 
 PR #143's replacement Backend run passed all 1,242 tests and measured 84.92
