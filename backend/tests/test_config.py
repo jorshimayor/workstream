@@ -20,6 +20,7 @@ from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
 from app.core.config import Settings, get_settings
 from app.core.s3_validation import (
     canonical_minio_endpoint,
+    is_canonical_s3_region,
     is_canonical_s3_prefix,
     validate_s3_namespace_descriptor,
 )
@@ -649,6 +650,9 @@ def test_minio_settings_and_factory_construct_closed_namespace(tmp_path: Path) -
     [
         ({"artifact_s3_provider_profile": None}, "requires a provider profile"),
         ({"artifact_s3_region": "US-east-1"}, "requires a canonical region"),
+        ({"artifact_s3_region": "us-east-1-"}, "requires a canonical region"),
+        ({"artifact_s3_region": "1-east-1"}, "requires a canonical region"),
+        ({"artifact_s3_region": "a-east-1"}, "requires a canonical region"),
         ({"artifact_s3_bucket": "192.168.0.1"}, "requires a canonical bucket"),
         ({"artifact_s3_bucket": "bucket..name"}, "requires a canonical bucket"),
         ({"artifact_s3_bucket": "bucket.-name"}, "requires a canonical bucket"),
@@ -1051,6 +1055,93 @@ def test_minio_endpoint_canonicalization_handles_ipv6_and_invalid_ports() -> Non
     assert canonical_minio_endpoint("HTTP://[::1]:9000/") == "http://[::1]:9000"
     with pytest.raises(ValueError, match="endpoint is invalid"):
         canonical_minio_endpoint("http://localhost:not-a-port")
+
+
+@pytest.mark.parametrize(
+    "region",
+    ["us-east-1", "us-gov-west-1", "eusc-de-east-1"],
+)
+def test_s3_region_validation_accepts_canonical_region_shapes(region: str) -> None:
+    assert is_canonical_s3_region(region) is True
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "http://user:endpoint-secret@localhost:9000",
+        "http://localhost:endpoint-secret",
+    ],
+)
+def test_invalid_minio_endpoint_secrets_do_not_survive_errors(
+    tmp_path: Path,
+    endpoint: str,
+) -> None:
+    secret = "endpoint-secret"
+
+    with pytest.raises(ValueError) as endpoint_error:
+        canonical_minio_endpoint(endpoint)
+    assert_secret_not_retained(
+        endpoint_error.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+    payload = _minio_setting_values(
+        tmp_path,
+        artifact_scratch_root=str(tmp_path / "scratch"),
+        artifact_s3_endpoint_url=endpoint,
+    )
+    for method_name in (
+        "constructor",
+        "model_validate",
+        "model_validate_json",
+        "model_validate_strings",
+    ):
+        with pytest.raises((ValidationError, ValueError)) as settings_error:
+            if method_name == "constructor":
+                Settings(**payload)
+            elif method_name == "model_validate_json":
+                Settings.model_validate_json(json.dumps(payload))
+            else:
+                getattr(Settings, method_name)(payload)
+        assert_secret_not_retained(
+            settings_error.value,
+            secret,
+            traceback_module_prefixes=("app.",),
+        )
+
+
+def test_invalid_minio_endpoint_secrets_from_env_and_dotenv_do_not_survive_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    secret = "endpoint-source-secret"
+    endpoint = f"http://user:{secret}@localhost:9000"
+    payload = _minio_setting_values(tmp_path)
+    payload.pop("artifact_s3_endpoint_url")
+    monkeypatch.setenv("WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL", endpoint)
+
+    with pytest.raises(ValueError) as env_error:
+        Settings(**payload)
+    assert_secret_not_retained(
+        env_error.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+    monkeypatch.delenv("WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL")
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        f"WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL={endpoint}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError) as dotenv_error:
+        Settings(**payload, _env_file=env_file)
+    assert_secret_not_retained(
+        dotenv_error.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize(

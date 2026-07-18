@@ -426,6 +426,11 @@ its only v0.1 production provider. MinIO proves the same protocol contract in
 local integration tests and CI. Cloudflare R2 is deferred and has no active
 runtime profile or credential contract.
 
+The v0.1 AWS profile supports global general-purpose buckets only. Workstream
+does not emit the account-regional namespace request header, so account-regional
+bucket names ending in `-an` fail the canonical bucket gate rather than being
+accepted with incomplete request semantics.
+
 Configuration includes:
 
 - provider profile `aws_s3` or `minio`;

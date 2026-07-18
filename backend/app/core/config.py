@@ -36,6 +36,9 @@ _ARTIFACT_S3_SECRET_FIELDS = frozenset(
         "artifact_s3_session_token",
     }
 )
+_ARTIFACT_S3_SENSITIVE_INPUT_FIELDS = _ARTIFACT_S3_SECRET_FIELDS | {
+    "artifact_s3_endpoint_url"
+}
 _EMPTY_ARTIFACT_S3_SECRETS: tuple[SecretStr | None, SecretStr | None, SecretStr | None] = (
     None,
     None,
@@ -201,6 +204,7 @@ class Settings(BaseSettings):
         secret: SecretStr | None = None
         s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
         try:
+            _normalize_artifact_s3_endpoint_input(values)
             secret = _extract_api_rate_limit_key_secret(values)
             s3_secrets = _extract_artifact_s3_static_secrets(values)
             super().__init__(**values)
@@ -220,7 +224,7 @@ class Settings(BaseSettings):
         """Sanitize secret-bearing mappings before Pydantic retains input."""
         if isinstance(obj, Mapping) and (
             "api_rate_limit_key_secret" in obj
-            or _ARTIFACT_S3_SECRET_FIELDS.intersection(obj)
+            or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
             supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
@@ -229,6 +233,7 @@ class Settings(BaseSettings):
             s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
             settings: Settings | None = None
             try:
+                _normalize_artifact_s3_endpoint_input(sanitized)
                 secret = (
                     _extract_api_rate_limit_key_secret(sanitized)
                     if "api_rate_limit_key_secret" in sanitized
@@ -277,7 +282,7 @@ class Settings(BaseSettings):
             raise ValueError("invalid settings JSON")
         if isinstance(parsed, Mapping) and (
             "api_rate_limit_key_secret" in parsed
-            or _ARTIFACT_S3_SECRET_FIELDS.intersection(parsed)
+            or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(parsed)
         ):
             try:
                 return cls.model_validate(parsed, **kwargs)
@@ -292,7 +297,7 @@ class Settings(BaseSettings):
         """Sanitize string-mapping secret input before structured validation."""
         if isinstance(obj, Mapping) and (
             "api_rate_limit_key_secret" in obj
-            or _ARTIFACT_S3_SECRET_FIELDS.intersection(obj)
+            or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
             supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
@@ -301,6 +306,7 @@ class Settings(BaseSettings):
             s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
             settings: Settings | None = None
             try:
+                _normalize_artifact_s3_endpoint_input(sanitized)
                 secret = (
                     _extract_api_rate_limit_key_secret(sanitized)
                     if "api_rate_limit_key_secret" in sanitized
@@ -494,7 +500,10 @@ def get_settings() -> Settings:
 
 
 def _clear_settings_private_secrets(settings: object) -> None:
-    """Remove secret values from a partially or fully initialized Settings object."""
+    """Remove sensitive values from a partially or fully initialized Settings object."""
+    settings_values = getattr(settings, "__dict__", None)
+    if isinstance(settings_values, dict):
+        settings_values["artifact_s3_endpoint_url"] = None
     private_values = getattr(settings, "__pydantic_private__", None)
     if not isinstance(private_values, dict):
         return
@@ -502,6 +511,42 @@ def _clear_settings_private_secrets(settings: object) -> None:
     private_values["_artifact_s3_access_key_id"] = None
     private_values["_artifact_s3_secret_access_key"] = None
     private_values["_artifact_s3_session_token"] = None
+
+
+def _normalize_artifact_s3_endpoint_input(values: dict[str, object]) -> None:
+    """Replace a raw endpoint source with its noncredentialed canonical origin."""
+    raw_value = values.pop("artifact_s3_endpoint_url", _MISSING_SECRET)
+    if raw_value is _MISSING_SECRET:
+        raw_value = os.environ.get(
+            "WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL",
+            _MISSING_SECRET,
+        )
+    if raw_value is _MISSING_SECRET:
+        env_file = values.get("_env_file", ".env")
+        if env_file is not None:
+            env_encoding = values.get("_env_file_encoding", "utf-8")
+            env_files = (
+                (env_file,)
+                if isinstance(env_file, (str, os.PathLike))
+                else tuple(env_file)
+            )
+            for path in env_files:
+                raw_value = dotenv_values(path, encoding=env_encoding).get(
+                    "WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL",
+                    raw_value,
+                )
+    if raw_value is _MISSING_SECRET:
+        return
+    if raw_value is None:
+        values["artifact_s3_endpoint_url"] = None
+        return
+    try:
+        endpoint = canonical_minio_endpoint(raw_value)
+    except ValueError:
+        raw_value = None
+        raise ValueError("MinIO artifact storage endpoint is invalid") from None
+    values["artifact_s3_endpoint_url"] = endpoint
+    raw_value = None
 
 
 def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr | None:

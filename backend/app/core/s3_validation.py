@@ -7,7 +7,7 @@ import re
 from urllib.parse import urlsplit
 
 
-_S3_REGION = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
+_S3_REGION = re.compile(r"^[a-z]{2,4}(?:-[a-z0-9]+)+-[0-9]+$")
 _S3_BUCKET = re.compile(r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
 _S3_BUCKET_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _S3_RESERVED_PREFIXES = ("xn--", "sthree-", "amzn-s3-demo-")
@@ -25,11 +25,15 @@ _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 def is_canonical_s3_region(value: object) -> bool:
     """Return whether one region is bounded and canonical."""
-    return isinstance(value, str) and _S3_REGION.fullmatch(value) is not None
+    return (
+        isinstance(value, str)
+        and len(value) <= 63
+        and _S3_REGION.fullmatch(value) is not None
+    )
 
 
 def is_canonical_s3_bucket(value: object) -> bool:
-    """Return whether one dedicated bucket name is DNS-compatible."""
+    """Return whether one global general-purpose bucket is DNS-compatible."""
     if not isinstance(value, str) or _S3_BUCKET.fullmatch(value) is None:
         return False
     return (
@@ -53,13 +57,25 @@ def is_canonical_s3_prefix(value: object) -> bool:
 
 def canonical_minio_endpoint(value: object) -> str:
     """Return one normalized noncredentialed HTTP(S) MinIO origin."""
+    missing = value is None or value == ""
+    endpoint = _try_canonical_minio_endpoint(value)
+    del value
+    if endpoint is None:
+        if missing:
+            raise ValueError("MinIO artifact storage requires an endpoint") from None
+        raise ValueError("MinIO artifact storage endpoint is invalid") from None
+    return endpoint
+
+
+def _try_canonical_minio_endpoint(value: object) -> str | None:
+    """Normalize one endpoint without retaining invalid input in an exception."""
     if not isinstance(value, str) or not value or len(value) > 2048:
-        raise ValueError("MinIO artifact storage requires an endpoint")
-    parsed = urlsplit(value)
+        return None
     try:
+        parsed = urlsplit(value)
         port = parsed.port
-    except ValueError as error:
-        raise ValueError("MinIO artifact storage endpoint is invalid") from error
+    except (UnicodeError, ValueError):
+        return None
     if (
         parsed.scheme.lower() not in {"http", "https"}
         or not parsed.hostname
@@ -70,7 +86,7 @@ def canonical_minio_endpoint(value: object) -> str:
         or parsed.path not in {"", "/"}
         or parsed.hostname.endswith(".")
     ):
-        raise ValueError("MinIO artifact storage endpoint is invalid")
+        return None
     scheme = parsed.scheme.lower()
     hostname = parsed.hostname.lower()
     if ":" in hostname:

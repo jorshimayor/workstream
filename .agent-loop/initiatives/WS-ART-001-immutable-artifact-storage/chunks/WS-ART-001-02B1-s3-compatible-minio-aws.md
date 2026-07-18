@@ -54,6 +54,9 @@ credential-delivery contract.
 - ETag/provider checksums are not Workstream integrity facts;
 - native AWS endpoint omission with explicit region and MinIO endpoint/region
   validate; production rejects HTTP/local endpoints and static credentials;
+- the v0.1 AWS profile accepts global general-purpose buckets only and rejects
+  account-regional bucket names ending in `-an` because Workstream does not
+  emit the account-regional namespace request header;
 - AWS production credential mode `aws_workload_identity` selects exactly one
   of `assume-role-with-web-identity`, `container-role`, or `iam-role`; the
   credential resolver contains only that provider and the resolved method must
