@@ -4145,7 +4145,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09B` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09C` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09D` | Split |" in auth_status
-    assert "| `WS-AUTH-001-09D-A` | Contract review |" in auth_status
+    assert "| `WS-AUTH-001-09D-A` | Active |" in auth_status
     assert "| `WS-AUTH-001-09D-B` | Inactive |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     artifact_phases = (

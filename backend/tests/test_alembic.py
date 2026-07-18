@@ -1323,6 +1323,226 @@ def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
     }
 
 
+def test_actor_profile_lifecycle_fresh_and_prior_head_upgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Install 0026 from the exact prior head and preserve reversible shape."""
+    config = _alembic_config()
+
+    async def shape() -> tuple[str, bool, bool]:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.connect() as connection:
+                return (
+                    str(await connection.scalar(text("select version_num from alembic_version"))),
+                    bool(
+                        await connection.scalar(
+                            text(
+                                "select exists(select 1 from information_schema.columns "
+                                "where table_name='actor_profiles' and column_name='reactivated_at')"
+                            )
+                        )
+                    ),
+                    bool(
+                        await connection.scalar(
+                            text(
+                                "select exists(select 1 from pg_constraint where "
+                                "conname='ck_actor_identity_links_reactivation_fields')"
+                            )
+                        )
+                    ),
+                )
+        finally:
+            await engine.dispose()
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0025_artifact_store_v2")
+            assert asyncio.run(shape()) == ("0025_artifact_store_v2", False, False)
+            command.upgrade(config, "head")
+            assert asyncio.run(shape()) == ("0026_actor_profile_lifecycle", True, True)
+            command.downgrade(config, "0025_artifact_store_v2")
+            assert asyncio.run(shape()) == ("0025_artifact_store_v2", False, False)
+            command.upgrade(config, "head")
+            assert asyncio.run(shape()) == ("0026_actor_profile_lifecycle", True, True)
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_actor_profile_lifecycle_constraint_and_trigger_parity(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Enforce normalized attribution and only legal profile lifecycle transitions."""
+    config = _alembic_config()
+    actor_id = str(uuid4())
+
+    async def prove_guards() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await _insert_canonical_actor(connection, actor_id, "lifecycle-parity", "human")
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='suspended',suspended_by=:actor,"
+                        "suspended_at=clock_timestamp(),suspension_reason='investigate' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='active',suspended_by=null,"
+                        "suspended_at=null,suspension_reason=null,reactivated_by=:actor,"
+                        "reactivated_at=clock_timestamp(),reactivation_reason='restored' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            invalid = (
+                "update actor_profiles set reactivation_reason='rewritten' where id=:actor",
+                "update actor_profiles set status='suspended',suspended_by=:actor,"
+                "suspended_at=clock_timestamp(),suspension_reason=' padded ' where id=:actor",
+                "update actor_identity_links set reactivated_by=:actor where actor_profile_id=:actor",
+            )
+            for statement in invalid:
+                with pytest.raises(DBAPIError):
+                    async with engine.begin() as connection:
+                        await connection.execute(text(statement), {"actor": actor_id})
+            async with engine.begin() as connection:
+                await connection.execute(text("alter table actor_profiles disable trigger user"))
+                await connection.execute(
+                    text(
+                        "update actor_profiles set reactivated_by=null,reactivated_at=null,"
+                        "reactivation_reason=null where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(text("alter table actor_profiles enable trigger user"))
+        finally:
+            await engine.dispose()
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            asyncio.run(prove_guards())
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Refuse partial prior-head provenance before adding any 0026 DDL."""
+    config = _alembic_config()
+    actor_id = str(uuid4())
+
+    async def seed_partial(value: str | None) -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                if value is not None:
+                    await _insert_canonical_actor(connection, actor_id, "dirty-lifecycle", "human")
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set reactivated_by=:value "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"value": value, "actor": actor_id},
+                )
+        finally:
+            await engine.dispose()
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0025_artifact_store_v2")
+            asyncio.run(seed_partial(actor_id))
+            with pytest.raises(RuntimeError, match="dirty actor lifecycle rows"):
+                command.upgrade(config, "head")
+            assert asyncio.run(_current_revision(isolated_database_env)) == "0025_artifact_store_v2"
+            asyncio.run(seed_partial(None))
+            command.upgrade(config, "head")
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_actor_profile_lifecycle_safe_downgrade_and_reupgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Restore the exact prior schema when no forward evidence exists."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            command.downgrade(config, "0025_artifact_store_v2")
+            assert asyncio.run(_current_revision(isolated_database_env)) == "0025_artifact_store_v2"
+            command.upgrade(config, "head")
+            assert asyncio.run(_current_revision(isolated_database_env)) == "0026_actor_profile_lifecycle"
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_actor_profile_lifecycle_downgrade_refuses_forward_evidence(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Keep 0026 intact once profile reactivation provenance exists."""
+    config = _alembic_config()
+    actor_id = str(uuid4())
+
+    async def write_reactivation(*, clear: bool = False) -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                if clear:
+                    await connection.execute(text("alter table actor_profiles disable trigger user"))
+                    await connection.execute(
+                        text(
+                            "update actor_profiles set reactivated_by=null,reactivated_at=null,"
+                            "reactivation_reason=null where id=:actor"
+                        ),
+                        {"actor": actor_id},
+                    )
+                    await connection.execute(text("alter table actor_profiles enable trigger user"))
+                    return
+                await _insert_canonical_actor(connection, actor_id, "forward-lifecycle", "human")
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='suspended',suspended_by=:actor,"
+                        "suspended_at=clock_timestamp(),suspension_reason='hold' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='active',suspended_by=null,"
+                        "suspended_at=null,suspension_reason=null,reactivated_by=:actor,"
+                        "reactivated_at=clock_timestamp(),reactivation_reason='restored' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+        finally:
+            await engine.dispose()
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            asyncio.run(write_reactivation())
+            with pytest.raises(RuntimeError, match="cannot downgrade actor lifecycle evidence"):
+                command.downgrade(config, "0025_artifact_store_v2")
+            assert asyncio.run(_current_revision(isolated_database_env)) == "0026_actor_profile_lifecycle"
+            asyncio.run(write_reactivation(clear=True))
+            command.downgrade(config, "0025_artifact_store_v2")
+        finally:
+            command.downgrade(config, "base")
+
+
 def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
     isolated_database_env: str,
     migration_lock,

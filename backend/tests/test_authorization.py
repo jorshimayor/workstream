@@ -36,6 +36,10 @@ from app.modules.actors.service_identities import SERVICE_IDENTITIES, ServiceIde
 from app.modules.authorization import catalogue as authorization_catalogue
 from app.modules.authorization import kernel as authorization_kernel
 from app.modules.authorization import router as authorization_router
+from app.modules.authorization.lifecycle_schemas import (
+    ActorLifecycleBody,
+    ActorLifecycleMutationResponse,
+)
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
     ACTION_DEFINITIONS,
@@ -97,6 +101,7 @@ from app.modules.authorization.runtime import (
     ActorIdentityLinkAdminReadResourceContext,
     ActorKind,
     ActorProfileAdminReadResourceContext,
+    ActorProfileLifecycleResourceContext,
     ActorSelfResourceContext,
     ActorStatus,
     AdminRoleDefinitionsResourceContext,
@@ -279,9 +284,12 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
         ActionId.ACTOR_PROFILE_READ,
-        ActionId.ACTOR_IDENTITY_LINK_READ,
-        ActionId.ACTOR_SERVICE_PROVISION,
-    }
+            ActionId.ACTOR_IDENTITY_LINK_READ,
+            ActionId.ACTOR_SERVICE_PROVISION,
+            ActionId.ACTOR_PROFILE_SUSPEND,
+            ActionId.ACTOR_PROFILE_REACTIVATE,
+            ActionId.ACTOR_PROFILE_DEACTIVATE,
+        }
     assert {
         definition.action_id.value: (
             definition.permission_id.value,
@@ -821,6 +829,7 @@ class _AdminPolicyFacts:
             target_actor_profile_id=str(uuid4()),
         )
         self.request_actor_is_present = True
+        self.lifecycle_target_is_present = True
         self.control_locked = False
         self.find_calls: list[tuple[tuple, dict]] = []
 
@@ -854,6 +863,15 @@ class _AdminPolicyFacts:
 
     async def get_grant(self, _grant_id, **_kwargs):
         return self.grant
+
+    async def lock_actor_lifecycle_target(self, actor_profile_id):
+        if not self.lifecycle_target_is_present:
+            return None
+        return (
+            SimpleNamespace(status="active"),
+            SimpleNamespace(id=str(actor_profile_id), status="active"),
+            None,
+        )
 
 
 def _admin_runtime_service(
@@ -962,6 +980,65 @@ async def test_actor_admin_reads_reject_cross_paired_resource_contexts(
     assert facts.find_calls == []
     assert evidence.events[0].after_facts == {"allowed": False}
     assert evidence.events[0].denial_code == "resource_guard_denied"
+
+
+@pytest.mark.parametrize(
+    ("action_id", "transition"),
+    [
+        (ActionId.ACTOR_PROFILE_SUSPEND, "suspend"),
+        (ActionId.ACTOR_PROFILE_REACTIVATE, "reactivate"),
+        (ActionId.ACTOR_PROFILE_DEACTIVATE, "deactivate"),
+    ],
+)
+async def test_actor_profile_lifecycle_kernel_locks_control_and_exact_target(
+    action_id: ActionId,
+    transition: str,
+) -> None:
+    service, evidence, facts = _admin_runtime_service(_runtime_context())
+    resource = ActorProfileLifecycleResourceContext(
+        resource_type="actor_profile",
+        resource_id=uuid4(),
+        transition=transition,
+    )
+
+    decision = await service.require(action_id, resource)
+
+    assert decision.allowed is True
+    assert decision.revalidated is True
+    assert decision.resource_context_digest == authorization_resource_digest(resource)
+    assert facts.control_locked is True
+    assert evidence.events[0].resource_id == str(resource.resource_id)
+
+
+async def test_actor_profile_lifecycle_kernel_guards_self_pairing_and_disclosure() -> None:
+    context = _runtime_context()
+    service, evidence, facts = _admin_runtime_service(context)
+    self_resource = ActorProfileLifecycleResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        transition="suspend",
+    )
+    with pytest.raises(AuthorizationDenied) as self_denial:
+        await service.require(ActionId.ACTOR_PROFILE_SUSPEND, self_resource)
+    assert self_denial.value.public_code == "resource_guard_denied"
+
+    crossed = self_resource.model_copy(
+        update={"resource_id": uuid4(), "transition": "deactivate"}
+    )
+    with pytest.raises(AuthorizationDenied) as crossed_denial:
+        await service.require(ActionId.ACTOR_PROFILE_SUSPEND, crossed)
+    assert crossed_denial.value.public_code == "resource_guard_denied"
+
+    missing = self_resource.model_copy(update={"resource_id": uuid4()})
+    facts.lifecycle_target_is_present = False
+    with pytest.raises(AuthorizationDenied) as missing_denial:
+        await service.require(ActionId.ACTOR_PROFILE_SUSPEND, missing)
+    assert missing_denial.value.public_code == "actor_not_found"
+    assert [event.denial_code for event in evidence.events] == [
+        "resource_guard_denied",
+        "resource_guard_denied",
+        "actor_not_found",
+    ]
 
 
 async def test_admin_kernel_conceals_targets_until_permission_and_scope_match() -> None:
@@ -2459,6 +2536,7 @@ def _operation_success(
     *,
     admin_authorizer_grant_id: UUID | None = None,
     admin_revoke_target: UUID | None = None,
+    identity_link_target: UUID | None = None,
 ) -> AuthorityAuditEventInput:
     """Build the exact concrete success evidence for one canonical operation case."""
     event, permission, reason = {
@@ -2586,8 +2664,14 @@ def _operation_success(
     elif isinstance(request, ActorProfileDeactivateRequest):
         before_facts, after_facts = {"status": "active"}, {"status": "deactivated"}
     elif isinstance(request, ActorIdentityLinkRevokeRequest):
+        if identity_link_target is None:
+            raise AssertionError("identity-link revoke proof requires its owning actor")
+        target_actor = identity_link_target
         before_facts, after_facts = {"status": "active"}, {"status": "revoked"}
     elif isinstance(request, ActorIdentityLinkReactivateRequest):
+        if identity_link_target is None:
+            raise AssertionError("identity-link reactivation proof requires its owning actor")
+        target_actor = identity_link_target
         before_facts, after_facts = {"status": "revoked"}, {"status": "active"}
 
     event_id = uuid4()
@@ -3413,11 +3497,43 @@ def test_every_operation_has_one_strict_canonical_request_variant() -> None:
     )
 
 
+def test_actor_profile_lifecycle_public_schemas_are_strict_bounded_and_typed() -> None:
+    target = uuid4()
+    assert ActorLifecycleBody(reason="  approved correction  ").reason == "approved correction"
+    assert ActorLifecycleBody(reason="é" * 250).reason == "é" * 250
+    for value in ("", "   ", "contains\x00null", "é" * 251, "x" * 501, 1, None):
+        with pytest.raises(ValidationError):
+            ActorLifecycleBody.model_validate({"reason": value})
+    with pytest.raises(ValidationError):
+        ActorLifecycleBody.model_validate({"reason": "valid", "unexpected": True})
+    assert ActorLifecycleMutationResponse(
+        resource_type="actor_profile",
+        resource_id=target,
+        version=None,
+        http_status=200,
+    ).model_dump() == {
+        "resource_type": "actor_profile",
+        "resource_id": target,
+        "version": None,
+        "http_status": 200,
+    }
+    with pytest.raises(ValidationError):
+        ActorLifecycleMutationResponse.model_validate(
+            {
+                "resource_type": "actor_profile",
+                "resource_id": str(target),
+                "version": None,
+                "http_status": 200,
+            }
+        )
+
+
 @pytest.mark.asyncio
 async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
     authorization_factory,
 ) -> None:
     project, actor, resource, admin_revoke_target = uuid4(), uuid4(), uuid4(), uuid4()
+    identity_link_target = uuid4()
     admin_authorizer_grant_id = uuid4()
     requests = [
         ServiceActorCreateRequest(
@@ -3543,6 +3659,15 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
                     if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE
                     else None
                 ),
+                identity_link_target=(
+                    identity_link_target
+                    if request.operation
+                    in {
+                        AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE,
+                        AuthorityOperation.ACTOR_IDENTITY_LINK_REACTIVATE,
+                    }
+                    else None
+                ),
             )
             if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE:
                 assert success.target_actor_ref == str(admin_revoke_target)
@@ -3594,13 +3719,20 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
             in {
                 AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
                 AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,
+                AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,
+                AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
             }
             else success.resource_id
         )
         assert invalidation_row.invalidation_target_ref == expected_target
         expected_before = (
             {"effective": False}
-            if success.event_type is AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED
+            if success.event_type
+            in {
+                AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
+                AuthorityEventType.ACTOR_PROFILE_REACTIVATED,
+                AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
+            }
             else {"effective": True}
         )
         expected_after = {"effective": not expected_before["effective"]}

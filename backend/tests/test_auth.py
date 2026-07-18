@@ -4793,6 +4793,440 @@ async def test_permission_policy_rejects_missing_role() -> None:
         require_any_role(actor, {"finance"})
 
 
+async def test_actor_profile_lifecycle_real_postgres_matrix(
+    auth_database_env: str,
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prove profile state, replay, reusable conflicts, concealment, and privacy."""
+    private_key, jwk = rsa_signing_material
+    settings = production_verifier_settings(database_url=auth_database_env)
+    app = create_app(settings)
+    app.state.auth_verifier = FlowAuthVerifier(settings, jwks_transport=jwks_transport(jwk))
+    tokens = {
+        name: issue_asymmetric_token(
+            private_key,
+            claims={
+                "sub": f"auth09d-a-{name}",
+                "jti": f"auth09d-a-{name}-token",
+                "email": f"private-{name}@example.test",
+            },
+        )
+        for name in ("admin", "target", "ordinary", "replay_target")
+    }
+    headers = {
+        name: {"Authorization": f"Bearer {token}"} for name, token in tokens.items()
+    }
+
+    async def profile_state(actor_id: UUID) -> tuple:
+        async with db_session.get_session_factory()() as session:
+            return tuple(
+                (
+                    await session.execute(
+                        text(
+                            "select p.status,p.suspended_by,p.suspended_at,p.suspension_reason,"
+                            "p.reactivated_by,p.reactivated_at,p.reactivation_reason,"
+                            "p.deactivated_by,p.deactivated_at,p.deactivation_reason,"
+                            "p.last_seen_at,l.last_verified_at from actor_profiles p "
+                            "join actor_identity_links l on l.actor_profile_id=p.id "
+                            "where p.id=:actor"
+                        ),
+                        {"actor": str(actor_id)},
+                    )
+                ).one()
+            )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        profiles = {
+            name: UUID(
+                (await client.get("/api/v1/actors/me", headers=actor_headers)).json()[
+                    "actor_profile_id"
+                ]
+            )
+            for name, actor_headers in headers.items()
+        }
+        assert (await run_admin_bootstrap(profiles["admin"], execute=True))[0] == 0
+
+        missing = await client.post(
+            f"/api/v1/actors/{uuid4()}/suspend",
+            headers={**headers["ordinary"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "must not disclose the target"},
+        )
+        assert missing.status_code == 403
+        assert missing.json()["error"]["code"] == "permission_not_granted"
+        authorized_missing = await client.post(
+            f"/api/v1/actors/{uuid4()}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "authorized target lookup"},
+        )
+        assert authorized_missing.status_code == 404
+        assert authorized_missing.json()["error"]["code"] == "actor_not_found"
+        self_denial = await client.post(
+            f"/api/v1/actors/{profiles['admin']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "self suspension must fail"},
+        )
+        assert self_denial.status_code == 403
+        assert self_denial.json()["error"]["code"] == "resource_guard_denied"
+        self_deactivate = await client.post(
+            f"/api/v1/actors/{profiles['admin']}/deactivate",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "self deactivation must fail"},
+        )
+        assert self_deactivate.status_code == 403
+        assert self_deactivate.json()["error"]["code"] == "resource_guard_denied"
+
+        delegated = await client.post(
+            "/api/v1/admin-role-grants",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={
+                "target_actor_profile_id": str(profiles["ordinary"]),
+                "role": "access_administrator",
+                "scope_type": "system",
+                "scope_project_id": None,
+                "reason": "Replay authority-loss proof",
+            },
+        )
+        assert delegated.status_code == 201, delegated.text
+        authority_replay_key = str(uuid4())
+        delegated_mutation = await client.post(
+            f"/api/v1/actors/{profiles['replay_target']}/suspend",
+            headers={**headers["ordinary"], "Idempotency-Key": authority_replay_key},
+            json={"reason": "Delegated lifecycle proof"},
+        )
+        assert delegated_mutation.status_code == 200, delegated_mutation.text
+        disable_delegate = await client.post(
+            f"/api/v1/actors/{profiles['ordinary']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "Temporarily remove caller authority"},
+        )
+        assert disable_delegate.status_code == 200, disable_delegate.text
+        delegate_disabled_state = await profile_state(profiles["ordinary"])
+        denied_replay = await client.post(
+            f"/api/v1/actors/{profiles['replay_target']}/suspend",
+            headers={**headers["ordinary"], "Idempotency-Key": authority_replay_key},
+            json={"reason": "Delegated lifecycle proof"},
+        )
+        assert denied_replay.status_code == 403
+        assert denied_replay.json()["error"]["code"] == "actor_suspended"
+        assert await profile_state(profiles["ordinary"]) == delegate_disabled_state
+        restore_delegate = await client.post(
+            f"/api/v1/actors/{profiles['ordinary']}/reactivate",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "Restore delegated administrator"},
+        )
+        assert restore_delegate.status_code == 200, restore_delegate.text
+
+        target_before = await profile_state(profiles["target"])
+        reason = "  Investigate bounded lifecycle access  "
+        suspend_key = str(uuid4())
+        original_add_event = AuditService.add_authority_event
+
+        async def fail_lifecycle_success(service, event):
+            if event.event_type is AuthorityEventType.ACTOR_PROFILE_SUSPENDED:
+                raise SQLAlchemyError("forced lifecycle evidence failure")
+            return await original_add_event(service, event)
+
+        monkeypatch.setattr(AuditService, "add_authority_event", fail_lifecycle_success)
+        failed = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": suspend_key},
+            json={"reason": reason},
+        )
+        monkeypatch.setattr(AuditService, "add_authority_event", original_add_event)
+        assert failed.status_code == 503
+        assert failed.json()["error"]["code"] == "service_unavailable"
+        assert await profile_state(profiles["target"]) == target_before
+
+        suspended = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": suspend_key},
+            json={"reason": reason},
+        )
+        assert suspended.status_code == 200, suspended.text
+        assert suspended.json() == {
+            "resource_type": "actor_profile",
+            "resource_id": str(profiles["target"]),
+            "version": None,
+            "http_status": 200,
+        }
+        assert reason.strip() not in suspended.text
+        assert "private-target@example.test" not in suspended.text
+        after_suspend = await profile_state(profiles["target"])
+        assert after_suspend[0] == "suspended"
+        assert after_suspend[1] == str(profiles["admin"])
+        assert after_suspend[2] is not None
+        assert after_suspend[3] == reason.strip()
+        assert after_suspend[10:] == target_before[10:]
+
+        mismatch = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": suspend_key},
+            json={"reason": "changed reason under one operation"},
+        )
+        assert mismatch.status_code == 409
+        assert mismatch.json()["error"]["code"] == "idempotency_mismatch"
+
+        conflict_key = str(uuid4())
+        conflict = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": conflict_key},
+            json={"reason": "second transition"},
+        )
+        assert conflict.status_code == 409
+        assert conflict.json()["error"]["code"] == "actor_already_suspended"
+
+        reactivated = await client.post(
+            f"/api/v1/actors/{profiles['target']}/reactivate",
+            headers={**headers["admin"], "Idempotency-Key": suspend_key},
+            json={"reason": "Correction complete"},
+        )
+        assert reactivated.status_code == 200, reactivated.text
+        after_reactivate = await profile_state(profiles["target"])
+        assert after_reactivate[0] == "active"
+        assert after_reactivate[1:4] == (None, None, None)
+        assert after_reactivate[4] == str(profiles["admin"])
+        assert after_reactivate[5] is not None
+        assert after_reactivate[6] == "Correction complete"
+        assert after_reactivate[10:] == target_before[10:]
+        visible_reactivation = await client.get(
+            f"/api/v1/actors/{profiles['target']}",
+            headers=headers["admin"],
+        )
+        assert visible_reactivation.status_code == 200
+        assert visible_reactivation.json()["reactivated_at"] is not None
+
+        retry_conflict_key = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": conflict_key},
+            json={"reason": "second transition"},
+        )
+        assert retry_conflict_key.status_code == 200, retry_conflict_key.text
+
+        replay = await client.post(
+            f"/api/v1/actors/{profiles['target']}/suspend",
+            headers={**headers["admin"], "Idempotency-Key": suspend_key},
+            json={"reason": reason},
+        )
+        assert replay.status_code == 200
+        assert replay.json() == suspended.json()
+
+        deactivated = await client.post(
+            f"/api/v1/actors/{profiles['target']}/deactivate",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "Terminal security response"},
+        )
+        assert deactivated.status_code == 200, deactivated.text
+        terminal = await client.post(
+            f"/api/v1/actors/{profiles['target']}/reactivate",
+            headers={**headers["admin"], "Idempotency-Key": str(uuid4())},
+            json={"reason": "must remain terminal"},
+        )
+        assert terminal.status_code == 409
+        assert terminal.json()["error"]["code"] == "actor_deactivated_terminal"
+        after_deactivate = await profile_state(profiles["target"])
+        assert after_deactivate[0] == "deactivated"
+        assert after_deactivate[7] == str(profiles["admin"])
+        assert after_deactivate[8] is not None
+        assert after_deactivate[9] == "Terminal security response"
+        assert after_deactivate[10:] == target_before[10:]
+
+    async with db_session.get_session_factory()() as session:
+        lifecycle_records = (
+            await session.execute(
+                    text(
+                        "select operation,status,count(*) from authority_idempotency_records "
+                        "where response_resource_id=:target "
+                        "group by operation,status order by operation,status"
+                ),
+                {"target": str(profiles["target"])},
+            )
+        ).all()
+        assert lifecycle_records == [
+            ("actor_profile.deactivate", "committed", 1),
+            ("actor_profile.reactivate", "committed", 1),
+            ("actor_profile.suspend", "committed", 2),
+        ]
+        event_counts = dict(
+            (
+                await session.execute(
+                    text(
+                        "select event_type,count(*) from audit_events "
+                        "where resource_type='actor_profile' and resource_id=:target "
+                        "and (event_type like 'ActorProfile%' "
+                        "or event_type='SensitiveAuthorizationDenied') "
+                        "group by event_type"
+                    ),
+                    {"target": str(profiles["target"])},
+                )
+            ).all()
+        )
+        assert event_counts["ActorProfileSuspended"] == 2
+        assert event_counts["ActorProfileReactivated"] == 1
+        assert event_counts["ActorProfileDeactivated"] == 1
+        assert event_counts["SensitiveAuthorizationDenied"] == 3
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(AuthorityIdempotencyRecord)
+                .where(AuthorityIdempotencyRecord.status == "pending")
+            )
+            or 0
+        ) == 0
+
+
+async def test_actor_profile_lifecycle_real_postgres_concurrency(
+    auth_database_env: str,
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Serialize exact replay and competing transitions without timing sleeps."""
+    private_key, jwk = rsa_signing_material
+    settings = production_verifier_settings(database_url=auth_database_env)
+    app = create_app(settings)
+    app.state.auth_verifier = FlowAuthVerifier(settings, jwks_transport=jwks_transport(jwk))
+    admin_headers = {
+        "Authorization": "Bearer "
+        + issue_asymmetric_token(
+            private_key,
+            claims={"sub": "auth09d-a-race-admin", "jti": "auth09d-a-race-admin-token"},
+        )
+    }
+    target_headers = {
+        "Authorization": "Bearer "
+        + issue_asymmetric_token(
+            private_key,
+            claims={"sub": "auth09d-a-race-target", "jti": "auth09d-a-race-target-token"},
+        )
+    }
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        admin_id = UUID(
+            (await client.get("/api/v1/actors/me", headers=admin_headers)).json()[
+                "actor_profile_id"
+            ]
+        )
+        target_id = UUID(
+            (await client.get("/api/v1/actors/me", headers=target_headers)).json()[
+                "actor_profile_id"
+            ]
+        )
+        assert (await run_admin_bootstrap(admin_id, execute=True))[0] == 0
+        path = f"/api/v1/actors/{target_id}/suspend"
+        payload = {"reason": "Concurrent exact profile suspension"}
+
+        async def concurrent_posts(keys: tuple[str, str]) -> tuple[Response, Response]:
+            original_reserve = AuthorityIdempotencyRepository.reserve
+            ready = asyncio.Event()
+            arrivals = 0
+
+            async def barrier_reserve(self, **kwargs):
+                nonlocal arrivals
+                arrivals += 1
+                if arrivals == 2:
+                    ready.set()
+                await ready.wait()
+                return await original_reserve(self, **kwargs)
+
+            monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", barrier_reserve)
+            try:
+                responses = await asyncio.wait_for(
+                    asyncio.gather(
+                        client.post(
+                            path,
+                            headers={**admin_headers, "Idempotency-Key": keys[0]},
+                            json=payload,
+                        ),
+                        client.post(
+                            path,
+                            headers={**admin_headers, "Idempotency-Key": keys[1]},
+                            json=payload,
+                        ),
+                    ),
+                    timeout=60,
+                )
+                return responses[0], responses[1]
+            finally:
+                monkeypatch.setattr(
+                    AuthorityIdempotencyRepository,
+                    "reserve",
+                    original_reserve,
+                )
+
+        shared_key = str(uuid4())
+        same_key = await concurrent_posts((shared_key, shared_key))
+        assert [response.status_code for response in same_key] == [200, 200]
+        assert same_key[0].json() == same_key[1].json()
+
+        reactivated = await client.post(
+            f"/api/v1/actors/{target_id}/reactivate",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json={"reason": "Prepare distinct-key race"},
+        )
+        assert reactivated.status_code == 200, reactivated.text
+
+        competing_keys = (str(uuid4()), str(uuid4()))
+        different_keys = await concurrent_posts(competing_keys)
+        assert sorted(response.status_code for response in different_keys) == [200, 409]
+        loser = next(
+            (key, response)
+            for key, response in zip(competing_keys, different_keys, strict=True)
+            if response.status_code == 409
+        )
+        assert loser[1].json()["error"]["code"] == "actor_already_suspended"
+
+        reactivated_again = await client.post(
+            f"/api/v1/actors/{target_id}/reactivate",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json={"reason": "Prove losing key remains reusable"},
+        )
+        assert reactivated_again.status_code == 200, reactivated_again.text
+        reused_loser = await client.post(
+            path,
+            headers={**admin_headers, "Idempotency-Key": loser[0]},
+            json=payload,
+        )
+        assert reused_loser.status_code == 200, reused_loser.text
+
+    async with db_session.get_session_factory()() as session:
+        state = (
+            await session.execute(
+                text(
+                    "select p.status,count(r.id) filter (where r.status='committed') "
+                    "from actor_profiles p left join authority_idempotency_records r "
+                    "on r.response_resource_id=p.id::uuid where p.id=:target "
+                    "group by p.status"
+                ),
+                {"target": str(target_id)},
+            )
+        ).one()
+        assert tuple(state) == ("suspended", 5)
+        counts = dict(
+            (
+                await session.execute(
+                    text(
+                        "select event_type,count(*) from audit_events "
+                        "where target_actor_ref=:target and event_type in "
+                        "('ActorProfileSuspended','ActorProfileReactivated',"
+                        "'SensitiveAuthorizationDenied') group by event_type"
+                    ),
+                    {"target": str(target_id)},
+                )
+            ).all()
+        )
+        assert counts == {
+            "ActorProfileSuspended": 3,
+            "ActorProfileReactivated": 2,
+            "SensitiveAuthorizationDenied": 1,
+        }
+
+
 async def test_no_local_login_password_or_session_routes() -> None:
     app = create_app()
     paths = {path.lower() for path in _application_paths(app)}

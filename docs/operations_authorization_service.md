@@ -564,11 +564,11 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 ### Catalogue And Action-Evidence Staging
 
 The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
-AUTH-09C. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
+AUTH-09D-A. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
 actions, `actor.service.provision`, `actor.profile.read`, and
-`actor.identity_link.read` are active; the other 53 entries remain planned and
-non-executable. Five of those planned rows are AUTH-09D actor/link mutations
-introduced by `0023`. The target post-custody
+`actor.identity_link.read`, plus the three profile lifecycle actions are active;
+the other 50 entries remain planned and non-executable. The two identity-link
+lifecycle rows introduced by `0023` remain planned for AUTH-09D-B. The target post-custody
 invariant is that planned runtime entries contain only action, permission, exact
 AUTH activation owner, and availability. Until the availability-neutral custody
 transfers merge, the 25 ART and 19 REV rows retain their historical feature
@@ -835,6 +835,20 @@ Never use token, subject, email, `jti`, raw URL, key material, or unbounded
 resource IDs as metric labels.
 
 ## Authority Mutation Idempotency
+
+AUTH-09D-A exposes only:
+
+```text
+POST /api/v1/actors/{actor_profile_id}/suspend
+POST /api/v1/actors/{actor_profile_id}/reactivate
+POST /api/v1/actors/{actor_profile_id}/deactivate
+```
+
+Each route requires an effective system Access Administrator, the administrative
+mutation limiter, a UUID `Idempotency-Key`, and exactly one normalized bounded
+`reason`. Conflicts do not consume the key. Deactivation is terminal, and a
+profile reactivation does not restore a revoked identity link, grant, or fixed
+service admission. Identity-link lifecycle routes remain unavailable.
 
 Service-actor creation, administrative/project grant issue or revocation,
 actor suspension/reactivation/deactivation, and identity-link

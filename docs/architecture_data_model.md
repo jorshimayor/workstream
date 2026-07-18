@@ -76,6 +76,10 @@ Fields include:
   deactivation attribution after AUTH-09D-A migration `0026`
 
 Profile status is a guard, not a role or project grant.
+Lifecycle invalidation effectiveness is component-scoped. Reactivating a
+profile records `effective=false -> effective=true` for that profile projection
+without asserting that its identity link, grants, or fixed-service admission
+make the whole actor effective.
 
 ### ActorIdentityLink
 
