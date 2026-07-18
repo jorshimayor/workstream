@@ -10,14 +10,16 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `48eeb2762f82e71129c4f42243eabe61b44933d3`
+Reviewed code SHA: `fafd6338623ab82152ba9dbe88b5622c73f1ff91`
 
-Reviewed at: 2026-07-18T22:22:34Z
+Reviewed at: 2026-07-18T22:51:42Z
 
-Reviewer run IDs: senior-engineering=019f7739-0db0-7392-ae3a-45438727badd; architecture=019f7739-003d-7bd1-9704-d4c3cbb92318; QA/test=019f7739-187d-7613-bb54-6f772673554d; security/auth=019f7741-7f1c-7780-93e1-bd40571685bd; product/ops=019f7741-8a64-7e82-9d48-ff8237bb7f4d; reuse/dedup=019f7741-9510-75c0-bdce-07c5c12b8b0a; CI-integrity=019f7748-0d50-7ea1-b15f-76d68a60fb58; test-delta=019f7748-2918-76b3-a2f1-374f14ab179e; docs=019f7748-53f2-7990-8a5e-15bf1c09fccf
+Reviewer run IDs: senior-engineering=019f7757-5a85-78d2-a205-5e4daa95e0f6; architecture=019f7757-4ec9-7640-b511-a6206d78ae18; QA/test=019f775f-20e2-7b51-92b9-00c8c628b1b5; security/auth=019f775f-64e8-7472-8efa-f689fd04eb9e; product/ops=019f775f-755f-7860-be64-0d24f7b3636d; reuse/dedup=019f775f-82ba-7dd2-9338-e4fa4d1678ea; CI-integrity=019f7766-5851-7b32-8dc2-427deba32f83; test-delta=019f7766-74ef-7961-93f9-573eda2455bf; docs=019f7766-9599-7503-a835-8eddfe95e343
 
 The reviewed base is `origin/main` at
-`99ae4c963e53f317175dcb308b9e47c93ccf19ed`, including AUTH PR #148.
+`983b9e534b84f1590fafecc0ce1355cf131257ce`, including AUTH PR #148 and the
+latest merged REV planning. The merged REV planning changes introduce no ART
+runtime or ownership drift in `origin/main...HEAD`.
 Only review artifacts and initiative status may change after the reviewed SHA.
 Any implementation, test, workflow, policy, or chunk-contract change invalidates
 this evidence and requires a new exact-head review cycle.
@@ -41,6 +43,8 @@ this evidence and requires a new exact-head review cycle.
   90 percent gate while adding exact S3 adapter and validation gates.
 - Integrated AUTH PR #148 without editing or activating AUTH-owned runtime
   behavior.
+- Integrated the latest merged REV planning without editing or activating
+  REV-owned runtime behavior.
 - Bound repository-managed MinIO to host loopback in Compose and CI and added
   deterministic gates for both definitions.
 - Defined `local/CI MinIO` as non-production eligibility, including private
@@ -52,10 +56,10 @@ this evidence and requires a new exact-head review cycle.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | The shared adapter remains maintainable, AWS remains unavailable before live proof, and no operational issue remains. |
+| senior engineering | PASS WITH LOW RISKS | None | The shared adapter remains maintainable and AWS remains unavailable before live proof. A non-blocking repository-wide Ruff version-range reproducibility note remains outside this ART behavior. |
 | qa/test | PASS | None | Real MinIO, credential isolation, namespace fencing, configuration, and CI evidence cover the chunk contract without weakened tests. |
 | security/auth | PASS | None | Secret-bearing endpoint and metadata failures are sanitized, credential sources are closed, and ART/AUTH ownership remains intact. |
-| product/ops | PASS | None | No operator recovery, contributor, reviewer, contribution, compensation, fulfillment, or reputation behavior is activated. |
+| product/ops | PASS WITH LOW RISKS | None | No operator recovery, contributor, reviewer, contribution, compensation, fulfillment, or reputation behavior is activated. Existing pre-cutover R2 wording remains owned by later product cutover work and adds no runtime eligibility here. |
 | architecture | PASS | None | One typed adapter path remains, concrete S3 construction stays in ART composition, and product services receive no concrete store. |
 | ci integrity | PASS | None | The 78 percent repository gate and all cumulative 90 percent gates remain fail closed with no bypass. |
 | docs | PASS | None | README, artifact specification, settings, provider eligibility, and loop state match the implementation. |

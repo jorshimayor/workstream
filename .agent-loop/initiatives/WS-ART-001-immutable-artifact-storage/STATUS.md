@@ -53,8 +53,9 @@ has a v0.1 chunk.
 ## Gate
 
 The reviewed implementation recorded: "The current gate is deterministic 02B1
-proof followed by all nine exact-SHA internal reviewer tracks." That gate passed
-at `48eeb276`. The remaining gate is GitHub Actions, CodeRabbit, and explicit
-human review. Durable admission, put attempts, verification publication, and
-recovery remain in later owning chunks. No later artifact chunk starts
-automatically, and only the user may approve merge.
+proof followed by all nine exact-SHA internal reviewer tracks." After integrating
+latest `main`, including merged REV planning, that gate passed again at
+`fafd6338` with no ART runtime or ownership drift. The remaining gate is GitHub
+Actions, CodeRabbit, and explicit human review. Durable admission, put attempts,
+verification publication, and recovery remain in later owning chunks. No later
+artifact chunk starts automatically, and only the user may approve merge.

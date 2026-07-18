@@ -25,6 +25,8 @@ chunk.
   traceback/object-graph tests.
 - Added exact async SDK pins and cumulative CI coverage guards.
 - Integrated AUTH PR #148 while leaving all AUTH runtime activation with AUTH.
+- Integrated the latest merged REV planning without changing ART or REV runtime
+  ownership.
 
 ## Scope Control
 
@@ -67,7 +69,7 @@ percent repository floor, and all cumulative focused 90 percent gates.
 
 ## Internal Review
 
-Reviewed code SHA: `48eeb2762f82e71129c4f42243eabe61b44933d3`
+Reviewed code SHA: `fafd6338623ab82152ba9dbe88b5622c73f1ff91`
 
 All nine required reviewer tracks passed the exact integrated SHA with no
 remaining finding. Every reviewer session is closed. Reviewer IDs and the
