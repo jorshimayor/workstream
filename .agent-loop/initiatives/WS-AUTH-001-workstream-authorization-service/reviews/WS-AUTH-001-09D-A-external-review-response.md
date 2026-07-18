@@ -17,8 +17,8 @@ The repair gives both ActorProfile and ActorIdentityLink lifecycle constraints
 the exact 29 code points treated as whitespace by `str.strip()` across the
 currently supported Python runtimes, including ASCII whitespace, non-breaking
 space, Unicode separators, and ideographic space. Migration `0026` uses the
-same expression for its
-pre-DDL dirty-row refusal and installed constraints. Direct-write tests cover
+same expression for its pre-DDL dirty-row refusal and installed constraints.
+Direct-write tests cover
 all five lifecycle reason fields plus non-breaking space, and previous-head
 dirty-row cases prove ASCII and Unicode padding stop the upgrade without
 changing revision, schema, or data.
@@ -36,6 +36,21 @@ The regenerated evidence will use only recognized canonical rows in its table,
 record migration/data-integrity proof outside that table, and name the exact
 reviewed SHA. No global queue or review-log file will change after that SHA.
 
+### Full-Suite Migration Fixture Used An Invalid Reactivation
+
+The replacement Backend run exposed one historical migration test helper that
+reset a revoked identity link by clearing revocation fields directly. Migration
+`0026` correctly rejected that unattributed reactivation. The first failure
+left the shared migration fixture inactive, which caused the remaining 18
+Alembic failures and 354 downstream setup errors.
+
+The test-only repair disables both lifecycle history guards for explicit
+fixture cleanup, restores profile and identity-link status plus all lifecycle
+provenance to the neutral active state, and re-enables both guards in `finally`.
+The original rollback-refusal assertion and the immediately following migration
+test pass together, proving clean state transfer between tests. Production
+guards and migration behavior are unchanged.
+
 ## Non-Actionable Warning
 
 CodeRabbit's generic diff-local docstring percentage is not a configured
@@ -49,6 +64,8 @@ and documentation gates remain authoritative and unchanged.
 - Direct installed-constraint and previous-head dirty-row migration nodes:
   `2 passed in 111.55s`.
 - Full five-node lifecycle migration suite: `5 passed in 250.95s`.
+- Historical rollback-guard cleanup plus following migration node:
+  `2 passed in 110.04s`.
 - Strict lifecycle request-schema node: `1 passed in 9.46s`.
 - Focused Ruff and `git diff --check`: passed.
 - Required exact-head internal review, replacement GitHub checks, CodeRabbit,

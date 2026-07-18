@@ -500,7 +500,6 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
                     _reset_canonical_actor_guard_state(
                         isolated_database_env,
                         actor_id,
-                        owner_reset=state == "deactivated",
                     )
                 )
             command.downgrade(config, "0019_authority_idempotency")
@@ -2651,44 +2650,56 @@ async def _set_canonical_actor_guard_state(
 async def _reset_canonical_actor_guard_state(
     database_url: str,
     actor_id: str,
-    *,
-    owner_reset: bool,
 ) -> None:
     """Restore test-owned state after proving the migration refuses it."""
     engine = create_async_engine(database_url)
-    history_guard_disabled = False
+    history_guards_disabled = False
     try:
         try:
-            if owner_reset:
-                async with engine.begin() as connection:
-                    await connection.execute(
-                        text(
-                            "alter table actor_profiles disable trigger actor_profile_history_guard"
-                        )
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "alter table actor_profiles disable trigger actor_profile_history_guard"
                     )
-                history_guard_disabled = True
+                )
+                await connection.execute(
+                    text(
+                        "alter table actor_identity_links disable trigger "
+                        "actor_identity_link_history_guard"
+                    )
+                )
+            history_guards_disabled = True
             async with engine.begin() as connection:
                 await connection.execute(
                     text(
                         "update actor_profiles set status='active', suspended_by=null, "
                         "suspended_at=null, suspension_reason=null, deactivated_by=null, "
-                        "deactivated_at=null, deactivation_reason=null where id=:actor"
+                        "deactivated_at=null, deactivation_reason=null, reactivated_by=null, "
+                        "reactivated_at=null, reactivation_reason=null where id=:actor"
                     ),
                     {"actor": actor_id},
                 )
                 await connection.execute(
                     text(
                         "update actor_identity_links set status='active', revoked_by=null, "
-                        "revoked_at=null, revoked_reason=null where actor_profile_id=:actor"
+                        "revoked_at=null, revoked_reason=null, reactivated_by=null, "
+                        "reactivated_at=null, reactivation_reason=null "
+                        "where actor_profile_id=:actor"
                     ),
                     {"actor": actor_id},
                 )
         finally:
-            if history_guard_disabled:
+            if history_guards_disabled:
                 async with engine.begin() as connection:
                     await connection.execute(
                         text(
                             "alter table actor_profiles enable trigger actor_profile_history_guard"
+                        )
+                    )
+                    await connection.execute(
+                        text(
+                            "alter table actor_identity_links enable trigger "
+                            "actor_identity_link_history_guard"
                         )
                     )
     finally:
