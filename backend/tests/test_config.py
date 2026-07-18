@@ -647,6 +647,8 @@ def test_minio_settings_and_factory_construct_closed_namespace(tmp_path: Path) -
         ({"artifact_s3_region": "US-east-1"}, "requires a canonical region"),
         ({"artifact_s3_bucket": "192.168.0.1"}, "requires a canonical bucket"),
         ({"artifact_s3_bucket": "bucket..name"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket.-name"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket-.name"}, "requires a canonical bucket"),
         ({"artifact_s3_private_prefix": "/bad"}, "private prefix is invalid"),
         ({"artifact_maximum_bytes": 512 * 1024 * 1024 + 1}, "maximum exceeds"),
         ({"environment": "production"}, "MinIO artifact storage is restricted"),

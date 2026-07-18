@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 
 _S3_REGION = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 _S3_BUCKET = re.compile(r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
+_S3_BUCKET_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _S3_PREFIX_SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -22,7 +23,11 @@ def is_canonical_s3_bucket(value: object) -> bool:
     """Return whether one dedicated bucket name is DNS-compatible."""
     if not isinstance(value, str) or _S3_BUCKET.fullmatch(value) is None:
         return False
-    return ".." not in value and re.fullmatch(r"\d+\.\d+\.\d+\.\d+", value) is None
+    return (
+        ".." not in value
+        and re.fullmatch(r"\d+\.\d+\.\d+\.\d+", value) is None
+        and all(_S3_BUCKET_LABEL.fullmatch(label) is not None for label in value.split("."))
+    )
 
 
 def is_canonical_s3_prefix(value: object) -> bool:
