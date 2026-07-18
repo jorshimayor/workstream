@@ -142,7 +142,7 @@ reputation scoring
   implemented and consumed in this chunk after the reviewer CON operation. It
   appends the exact Review-rooted initial preparation before Task becomes
   contributor-readable. Failure rolls
-  back Review, Task/Assignment, lease/queue, obligation/preparation, reviewer
+  back Review, Task/Assignment, lease/queue, initial preparation, reviewer
   contribution/award, audit, and outbox together.
 - Same-reviewer and takeover matrices prove v1 `needs_revision` then v2
   accept/reject follows exact Submission/Review predecessors, attributes each

@@ -46,7 +46,7 @@ not merged.
   distinct supported CheckerRun path, keeps existing task context, and never
   fabricates Review/finding/reviewer contribution or consumes human rebase/D6.
 - Limit/deadline exhaustion cannot be repaired around; only exact D6 close may
-  terminate that frozen obligation.
+  terminate that frozen human revision episode.
 - Persisted release phase denies command execution. It does not unregister
   routers, change AUTH action availability/static membership, or replace
   scheduler operations.
@@ -59,11 +59,12 @@ not merged.
 - Accept alone creates immutable FinalAcceptance, accepts Task/completes exact
   assignment, and creates submitter `accepted_submission` from that fact.
 - Needs revision creates no FinalAcceptance/submitter contribution and atomically
-  creates a human-rooted revision obligation/preparation.
+  appends the Review-rooted task-owned initial preparation.
 - Reject blocks the exact reviewed Submission assignment and rejects Task; it
   creates no FinalAcceptance/submitter contribution.
-- Checker needs revision atomically creates a checker-rooted obligation/
-  preparation and no Review/CON record.
+- Checker needs revision atomically records the final CheckerRun transition with
+  the Task's existing locked context and creates no Review, preparation, or CON
+  record.
 - Adjudication and reputation mutation remain deferred and unimplemented.
 
 ## Human-owned gates

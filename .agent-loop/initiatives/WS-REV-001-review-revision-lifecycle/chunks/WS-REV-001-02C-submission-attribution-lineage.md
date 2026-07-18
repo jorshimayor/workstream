@@ -103,9 +103,12 @@ CON, compensation, contribution, reputation, adjudication, or synthetic reject
   implemented here.
 - Version allocation and predecessor selection lock the Task plus current chain
   head. Concurrent initial creates yield one v1 and an exact replay or stable
-  conflict, never v2. After prepared cutover, concurrent creates against one
-  exact preparation head yield one N+1 and an exact replay or conflict, never
-  N+2; a new version requires a later committed revision obligation/head.
+  conflict, never v2. After prepared cutover, concurrent human-Review creates
+  against one exact preparation head yield one N+1 and an exact replay or
+  conflict. Concurrent checker-remediation creation attempts against one exact
+  final needs-revision CheckerRun yield the same one-winner guarantee without a
+  preparation. N+2 requires a later committed human Review/preparation or final
+  needs-revision CheckerRun.
 - TaskAssignment continues to store only task identity and contributor/freeze
   terms; it receives no guide or revision-preparation duplicate.
 - Submission creation revalidates that the canonical contributor ActorProfile

@@ -89,8 +89,8 @@ Decision branches are exact:
 - `accept`: append `FinalAcceptance`, set Task `accepted`, complete the exact
   reviewed TaskAssignment, invoke CON submitter operation from
   `FinalAcceptance`, then stage shared audit/outbox.
-- `needs_revision`: invoke the task-owned revision-obligation participant,
-  append the human-review-rooted obligation and initial preparation, set Task
+- `needs_revision`: invoke the task-owned preparation participant, append the
+  human-Review-rooted initial preparation, set Task
   `needs_revision`, keep the assignment active, and create no FinalAcceptance or
   submitter contribution.
 - `reject`: block the exact immutable `Submission.task_assignment_id`, set Task
@@ -195,7 +195,7 @@ inferred from checker retries, task SLA, current time, or archival examples.
 Whatever values are approved freeze on the Review-rooted episode and use
 database time. At exhaustion, Task remains `needs_revision` and assignment
 active; context repair cannot bypass exhaustion, and only exact D6 close may
-terminate the human revision obligation. No synthetic reject is created.
+terminate the human revision episode. No synthetic reject is created.
 
 An exact final CheckerRun proves a checker-remediation task is not a rootless
 human revision. Only state that claims human Review revision but has no

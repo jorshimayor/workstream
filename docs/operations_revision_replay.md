@@ -54,10 +54,12 @@ ReviewFinding response or resolution.
 
 ## Resubmission And Checks
 
-Submission N+1 acknowledges the exact preparation head/digest, links its
-immediate predecessor, and stamps the frozen context. The normal finalization
-and checker spine reruns. Only a current successful `allow_review` may create a
-new queue entry.
+A human-Review Submission N+1 acknowledges the exact preparation head/digest,
+links its immediate predecessor, and stamps the frozen context. A checker-
+remediation Submission N+1 instead binds the exact final needs-revision
+CheckerRun and the Task's existing locked context; it carries no preparation or
+ReviewFinding response. Both paths rerun the normal finalization and checker
+spine. Only a current successful `allow_review` may create a new queue entry.
 
 Human Review return initially prefers the reviewer who requested revision. The
 distinct corrected checker path enters open routing. Expiry,
@@ -83,9 +85,9 @@ database time and freeze on the Review-rooted episode. A reached revision limit
 or deadline blocks further preparation and
 `submission.create`; it does not automatically reject or cancel the task. The
 task remains `needs_revision` until a covered Project Manager explicitly invokes
-the planned reason-bound obligation-close command. That administrative closure
-uses task `cancelled`, releases the assignment, and creates no synthetic Review
-or contribution.
+the planned reason-bound `review.revision_obligation.close` command. That
+administrative closure uses task `cancelled`, releases the assignment, and
+creates no synthetic Review or contribution.
 
 A blocked or invalid context preparation can be repaired only by appending one
 successor through the planned covered-manager repair command. Repair cannot

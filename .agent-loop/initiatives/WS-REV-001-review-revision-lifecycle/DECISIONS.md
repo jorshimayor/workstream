@@ -111,9 +111,10 @@ to append a successor rather than editing it. Database constraints enforce
 one root per episode, one child per preparation, same task/reviewed-assignment/
 prior-Submission/episode across an edge, and a sequence increment of exactly one.
 The target assignment normally remains the reviewed assignment. After AUTH-13
-closes it for authority loss and a covered manager creates a replacement on the
-durable `needs_revision` obligation, the same caller transaction appends one
-successor bound to that replacement assignment and recomputes the current guide
+closes it for authority loss and a covered manager creates a replacement while
+the Task remains in durable human-review `needs_revision`, the same caller
+transaction appends one successor bound to that replacement assignment and
+recomputes the current guide
 classification. No edit or branch occurs, and the prior contributor loses
 submission authority. Submission N+1 binds to that successor's target
 TaskAssignment.
@@ -421,7 +422,7 @@ freeze. A later lease may independently freeze the then-current reviewer terms.
 ### D18 - Authority-Loss Replacement Preserves Source And Changes Target
 
 Normal `needs_revision` returns to the same contributor. The AUTH-13/14 final
-contract nevertheless preserves a durable unassigned revision obligation when
+contract nevertheless preserves a durable unassigned human revision episode when
 that contributor loses authority and permits a covered manager to assign a
 replacement. WS-REV adopts that dependency rather than stranding the task.
 
@@ -562,9 +563,10 @@ D26 narrows D19. Persisted lifecycle phase controls command execution through
 mandatory database fences. It does not unregister FastAPI routers, deactivate
 AUTH actions, rewrite fixed-service memberships, or replace operational
 scheduler suspension. Product reads and mutation classes are separate.
-Checker revision routing/preparation is allowed wherever checker completion is
-allowed through `revision_cutover_fenced`, then denied from `admission_fenced`.
-Human-origin preparation remains inside the already leased decision command.
+Checker revision routing is allowed wherever checker completion is allowed
+through `revision_cutover_fenced`, then denied from `admission_fenced`; it creates
+no preparation. Human Review preparation remains inside the already leased
+decision command.
 
 ### D27 - Oversized Parent Contracts Are Non-Executable
 

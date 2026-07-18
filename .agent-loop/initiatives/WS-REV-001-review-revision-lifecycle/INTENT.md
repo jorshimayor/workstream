@@ -110,8 +110,8 @@ outcomes.
    visibility uses the frozen preparation, and no reviewer-side guide exists.
 3. D6's recommendation is approved: limit/deadline blocks further submission while
    leaving `needs_revision` active, with only the covered Project Manager's
-   explicit reason-bound revision-obligation closure and never a fabricated
-   human `reject` Review.
+   explicit reason-bound `review.revision_obligation.close` command and never a
+   fabricated human `reject` Review.
 4. The revised reviewer `current` endpoint controls over
    the older WS-IMP full-backlog reviewer response.
 5. Production enables the coherent lifecycle route set only after the

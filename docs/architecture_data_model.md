@@ -1188,7 +1188,7 @@ Fields:
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
-- `revision_context_preparation_id` (revision submissions only)
+- `revision_context_preparation_id` (human-Review revision submissions only)
 
 The contributor submission packet supplies the task id, summary, outputs,
 artifact hashes, evidence references, and contributor attestation. Workstream assigns the

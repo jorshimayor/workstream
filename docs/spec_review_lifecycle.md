@@ -501,16 +501,19 @@ For a human-review origin, every unresolved blocking ReviewFinding requires one
 immutable `SubmissionFindingResponse` from the assigned submitter, with response
 text and optional finalized
 evidence binding. Responses to advisory findings are optional unless the locked
-policy explicitly requires them. A checker origin instead exposes only bounded
-contributor-safe CheckerResult messages/suggested fixes, requires no fabricated
-ReviewFinding/response/resolution, and returns to open routing after corrected
-checker admission.
+policy explicitly requires them. The checker-remediation path instead exposes
+only bounded contributor-safe CheckerResult messages/suggested fixes, requires
+no fabricated ReviewFinding/response/resolution, and returns to open routing
+after corrected checker admission.
 
-Submission N+1 links its immediate predecessor, exact preparation head,
-responses, evidence relations, and target TaskAssignment. The existing
-finalization and checker spine reruns. A new current `allow_review` creates a
-queue entry preferred to the reviewer who issued the prior revision request for
-a human origin. A checker origin enters ordinary open routing.
+A human-Review Submission N+1 links its immediate predecessor, exact preparation
+head, required responses, evidence relations, and target TaskAssignment. A
+checker-remediation Submission N+1 instead binds the exact final needs-revision
+CheckerRun and the Task's existing locked context; it has no preparation or
+ReviewFinding response. Both paths rerun the existing finalization and checker
+spine. A new current `allow_review` creates a queue entry preferred to the
+reviewer who issued the prior human revision request. Corrected checker work
+enters ordinary open routing.
 
 The later Review appends one immutable `FindingResolution` for each required
 prior finding with the canonical result `resolved`, `unresolved`, or
@@ -519,9 +522,9 @@ or submitter response.
 
 Normal revision returns to the same assigned contributor. If that contributor
 loses authority, the source Submission and TaskAssignment remain immutable. A
-covered manager may assign a replacement against the durable revision
-obligation and append one preparation successor whose target TaskAssignment is
-the replacement. The old contributor cannot submit.
+covered manager may assign a replacement against the durable human revision
+episode and append one preparation successor whose target TaskAssignment is the
+replacement. The old contributor cannot submit.
 
 ## Revision Limits, Repair, And Legacy Recovery
 
