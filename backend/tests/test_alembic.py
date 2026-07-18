@@ -159,7 +159,9 @@ def test_current_schema_uses_project_policy_contract(
         "artifact_upload_items.id",
         "artifact_contents.sha256",
         "artifact_bindings.scope_version",
-        "artifact_replicas.provider_artifact_id",
+        "artifact_storage_namespaces.namespace_fingerprint",
+        "artifact_replicas.provider_object_ref",
+        "artifact_replicas.storage_namespace_id",
         "artifact_operation_receipts.request_digest",
     }.issubset(columns)
     discarded_columns = {
@@ -184,6 +186,11 @@ def test_current_schema_uses_project_policy_contract(
         "workstream_tasks.locked_checker_policy_version",
         "submissions.locked_checker_policy_version",
         "checker_runs.locked_checker_policy_version",
+        "artifact_replicas.provider_artifact_id",
+        "artifact_replicas.provider_manifest_id",
+        "artifact_replicas.retention_state",
+        "artifact_operation_receipts.provider_receipt_id",
+        "artifact_operation_receipts.retention_reference",
     }
     assert columns.isdisjoint(discarded_columns)
 
@@ -1151,6 +1158,169 @@ def test_artifact_foundation_enforces_immutable_facts_and_guarded_downgrade(
             )
         finally:
             command.downgrade(config, "base")
+
+
+def test_artifact_store_v2_empty_clean_cut_and_reversible_shape(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Migrate only empty v1 tables and restore their empty shape on downgrade."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0023_service_actor_identity")
+            command.upgrade(config, "0025_artifact_store_v2")
+            v2_columns = asyncio.run(_fetch_columns(isolated_database_env))
+            command.downgrade(config, "0023_service_actor_identity")
+            v1_columns = asyncio.run(_fetch_columns(isolated_database_env))
+            command.upgrade(config, "0025_artifact_store_v2")
+        finally:
+            command.downgrade(config, "base")
+
+    assert {
+        "artifact_storage_namespaces.namespace_fingerprint",
+        "artifact_upload_items.provider_object_ref",
+        "artifact_replicas.storage_namespace_id",
+        "artifact_replicas.namespace_fingerprint",
+        "artifact_replicas.provider_profile",
+        "artifact_replicas.provider_object_ref",
+        "artifact_operation_receipts.replayed",
+    }.issubset(v2_columns)
+    assert {
+        "artifact_upload_items.provider_operation_reference",
+        "artifact_replicas.provider_artifact_id",
+        "artifact_replicas.provider_manifest_id",
+        "artifact_replicas.retention_state",
+        "artifact_operation_receipts.provider_receipt_id",
+        "artifact_operation_receipts.retention_reference",
+    }.issubset(v1_columns)
+    assert {
+        "artifact_upload_items.provider_object_ref",
+        "artifact_replicas.storage_namespace_id",
+        "artifact_replicas.namespace_fingerprint",
+        "artifact_replicas.provider_profile",
+        "artifact_replicas.provider_object_ref",
+        "artifact_operation_receipts.provider_object_ref",
+        "artifact_operation_receipts.replayed",
+    }.isdisjoint(v1_columns)
+    assert "artifact_storage_namespaces.id" not in v1_columns
+
+
+def test_artifact_store_v2_refuses_populated_v1_before_ddl(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Never fabricate namespace or verification provenance for a v1 row."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0023_service_actor_identity")
+            asyncio.run(_seed_artifact_content(isolated_database_env))
+            with pytest.raises(
+                RuntimeError,
+                match="artifact storage clean cut requires empty pre-production tables",
+            ):
+                command.upgrade(config, "0025_artifact_store_v2")
+            refused = asyncio.run(_artifact_v2_refusal_state(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.upgrade(config, "0025_artifact_store_v2")
+        finally:
+            command.downgrade(config, "base")
+
+    assert refused == {
+        "revision": "0023_service_actor_identity",
+        "namespace_table_exists": False,
+        "v1_content_count": 1,
+    }
+
+
+def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Never drop a namespace-only v2 deployment fence during downgrade."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0025_artifact_store_v2")
+            asyncio.run(_seed_v2_artifact_namespace(isolated_database_env))
+            with pytest.raises(
+                RuntimeError,
+                match="artifact storage clean cut requires empty pre-production tables",
+            ):
+                command.downgrade(config, "0023_service_actor_identity")
+            refused_revision = asyncio.run(_current_revision(isolated_database_env))
+            refused_columns = asyncio.run(_fetch_columns(isolated_database_env))
+            refused_namespace_count = asyncio.run(
+                _artifact_namespace_count(isolated_database_env)
+            )
+            asyncio.run(_truncate_v2_artifact_namespace(isolated_database_env))
+            command.downgrade(config, "0023_service_actor_identity")
+        finally:
+            asyncio.run(_truncate_v2_artifact_namespace(isolated_database_env))
+            command.downgrade(config, "base")
+
+    assert refused_revision == "0025_artifact_store_v2"
+    assert refused_namespace_count == 1
+    assert "artifact_replicas.provider_object_ref" in refused_columns
+
+
+def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Serialize the clean-cut emptiness check against every v1 writer."""
+    config = _alembic_config()
+    inserted = threading.Event()
+    release_insert = threading.Event()
+    upgrade_started = threading.Event()
+
+    def guarded_upgrade() -> None:
+        upgrade_started.set()
+        command.upgrade(config, "0025_artifact_store_v2")
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0023_service_actor_identity")
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                insert_future = pool.submit(
+                    asyncio.run,
+                    _insert_v1_artifact_content_until_released(
+                        isolated_database_env,
+                        inserted,
+                        release_insert,
+                    ),
+                )
+                assert inserted.wait(timeout=5)
+                upgrade_future = pool.submit(guarded_upgrade)
+                assert upgrade_started.wait(timeout=5)
+                time.sleep(0.2)
+                assert upgrade_future.done() is False
+                release_insert.set()
+                insert_future.result(timeout=5)
+                with pytest.raises(
+                    RuntimeError,
+                    match="artifact storage clean cut requires empty pre-production tables",
+                ):
+                    upgrade_future.result(timeout=5)
+
+            refused = asyncio.run(_artifact_v2_refusal_state(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.upgrade(config, "0025_artifact_store_v2")
+        finally:
+            release_insert.set()
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "base")
+
+    assert refused == {
+        "revision": "0023_service_actor_identity",
+        "namespace_table_exists": False,
+        "v1_content_count": 1,
+    }
 
 
 def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
@@ -2942,6 +3112,114 @@ async def _artifact_table_counts(database_url: str) -> dict[str, int]:
                 count = await connection.scalar(text(f"select count(*) from {table}"))
                 counts[table] = int(count or 0)
             return counts
+    finally:
+        await engine.dispose()
+
+
+async def _seed_artifact_content(database_url: str) -> None:
+    """Insert one content fact that a clean-cut migration must refuse."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_contents "
+                    "(id, sha256, byte_count, media_type, normalized_display_name) "
+                    "values (:id, :sha256, 1, 'application/octet-stream', 'legacy.bin')"
+                ),
+                {"id": str(uuid4()), "sha256": "sha256:" + "1" * 64},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _seed_v2_artifact_namespace(database_url: str) -> None:
+    """Insert the v2-only namespace fact that downgrade must preserve."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_storage_namespaces "
+                    "(id, backend, adapter, provider_profile, namespace_descriptor, "
+                    "namespace_fingerprint) values "
+                    "('primary', 'local', 'local', 'local-v2', '{}'::json, :fingerprint)"
+                ),
+                {"fingerprint": "sha256:" + "3" * 64},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _artifact_namespace_count(database_url: str) -> int:
+    """Return the current v2 deployment-namespace fact count."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            count = await connection.scalar(
+                text("select count(*) from artifact_storage_namespaces")
+            )
+            return int(count or 0)
+    finally:
+        await engine.dispose()
+
+
+async def _truncate_v2_artifact_namespace(database_url: str) -> None:
+    """Clear the v2 namespace when its table exists during test cleanup."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            exists = await connection.scalar(
+                text("select to_regclass('public.artifact_storage_namespaces') is not null")
+            )
+            if exists:
+                await connection.execute(
+                    text("truncate table artifact_storage_namespaces cascade")
+                )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_v1_artifact_content_until_released(
+    database_url: str,
+    inserted: threading.Event,
+    release: threading.Event,
+) -> None:
+    """Hold one uncommitted v1 writer while the clean-cut upgrade requests locks."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_contents "
+                    "(id, sha256, byte_count, media_type, normalized_display_name) "
+                    "values (:id, :sha256, 1, 'application/octet-stream', 'raced.bin')"
+                ),
+                {"id": str(uuid4()), "sha256": "sha256:" + "2" * 64},
+            )
+            inserted.set()
+            assert await asyncio.to_thread(release.wait, 5)
+    finally:
+        await engine.dispose()
+
+
+async def _artifact_v2_refusal_state(database_url: str) -> dict[str, object]:
+    """Return transactional proof that refusal changed no v1 schema or data."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            revision = await connection.scalar(text("select version_num from alembic_version"))
+            namespace_table = await connection.scalar(
+                text("select to_regclass('public.artifact_storage_namespaces') is not null")
+            )
+            content_count = await connection.scalar(
+                text("select count(*) from artifact_contents")
+            )
+            return {
+                "revision": revision,
+                "namespace_table_exists": namespace_table,
+                "v1_content_count": content_count,
+            }
     finally:
         await engine.dispose()
 
