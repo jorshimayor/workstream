@@ -10,6 +10,10 @@
   `../chunks/WS-CON-001-02A-shared-outbox-persistence.md`.
 - The user-owned deleted reference PDF is outside scope and must remain
   unstaged and untouched.
+- Before final implementation evidence, trusted `main` advanced again to
+  `0ffdabf` through AUTH-09C PR #146. Its administrative actor/profile reads
+  activate only existing AUTH-owned identifiers, add no migration or CON
+  action, and leave this reviewed implementation contract unchanged.
 
 ## Proposed implementation
 

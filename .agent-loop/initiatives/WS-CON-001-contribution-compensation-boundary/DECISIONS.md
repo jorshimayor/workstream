@@ -221,14 +221,17 @@ contribution type, branch, action, readiness check, or initiative dependency.
 
 ## D16 - AUTH Planning And Provisioning Do Not Activate CON
 
-**Status:** accepted by merged AUTH PR #140 and AUTH-09B PR #143 on 2026-07-17.
+**Status:** accepted by merged AUTH PR #140, AUTH-09B PR #143, and AUTH-09C PR
+#146 through 2026-07-18.
 
-Trusted main `053242b` after AUTH-09B has 74 PermissionIds, 65 ActionIds, ten
-active actions, and 55 planned actions, with no registered CON or task-claim
+Trusted main `0ffdabf` after AUTH-09C has 74 PermissionIds, 65 ActionIds, 12
+active actions, and 53 planned actions, with no registered CON or task-claim
 ActionId. AUTH-09B activates only `actor.service.provision`; its controlled
 human-administrator route can create the ActorProfile/ActorIdentityLink for an
 already-approved closed ServiceIdentity but grants no service execution,
-runtime admission, role, grant, or database action assignment. PR #140 supplies
+runtime admission, role, grant, or database action assignment. AUTH-09C
+activates only administrative `actor.profile.read` and
+`actor.identity_link.read`. PR #140 supplies
 the exact prepared protocol, complete ART/REV custody maps, and feature-manifest
 activation rule; those runtime implementations remain upstream work.
 

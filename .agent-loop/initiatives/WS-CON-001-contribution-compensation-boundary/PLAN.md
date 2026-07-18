@@ -2,9 +2,10 @@
 
 ## Proposed approach
 
-Adopt merged REV PR #128 plus trusted main `053242b`, including AUTH-09A,
-AUTH-09B PR #143, AUTH PR #140, and the underlying WS-XINT PR #139 boundary
-before runtime work, then deliver WS-CON through hidden, reviewable chunks. The
+Adopt merged REV PR #128 plus trusted main `0ffdabf`, including AUTH-09C PR
+#146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and the underlying
+WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
+hidden, reviewable chunks. The
 core path is PostgreSQL-local and has no ART dependency:
 
 ```text
@@ -161,12 +162,14 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `053242b`, merging AUTH-09B PR #143 after REV PR #128,
-AUTH-09A, AUTH PR #140, and WS-XINT PR #139. Runtime catalogue counts are 74
-PermissionIds, 65 ActionIds, ten active actions, and 55 planned actions. No
-WS-CON or task-claim ActionId is registered. AUTH-09B activates only the
-controlled human `actor.service.provision` operation and grants no service
-execution or runtime admission. PR #140 adds reviewed AUTH
+Trusted `main` is `0ffdabf`, merging AUTH-09C PR #146 after ART PR #141,
+AUTH-09B PR #143, REV PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
+Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 12 active actions,
+and 53 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
+activates only the controlled human `actor.service.provision` operation;
+AUTH-09C activates only administrative `actor.profile.read` and
+`actor.identity_link.read`. Neither grants service execution or runtime
+admission. PR #140 adds reviewed AUTH
 custody/PREP/activation contracts only; the custody transfers and prepared
 protocol remain proposed runtime work.
 

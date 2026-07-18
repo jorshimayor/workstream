@@ -10,13 +10,15 @@
 
 ## Trusted baseline
 
-- `origin/main` at `053242b90d927ace3fab92eeca72da27a61cecec`, merging
-  AUTH-09B PR #143 after reviewed REV PR #128, AUTH-09A, AUTH PR #140, and
-  WS-XINT PR #139.
+- `origin/main` at `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`, merging
+  AUTH-09C PR #146 after ART PR #141, AUTH-09B PR #143, reviewed REV PR #128,
+  AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
 - PR #128 remains planning authority, not Review runtime implementation.
-- Runtime AUTH is 74 PermissionIds, 65 ActionIds, ten active, 55 planned.
-  AUTH-09B activates only `actor.service.provision`; no CON or task-claim
-  ActionId exists, and provisioning grants no service runtime authority.
+- Runtime AUTH is 74 PermissionIds, 65 ActionIds, 12 active, 53 planned.
+  AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
+  `actor.profile.read` and `actor.identity_link.read`. No CON or task-claim
+  ActionId exists, and these administrative operations grant no service
+  runtime authority.
 - PR #140 remains the source for AUTH activation-custody, prepared-protocol,
   revised chunk,
   operations, and verification contracts. It changes no runtime CON behavior,

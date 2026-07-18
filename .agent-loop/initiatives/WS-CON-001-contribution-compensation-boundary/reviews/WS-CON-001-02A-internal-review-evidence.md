@@ -8,7 +8,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
+Trusted main SHA: `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`
 
 The implementation is limited to one linear PostgreSQL migration after
 ART-owned revision 0025, the generic outbox persistence/append module, shared

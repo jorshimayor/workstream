@@ -10,8 +10,9 @@ points ledger, or reputation scoring.
 
 The supplied WS-CON reference pair is input to reconcile, not authority to
 accept blindly. The active contract follows trusted repository decisions and
-current main `053242b`, including merged AUTH-09B PR #143, REV PR #128, AUTH PR
-#140, and the underlying WS-XINT-001 boundary from PR #139.
+current main `0ffdabf`, including merged AUTH-09C PR #146, ART PR #141,
+AUTH-09B PR #143, REV PR #128, AUTH PR #140, and the underlying WS-XINT-001
+boundary from PR #139.
 
 ## Success state
 

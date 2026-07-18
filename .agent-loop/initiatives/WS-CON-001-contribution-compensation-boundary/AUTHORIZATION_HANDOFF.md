@@ -2,11 +2,13 @@
 
 ## Current baseline
 
-Trusted `main` is `053242b` from merged AUTH-09B PR #143, layered on merged REV
-PR #128, AUTH-09A/AUTH PR #140, and the earlier WS-XINT PR #139 boundary. The
-runtime catalogue contains 74 PermissionIds and 65 ActionIds: ten active and 55
-planned. AUTH-09B activates only `actor.service.provision`; no WS-CON-specific
-or task-claim ActionId below is registered. PR #140 still defines the
+Trusted `main` is `0ffdabf` from merged AUTH-09C PR #146, layered on ART PR
+#141, AUTH-09B PR #143, merged REV PR #128, AUTH-09A/AUTH PR #140, and the
+earlier WS-XINT PR #139 boundary. The runtime catalogue contains 74
+PermissionIds and 65 ActionIds: 12 active and 53 planned. AUTH-09B activates
+only `actor.service.provision`; AUTH-09C activates only `actor.profile.read`
+and `actor.identity_link.read`. No WS-CON-specific or task-claim ActionId below
+is registered. PR #140 still defines the
 prepared/custody plan; it does not implement AUTH-PREP, transfer ART/REV custody,
 register a CON action, or activate a CON feature action.
 

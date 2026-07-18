@@ -2,9 +2,9 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `e118e33`, including merged CON-01 PR #144,
-  AUTH-09B PR #143, REV PR #128, AUTH-09A, AUTH PR #140, and the earlier
-  WS-XINT PR #139 boundary;
+- trusted `origin/main` refreshed to `0ffdabf`, including merged AUTH-09C PR
+  #146, ART PR #141, CON-01 PR #144, AUTH-09B PR #143, REV PR #128, AUTH-09A,
+  AUTH PR #140, and the earlier WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -30,9 +30,10 @@
 - No FinalAcceptance runtime exists yet. Merged REV PR #128 is reviewed planning
   authority and defines the exact schema/transaction, but CON-03C still waits
   for the REV-04 runtime target.
-- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Ten actions
-  are active and 55 are planned. AUTH-09B activates only
-  `actor.service.provision`; no WS-CON or task-claim ActionId is registered.
+- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Twelve
+  actions are active and 53 are planned. AUTH-09B activates only
+  `actor.service.provision`; AUTH-09C activates only `actor.profile.read` and
+  `actor.identity_link.read`. No WS-CON or task-claim ActionId is registered.
 - Current AUTH supports actor-self, AdminRoleGrant evaluation, and controlled
   human-administrator provisioning of an approved fixed service
   ActorProfile/ActorIdentityLink. Independent ProjectRoleGrant runtime,
@@ -49,7 +50,7 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `a10d901` now ends at ART-owned
+- Trusted `main` at `0ffdabf` still ends its migration chain at ART-owned
   `0025_artifact_store_v2`; CON-02A owns linear revision
   `0026_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
@@ -80,6 +81,9 @@
   executor but no shared outbox module, outbox route, dispatcher registry,
   broker publication seam, or outbox permission. CON-02A therefore remains
   feature-neutral and authorization-neutral and does not call ART.
+- AUTH-09C PR #146 adds serialized administrative actor/profile reads and
+  activates their already-canonical action/permission pairs. It adds no
+  migration, CON/outbox identifier, service admission, or dispatcher seam.
 
 ## Canonical merged changes affecting CON
 

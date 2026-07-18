@@ -27,6 +27,12 @@ the controlled `actor.service.provision` route. Historical review artifacts
 retain their exact earlier SHAs and observations. No AUTH runtime file is
 changed by this CON reconciliation.
 
+Before CON-02A review, trusted main advanced through ART PR #141 and AUTH-09C
+PR #146 to `0ffdabf`. The live catalogue is now
+74-permission/65-action/12-active/53-planned because AUTH-09C activates only
+`actor.profile.read` and `actor.identity_link.read`; it adds no CON/outbox
+identifier or migration. Historical CON-01 evidence above remains exact.
+
 ## Inspected and already aligned
 
 The following active documents already describe ContributionPolicy,
