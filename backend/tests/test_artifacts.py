@@ -14,7 +14,7 @@ from alembic.config import Config
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
 from app.core.config import Settings
@@ -245,9 +245,7 @@ async def test_put_acknowledgement_stops_at_pending_verification(
     engine = create_async_engine(artifact_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     settings = _settings(tmp_path)
-    bootstrap = LocalStorageBootstrap(
-        LocalStorageAdapter(root=tmp_path / "store", buffer_bytes=2)
-    )
+    bootstrap = LocalStorageBootstrap(LocalStorageAdapter(root=tmp_path / "store", buffer_bytes=2))
     namespace = artifact_storage_namespace_spec(settings, bootstrap)
     store = bootstrap.initialize_after_namespace_claim(local_namespace_claim(bootstrap))
     try:
@@ -259,9 +257,7 @@ async def test_put_acknowledgement_stops_at_pending_verification(
                 ).put_reserved_item(item_id, source)
         async with _minted_source(tmp_path / "scratch-replay", content) as replay_source:
             async with factory() as session:
-                replay_item_id = await _seed_reserved_item(
-                    session, replay_source.commitment
-                )
+                replay_item_id = await _seed_reserved_item(session, replay_source.commitment)
                 replay = await ArtifactStorageOrchestrator(
                     session, store, namespace
                 ).put_reserved_item(replay_item_id, replay_source)
@@ -275,9 +271,7 @@ async def test_put_acknowledgement_stops_at_pending_verification(
             replay_receipt = next(
                 value for value in receipts if value.upload_item_id == replay_item_id
             )
-            namespace_row = (
-                await session.execute(select(ArtifactStorageNamespace))
-            ).scalar_one()
+            namespace_row = (await session.execute(select(ArtifactStorageNamespace))).scalar_one()
             assert item is not None
             assert item.state == "stored_pending_verification"
             assert item.provider_object_ref == result.provider_object_ref
@@ -295,7 +289,7 @@ async def test_put_acknowledgement_stops_at_pending_verification(
                 result.provider_object_ref,
                 exists=True,
                 byte_count=len(content),
-                    media_type=None,
+                media_type=None,
             )
     finally:
         store.close()
@@ -321,9 +315,7 @@ class _UnavailableStore:
         self.put_calls += 1
         raise ArtifactStoreUnavailableError()
 
-    async def observe_put_result(
-        self, _commitment: ArtifactCommitment
-    ) -> ArtifactPutObservation:
+    async def observe_put_result(self, _commitment: ArtifactCommitment) -> ArtifactPutObservation:
         raise NotImplementedError
 
     def open(
@@ -369,6 +361,22 @@ class _AcknowledgingStore(_UnavailableStore):
             f"sha256/{digest_hex[:2]}/{digest_hex[2:]}",
             replayed=False,
         )
+
+
+class _NamespaceObservingAcknowledgingStore(_AcknowledgingStore):
+    """Assert the committed namespace exists before the provider is invoked."""
+
+    def __init__(self, factory: async_sessionmaker[AsyncSession]) -> None:
+        super().__init__()
+        self._factory = factory
+        self.observed_namespace_fingerprint: str | None = None
+
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        async with self._factory() as session:
+            namespace = await session.scalar(select(ArtifactStorageNamespace))
+        assert namespace is not None
+        self.observed_namespace_fingerprint = namespace.namespace_fingerprint
+        return await super().put(source)
 
 
 class _ConcurrentAcknowledgingStore(_AcknowledgingStore):
@@ -445,16 +453,18 @@ async def test_concurrent_same_object_finalization_reuses_one_replica(
 
         async with factory() as session:
             items = (
-                await session.execute(
-                    select(ArtifactUploadItem).where(
-                        ArtifactUploadItem.id.in_((first_item_id, second_item_id))
+                (
+                    await session.execute(
+                        select(ArtifactUploadItem).where(
+                            ArtifactUploadItem.id.in_((first_item_id, second_item_id))
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             replicas = (await session.execute(select(ArtifactReplica))).scalars().all()
-            receipts = (
-                await session.execute(select(ArtifactOperationReceipt))
-            ).scalars().all()
+            receipts = (await session.execute(select(ArtifactOperationReceipt))).scalars().all()
 
         assert {item.state for item in items} == {"stored_pending_verification"}
         assert len(items) == 2
@@ -503,14 +513,16 @@ async def test_independent_items_in_one_session_finalize_without_shared_cas_repl
 
         async with factory() as session:
             items = (
-                await session.execute(
-                    select(ArtifactUploadItem).where(ArtifactUploadItem.id.in_(item_ids))
+                (
+                    await session.execute(
+                        select(ArtifactUploadItem).where(ArtifactUploadItem.id.in_(item_ids))
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             upload_session = await session.get(ArtifactUploadSession, items[0].session_id)
-            receipts = (
-                await session.execute(select(ArtifactOperationReceipt))
-            ).scalars().all()
+            receipts = (await session.execute(select(ArtifactOperationReceipt))).scalars().all()
 
         assert {item.state for item in items} == {"stored_pending_verification"}
         assert upload_session is not None
@@ -837,9 +849,7 @@ async def test_namespace_mismatch_fails_before_provider_io(
     )
     try:
         async with factory() as session:
-            await ArtifactStorageOrchestrator(
-                session, store, canonical
-            ).ensure_storage_namespace()
+            await ArtifactStorageOrchestrator(session, store, canonical).ensure_storage_namespace()
         async with _minted_source(tmp_path / "scratch", b"blocked") as source:
             async with factory() as session:
                 item_id = await _seed_reserved_item(session, source.commitment)
@@ -859,8 +869,9 @@ async def test_concurrent_different_first_namespace_writers_have_one_winner(
 ) -> None:
     engine = create_async_engine(artifact_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
-    store = _UnavailableStore()
-    first = artifact_storage_namespace_spec(_settings(tmp_path), store)
+    first_store = _NamespaceObservingAcknowledgingStore(factory)
+    second_store = _NamespaceObservingAcknowledgingStore(factory)
+    first = artifact_storage_namespace_spec(_settings(tmp_path), first_store)
     second_descriptor = dict(first.namespace_descriptor)
     second_descriptor["private_root_identity"] = "sha256:" + "a" * 64
     second = ArtifactStorageNamespaceSpec(
@@ -871,21 +882,49 @@ async def test_concurrent_different_first_namespace_writers_have_one_winner(
         namespace_fingerprint=canonical_json_hash(second_descriptor),
     )
 
-    async def claim(spec: ArtifactStorageNamespaceSpec) -> object:
+    async def publish(
+        item_id: str,
+        source: CommittedArtifactSource,
+        store: _NamespaceObservingAcknowledgingStore,
+        spec: ArtifactStorageNamespaceSpec,
+    ) -> object:
         async with factory() as session:
             try:
-                return await ArtifactStorageOrchestrator(
-                    session, store, spec
-                ).ensure_storage_namespace()
+                return await ArtifactStorageOrchestrator(session, store, spec).put_reserved_item(
+                    item_id, source
+                )
             except ArtifactStorageNamespaceError as exc:
                 return exc
 
     try:
-        outcomes = await asyncio.gather(claim(first), claim(second))
-        assert sum(isinstance(value, ArtifactStorageNamespace) for value in outcomes) == 1
+        async with _minted_source(tmp_path / "scratch-first", b"first") as first_source:
+            async with _minted_source(tmp_path / "scratch-second", b"second") as second_source:
+                async with factory() as session:
+                    first_item_id = await _seed_reserved_item(session, first_source.commitment)
+                    second_item_id = await _seed_reserved_item(session, second_source.commitment)
+                outcomes = await asyncio.gather(
+                    publish(first_item_id, first_source, first_store, first),
+                    publish(second_item_id, second_source, second_store, second),
+                )
+
+        assert sum(isinstance(value, ArtifactPutResult) for value in outcomes) == 1
         assert sum(isinstance(value, ArtifactStorageNamespaceError) for value in outcomes) == 1
+        winning_index = next(
+            index for index, value in enumerate(outcomes) if isinstance(value, ArtifactPutResult)
+        )
+        stores = (first_store, second_store)
+        specs = (first, second)
+        assert stores[winning_index].put_calls == 1
+        assert (
+            stores[winning_index].observed_namespace_fingerprint
+            == specs[winning_index].namespace_fingerprint
+        )
+        assert stores[1 - winning_index].put_calls == 0
+        assert stores[1 - winning_index].observed_namespace_fingerprint is None
         async with factory() as session:
-            assert await session.scalar(select(ArtifactStorageNamespace)) is not None
+            namespace = await session.scalar(select(ArtifactStorageNamespace))
+            assert namespace is not None
+            assert namespace.namespace_fingerprint == specs[winning_index].namespace_fingerprint
     finally:
         await engine.dispose()
 
