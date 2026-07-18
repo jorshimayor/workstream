@@ -1,5 +1,20 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D Preimplementation Review Failed And Split
+
+- Basis: trusted `main` at `0ffdabf` after PR #146 and signed memory
+  `eeb3dc2`.
+- Result: the combined lifecycle contract failed required L1 review before any
+  runtime edit. It mixed profile and identity-link mutations, omitted required
+  forward migration ownership, conflicted with canonical reserve-first and
+  singleton/caller-first ordering, and did not close reactivation evidence,
+  provenance, conflict, response, or final-admin concurrency semantics.
+- Repair: split the parent into active contract-review child
+  `WS-AUTH-001-09D-A` and inactive child `WS-AUTH-001-09D-B`. The first child
+  owns migration `0026`, lifecycle evidence repair, and only profile suspend,
+  reactivate, and terminal deactivate. Runtime implementation remains gated on
+  exact repaired-contract review.
+
 ## 2026-07-18 - WS-AUTH-001-09C External Repair Evidence Passed
 
 PR #146's original Backend, Agent Gates, and CodeRabbit checks passed.

@@ -728,17 +728,20 @@ The implementation order is fixed by the WS-AUTH-001 chunk map:
     provisioning with an unverified service link until AUTH-09E verifies the
     service token;
 11. `WS-AUTH-001-09C`: actor and identity-link administrative reads;
-12. `WS-AUTH-001-09D`: actor and identity-link lifecycle mutations;
-13. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
+12. `WS-AUTH-001-09D-A`: lifecycle evidence repair and actor-profile suspend,
+    reactivate, and terminal deactivate;
+13. `WS-AUTH-001-09D-B`: identity-link revoke/reactivate and mixed lifecycle
+    race closure;
+14. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
     evaluation or feature action activation;
-14. `WS-AUTH-001-ART-CUSTODY` and `WS-AUTH-001-REV-CUSTODY`:
+15. `WS-AUTH-001-ART-CUSTODY` and `WS-AUTH-001-REV-CUSTODY`:
     availability-neutral transfer to exact AUTH activation owners;
-15. `WS-AUTH-001-PREP`: prepared mutation authorization protocol;
-16. `WS-AUTH-001-10`: independent project contributor grants;
-17. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
+16. `WS-AUTH-001-PREP`: prepared mutation authorization protocol;
+17. `WS-AUTH-001-10`: independent project contributor grants;
+18. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
     cutovers;
-18. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
-19. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
+19. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
+20. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
     proof.
 
 No implementation may add a compatibility alias, fallback authority source,
