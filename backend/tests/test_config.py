@@ -891,6 +891,37 @@ def test_unexpected_validation_errors_do_not_retain_minio_secrets(
 
 
 @pytest.mark.parametrize(
+    ("field_name", "field_value"),
+    [
+        ("artifact_s3_access_key_id", "nested-json-secret"),
+        ("artifact_s3_secret_access_key", "nested-json-secret"),
+        ("artifact_s3_session_token", "nested-json-secret"),
+        (
+            "artifact_s3_endpoint_url",
+            "http://user:nested-json-secret@localhost:9000",
+        ),
+    ],
+)
+def test_invalid_json_shapes_do_not_retain_minio_secrets(
+    field_name: str,
+    field_value: str,
+) -> None:
+    """Rejected non-object JSON must not survive in Workstream error frames."""
+    secret = "nested-json-secret"
+    payload = json.dumps([{field_name: field_value}])
+
+    with pytest.raises(ValueError, match="^invalid settings JSON$") as caught:
+        Settings.model_validate_json(payload)
+
+    assert secret not in f"{caught.value!s} {caught.value!r}"
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+
+@pytest.mark.parametrize(
     "method_name",
     ["model_validate", "model_validate_json", "model_validate_strings"],
 )

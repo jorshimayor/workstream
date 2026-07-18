@@ -251,6 +251,10 @@ class Settings(BaseSettings):
         if malformed:
             json_data = b""
             raise ValueError("invalid settings JSON")
+        if not isinstance(parsed, Mapping):
+            parsed = None
+            json_data = b""
+            raise ValueError("invalid settings JSON")
         if isinstance(parsed, Mapping) and (
             "api_rate_limit_key_secret" in parsed
             or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(parsed)
@@ -261,7 +265,12 @@ class Settings(BaseSettings):
                 parsed = None
                 json_data = b""
                 raise
-        return super().model_validate_json(json_data, **kwargs)
+        try:
+            return super().model_validate_json(json_data, **kwargs)
+        except Exception:
+            parsed = None
+            json_data = b""
+            raise
 
     @classmethod
     def model_validate_strings(cls, obj: object, **kwargs: object) -> Self:
