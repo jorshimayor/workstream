@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `ca6b46b02026af5aef800b3de62c04f7e42b86cf`
+Reviewed code SHA: `5af0adcec3cc184c4455292ec2f04e7505a90857`
 
 Trusted main SHA: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
-Reviewed at: `2026-07-18T05:00:22Z`
+Reviewed at: `2026-07-18T05:54:45Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -16,15 +16,15 @@ Valid findings addressed: yes
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| Senior engineering | PASS | None | External repairs are maintainable, scoped, and consistent with canonical lifecycle ownership |
-| QA/test | PASS | None | All CodeRabbit repairs, edge cases, structural regressions, and 87 agent gates verified |
+| Senior engineering | PASS | None | Status-aware scope proof is maintainable, deterministic, and bounded to Chunk 01 |
+| QA/test | PASS | None | Exact 71-entry scope match, four adversarial probes, structural regressions, and 87 agent gates verified |
 | Security/auth | PASS | None | AUTH PREP order, grants, lease privacy, exact admission, and unavailable surfaces verified |
 | Product/ops | PASS | None | Decision effects, checker versus human revision, no synthetic reject, and contribution lineage verified |
-| Architecture | PASS | None | REV/AUTH/ART/CON ownership, FinalAcceptance ordering, ART v2 capabilities, and deferred boundaries verified |
-| Docs | PASS | None | Exact CheckerRun guards, TaskAssignment fields, templates, renderer, and storage terminology verified |
-| Reuse/dedup | PASS | None | Existing canonical records, capability ports, renderer, and scanner were reused without parallel abstractions |
+| Architecture | PASS | None | REV/AUTH/ART/CON ownership and current-main versus archival-base separation remain correct |
+| Docs | PASS | None | Status-manifest semantics and chunk-specific non-global-CI boundary are exact and unambiguous |
+| Reuse/dedup | PASS | None | Git status output and existing gates are reused without a parallel global scope mechanism |
 | Test delta | PASS | None | Base 80 tests and all assertions retained; seven REV tests add coverage |
-| CI integrity | PASS | None | Ruff, mandatory gates, workflows, coverage thresholds, and failure handling verified |
+| CI integrity | PASS | None | Exact A/M status comparison fails on additions, deletions, renames, and status drift without weakening durable CI |
 
 ## Finding Disposition
 
@@ -56,7 +56,16 @@ and retained S3/MinIO, submission/checker cutover, packet-read, and evidence
 candidate/finalize as later gates. Candidate `3572835` failed only because four
 merged ART assertions were not Ruff-formatted. Candidate `ca6b46b` contains the
 mechanical repair and passed the plan gate and all nine reviewer tracks against
-the new trusted main.
+the new trusted main. CodeRabbit's next review correctly required the final
+PR-scope listing to fail closed. Candidate `7742730` added a path-only
+allowlist and documented why trusted current main, rather than the planning
+base, defines current PR scope. Internal security/docs/CI review then found the
+path-only form could not distinguish an approved modification from deletion of
+that same file. Candidate `7785b832` replaces it with an exact
+`--name-status --no-renames` A/M manifest. All 71 statuses match, while
+adversarial status-change, removal, rename-as-D+A, and addition probes fail.
+Candidate `5af0adc` adds only the required accurate review-log entry, and a
+final exact-SHA review passed the plan gate and all nine tracks.
 
 ## Deterministic Evidence
 
@@ -77,6 +86,9 @@ the new trusted main.
 - Both local roadmap exports remain absent and no `sheets/` file is tracked.
 - Exactly one merge-intent file exists for this chunk and `git diff --check`
   passed.
+- The committed 71-entry reviewed-scope manifest exactly matches
+  `git diff --name-status --no-renames` against trusted current main. Simulated
+  status change, removal, rename, and addition each fail the comparison.
 
 ## Residual Risks
 

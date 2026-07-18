@@ -37,6 +37,8 @@ not v0.1 behavior.
   preserving later S3, submission/checker, packet-read, and evidence gates.
 - Addressed external lifecycle, checker-admission, ART terminology, rendering,
   template, and revision-policy findings without expanding runtime scope.
+- Added an exact 71-entry A/M scope manifest so additions, deletions, renames,
+  and status drift fail the final Chunk 01 review comparison.
 
 ## Why It Changed
 
@@ -63,7 +65,8 @@ were rejected because they violate approved ownership or lifecycle boundaries.
 
 This is an L1 specification/architecture chunk. It changes no backend,
 migration, frontend, AUTH, ART, or CON runtime implementation. All changed paths
-are listed by the chunk contract; exactly one merge intent is present.
+and their exact added/modified statuses are listed by the chunk contract's
+reviewed-scope manifest; exactly one merge intent is present.
 
 ## Product Behavior
 
@@ -81,9 +84,11 @@ roadmap exports remain absent.
 
 ## Tests/Checks Run
 
-`87 agent gate tests passed`; Ruff format/lint, four stale-contract families,
-Markdown links, archive checksums/base diffs, PDF attributes, pinned double
-render, spreadsheet absence, merge-intent count, and `git diff --check` passed.
+`87 agent gate tests passed`; exact status-scope comparison and adversarial
+status/removal/rename/addition probes, Ruff format/lint, four stale-contract
+families, Markdown links, archive checksums/base diffs, PDF attributes, pinned
+double render, spreadsheet absence, merge-intent count, and `git diff --check`
+passed.
 
 ## Test Delta
 
@@ -99,7 +104,7 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 The plan gate and all nine required reviewer tracks passed exact SHA
-`ca6b46b02026af5aef800b3de62c04f7e42b86cf` against trusted main
+`5af0adcec3cc184c4455292ec2f04e7505a90857` against trusted main
 `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
@@ -115,8 +120,11 @@ preconditions, and explicit false revision-limit configuration. The resulting
 scanner also rejects quoted and unquoted truthy variants. The prior published
 backend and Agent Gates runs passed. ART-02A3 then advanced main and was
 reconciled through a fresh exact-SHA internal loop; replacement checks on the
-new head remain external gates. External checks supplement internal review and
-do not replace it.
+new head remain external gates. CodeRabbit's later fail-closed scope comment
+was addressed with an exact status manifest and an explicit current-main versus
+archival-base rationale. Internal review caught and repaired the first
+path-only version before publication. External checks supplement internal
+review and do not replace it.
 
 ## Remaining Risks
 

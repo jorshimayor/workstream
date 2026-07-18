@@ -4,7 +4,7 @@
 
 - PR: `#145`
 - Initial published head: `9ad0420e4c8f3ce0933a85fc75f133a340f91fcd`
-- Reviewed repair candidate: `ca6b46b02026af5aef800b3de62c04f7e42b86cf`
+- Reviewed repair candidate: `5af0adcec3cc184c4455292ec2f04e7505a90857`
 - Trusted base: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
 ## Comments Addressed
@@ -31,6 +31,15 @@
   glossary overlap by preserving both exact byte-store operations and narrow
   typed product capabilities, and corrected Ruff formatting in four merged ART
   gate assertions. Fresh exact-SHA internal review passed.
+- CodeRabbit's later scope-verification comment was valid in requiring a
+  fail-closed comparison. The repair intentionally retains trusted current main
+  as the PR-scope base, documents why the original planning base is reserved
+  for archival immutability, and compares exact added/modified statuses against
+  a committed 71-entry manifest with rename detection disabled.
+- Internal repair review then found that the first path-only manifest could not
+  distinguish an approved modification from deleting the same path. The final
+  status-aware manifest closes that gap; adversarial status-change, removal,
+  rename-as-delete-plus-add, and unreviewed-addition probes all fail.
 
 ## Comments Deferred
 
@@ -51,11 +60,13 @@
 - Stale artifact, authorization, review, and Workstream wording scanners.
 - Markdown links, reference checksums, pinned PlantUML rendering, table-column
   checks, scope checks, and `git diff --check`.
+- Exact `--name-status --no-renames` manifest comparison plus adversarial
+  status-change, removal, rename, and addition probes.
 - Exact-SHA plan gate and all nine required internal reviewer tracks.
 
 ## Remaining Risks
 
-- Replacement GitHub checks and any CodeRabbit follow-up on the repaired PR
-  head remain required after push.
+- Replacement GitHub checks and any CodeRabbit follow-up on the final repaired
+  PR head remain required after push.
 - Runtime concurrency, rollback, and AUTH/ART/CON integration remain owned by
   later implementation chunks.
