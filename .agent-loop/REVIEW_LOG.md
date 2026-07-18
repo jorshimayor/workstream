@@ -1,6 +1,6 @@
 # Review Log
 
-## 2026-07-18 - WS-AUTH-001-09D-A External Repair In Review
+## 2026-07-18 - WS-AUTH-001-09D-A External Repair Review Passed
 
 - PR #148 CodeRabbit correctly found an API/database normalization mismatch:
   one-argument PostgreSQL `btrim` allowed tab and newline padding rejected or
@@ -9,9 +9,9 @@
   tables, migration `0026` dirty-row refusal, and installed constraints.
   Direct-write and previous-head migration behavior tests pass.
 - CodeRabbit and GitHub checks also correctly rejected stale internal-review
-  evidence. All required tracks must rerun against the repaired exact head,
-  after which only canonical evidence rows and the exact reviewed SHA will be
-  recorded. Replacement external checks and human approval remain required.
+  evidence. All required tracks pass the repaired exact head `efc4e6c`; the
+  evidence now requires canonical rows and that exact reviewed SHA.
+  Replacement external checks and human approval remain required.
 
 ## 2026-07-18 - WS-AUTH-001-09D-A Exact-Head Internal Review Passed
 

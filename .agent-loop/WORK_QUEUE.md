@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | PR #148 external normalization/evidence repair passes focused proof; exact-head internal rereview pending |
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | PR #148 external repair and exact-head review pass at `efc4e6c`; canonical evidence refresh pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
