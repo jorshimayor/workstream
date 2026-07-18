@@ -34,8 +34,9 @@
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
 - Current gate: AUTH-09D-A exact-head internal review passed at `cc7e6cc` after
-  all valid findings were repaired; publish one ready PR. No service caller
-  becomes executable before AUTH-09E.
+  all valid findings were repaired; ready PR #148 is open for external checks
+  and explicit human approval. No service caller becomes executable before
+  AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

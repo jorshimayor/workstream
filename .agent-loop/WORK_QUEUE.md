@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Exact-head internal review passed at `cc7e6cc`; ready PR publication pending |
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Exact-head internal review passed at `cc7e6cc`; ready PR #148 open for external checks and human approval |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

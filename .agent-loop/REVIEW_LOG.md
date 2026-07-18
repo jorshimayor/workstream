@@ -8,8 +8,8 @@
 - All valid findings are repaired. Exact owner parity is 65 actions, 15 active,
   and 50 planned; identity-link mutations remain inactive under 09D-B.
 - Internal evidence and the PR trust bundle record the behavior, migration,
-  coverage, CI-integrity, and reviewer proof. Ready PR publication is the next
-  gate; external checks and explicit human merge approval follow.
+  coverage, CI-integrity, and reviewer proof. Ready PR #148 is open; external
+  checks and explicit human merge approval are the current gate.
 
 ## 2026-07-18 - WS-AUTH-001-09D-A Deterministic Evidence Repaired
 
