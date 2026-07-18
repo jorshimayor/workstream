@@ -94,8 +94,9 @@ threshold changed. GitHub Backend remains authoritative for the full suite.
 ## Reviewer Results
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, CI
-integrity, docs, reuse/dedup, and test delta all pass exact reviewed code SHA
-`6791381ceb9cb0c7f6ba163d4525c6c770c02ca6` after valid findings were repaired.
+integrity, docs, reuse/dedup, and test delta all pass the exact integrated repair
+SHA `c47d6275c84e338e30f3d911d1cfdd9f1147fd86` after valid CodeRabbit and
+internal-review findings were repaired.
 
 ## External Review
 
@@ -105,8 +106,8 @@ backend lock correlation, exact self-target and kernel assertions, both
 missing-resource rollback routes, and both project-scoped Audit Authority
 denials. Ten focused unit tests and two fresh real PostgreSQL lifecycle/race
 tests pass after integrating trusted main. Exact integrated-head internal review
-and replacement external checks remain; the repair does not change production
-behavior or weaken any test or threshold.
+passes at `c47d627`; replacement external checks remain. The repair does not
+change production behavior or weaken any test or threshold.
 
 ## Remaining Risks
 

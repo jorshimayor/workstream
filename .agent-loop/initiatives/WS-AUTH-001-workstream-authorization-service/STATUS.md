@@ -99,8 +99,8 @@ percent. Every required implementation review track passes at exact SHA
 passed. All five valid CodeRabbit proof findings are repaired at `c64bcc7`, and
 trusted `main` through PR #141 at `a10d901` is integrated. Focused unit, fresh
 real PostgreSQL, Ruff, and Agent Gates proof passes on the integrated candidate;
-exact integrated-head internal repair review remains. No service caller or
-feature action is active.
+all required exact integrated-head repair tracks pass at `c47d627`. Replacement
+external checks remain. No service caller or feature action is active.
 
 ## Active planning chunk
 
@@ -140,7 +140,7 @@ admission, or feature action.
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | Merged | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merged as `299363a`; signed memory passed. |
 | `WS-AUTH-001-09B` | Merged | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Merged as `053242b`; signed memory passed. |
-| `WS-AUTH-001-09C` | In review | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Original external checks passed; all valid CodeRabbit findings repaired; integrated exact-head review pending. |
+| `WS-AUTH-001-09C` | In review | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Original external checks passed; all valid CodeRabbit findings repaired; integrated exact-head review passed; replacement checks pending. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
@@ -164,10 +164,10 @@ AUTH-09C passed deterministic PostgreSQL behavior, concurrency, rollback,
 privacy, live HTTP, and focused 90 percent coverage proof. The original
 exact-head L1 internal and external checks passed. CodeRabbit's five valid proof
 findings are repaired, trusted `main` at `a10d901` is integrated, and focused
-integrated evidence passes. Exact integrated-head internal review, replacement
-GitHub checks, and explicit human merge approval remain. It must not add
-lifecycle mutation, service grants, dynamic assignments, token-role authority,
-service admission, or feature-action activation.
+integrated evidence passes. All required exact integrated-head internal tracks
+pass at `c47d627`; replacement GitHub checks and explicit human merge approval
+remain. It must not add lifecycle mutation, service grants, dynamic assignments,
+token-role authority, service admission, or feature-action activation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also

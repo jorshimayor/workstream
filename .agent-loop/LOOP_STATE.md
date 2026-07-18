@@ -32,9 +32,9 @@
 - Current gate: PR #146's original Backend, Agent Gates, and CodeRabbit checks
   passed. All five valid CodeRabbit proof findings are repaired at `c64bcc7`,
   trusted `main` through PR #141 is integrated, and focused unit, real
-  PostgreSQL, and Agent Gates proof passes. Exact integrated-head internal
-  repair review remains before push. No service caller becomes executable
-  before AUTH-09E.
+  PostgreSQL, and Agent Gates proof passes. All required exact integrated-head
+  internal repair tracks pass at `c47d627`; push and replacement external
+  checks remain. No service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

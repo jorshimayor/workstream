@@ -9,8 +9,8 @@ facts, both missing-resource rollback routes, and both project-scoped Audit
 Authority denials. Test-only repair `c64bcc7` closes all five. Trusted `main`
 through PR #141 at `a10d901` is integrated, including migration `0025`; 10
 focused unit tests, 2 fresh real PostgreSQL lifecycle/race tests, Ruff, and all
-Agent Gates pass. Exact integrated-head internal repair review and replacement
-external checks remain; AUTH-09D is inactive.
+Agent Gates pass. All required exact integrated-head internal repair tracks pass
+at `c47d627`; replacement external checks remain. AUTH-09D is inactive.
 
 ## 2026-07-18 - WS-AUTH-001-09C Internal Review Passed
 
