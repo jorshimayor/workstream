@@ -50,13 +50,13 @@ user explicitly starts it.
 ## Tests And Checks
 
 ```text
-428 real-service focused tests PASS
+437 real-service focused tests PASS
 S3CompatibleArtifactStore coverage 92%
 S3 validation coverage 100%
-Combined changed-subsystem coverage 92.95%
+Combined changed-subsystem coverage 92.69%
 Ruff PASS
 pip check PASS
-87 agent-gate tests PASS
+88 agent-gate tests PASS
 Stale artifact/authorization/review/Workstream wording PASS
 Markdown links PASS
 git diff --check PASS
@@ -67,7 +67,7 @@ percent repository floor, and all cumulative focused 90 percent gates.
 
 ## Internal Review
 
-Reviewed code SHA: `9cd41ab907aba323f1fbd79dac8bbe1602bcc30f`
+Reviewed code SHA: `48eeb2762f82e71129c4f42243eabe61b44933d3`
 
 All nine required reviewer tracks passed the exact integrated SHA with no
 remaining finding. Every reviewer session is closed. Reviewer IDs and the
@@ -84,7 +84,8 @@ addressed repair history are recorded in the internal review evidence.
 ## Remaining Risks
 
 - AWS is configuration-ready but intentionally unavailable until Chunk 07.
-- MinIO proves protocol behavior only for local and CI environments.
+- MinIO proves protocol behavior only for non-production local, development,
+  test, and CI environments; repository-managed instances are loopback-bound.
 - Durable admission, verification, publication, and recovery are later chunks.
 
 ## Human Review Focus

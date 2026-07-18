@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `9cd41ab907aba323f1fbd79dac8bbe1602bcc30f`
+Reviewed code SHA: `48eeb2762f82e71129c4f42243eabe61b44933d3`
 
-Reviewed at: 2026-07-18T19:49:08Z
+Reviewed at: 2026-07-18T22:22:34Z
 
-Reviewer run IDs: senior-engineering=019f7698-ca9c-75a0-9ad9-5ddb553144ee; architecture=019f7698-d670-7b02-9336-93111bfb0905; QA/test=019f7698-ea1c-7632-8c76-3b2bddc1a709; security/auth=019f76b8-a76d-7060-95a2-e3296813464e; product/ops=019f76b8-acef-7cc1-a7ba-24f9262521de; reuse/dedup=019f76b8-b3b7-7961-85d9-5dfd9cddaaec; CI-integrity=019f76be-436c-7473-92da-50ee58380fd4; test-delta=019f76be-4869-7350-a737-fa75a6123fd0; docs=019f76be-52ed-7cf1-b589-aa9dc1ddd1bb
+Reviewer run IDs: senior-engineering=019f7739-0db0-7392-ae3a-45438727badd; architecture=019f7739-003d-7bd1-9704-d4c3cbb92318; QA/test=019f7739-187d-7613-bb54-6f772673554d; security/auth=019f7741-7f1c-7780-93e1-bd40571685bd; product/ops=019f7741-8a64-7e82-9d48-ff8237bb7f4d; reuse/dedup=019f7741-9510-75c0-bdce-07c5c12b8b0a; CI-integrity=019f7748-0d50-7ea1-b15f-76d68a60fb58; test-delta=019f7748-2918-76b3-a2f1-374f14ab179e; docs=019f7748-53f2-7990-8a5e-15bf1c09fccf
 
 The reviewed base is `origin/main` at
 `99ae4c963e53f317175dcb308b9e47c93ccf19ed`, including AUTH PR #148.
@@ -41,6 +41,12 @@ this evidence and requires a new exact-head review cycle.
   90 percent gate while adding exact S3 adapter and validation gates.
 - Integrated AUTH PR #148 without editing or activating AUTH-owned runtime
   behavior.
+- Bound repository-managed MinIO to host loopback in Compose and CI and added
+  deterministic gates for both definitions.
+- Defined `local/CI MinIO` as non-production eligibility, including private
+  operator-controlled container-network development/test endpoints only.
+- Documented and enforced the exact `minio-v1` and `aws-s3-v1` namespace
+  descriptor schemas.
 
 ## Reviewer Results
 
@@ -74,6 +80,17 @@ this evidence and requires a new exact-head review cycle.
   removed stale provider-reference divergence.
 - Reconciled authored ART loop state and work queue with AUTH PR #148 while
   keeping AUTH-09D-B and every later ART chunk inactive.
+- Corrected the successor chunk heading so merge-intent validation resolves
+  `WS-ART-001-02C1` without changing explicit-start authority.
+- Consolidated duplicate mapping validators while preserving distinct Pydantic
+  entry points and clearing credentials from every ordinary exception path.
+- Rejected non-object settings JSON before Pydantic can retain secret-bearing
+  input in structured errors and cleared partial S3 secret extraction on later
+  source failures.
+- Bound repository-managed MinIO to loopback in Compose and CI and made both
+  definitions regression-protected by the 88-test agent-gate runner.
+- Clarified private non-production MinIO eligibility and added the exact closed
+  S3 namespace profile table to the canonical artifact specification.
 
 ## Commands Run
 
@@ -91,11 +108,11 @@ python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
-Results: 428 real-service focused tests passed after AUTH PR #148 integration.
+Results: 437 real-service focused tests passed after AUTH PR #148 integration.
 `S3CompatibleArtifactStore` coverage is 92 percent, S3 validation coverage is
-100 percent, and combined changed-subsystem coverage is 92.95 percent. Ruff,
+100 percent, and combined changed-subsystem coverage is 92.69 percent. Ruff,
 dependency integrity, stale contract/authorization/review/wording scans,
-Markdown links, 87 agent-gate tests, and diff checks passed.
+Markdown links, 88 agent-gate tests, Compose validation, and diff checks passed.
 
 The isolated full repository suite and 78 percent whole-app floor remain
 authoritative in GitHub Backend CI, as explicitly chosen because local execution
@@ -105,7 +122,8 @@ is prohibitively slow. The CI reviewer confirmed that exact gate is retained.
 
 - Native AWS operations remain deliberately unavailable until Chunk 07 adds the
   release-bound live proof and production composition guard.
-- MinIO is a local/CI protocol proof, not production activation evidence.
+- MinIO is non-production protocol proof, including private local/dev/test
+  container-network use; it is not production activation evidence.
 - Provider acknowledgement remains non-bindable pending later admission,
   verification, publication, and recovery chunks.
 
