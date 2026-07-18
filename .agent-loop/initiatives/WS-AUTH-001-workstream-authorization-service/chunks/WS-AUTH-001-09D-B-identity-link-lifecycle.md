@@ -1,70 +1,280 @@
 # Chunk Contract: WS-AUTH-001-09D-B - Identity-Link Lifecycle And Race Closure
 
-Initiative: `WS-AUTH-001` | Risk: L1 / P1 | Status: inactive
+Initiative: `WS-AUTH-001` | Risk: L1 / P1 | Status: preimplementation review
 
 ## Goal
 
 Activate exact identity-link revoke/reactivate behavior and close the mixed
-profile, link, and grant final-admin concurrency matrix.
+profile, link, and grant final-Access-Administrator concurrency matrix on the
+single authorization foundation established by 09D-A.
+
+## Why This Chunk Exists
+
+AUTH-09D-A made lifecycle evidence, invalidation direction, transaction order,
+and final-administrator locking truthful. Its migration intentionally
+pre-registered identity-link lifecycle provenance and denial vocabulary, while
+leaving the two link actions inactive. This child supplies only their public
+administrative behavior and the remaining cross-operation race proof.
 
 ## Start Gate
 
-AUTH-09D-A must merge, signed memory must stop, and the user must explicitly
-start this child. No implementation begins from the 09D-A branch.
+AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory
+`cf8a3e8` stopped and named this child; the user then explicitly started it.
+Implementation begins only after this exact contract passes required L1 review.
 
-## Allowed Boundary
+## Allowed Files
 
-This child may change actor/authorization/audit runtime, tests, API drill,
-authorization docs, its initiative artifacts, and its one merge intent. It may
-not add a migration, new link, replacement actor, compatibility path, service
-admission, grant mutation, or consumer lifecycle behavior.
+```text
+backend/app/modules/authorization/catalogue.py
+backend/app/modules/authorization/kernel.py
+backend/app/modules/authorization/runtime.py
+backend/app/modules/authorization/repository.py
+backend/app/modules/authorization/lifecycle_schemas.py
+backend/app/modules/authorization/lifecycle_service.py
+backend/app/modules/authorization/router.py
+backend/tests/test_authorization.py
+backend/tests/test_auth.py
+backend/tests/test_api_controls.py
+backend/tests/test_api_rate_controls.py
+backend/scripts/api_contract_e2e.py
+scripts/test_agent_gates.py
+docs/spec_authorization_service.md
+docs/operations_authorization_service.md
+docs/architecture_data_model.md
+.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
+.agent-loop/merge-intents/WS-AUTH-001-09D-B.json
+.agent-loop/LOOP_STATE.md
+.agent-loop/WORK_QUEUE.md
+.agent-loop/REVIEW_LOG.md
+```
 
-## Exact Surface
+The lifecycle service owns orchestration only. It reuses the existing
+reservation, authority decision, idempotency completion, append-only audit,
+invalidation, actor touch, limiter, error, route-owned commit, and
+`AdminAuthorizationRepository` primitives. Exact implementation discovery may
+remove an allowed path; adding a path requires contract repair and renewed
+preimplementation review before editing it.
+
+## Not Allowed
+
+```text
+Alembic migration or historical migration edit
+actor-profile schema, model, or lifecycle behavior change
+new identity link, actor replacement, link deletion, or issuer/subject rewrite
+AdminRoleGrant or ProjectRoleGrant mutation or grant restoration
+fixed-service admission or service-action activation
+project, contributor, task, submission, check, review, revision, artifact,
+payment, contribution-record, or reputation behavior
+compatibility route, alias, fallback, dual path, or legacy response
+parallel ledger, authorization kernel, unit of work, session, or database engine
+AUTH-09E or another initiative's implementation
+```
+
+## Exact Surface And Authority
 
 ```text
 POST /api/v1/actor-identity-links/{identity_link_id}/revoke
 POST /api/v1/actor-identity-links/{identity_link_id}/reactivate
 ```
 
-Both require effective system Access Administrator authority, the mutation
-limiter, UUID `Idempotency-Key`, and the same strict normalized lifecycle reason
-contract as 09D-A. Success and replay return exactly the typed link resource ID,
-null version, and HTTP 200.
+The routes declare and activate only the identically named ActionIds and
+PermissionIds. Each requires an effective system-scoped Access Administrator,
+the admin mutation limiter, a UUID `Idempotency-Key`, and exactly
+`{ "reason": "..." }`. Audit Authority, project-scoped authority, fixed-service
+callers, token roles, and every other candidate deny before target disclosure.
 
-## Behavior Contract
+The shared lifecycle body trims both ends, requires 1 to 500 UTF-8 bytes after
+trimming, rejects NUL and unknown fields, and freezes the normalized value for
+persistence and digest derivation. Validation returns a non-echoing 422.
 
-- Active-link revoke writes caller, database time, and reason. A revoked link
-  returns 409 `identity_link_already_revoked`.
-- Revoked-link reactivate clears revoke fields; writes reactivation caller,
-  database time, and reason; preserves its immutable issuer/subject binding; and
-  returns 409 `identity_link_not_revoked` for an active link.
-- A deactivated owning profile returns `actor_deactivated_terminal` and cannot
-  regain an authenticatable link. A suspended profile may have its link repaired
-  but remains unable to authenticate until separately reactivated.
-- Human and fixed-service links are valid targets. Self-link revoke returns 403
-  `resource_guard_denied`; a caller with a revoked own link cannot authorize its
-  own reactivation.
-- Link success evidence targets the exact link and also binds the owning target
-  ActorProfile. Its invalidation obligation targets that ActorProfile authority
-  projection. Reactivation is `effective=false -> effective=true`; revocation is
-  `effective=true -> effective=false`.
-- Link reactivation never restores a separately revoked AdminRoleGrant or
-  ProjectRoleGrant and never advances target verification timestamps.
-- Domain conflicts roll back the reservation and staged allow, commit one exact
-  privacy-safe denial in a clean transaction, and do not consume the key.
+## Public Response
 
-## Concurrency Closure
+Success and exact replay return exactly:
 
-All operations reuse 09D-A's reservation-first and singleton/caller-first lock
-order. Real PostgreSQL tests cover revoke/reactivate, same-target different-key
-races, profile/link loss, link/grant loss, and different-target final-admin loss.
-At least one authenticatable effective Access Administrator remains after every
-committed combination, and no test uses timing sleeps as lock evidence.
+```json
+{
+  "resource_type": "actor_identity_link",
+  "resource_id": "uuid",
+  "version": null,
+  "http_status": 200
+}
+```
 
-## Acceptance And Stop
+No actor ID, issuer, subject, contact data, raw reason, lifecycle attribution,
+event ID, grant data, or digest is returned. The idempotency record stores only
+this typed resource reference.
 
-Exactly two actions activate, producing the parent final totals of 65 actions,
-17 active and 48 planned. Full replay, mismatch, conflict, rollback, timestamp,
-privacy, rate/OpenAPI, manifest, coverage, and mixed-race matrices pass.
+## State And Field Contract
 
-Stop after merge and signed memory. AUTH-09E requires a separate explicit start.
+| Operation | Allowed state | Mutation | New-key conflict |
+|---|---|---|---|
+| revoke | link `active`; owner `active` or `suspended` | set `revoked`; write caller, database time, normalized reason; preserve prior reactivation provenance | `identity_link_already_revoked` or `actor_deactivated_terminal` |
+| reactivate | link `revoked`; owner `active` or `suspended` | set `active`; clear revoke fields; write caller, database time, normalized reason; preserve immutable issuer/subject binding | `identity_link_not_revoked` or `actor_deactivated_terminal` |
+
+Human and fixed-service links are valid targets. A suspended profile's link may
+be repaired, but the actor remains unable to authenticate. A deactivated
+profile is terminal and its link cannot change. Reactivation does not admit a
+fixed service, restore any grant, or advance target verification timestamps.
+
+Self-link revoke returns 403 `resource_guard_denied` before target disclosure.
+A caller whose own link is revoked fails authentication and cannot reactivate
+itself. An authorized missing link returns 404 `actor_identity_link_not_found`.
+
+Each domain conflict rolls back the pending reservation and staged allow, then
+commits one `SensitiveAuthorizationDenied` row in a clean transaction with the
+exact link ActionId/PermissionId, exact link resource, owning ActorProfile
+target, categorical `authorization_evaluation` reason, exact denial code, and
+no matched-grant or idempotency reference. The losing key remains reusable.
+
+## Evidence And Invalidation
+
+- Success evidence uses the exact link as entity/resource and binds the owning
+  target ActorProfile without exposing issuer or subject.
+- Its single invalidation obligation targets the owning ActorProfile authority
+  projection.
+- Revocation records `effective=true -> effective=false`; reactivation records
+  `effective=false -> effective=true`. These facts describe the link component,
+  not whole-actor authenticatability or current authority.
+- State, attribution, caller touch, success evidence, invalidation,
+  idempotency completion, and commit are one atomic transaction.
+
+## Reservation, Lock, And Transaction Order
+
+Every new request follows the reviewed 09D-A order:
+
+1. validate and freeze the request;
+2. reserve idempotency as the first database write;
+3. authorize the exact action;
+4. inside authorization, lock `AuthorityControl(id=1)`, caller profile, caller
+   link, and the exact matched caller grant;
+5. only after permission match, lock the target link, owning target profile,
+   and any active system Access Administrator target grant;
+6. disclose replay or mismatch only after current authority succeeds;
+7. enforce self, owner, link-state, and final-administrator guards;
+8. mutate, touch only the verified caller, append one success and one
+   invalidation, complete idempotency, and commit once.
+
+The singleton lock serializes profile, link, and grant authority loss. Link
+revocation of a currently effective human Access Administrator fails with 409
+`last_access_administrator` when the post-transition count would be zero. The
+count requires active human profile, active exact link, and active system Access
+Administrator grant. Link reactivation is not a final-admin loss.
+
+Target locking must use one canonical repository method. It may accept the link
+ID but must return the exact link, owning profile, and exact active Access
+Administrator grant in the established link/profile/grant order without
+introducing another lookup or lock path.
+
+## Replay, Failure, And Timestamp Contract
+
+- Exact replay reauthorizes, returns the stored link reference even if later
+  state changed, and advances only the successful human caller's verification
+  timestamps.
+- Changed reason or target under the same operation returns
+  `idempotency_mismatch` only after reauthorization. Operation is part of the
+  namespace, so using the same UUID for the other link operation is independent.
+- Validation, rate limit, denial, missing target, conflict, mismatch, and every
+  SQL/evidence/completion/commit failure advance no timestamp.
+- Authorization evidence, target lookup, reservation, state flush, caller
+  touch, success evidence, invalidation, completion, and commit failures return
+  the stable retryable 503 envelope with no partial state, evidence, timestamp,
+  or pending claim.
+- Target `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at`
+  never advance for administrative link mutation.
+
+## Acceptance Criteria
+
+- Exactly two actions activate. Catalogue totals become 65 actions, 17 active,
+  and 48 planned, with one generated manifest declaration per route.
+- State, attribution, exact action decision, link success evidence,
+  ActorProfile invalidation, and idempotency completion commit atomically.
+- Behavior matrices cover human/service targets, active/revoked links,
+  active/suspended/deactivated owners, self guard, target concealment,
+  replay/mismatch, authority loss, rollback, timestamps, rate limits, OpenAPI,
+  manifest parity, and privacy canaries.
+- Real PostgreSQL tests cover the following normative races without sleeps:
+
+| Race | Required committed outcome |
+|---|---|
+| same key, same revoke/reactivate request | one success and one exact replay; one success/invalidation pair; completed key |
+| different keys, same transition | one success and one state-conflict denial; losing key reusable |
+| revoke versus reactivate | first valid transition commits; the serialized second transition observes the new state and may commit only when valid |
+| profile loss versus link revoke | singleton order permits at most one final-authority loss; one effective human admin remains |
+| link revoke versus grant revoke | singleton order permits at most one final-authority loss; one effective human admin remains |
+| different-target profile/link/grant loss | serialized commits never reduce authenticatable effective human Access Administrators below one |
+
+Every race asserts no deadlock, no pending claim, exact success/invalidation/
+denial counts, completed or reusable key disposition, and final profile/link/
+grant state. PostgreSQL blockers, never timing sleeps, establish order.
+
+- Responses, errors, logs, OpenAPI, and evidence exclude issuer, subject, email,
+  token data, raw reason, attribution IDs, matched-grant internals, and digests.
+- Focused actor/authorization branch coverage is at least 90.00 percent.
+  GitHub Backend preserves the repository-wide 78 percent floor.
+- Authorization spec, operations runbook, and live data model document link
+  lifecycle administration, component-scoped effectiveness, final-admin guard,
+  and non-restoration of grants. Archived reference specifications do not
+  change.
+
+## Verification Commands
+
+```bash
+(cd backend && .venv/bin/python -m ruff check app tests scripts/api_contract_e2e.py)
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/focused.json" --timeout-seconds 3600 -- \
+  .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_api_controls.py \
+  tests/test_api_rate_controls.py \
+  tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_matrix \
+  tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_concurrency)
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/authorization-coverage.json" \
+  --timeout-seconds 3600 -- \
+  bash -lc '.venv/bin/coverage erase && .venv/bin/coverage run --branch \
+  --source=app/modules/authorization -m pytest -q \
+  tests/test_authorization.py \
+  tests/test_auth.py::test_signed_tokens_bootstrap_and_admin_grant_lifecycle \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_matrix \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_concurrency \
+  tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_matrix \
+  tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_concurrency && \
+  .venv/bin/coverage report --precision=2 --fail-under=90')
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/api-contract.json" --timeout-seconds 3600 -- \
+  .venv/bin/python scripts/api_contract_e2e.py)
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_markdown_links.py
+python3 scripts/test_agent_gates.py
+python3 scripts/check_internal_review_evidence.py
+python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main
+git diff --check
+```
+
+The two named PostgreSQL nodes are created by this chunk and are mandatory
+implementation proof. Full Backend CI remains the authoritative repository-wide
+78 percent floor and integration regression gate.
+
+## Required Reviewers
+
+Senior engineering, QA/test, security/auth, product/ops, architecture, CI
+integrity, docs, reuse/dedup, and test delta.
+
+## Human Review Focus
+
+Review permission-before-disclosure, self-link safety, terminal owner behavior,
+component-scoped reactivation, link-to-profile evidence binding, truthful
+invalidation direction, singleton serialization across profile/link/grant loss,
+final-administrator preservation, caller-only timestamps, and rollback
+atomicity.
+
+## Stop Condition
+
+Stop after merge and signed memory. Do not start `WS-AUTH-001-09E` or another
+initiative automatically.

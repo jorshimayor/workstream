@@ -33,8 +33,8 @@ stopped.
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Merged through PR #143 as `053242b` |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Merged through PR #146 as `0ffdabf` |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Split before runtime implementation into 09D-A and 09D-B |
-| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Implementation and deterministic proof passed; exact-head internal review pending |
-| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Inactive until 09D-A merge/memory and explicit start |
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Merged through PR #148 as `99ae4c9`; signed memory `cf8a3e8` passed |
+| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Explicitly started; exact contract review in progress |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D-B merge/memory and explicit start |
 | `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |

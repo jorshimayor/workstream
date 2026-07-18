@@ -4139,8 +4139,15 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09B` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09C` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09D` | Split |" in auth_status
-    assert "| `WS-AUTH-001-09D-A` | Active |" in auth_status
-    assert "| `WS-AUTH-001-09D-B` | Inactive |" in auth_status
+    assert "Merged through PR #148 as `99ae4c9`" in auth_map
+    assert "| `WS-AUTH-001-09D-A` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09D-B` | Contract review |" in auth_status
+    assert (
+        "| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | "
+        "Explicitly started; exact contract and L1 preimplementation review in progress"
+        in work_queue
+    )
+    assert "Active implementation chunk: `WS-AUTH-001-09D-B`" in loop_state
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     artifact_phases = (
         "Deterministic proof passed; exact-SHA internal review in progress",

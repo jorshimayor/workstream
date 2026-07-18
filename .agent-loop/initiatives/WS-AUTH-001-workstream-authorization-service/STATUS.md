@@ -148,8 +148,8 @@ current gate.
 | `WS-AUTH-001-09B` | Merged | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Merged as `053242b`; signed memory passed. |
 | `WS-AUTH-001-09C` | Merged | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Merged as `0ffdabf`; signed memory `eeb3dc2` passed and stopped. |
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09D-A` | Active | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | External and Backend repair, exact-head review, and canonical evidence pass at `7c33e64`; replacement external checks pending. |
-| `WS-AUTH-001-09D-B` | Inactive | - | - | Identity-link lifecycle and race closure after 09D-A merge/memory and explicit start. |
+| `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
+| `WS-AUTH-001-09D-B` | Contract review | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Explicitly started from merged 09D-A; runtime has not started. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D-B. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
 | `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |

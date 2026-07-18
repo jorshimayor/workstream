@@ -1,5 +1,13 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-B Explicitly Started
+
+- PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
+  stopped and named 09D-B as the same-initiative successor.
+- The user explicitly started 09D-B. Its broad inherited contract is being
+  repaired to exact files, exclusions, behavior, proof, reviewers, and human
+  review focus before any runtime edit.
+
 ## 2026-07-18 - WS-AUTH-001-09D-A External Repair Review Passed
 
 - PR #148 CodeRabbit correctly found an API/database normalization mismatch:

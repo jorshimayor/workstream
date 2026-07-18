@@ -20,25 +20,20 @@
   `eeb3dc2` recorded its two administrative reads and stopped.
 - PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on
   2026-07-18; ART-02B1 remains inactive pending a separate explicit start.
-- Active implementation chunk: `WS-AUTH-001-09D-A`. The explicitly started parent
-  `WS-AUTH-001-09D` failed required preimplementation review and was split
-  before runtime edits into `WS-AUTH-001-09D-A` and `WS-AUTH-001-09D-B`.
-- Active branch: `WS-AUTH-001-09D-A` on
-  `codex/ws-auth-001-09d-actor-identity-lifecycle`. It owns lifecycle evidence
-  repair plus three exact profile lifecycle mutations. `WS-AUTH-001-09D-B`
-  remains inactive until 09D-A merge, signed memory, and explicit user start.
-- Start basis: trusted `main` at `0ffdabf` after PR #146.
+- AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory at
+  `cf8a3e8` recorded the stopped gate and exact 09D-B successor.
+- Active implementation chunk: `WS-AUTH-001-09D-B` on
+  `codex/ws-auth-001-09d-b-identity-link-lifecycle`, started from trusted
+  `main` at `99ae4c9` after the user's explicit start signal. Contract repair
+  and required L1 preimplementation review are the current gate; runtime has
+  not started.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: PR #148 external repair aligns database lifecycle-reason
-  whitespace with the API and repairs stale reviewer evidence. PostgreSQL proof
-  plus required exact-head internal review pass at `7c33e64`; canonical evidence
-  is refreshed against that SHA after repairing the Backend fixture cascade.
-  Replacement external checks and explicit human approval remain. No service
-  caller becomes executable before AUTH-09E.
+- Current gate: exact 09D-B contract review. No service caller becomes
+  executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
