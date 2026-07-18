@@ -38,4 +38,6 @@
 - CodeRabbit review remains unavailable until its rate-limit cooldown expires
   or organization billing enables additional reviews.
 - CON-01 PR #144 advanced main while replacement Backend was running. That run
-  is historical; the reconciled candidate requires new replacement checks.
+  is historical. Candidate `694c02ac8f961da9c445f1751e318fc7c479bda4`
+  is internally reviewed against `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
+  and requires new replacement checks.

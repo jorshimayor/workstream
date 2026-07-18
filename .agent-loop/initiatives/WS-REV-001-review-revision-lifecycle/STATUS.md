@@ -90,10 +90,11 @@ integrity. All 80 current-main agent tests and seven REV additions are retained;
 
 Chunk 01 is published as PR #145. Its initial merge-intent repair passed
 internal review and replacement Agent Gates, but CON-01 PR #144 then advanced
-main and invalidated that exact-SHA evidence. The reconciled candidate requires
-fresh internal and replacement-CI review. CodeRabbit was rate-limited and
-produced no findings. This chunk activates no review action or endpoint and
-does not authorize merge.
+main and invalidated that exact-SHA evidence. The reconciled candidate
+`694c02ac8f961da9c445f1751e318fc7c479bda4` passed all nine internal tracks
+against `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9` and awaits replacement CI.
+CodeRabbit was rate-limited and produced no findings. This chunk activates no
+review action or endpoint and does not authorize merge.
 
 ## Stop condition
 
