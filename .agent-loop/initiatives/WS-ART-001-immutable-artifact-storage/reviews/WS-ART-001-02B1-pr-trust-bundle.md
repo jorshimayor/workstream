@@ -80,10 +80,14 @@ addressed repair history are recorded in the internal review evidence.
 
 ## External Review
 
+External review response file:
+
+- `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02B1-external-review-response.md`
+
 | Source | Status | Notes |
 |---|---:|---|
-| GitHub Actions | Pending | Runs the isolated full suite, repository floor, cumulative focused gates, and real MinIO proof. |
-| CodeRabbit | Pending | External review starts after publication. |
+| GitHub Actions | Pending | Agent Gates passed; Backend reruns the isolated full suite, repository floor, cumulative focused gates, and real MinIO proof on the repaired candidate. |
+| CodeRabbit | Repairs verified; rerun pending | Four valid findings were fixed and automatically resolved. The immediate incremental rerun was rate-limited. |
 | Human review | Pending | Only the user may approve merge. |
 
 ## Remaining Risks
