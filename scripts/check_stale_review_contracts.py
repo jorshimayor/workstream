@@ -180,7 +180,7 @@ RULES = (
     Rule(
         "AUTO_REJECT_REVISION_LIMIT",
         re.compile(
-            r"\bauto_reject_after_limit\b|"
+            r"\bauto_reject_after_limit\b\s*(?::|=)\s*(?:true|1|yes)\b|"
             r"\b(?:revision\s+(?:limit|deadline)|limit\s+or\s+deadline)\b"
             r"[^.\n]{0,100}\b(?:automatically\s+reject(?:s|ed)?|auto-reject)\b|"
             r"\b(?:automatically\s+reject(?:s|ed)?|auto-reject)\b[^.\n]{0,100}"

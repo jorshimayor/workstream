@@ -58,7 +58,7 @@ Use this stamped context. No guide rebase occurs during review.
 
 | ReviewFinding ID | Kind | Area | Issue/Rationale | Required Change | Evidence Binding ID |
 |---|---|---|---|---|---|
-| `<uuid>` | `blocking | advisory` | `<area>` | `<issue>` | `<change or null>` | `<uuid or null>` |
+| `<uuid>` | `blocking` or `advisory` | `<area>` | `<issue>` | `<change or null>` | `<uuid or null>` |
 
 `needs_revision` requires at least one blocking finding. Reject requires its
 bounded reason; findings are optional when they add useful evidence.
@@ -67,7 +67,7 @@ bounded reason; findings are optional when they add useful evidence.
 
 | Prior Finding ID | SubmissionFindingResponse ID | Response Evidence | FindingResolution | Rationale |
 |---|---|---|---|---|
-| `<uuid>` | `<uuid>` | `<binding or null>` | `resolved | unresolved | not_applicable` | `<rationale>` |
+| `<uuid>` | `<uuid>` | `<binding or null>` | `resolved`, `unresolved`, or `not_applicable` | `<rationale>` |
 
 ## Contribution Effects
 

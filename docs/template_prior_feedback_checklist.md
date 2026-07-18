@@ -13,7 +13,7 @@
 
 | ReviewFinding ID | Kind | Required Change | SubmissionFindingResponse | Evidence Binding |
 |---|---|---|---|---|
-| `<uuid>` | `blocking | advisory` | `<change>` | `<response>` | `<uuid or null>` |
+| `<uuid>` | `blocking` or `advisory` | `<change>` | `<response>` | `<uuid or null>` |
 
 Every unresolved blocking finding requires exactly one response. Advisory
 responses are optional unless locked policy says otherwise.
@@ -22,4 +22,4 @@ responses are optional unless locked policy says otherwise.
 
 | ReviewFinding ID | FindingResolution | Rationale | Evidence Binding |
 |---|---|---|---|
-| `<uuid>` | `resolved | unresolved | not_applicable` | `<rationale>` | `<uuid or null>` |
+| `<uuid>` | `resolved`, `unresolved`, or `not_applicable` | `<rationale>` | `<uuid or null>` |

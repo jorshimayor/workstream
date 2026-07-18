@@ -19,8 +19,8 @@
 | predecessor preparation ID | `<uuid or null>` |
 | current head ID | `<uuid>` |
 | context digest | `<sha256>` |
-| outcome | `kept | rebased | blocked` |
-| direction | `forward | backward | null` |
+| outcome | `kept`, `rebased`, or `blocked` |
+| direction | `forward`, `backward`, or `null` |
 | prior guide ID/version/activation sequence | `<values>` |
 | next guide ID/version/activation sequence | `<values>` |
 | frozen source snapshot and task-execution policies | `<bounded references>` |
@@ -37,7 +37,7 @@ Every unresolved blocking finding requires one SubmissionFindingResponse.
 
 | ReviewFinding ID | Kind | Required Change | Response Text | Finalized Evidence Binding ID |
 |---|---|---|---|---|
-| `<uuid>` | `blocking | advisory` | `<required change>` | `<what changed or bounded rebuttal>` | `<uuid or null>` |
+| `<uuid>` | `blocking` or `advisory` | `<required change>` | `<what changed or bounded rebuttal>` | `<uuid or null>` |
 
 ## Later Immutable Resolutions
 
@@ -45,7 +45,7 @@ Completed by the later Review without editing the finding or response.
 
 | ReviewFinding ID | Revised Submission ID | Result | Rationale | Evidence Binding ID |
 |---|---|---|---|---|
-| `<uuid>` | `<uuid>` | `resolved | unresolved | not_applicable` | `<bounded rationale>` | `<uuid or null>` |
+| `<uuid>` | `<uuid>` | `resolved`, `unresolved`, or `not_applicable` | `<bounded rationale>` | `<uuid or null>` |
 
 ## Checker Readmission
 

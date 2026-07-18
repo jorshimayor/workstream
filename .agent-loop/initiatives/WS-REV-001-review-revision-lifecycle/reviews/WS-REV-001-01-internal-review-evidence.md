@@ -28,8 +28,8 @@ Valid findings addressed: yes
 
 ## Finding Disposition
 
-Earlier exact-SHA reviews are historical after the CON PR #142 and AUTH-09B PR
-#143 main merges and the subsequent repair cycles. Every valid finding was
+Earlier exact-SHA reviews are historical after the CON PR #142 and AUTH-09B
+PR #143 main merges and the subsequent repair cycles. Every valid finding was
 repaired before this review: FinalAcceptance field/provenance drift, canonical
 transaction ordering, planned availability, automated exact CheckerRun
 admission, checker versus Review-rooted revision lineage, non-mutating reject

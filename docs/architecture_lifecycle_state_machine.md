@@ -137,9 +137,11 @@ Automated checks passed or produced only non-blocking warnings. A human reviewer
 
 Required before entering:
 
-- checker run exists for the exact submission version
-- checker run references the same artifact hashes as the submission packet
-- no unresolved blocking checker failure is open under the locked post-submit checker policy
+- durable, final CheckerRun is current for the exact Submission version
+- CheckerRun outcome is exactly `allow_review`
+- CheckerRun references the same artifact hashes as the Submission packet
+- no unresolved blocking checker failure is open under the locked post-submit
+  checker policy
 
 ### NEEDS_REVISION
 
@@ -176,9 +178,6 @@ The submission is accepted.
 Required before entering:
 
 - accepted review decision
-- one immutable FinalAcceptance bound to the accepted Review, existing
-  versioned Submission, task, submitter, recording reviewer, and locked
-  ReviewPolicy
 - no unresolved blocking checker failure under the locked post-submit checker policy
 - evidence present
 - reviewer cited evidence supporting acceptance
@@ -189,7 +188,9 @@ Required before entering:
 Required side effects:
 
 - reviewer `completed_review` contribution created with the Review
-- immutable FinalAcceptance created from the accepting Review
+- immutable FinalAcceptance created from the accepting Review and bound to the
+  existing versioned Submission, task, submitter, recording reviewer, and locked
+  ReviewPolicy
 - submitter `accepted_submission` contribution created from FinalAcceptance,
   the exact TaskAssignment, frozen policy lineage, and artifact hash; it is not
   inferred directly from Review.decision
@@ -250,7 +251,9 @@ IN_PROGRESS -> CANCELLED
 
 No administrative or recovery grant authorizes these transitions:
 
-- `SUBMITTED -> REVIEW_PENDING` without checker run
+- `EVALUATION_PENDING -> REVIEW_PENDING` without a durable, final, current CheckerRun
+  whose outcome is exactly `allow_review`, whose Submission version is exact,
+  and whose artifact binding is verified
 - `REVIEW_PENDING -> ACCEPTED` without review decision
 - `REVIEW_PENDING -> ACCEPTED` without Review, FinalAcceptance, and both required contribution-source checks
 - `NEEDS_REVISION -> ACCEPTED` directly; a replacement Submission must pass

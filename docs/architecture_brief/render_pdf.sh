@@ -41,6 +41,13 @@ case "${1:-}" in
     convert_diagram ../diagrams/rendered/workstream_v01_container.svg images/workstream_v01_container.png
     ;;
   --all)
+    pushd ../diagrams >/dev/null
+    render_plantuml -tsvg -o rendered \
+      workstream_context.puml \
+      workstream_v01_container.puml \
+      backend_v01_components.puml \
+      future_identity_payment_reputation.puml
+    popd >/dev/null
     convert_diagram ../diagrams/rendered/workstream_context.svg images/workstream_context.png
     convert_diagram ../diagrams/rendered/workstream_v01_container.svg images/workstream_v01_container.png
     convert_diagram ../diagrams/rendered/backend_v01_components.svg images/backend_v01_components.png

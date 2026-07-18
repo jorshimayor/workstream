@@ -119,9 +119,11 @@ decision.
 
 Tasks lock to the active guide version at creation or screening time before entering `READY`. Material guide changes require a new guide version.
 
-TaskAssignment stores only the task relationship; each immutable Submission
-stamps the exact Project Guide identity, version, and activation sequence used by
-that attempt. After a human `needs_revision` Review, exact stamped identity and
+For guide and context resolution, TaskAssignment contributes only its `task_id`;
+it still retains required contributor, assignment, status, and frozen submitter
+contribution-policy attribution. Each immutable Submission stamps the exact
+Project Guide identity, version, and activation sequence used by that attempt.
+After a human `needs_revision` Review, exact stamped identity and
 activation-sequence match with the currently active guide keeps context. Any
 different valid active pair prepares a forward or backward rebase; incomplete,
 inconsistent, revoked, or unsafe context blocks for manager repair. Task Context

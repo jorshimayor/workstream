@@ -4402,6 +4402,10 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
         "After the reviewer operation, Review(accept) first creates "
         "FinalAcceptance, then applies accepted task effects.",
     )
+    assert not gate.scan_text(
+        "docs/template_project_guide.md",
+        "RevisionPolicyInput.auto_reject_after_limit: false",
+    )
 
     adversarial_samples = {
         "NON_CANONICAL_API_PREFIX": (

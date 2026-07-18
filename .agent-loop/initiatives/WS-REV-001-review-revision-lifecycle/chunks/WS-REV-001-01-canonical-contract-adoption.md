@@ -268,6 +268,7 @@ printf '%s  %s\n' \
   12f094e49c5c80f117e42d0f7f962b843f34508ab58d7f1d8def5f50fef532ed docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf | sha256sum -c -
 git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/reference_specs/WS-REV-001-review-lifecycle-specification.md docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf
 git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" {bad=1} END {exit bad}'
+: "${PLANTUML_JAR:?Set PLANTUML_JAR to the pinned PlantUML 1.2026.6 jar}"
 printf '%s  %s\n' 89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690 "$PLANTUML_JAR" | sha256sum -c -
 java -jar "$PLANTUML_JAR" -version | grep -F "PlantUML version 1.2026.6"
 ./docs/architecture_brief/render_pdf.sh --review-context
