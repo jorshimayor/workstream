@@ -291,6 +291,11 @@ def test_s3_constructor_and_bootstrap_reject_invalid_runtime_values() -> None:
     }
     for override in (
         {"provider_profile": "unknown"},
+        {"region": "US-east-1"},
+        {"bucket": "Bad..Bucket"},
+        {"private_prefix": "../bad//prefix"},
+        {"addressing_style": "automatic"},
+        {"endpoint_url": "http://user:secret@localhost:9000"},
         {"session": object()},
         {"buffer_bytes": 0},
         {"buffer_bytes": True},
@@ -303,6 +308,24 @@ def test_s3_constructor_and_bootstrap_reject_invalid_runtime_values() -> None:
             S3CompatibleArtifactStore(**(values | override))  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         S3CompatibleArtifactStoreBootstrap(object())  # type: ignore[arg-type]
+
+
+async def test_s3_operation_client_ignores_ambient_proxy_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep signed object requests and bytes off ambient process proxies."""
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:9")
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:9")
+    monkeypatch.setenv("ALL_PROXY", "http://127.0.0.1:9")
+    store = initialize_minio_store(private_prefix="negative/proxy-isolation")
+    try:
+        async with store._client() as client:
+            proxy = client._endpoint.http_session._proxy_config.proxy_url_for(
+                MINIO_ENDPOINT
+            )
+            assert proxy is None
+    finally:
+        store.close()
 
 
 def test_namespace_claim_is_single_use_and_close_disables_operations() -> None:

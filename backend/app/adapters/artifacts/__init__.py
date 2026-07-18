@@ -28,13 +28,7 @@ def create_artifact_store_bootstrap(settings: Settings) -> ArtifactStoreBootstra
     Raises:
         ExternalServiceConfigurationError: If the provider is not registered.
     """
-    if (
-        settings.artifact_store_backend == "s3_compatible"
-        and settings.artifact_s3_provider_profile == "aws_s3"
-    ):
-        raise ArtifactProviderLiveProofRequiredError(
-            "AWS artifact provider requires live deployment proof"
-        )
+    require_artifact_runtime_eligible(settings)
 
     from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
     from app.adapters.artifacts.s3_compatible import (
@@ -65,6 +59,17 @@ def create_artifact_store_bootstrap(settings: Settings) -> ArtifactStoreBootstra
     return factory.create(settings.artifact_store_backend)
 
 
+def require_artifact_runtime_eligible(settings: Settings) -> None:
+    """Reject configured providers that this chunk has not activated."""
+    if (
+        settings.artifact_store_backend == "s3_compatible"
+        and settings.artifact_s3_provider_profile == "aws_s3"
+    ):
+        raise ArtifactProviderLiveProofRequiredError(
+            "AWS artifact provider requires live deployment proof"
+        )
+
+
 def artifact_preparation_limits(settings: Settings) -> ArtifactPreparationLimits:
     """Map validated settings to the one process-independent scratch contract."""
     return ArtifactPreparationLimits(
@@ -92,6 +97,7 @@ def create_artifact_scratch_manager(settings: Settings) -> ArtifactScratchManage
 
 async def cleanup_stale_artifact_scratch(settings: Settings) -> int:
     """Run one database-independent stale cleanup with shared construction."""
+    require_artifact_runtime_eligible(settings)
     manager = create_artifact_scratch_manager(settings)
     try:
         return await manager.cleanup_stale()

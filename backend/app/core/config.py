@@ -7,12 +7,10 @@ import binascii
 from contextvars import ContextVar
 import json
 import os
-import re
 from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
-from urllib.parse import urlsplit
 
 from dotenv import dotenv_values
 from pydantic import Field, PrivateAttr, SecretStr, model_validator
@@ -23,6 +21,13 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from app.core.s3_validation import (
+    canonical_minio_endpoint,
+    is_canonical_s3_bucket,
+    is_canonical_s3_prefix,
+    is_canonical_s3_region,
+)
+
 
 _ARTIFACT_S3_SECRET_FIELDS = frozenset(
     {
@@ -31,9 +36,6 @@ _ARTIFACT_S3_SECRET_FIELDS = frozenset(
         "artifact_s3_session_token",
     }
 )
-_S3_REGION = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
-_S3_BUCKET = re.compile(r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
-_S3_PREFIX_SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _ALTERNATE_VALIDATION_RESTORES_SECRETS: ContextVar[bool] = ContextVar(
     "alternate_validation_restores_secrets",
     default=False,
@@ -396,11 +398,11 @@ class Settings(BaseSettings):
         """Require one closed MinIO or native AWS configuration profile."""
         if self.artifact_s3_provider_profile is None:
             raise ValueError("S3-compatible artifact storage requires a provider profile")
-        if not _is_canonical_s3_region(self.artifact_s3_region):
+        if not is_canonical_s3_region(self.artifact_s3_region):
             raise ValueError("S3-compatible artifact storage requires a canonical region")
-        if not _is_canonical_s3_bucket(self.artifact_s3_bucket):
+        if not is_canonical_s3_bucket(self.artifact_s3_bucket):
             raise ValueError("S3-compatible artifact storage requires a canonical bucket")
-        if not _is_canonical_s3_prefix(self.artifact_s3_private_prefix):
+        if not is_canonical_s3_prefix(self.artifact_s3_private_prefix):
             raise ValueError("S3-compatible artifact storage private prefix is invalid")
         if self.artifact_maximum_bytes > 512 * 1024 * 1024:
             raise ValueError("S3-compatible artifact maximum exceeds 512 MiB")
@@ -417,7 +419,7 @@ class Settings(BaseSettings):
             raise ValueError("MinIO artifact storage requires local static credentials")
         if self.artifact_s3_aws_workload_identity_method is not None:
             raise ValueError("MinIO artifact storage cannot select AWS workload identity")
-        self.artifact_s3_endpoint_url = _canonical_minio_endpoint(
+        self.artifact_s3_endpoint_url = canonical_minio_endpoint(
             self.artifact_s3_endpoint_url
         )
 
@@ -520,55 +522,6 @@ def _extract_optional_secret(
     ):
         raise ValueError("invalid artifact storage secret")
     return secret
-
-
-def _is_canonical_s3_region(value: str | None) -> bool:
-    """Return whether one region is bounded and canonical."""
-    return isinstance(value, str) and _S3_REGION.fullmatch(value) is not None
-
-
-def _is_canonical_s3_bucket(value: str | None) -> bool:
-    """Return whether one dedicated bucket name is DNS-compatible."""
-    if not isinstance(value, str) or _S3_BUCKET.fullmatch(value) is None:
-        return False
-    return ".." not in value and not re.fullmatch(r"\d+\.\d+\.\d+\.\d+", value)
-
-
-def _is_canonical_s3_prefix(value: str) -> bool:
-    """Return whether one private object prefix has canonical path segments."""
-    if not isinstance(value, str) or not value or len(value) > 512:
-        return False
-    segments = value.split("/")
-    return all(_S3_PREFIX_SEGMENT.fullmatch(segment) is not None for segment in segments)
-
-
-def _canonical_minio_endpoint(value: str | None) -> str:
-    """Return one normalized noncredentialed HTTP(S) MinIO origin."""
-    if not isinstance(value, str) or not value or len(value) > 2048:
-        raise ValueError("MinIO artifact storage requires an endpoint")
-    parsed = urlsplit(value)
-    try:
-        port = parsed.port
-    except ValueError as error:
-        raise ValueError("MinIO artifact storage endpoint is invalid") from error
-    if (
-        parsed.scheme.lower() not in {"http", "https"}
-        or not parsed.hostname
-        or parsed.username is not None
-        or parsed.password is not None
-        or parsed.query
-        or parsed.fragment
-        or parsed.path not in {"", "/"}
-        or parsed.hostname.endswith(".")
-    ):
-        raise ValueError("MinIO artifact storage endpoint is invalid")
-    scheme = parsed.scheme.lower()
-    hostname = parsed.hostname.lower()
-    if ":" in hostname:
-        hostname = f"[{hostname}]"
-    if port is not None and port != {"http": 80, "https": 443}[scheme]:
-        hostname = f"{hostname}:{port}"
-    return f"{scheme}://{hostname}"
 
 
 def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:

@@ -98,8 +98,9 @@ dependency and credential-behavior review. MinIO static credentials are
 local/CI only. The endpoint is omitted for native AWS S3 and explicit for
 MinIO. AWS requires an explicit region and production requires HTTPS, a
 non-local resolved endpoint, and backend `s3_compatible`. Secrets and resolved
-credentials are never persisted or retained by errors. Cloudflare R2 has no
-v0.1 runtime profile, credential service, or configuration path.
+credentials are never persisted or retained by errors. Object and credential
+metadata transports explicitly ignore ambient HTTP proxy variables. Cloudflare
+R2 has no v0.1 runtime profile, credential service, or configuration path.
 
 ## Immutable Object Identity
 

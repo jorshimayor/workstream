@@ -65,6 +65,8 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
     "02B1": (
         "coverage report --include='app/adapters/artifacts/s3_compatible.py' "
         "--precision=2 --fail-under=90",
+        "coverage report --include='app/core/s3_validation.py' "
+        "--precision=2 --fail-under=90",
     ),
     "02C1": (
         "coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90",

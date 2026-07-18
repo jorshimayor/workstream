@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from app.core.hashing import canonical_json_hash
+from app.core.s3_validation import validate_s3_namespace_descriptor
 from app.interfaces.external_services import (
     ExternalServiceAdapter,
     ExternalServiceAdapterIdentity,
@@ -150,6 +151,11 @@ class ArtifactStoreNamespaceIdentity:
             or set(keys) != expected_keys
         ):
             raise ValueError("artifact namespace descriptor is not canonical")
+        if self.provider_profile in {"minio-v1", "aws-s3-v1"}:
+            validate_s3_namespace_descriptor(
+                self.provider_profile,
+                dict(self.descriptor_items),
+            )
 
     def as_dict(self) -> dict[str, str]:
         """Return a fresh JSON-compatible descriptor projection."""

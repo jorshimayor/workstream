@@ -14,7 +14,8 @@ credential-delivery contract.
 ## Allowed Files
 
 - `backend/app/adapters/artifacts/s3_compatible.py`, the shared canonical
-  provider-reference helper, and adapter registration;
+  provider-reference and S3 namespace-validation helpers, and adapter
+  registration;
 - `backend/app/interfaces/artifacts.py` only to register the closed
   `minio-v1` and `aws-s3-v1` namespace profiles, their exact descriptor keys,
   and the stable AWS live-proof-required error;
@@ -60,6 +61,9 @@ credential-delivery contract.
 - each selected workload method accepts only its exact closed `AWS_*`
   environment allowlist; every other `AWS_*` or `BOTOCORE_*` SDK behavior
   control fails before SDK session construction;
+- S3 object operations and credential metadata operations ignore ambient HTTP
+  proxy variables so signed requests, credentials, and artifact bytes cannot
+  be redirected outside the configured provider transport;
 - container role accepts only the relative metadata path, IAM role rejects a
   custom metadata endpoint and requires IMDSv2, and the isolated IAM fetcher
   disables IMDSv1;
@@ -72,11 +76,12 @@ credential-delivery contract.
 - the application factory can instantiate only LocalStorage and MinIO in this
   chunk. Valid AWS configuration remains runtime-ineligible with the stable
   `artifact_provider_live_proof_required` startup failure. The composition root
-  raises that typed error after settings validation but before factory
-  construction, namespace claim, credential resolver construction, credential
-  loading, or provider I/O. Tests prove no namespace row is persisted and no
-  credential source is touched. Only Chunk 07 may add the immutable activation
-  record and production composition guard;
+  and Celery scheduler/task entry points raise that typed error after settings
+  validation but before factory construction, scratch cleanup, namespace claim,
+  credential resolver construction, credential loading, or provider I/O. Tests
+  prove no namespace row is persisted and no credential source is touched. Only
+  Chunk 07 may add the immutable activation record and production composition
+  guard;
 - startup and operation tests reject configured adapter/profile/namespace
   mismatch against persisted deployment or replica identity; no request is
   routed to a second namespace;
@@ -122,6 +127,7 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/main.py' --precision=2 --fail-under=90
 coverage report --include='app/adapters/artifacts/s3_compatible.py' --precision=2 --fail-under=90
+coverage report --include='app/core/s3_validation.py' --precision=2 --fail-under=90
 ```
 
 ## Verification
@@ -129,7 +135,7 @@ coverage report --include='app/adapters/artifacts/s3_compatible.py' --precision=
 ```bash
 docker compose up -d --wait postgres redis minio
 (cd backend && .venv/bin/ruff check app tests)
-(cd backend && .venv/bin/pytest tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_preparation.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py tests/test_s3_artifact_store.py tests/test_aws_credential_isolation.py tests/test_config.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifact_operations --cov=app.interfaces.artifacts --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && .venv/bin/pytest tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_preparation.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py tests/test_s3_artifact_store.py tests/test_aws_credential_isolation.py tests/test_config.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifact_operations --cov=app.interfaces.artifacts --cov=app.core.config --cov=app.core.s3_validation --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

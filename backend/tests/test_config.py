@@ -17,6 +17,11 @@ from app.adapters.auth.flow import FlowAuthVerifier
 from app.api.deps.auth import get_application_auth_verifier
 from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
 from app.core.config import Settings, get_settings
+from app.core.s3_validation import (
+    canonical_minio_endpoint,
+    is_canonical_s3_prefix,
+    validate_s3_namespace_descriptor,
+)
 from app.interfaces.artifacts import ArtifactProviderLiveProofRequiredError
 from app.interfaces.external_services import (
     ExternalServiceConfigurationError,
@@ -893,3 +898,48 @@ def test_s3_dependency_manifest_and_installed_versions_are_exact() -> None:
     assert "botocore==1.43.0" in manifest["project"]["dependencies"]
     assert importlib.metadata.version("aiobotocore") == "3.7.0"
     assert importlib.metadata.version("botocore") == "1.43.0"
+
+
+@pytest.mark.parametrize("value", [None, "", "x" * 513])
+def test_s3_prefix_validation_rejects_noncanonical_outer_bounds(value: object) -> None:
+    assert is_canonical_s3_prefix(value) is False
+
+
+def test_minio_endpoint_canonicalization_handles_ipv6_and_invalid_ports() -> None:
+    assert canonical_minio_endpoint("HTTP://[::1]:9000/") == "http://[::1]:9000"
+    with pytest.raises(ValueError, match="endpoint is invalid"):
+        canonical_minio_endpoint("http://localhost:not-a-port")
+
+
+@pytest.mark.parametrize(
+    ("profile", "changes", "message"),
+    [
+        ("minio-v1", {"addressing_style": "auto"}, "addressing style"),
+        ("minio-v1", {"region": "US-east-1"}, "region"),
+        ("minio-v1", {"endpoint_identity": "sha256:bad"}, "endpoint identity"),
+        (
+            "aws-s3-v1",
+            {"endpoint_identity": "sha256:" + "1" * 64},
+            "endpoint identity is forbidden",
+        ),
+        ("unsupported-v1", {}, "provider profile"),
+    ],
+)
+def test_s3_namespace_value_validation_fails_closed(
+    profile: str,
+    changes: dict[str, str],
+    message: str,
+) -> None:
+    descriptor = {
+        "addressing_style": "path",
+        "bucket": "workstream-artifacts",
+        "endpoint_identity": "sha256:" + "1" * 64,
+        "private_prefix": "workstream/artifacts",
+        "region": "us-east-1",
+    }
+    if profile == "aws-s3-v1":
+        descriptor.pop("endpoint_identity")
+    descriptor.update(changes)
+
+    with pytest.raises(ValueError, match=message):
+        validate_s3_namespace_descriptor(profile, descriptor)

@@ -813,10 +813,13 @@ static credentials, configured endpoints, unselected or ambient credential
 sources, arbitrary container credential URLs, and custom instance-metadata
 endpoints. The selected method accepts only its exact closed `AWS_*`
 environment allowlist; every other `AWS_*` or `BOTOCORE_*` SDK behavior control
-fails before SDK session construction. IAM-role validation requires IMDSv2 and
-the isolated fetcher disables IMDSv1. Even valid native AWS settings fail with
-`artifact_provider_live_proof_required` before credential-source probing,
-factory construction, namespace claim, resolver loading, or provider I/O.
+fails before SDK session construction. S3 object operations and credential
+metadata operations explicitly ignore ambient HTTP proxy variables. IAM-role
+validation requires IMDSv2 and the isolated fetcher disables IMDSv1. Even valid
+native AWS settings fail with `artifact_provider_live_proof_required` at API,
+Celery scheduler/task, and direct-cleanup entry points before credential-source
+probing, factory construction, scratch cleanup, namespace claim, resolver
+loading, or provider I/O.
 
 Every process sharing a scratch root must use the identical complete setting
 set. The root marker binds a canonical fingerprint of those limits and startup

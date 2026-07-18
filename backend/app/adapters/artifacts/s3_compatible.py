@@ -33,6 +33,12 @@ from app.adapters.artifacts.references import (
 )
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
+from app.core.s3_validation import (
+    canonical_minio_endpoint,
+    is_canonical_s3_bucket,
+    is_canonical_s3_prefix,
+    is_canonical_s3_region,
+)
 from app.interfaces.artifacts import (
     ARTIFACT_STORE_CAPABILITY_KEY,
     ArtifactByteRange,
@@ -182,6 +188,21 @@ class S3CompatibleArtifactStore:
         """Pin one validated namespace and one isolated SDK session."""
         if provider_profile not in {"minio", "aws_s3"}:
             raise ArtifactConfigurationError("S3 provider profile is invalid")
+        if not is_canonical_s3_region(region):
+            raise ArtifactConfigurationError("S3 region is invalid")
+        if not is_canonical_s3_bucket(bucket):
+            raise ArtifactConfigurationError("S3 bucket is invalid")
+        if not is_canonical_s3_prefix(private_prefix):
+            raise ArtifactConfigurationError("S3 private prefix is invalid")
+        if addressing_style not in {"path", "virtual"}:
+            raise ArtifactConfigurationError("S3 addressing style is invalid")
+        if provider_profile == "minio":
+            try:
+                endpoint_url = canonical_minio_endpoint(endpoint_url)
+            except ValueError as error:
+                raise ArtifactConfigurationError(str(error)) from None
+        elif endpoint_url is not None:
+            raise ArtifactConfigurationError("native AWS S3 endpoint is invalid")
         if not isinstance(session, AioSession):
             raise ArtifactConfigurationError("S3 credential session is invalid")
         if type(buffer_bytes) is not int or not 1 <= buffer_bytes <= 1024 * 1024:
@@ -213,6 +234,7 @@ class S3CompatibleArtifactStore:
             connect_timeout=float(connect_timeout_seconds),
             read_timeout=float(read_timeout_seconds),
             max_pool_connections=max_pool_connections,
+            proxies={},
             retries={"max_attempts": 1, "mode": "standard"},
             request_checksum_calculation="when_required",
             response_checksum_validation="when_required",
@@ -741,6 +763,7 @@ def create_isolated_aws_workload_identity_session(
             profile["role_session_name"] = role_session_name
 
         def create_isolated_sts_client(service_name: str, **_kwargs: object) -> object:
+            """Create only the pinned no-proxy STS client for web identity."""
             if service_name != "sts":
                 raise ArtifactConfigurationError("AWS web identity service is invalid")
             return session.create_client(

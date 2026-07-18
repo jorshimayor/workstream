@@ -341,3 +341,32 @@ def test_cleanup_task_runs_shared_helper_and_propagates_failure(
     monkeypatch.setattr(artifacts_module, "cleanup_stale_artifact_scratch", fail_cleanup)
     with pytest.raises(RuntimeError, match="scratch cleanup failed"):
         artifacts_module.cleanup_stale_scratch.run()
+
+
+def test_aws_s3_is_runtime_ineligible_for_celery_and_cleanup_task(
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+    tmp_path: Path,
+) -> None:
+    """Apply the same inactive-provider guard to API and worker entry points."""
+    celery_module, artifacts_module = _load_worker_modules(monkeypatch, request)
+    settings = Settings(
+        environment="production",
+        celery_task_always_eager=True,
+        artifact_store_backend="s3_compatible",
+        artifact_scratch_root=tmp_path / "scratch",
+        artifact_s3_provider_profile="aws_s3",
+        artifact_s3_region="us-east-1",
+        artifact_s3_bucket="workstream-artifacts-prod",
+        artifact_s3_credential_mode="aws_workload_identity",
+        artifact_s3_aws_workload_identity_method="container-role",
+    )
+    monkeypatch.setattr(celery_module, "get_settings", lambda: settings)
+    with pytest.raises(ArtifactProviderLiveProofRequiredError) as startup_error:
+        celery_module.create_celery_app()
+    assert startup_error.value.code == "artifact_provider_live_proof_required"
+
+    monkeypatch.setattr(artifacts_module, "get_settings", lambda: settings)
+    with pytest.raises(ArtifactProviderLiveProofRequiredError) as task_error:
+        artifacts_module.cleanup_stale_scratch.run()
+    assert task_error.value.code == "artifact_provider_live_proof_required"

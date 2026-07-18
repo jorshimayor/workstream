@@ -323,6 +323,25 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
                 ("region", "us-east-1"),
             ),
         ),
+        (
+            "minio-v1",
+            (
+                ("addressing_style", "path"),
+                ("bucket", "Bad..Bucket"),
+                ("endpoint_identity", "sha256:" + "1" * 64),
+                ("private_prefix", "workstream/artifacts"),
+                ("region", "us-east-1"),
+            ),
+        ),
+        (
+            "aws-s3-v1",
+            (
+                ("addressing_style", "virtual"),
+                ("bucket", "workstream-artifacts"),
+                ("private_prefix", "../bad//prefix"),
+                ("region", "us-east-1"),
+            ),
+        ),
     ):
         with pytest.raises(ValueError):
             ArtifactStoreNamespaceIdentity(profile, items)
