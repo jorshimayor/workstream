@@ -195,8 +195,8 @@ The exact state table is:
 
 The migration downgrade first refuses while any service link has a null
 verification timestamp, then restores non-null/default semantics. Historical
-migrations remain immutable. AUTH-10 through AUTH-15 move to `0025` through
-`0030` respectively.
+migrations remain immutable. ART owns `0025` for the ArtifactStore v2 clean
+cut. AUTH-10 through AUTH-15 move to `0026` through `0031` respectively.
 
 ## Acceptance criteria
 

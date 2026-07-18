@@ -8,13 +8,13 @@ Each chunk is one PR. No later chunk starts automatically.
 | `WS-ART-001-01` | Artifact domain and LocalStorage v1 foundation. | L1 | Merged through PR #101 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | Make AWS S3 the v0.1 production provider with MinIO local/CI protocol proof; keep optional providers outside v0.1. | L1 | Merged through PR #120 as `4408256` |
 | `WS-ART-001-02A1` | Install only ADR 0014's small typed external-service adapter/factory foundation without migrating a capability. | L1 | Merged through PR #127 as `f64a8e5` |
-| `WS-ART-001-02A2` | Add bounded committed-source preparation and inactive scratch-cleanup mechanics without changing the active v1 port. | L1 | Merged through PR #129 as `9a04434` |
-| `WS-ART-001-02A3` | Replace ArtifactStore v1 with byte-only v2, activate API-startup and Celery Beat scratch cleanup, migrate schema/callers/factory, and remove `flow_node` in one atomic clean cut. | L1 | Reviewed in isolated worktree; PR publication pending |
+| `WS-ART-001-02A2` | Add bounded committed-source preparation and inactive scratch-cleanup mechanics without changing the active v1 port. | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
+| `WS-ART-001-02A3` | Replace ArtifactStore v1 with byte-only v2, activate API-startup and Celery Beat scratch cleanup, migrate schema/callers/factory, and remove `flow_node` in one atomic clean cut. | L1 | Internal review and deterministic evidence passed; external checks pending |
 | `WS-ART-001-02B1` | Implement the S3-compatible adapter, MinIO integration, and AWS S3 production profile. | L1 | Proposed after 02A3 |
 | `WS-ART-001-02C1` | Add the generic durable-byte admission ledger and durable put-attempt state foundation without provider execution. | L1 | Proposed after 02B1 |
 | `WS-ART-001-02C2` | Add put resolution, verification publication, complete-object observation, immutable receipts, and PostgreSQL execution fencing without recovery attempts or routes. | L1 | Proposed after 02C1 |
 | `WS-ART-001-02C3` | Add the recovery-attempt model and exact idempotent source-job to retry-job chain without public or Operator routes. | L1 | Proposed after 02C2 |
-| `WS-ART-001-02D` | Add hidden Operator content/job/retry/recovery/audit APIs, canonical resource composition, and production-readiness checks while actions and provider profiles remain inactive. | L1 | Proposed after 02C3, AUTH-09E, and AUTH custody registration |
+| `WS-ART-001-02D` | Add hidden Operator content/job/retry/recovery/audit APIs, canonical resource composition, and production-readiness checks while actions and provider profiles remain inactive. | L1 | Proposed after 02C3, AUTH-09E, and `WS-AUTH-001-ART-CUSTODY` |
 | `WS-ART-001-03` | Store and bind guide-source bytes; add same-snapshot setup recovery through the authorized artifact reader. | L1 | Proposed after 02D |
 | `WS-ART-001-04A` | Add task-scoped upload sessions/items, trusted archive inspection, independent verification, immutable sealing, and artifact-set manifests. | L1 | Proposed after 03 |
 | `WS-ART-001-04B` | Execute authoritative pre-submit against sealed artifact sets and persist exact admissions with bounded infrastructure continuation. | L1 | Proposed after 04A |
@@ -54,6 +54,8 @@ Physical deletion and semantic search require separate approved initiatives.
 
 - Artifact actions follow AUTH planned registration -> hidden ART behavior and
   canonical resource composition -> AUTH evaluator integration and activation.
+  `WS-AUTH-001-ART-CUSTODY` first transfers the 25 current ART actions to eight
+  exact AUTH activation custodians without changing mappings or availability.
   Protected service commands first pass AUTH-09E. They consume canonical
   `ActorProfile.id`, closed `ActionId` and `PermissionId` catalogues, and exact
   fixed service matrix rows. ART never changes action

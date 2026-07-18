@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and AUTH custody registration
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and `WS-AUTH-001-ART-CUSTODY`
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -45,8 +45,8 @@ product cutover. Chunk 07 owns every live AWS provider inspection.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, artifact audit
   listing, and read-only admission usage.
-- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and the reviewed
-  custody-registration checkpoint are merged before this chunk starts. They
+- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and
+  `WS-AUTH-001-ART-CUSTODY` are merged before this chunk starts. They
   provide the complete typed/SQL planned action registry, Operator grants,
   static service-action matrix, provisioned service ActorProfiles and
   ActorIdentityLinks, fixed service runtime admission, and AUTH activation
@@ -124,7 +124,7 @@ product cutover. Chunk 07 owns every live AWS provider inspection.
 ## Exact CI Coverage Gates
 
 ```bash
-coverage report --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifact_operations.py,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
@@ -137,7 +137,7 @@ coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 
 ```bash
 docker compose up -d --wait postgres redis minio
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_operator_api.py tests/test_artifact_authorization.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov=app.api.router --cov-report=term-missing --cov-fail-under=90)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_operator_api.py tests/test_artifact_authorization.py tests/test_config.py -q --cov=app.interfaces.artifact_operations --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov=app.api.router --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_authorization_docs.py
