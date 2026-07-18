@@ -88,13 +88,14 @@ tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR #131
 as `aa0fdcd`. AUTH-09 was split before runtime implementation. PR #140 merged
 the authoritative AUTH XINT reconciliation as `d541521`; PR #132 then merged
 AUTH-09A as `299363a`. Signed memory stopped, and the user explicitly started
-AUTH-09B from that trusted head. Its bounded implementation and external-review
-repair passed every required internal reviewer track. PR #143's next Backend
-run passed all 1,242 tests, then the new authorization coverage gate reported
-89.75 percent. A behavior-test-only repair passes every required track at exact
-SHA `127615fde8f1b5583acf9dbbb3c606db514a455d` and projects 90.31 percent on
-the unchanged 1,600-statement denominator. Replacement external checks and
-evidence rebinding are pending. No service caller or feature action is active.
+AUTH-09B from that trusted head. Its bounded implementation, external-review
+repair, coverage repair, and required checks passed before PR #143 merged as
+`053242b`. Signed memory stopped, and the user explicitly started AUTH-09C.
+Its bounded implementation activates only the exact actor-profile and
+identity-link administrative reads. Deterministic proof passes, including the
+live HTTP drill and focused actor and authorization branch coverage above 90
+percent. Exact-head implementation review remains. No service caller or feature
+action is active.
 
 ## Active planning chunk
 
@@ -102,12 +103,13 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09B` - Controlled Service Actor Provisioning. This chunk activates
-one human-administrator route and no service admission or feature action.
+`WS-AUTH-001-09C` - Actor And Identity-Link Administration Reads. This chunk
+activates two system-authority read routes and no lifecycle mutation, service
+admission, or feature action.
 
 ## Current review branch
 
-`codex/ws-auth-001-09b-controlled-service-provisioning`
+`codex/ws-auth-001-09c-actor-identity-admin-reads`
 
 ## Chunk status
 
@@ -132,8 +134,8 @@ one human-administrator route and no service admission or feature action.
 | `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | Merged | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merged as `299363a`; signed memory passed. |
-| `WS-AUTH-001-09B` | In progress | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Coverage-gate behavior repair internally reviewed; replacement checks pending. |
-| `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
+| `WS-AUTH-001-09B` | Merged | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Merged as `053242b`; signed memory passed. |
+| `WS-AUTH-001-09C` | In progress | `codex/ws-auth-001-09c-actor-identity-admin-reads` | - | Deterministic evidence passed; exact-head internal review pending. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
@@ -153,12 +155,12 @@ merged feature manifests and separate human starts exist.
 
 ## Blockers
 
-AUTH-09B, its external-review repair, and the coverage-gate behavior repair
-passed exact-head L1 internal review, atomic PostgreSQL behavior proof, and
-privacy tests. Replacement GitHub Backend coverage, Agent Gates, CodeRabbit,
-and explicit human merge approval remain. It must not add service grants,
-dynamic assignments, token-role authority, service admission, or
-feature-action activation.
+AUTH-09C passed deterministic PostgreSQL behavior, concurrency, rollback,
+privacy, live HTTP, and focused 90 percent coverage proof. Exact-head L1
+internal review, GitHub Backend, Agent Gates, CodeRabbit, and explicit human
+merge approval remain. It must not add lifecycle mutation, service grants,
+dynamic assignments, token-role authority, service admission, or feature-action
+activation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also

@@ -8,23 +8,23 @@
 - Active initiatives include parallel `WS-AUTH-001` and `WS-ART-001`.
 - PR #132 merged `WS-AUTH-001-09A` into `main` as `299363a` on
   2026-07-17; signed schema-v2 memory recorded the stopped checkpoint.
-- Active implementation chunk: `WS-AUTH-001-09B` on
-  `codex/ws-auth-001-09b-controlled-service-provisioning` after explicit user
-  start.
-- AUTH-09B is bounded to one controlled service-actor provisioning route and
-  activates only `actor.service.provision`. AUTH-09C remains inactive.
-- Start basis: trusted `main` at `299363a` after PR #132, integrated through
-  `a947b86` after PR #142 before publication.
+- PR #143 merged `WS-AUTH-001-09B` into `main` as `053242b` on
+  2026-07-17; the user explicitly started `WS-AUTH-001-09C` afterward.
+- Active implementation chunk: `WS-AUTH-001-09C` on
+  `codex/ws-auth-001-09c-actor-identity-admin-reads`.
+- AUTH-09C is bounded to two exact administrative read routes and activates
+  only `actor.profile.read` and `actor.identity_link.read`. AUTH-09D remains
+  inactive.
+- Start basis: trusted `main` at `053242b` after PR #143.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: PR #143's replacement Backend run passed all 1,242 tests but
-  exposed 89.75 percent authorization coverage at the new 90 percent gate. The
-  behavior-test repair passes every required reviewer track at exact SHA
-  `127615f` and projects 90.31 percent on the unchanged 1,600-statement
-  denominator. Replacement GitHub checks and evidence rebinding remain; no
+- Current gate: AUTH-09C deterministic implementation proof passes, including
+  real PostgreSQL lifecycle and race tests, the live HTTP contract drill, 91.06
+  percent actor branch coverage, and 91.80 percent authorization branch
+  coverage. Exact-head implementation review and PR publication remain; no
   service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
@@ -41,9 +41,9 @@
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
   checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
   isolated parallel worktree but has no open PR at this checkpoint.
-- Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
-  #130, #131, and #132. Signed memory stopped after 09A, and the user explicitly
-  started 09B.
+- Authorization checkpoint: AUTH-07B through AUTH-09B merged through PRs #130,
+  #131, #132, and #143. Signed memory stopped after 09B, and the user explicitly
+  started 09C.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

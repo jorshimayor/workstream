@@ -18,6 +18,10 @@ from app.core.api_controls import ApiErrorResponse, StructuredHTTPException
 from app.db.session import get_db_session
 from app.interfaces.auth import AuthVerificationUnavailableError, AuthVerifier
 from app.modules.actors.service import ActorService, ResolvedActor
+from app.modules.actors.schemas import (
+    ActorIdentityLinkAdminResponse,
+    ActorProfileAdminResponse,
+)
 from app.modules.authorization.admin_schemas import (
     AdminRoleDefinitionsResponse,
     AdminRoleGrantCollectionResponse,
@@ -34,6 +38,8 @@ from app.modules.authorization.catalogue import ActionId
 from app.modules.authorization.kernel import AuthorizationService
 from app.modules.authorization.runtime import (
     ActorAdminRoleGrantHistoryResourceContext,
+    ActorIdentityLinkAdminReadResourceContext,
+    ActorProfileAdminReadResourceContext,
     AdminRoleDefinitionsResourceContext,
     AdminRoleGrantCollectionResourceContext,
     AdminRoleGrantIssueResourceContext,
@@ -72,6 +78,10 @@ def _domain_error(status_code: int, code: str, message: str) -> StructuredHTTPEx
         error_code=code,
         error_message=message,
     )
+
+
+def _actor_resource_not_found() -> StructuredHTTPException:
+    return _domain_error(404, "actor_resource_not_found", "Actor resource not found")
 
 
 def _scope_resource_id(scope_type: AdminScope, project_id: UUID | None):
@@ -289,6 +299,76 @@ def _service_actor_conflict(conflict: ServiceActorConflict) -> StructuredHTTPExc
     if conflict is ServiceActorConflict.SERVICE_IDENTITY:
         return _domain_error(409, conflict.value, "Service identity is already provisioned")
     return _domain_error(409, conflict.value, "Identity subject is already linked")
+
+
+@router.get(
+    "/actors/{actor_profile_id}",
+    response_model=ActorProfileAdminResponse,
+    responses={404: {"model": ApiErrorResponse, "description": "Actor resource not found."}},
+    openapi_extra={"x-workstream-action-id": ActionId.ACTOR_PROFILE_READ.value},
+)
+async def read_actor_profile(
+    actor_profile_id: UUID,
+    resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
+    authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ActorProfileAdminResponse:
+    await _database_call(
+        session,
+        authorization.require(
+            ActionId.ACTOR_PROFILE_READ,
+            ActorProfileAdminReadResourceContext(
+                resource_type="actor_profile",
+                resource_id=actor_profile_id,
+                read_kind="profile",
+            ),
+        ),
+    )
+    response = await _database_call(
+        session,
+        ActorService(session).read_admin_profile(actor_profile_id),
+    )
+    if response is None:
+        await session.rollback()
+        raise _actor_resource_not_found()
+    await _database_call(session, ActorService(session).touch_after_authorization(resolved))
+    await _commit_or_unavailable(session)
+    return response
+
+
+@router.get(
+    "/actors/{actor_profile_id}/identity-links",
+    response_model=ActorIdentityLinkAdminResponse,
+    responses={404: {"model": ApiErrorResponse, "description": "Actor resource not found."}},
+    openapi_extra={"x-workstream-action-id": ActionId.ACTOR_IDENTITY_LINK_READ.value},
+)
+async def read_actor_identity_link(
+    actor_profile_id: UUID,
+    resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
+    authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ActorIdentityLinkAdminResponse:
+    await _database_call(
+        session,
+        authorization.require(
+            ActionId.ACTOR_IDENTITY_LINK_READ,
+            ActorIdentityLinkAdminReadResourceContext(
+                resource_type="actor_profile",
+                resource_id=actor_profile_id,
+                read_kind="identity_link",
+            ),
+        ),
+    )
+    response = await _database_call(
+        session,
+        ActorService(session).read_admin_identity_link(actor_profile_id),
+    )
+    if response is None:
+        await session.rollback()
+        raise _actor_resource_not_found()
+    await _database_call(session, ActorService(session).touch_after_authorization(resolved))
+    await _commit_or_unavailable(session)
+    return response
 
 
 @router.get(

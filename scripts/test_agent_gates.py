@@ -4130,11 +4130,13 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     ).read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "`WS-AUTH-001-09B` - Controlled Service Actor Provisioning" in auth_status
+    assert "Merged through PR #143 as `053242b`" in auth_map
+    assert "`WS-AUTH-001-09C` - Actor And Identity-Link Administration Reads" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09A` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09B` | In progress |" in auth_status
+    assert "| `WS-AUTH-001-09B` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09C` | In progress |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
     assert "No artifact implementation chunk is active." in artifact_status

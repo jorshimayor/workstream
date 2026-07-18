@@ -22,7 +22,9 @@ from app.modules.authorization.catalogue import (
 from app.modules.authorization.repository import AdminAuthorizationRepository
 from app.modules.authorization.runtime import (
     ActorAdminRoleGrantHistoryResourceContext,
+    ActorIdentityLinkAdminReadResourceContext,
     ActorKind,
+    ActorProfileAdminReadResourceContext,
     ActorSelfResourceContext,
     ActorStatus,
     AdminRoleDefinitionsResourceContext,
@@ -56,6 +58,14 @@ _ADMIN_ACTIONS = frozenset(
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
         ActionId.ACTOR_SERVICE_PROVISION,
+        ActionId.ACTOR_PROFILE_READ,
+        ActionId.ACTOR_IDENTITY_LINK_READ,
+    }
+)
+_SERIALIZED_ADMIN_READS = frozenset(
+    {
+        ActionId.ACTOR_PROFILE_READ,
+        ActionId.ACTOR_IDENTITY_LINK_READ,
     }
 )
 _ADMIN_MUTATIONS = frozenset(
@@ -164,8 +174,10 @@ class AuthorizationService:
             return AuthorizationDenialCode.RESOURCE_GUARD_DENIED, context, None, None, False
 
         mutation = action.action_id in _ADMIN_MUTATIONS
+        serialized = mutation or action.action_id in _SERIALIZED_ADMIN_READS
         if mutation:
             await self._admin.lock_control()
+        if serialized:
             locked = await self._admin.lock_request_actor(
                 context.identity_link_id,
                 context.actor_profile_id,
@@ -193,7 +205,7 @@ class AuthorizationService:
             action.permission_id,
             scope_project_id=project_id,
             system_scope_only=system_only,
-            for_update=mutation,
+            for_update=serialized,
         )
         if matched is None:
             if project_id is not None and await self._admin.has_effective_permission_any_scope(
@@ -203,7 +215,7 @@ class AuthorizationService:
                 denial = AuthorizationDenialCode.SCOPE_NOT_AUTHORIZED
             else:
                 denial = AuthorizationDenialCode.PERMISSION_NOT_GRANTED
-            return denial, context, None, None, mutation
+            return denial, context, None, None, serialized
 
         denial = await self._admin_guard(action.action_id, resource, context)
         return (
@@ -211,7 +223,7 @@ class AuthorizationService:
             context,
             matched.id if denial is None else None,
             project_id if denial is None else None,
-            mutation,
+            serialized,
         )
 
     async def _admin_guard(
@@ -266,6 +278,8 @@ class AuthorizationService:
             ActionId.ADMIN_ROLE_GRANT_ISSUE: AdminRoleGrantIssueResourceContext,
             ActionId.ADMIN_ROLE_GRANT_REVOKE: AdminRoleGrantResourceContext,
             ActionId.ACTOR_SERVICE_PROVISION: ServiceActorProvisionResourceContext,
+            ActionId.ACTOR_PROFILE_READ: ActorProfileAdminReadResourceContext,
+            ActionId.ACTOR_IDENTITY_LINK_READ: ActorIdentityLinkAdminReadResourceContext,
         }.get(action_id)
         return expected is not None and isinstance(resource, expected)
 

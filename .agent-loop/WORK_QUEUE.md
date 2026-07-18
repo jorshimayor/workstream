@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | PR #143 open; coverage-gate behavior repair internally reviewed; replacement checks pending |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Implemented; deterministic evidence passed; exact-head internal review pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit user start |
+| `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Reviewed in isolated parallel worktree; pending its own PR and merge |
@@ -71,6 +71,8 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` on 2026-07-15 |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` on 2026-07-15 |
 | `WS-AUTH-001-08` | Bootstrap Access Administrator Grant | L1 | Merged through PR #131 as `aa0fdcd` on 2026-07-16 |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Merged through PR #132 as `299363a` on 2026-07-17 |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Merged through PR #143 as `053242b` on 2026-07-17 |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
 | `WS-XINT-001-PLAN` | Lifecycle Boundary Reconciliation | L1 | Merged through PR #139 as `5d353b6` on 2026-07-17 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |

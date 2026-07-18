@@ -69,6 +69,24 @@ class ActorSelfResourceContext(BaseModel):
         return self
 
 
+class ActorProfileAdminReadResourceContext(BaseModel):
+    """Server-composed selector for one administrative actor-profile read."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["actor_profile"]
+    resource_id: UUID
+    read_kind: Literal["profile"]
+
+
+class ActorIdentityLinkAdminReadResourceContext(BaseModel):
+    """Server-composed selector for one actor's administrative link read."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["actor_profile"]
+    resource_id: UUID
+    read_kind: Literal["identity_link"]
+
+
 class SystemResourceContext(BaseModel):
     """Non-authoritative placeholder for later fixed system actions."""
 
@@ -174,6 +192,8 @@ class ServiceActorProvisionResourceContext(BaseModel):
 
 AuthorizationResourceContext = (
     ActorSelfResourceContext
+    | ActorProfileAdminReadResourceContext
+    | ActorIdentityLinkAdminReadResourceContext
     | SystemResourceContext
     | PermissionCatalogueResourceContext
     | AdminRoleDefinitionsResourceContext

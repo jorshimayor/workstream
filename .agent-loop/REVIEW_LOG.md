@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09C Deterministic Evidence Passed
+
+PR #143 merged AUTH-09B as `053242b`, signed memory stopped, and the user
+explicitly started AUTH-09C. The repaired L1 contract passed every required
+preimplementation review track at exact SHA `76c5427`. The bounded
+implementation activates only `actor.profile.read` and
+`actor.identity_link.read` for exact targets under effective system authority.
+Real PostgreSQL lifecycle, two-session disabling races, rollback/privacy tests,
+and the live HTTP contract drill pass. Focused branch coverage is 91.06 percent
+for actors and 91.80 percent for authorization. Exact-head implementation
+review, PR publication, external checks, and explicit human merge approval
+remain; AUTH-09D is inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B Coverage Repair Internal Review Passed
 
 PR #143's replacement Backend run passed all 1,242 tests and measured 84.92
