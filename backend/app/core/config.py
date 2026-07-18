@@ -7,7 +7,7 @@ import binascii
 from contextvars import ContextVar
 import json
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
@@ -227,41 +227,12 @@ class Settings(BaseSettings):
             or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
-            supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
             obj = None
-            secret: SecretStr | None = None
-            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
-            settings: Settings | None = None
-            try:
-                _normalize_artifact_s3_endpoint_input(sanitized)
-                secret = (
-                    _extract_api_rate_limit_key_secret(sanitized)
-                    if "api_rate_limit_key_secret" in sanitized
-                    else None
-                )
-                s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
-                if secret is not None:
-                    sanitized["api_rate_limit_key_secret"] = None
-                for field_name in supplied_s3_fields:
-                    sanitized[field_name] = None
-                restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
-                try:
-                    settings = super().model_validate(sanitized, **kwargs)
-                finally:
-                    _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
-                if secret is not None:
-                    settings._api_rate_limit_key_secret = secret
-                settings._set_artifact_s3_static_secrets(s3_secrets)
-                settings._validate_artifact_s3_secret_contract()
-                return settings
-            except ValueError:
-                if settings is not None:
-                    _clear_settings_private_secrets(settings)
-                sanitized.clear()
-                secret = None
-                s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
-                settings = None
-                raise
+            return cls._validate_secret_mapping(
+                sanitized,
+                super().model_validate,
+                kwargs,
+            )
         return super().model_validate(obj, **kwargs)
 
     @classmethod
@@ -300,42 +271,56 @@ class Settings(BaseSettings):
             or _ARTIFACT_S3_SENSITIVE_INPUT_FIELDS.intersection(obj)
         ):
             sanitized = dict(obj)
-            supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
             obj = None
-            secret: SecretStr | None = None
-            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
-            settings: Settings | None = None
-            try:
-                _normalize_artifact_s3_endpoint_input(sanitized)
-                secret = (
-                    _extract_api_rate_limit_key_secret(sanitized)
-                    if "api_rate_limit_key_secret" in sanitized
-                    else None
-                )
-                s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
-                if secret is not None:
-                    sanitized["api_rate_limit_key_secret"] = None
-                for field_name in supplied_s3_fields:
-                    sanitized[field_name] = None
-                restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
-                try:
-                    settings = super().model_validate_strings(sanitized, **kwargs)
-                finally:
-                    _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
-                if secret is not None:
-                    settings._api_rate_limit_key_secret = secret
-                settings._set_artifact_s3_static_secrets(s3_secrets)
-                settings._validate_artifact_s3_secret_contract()
-                return settings
-            except ValueError:
-                if settings is not None:
-                    _clear_settings_private_secrets(settings)
-                sanitized.clear()
-                secret = None
-                s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
-                settings = None
-                raise
+            return cls._validate_secret_mapping(
+                sanitized,
+                super().model_validate_strings,
+                kwargs,
+            )
         return super().model_validate_strings(obj, **kwargs)
+
+    @classmethod
+    def _validate_secret_mapping(
+        cls,
+        sanitized: dict[str, object],
+        validator: Callable[..., Self],
+        kwargs: Mapping[str, object],
+    ) -> Self:
+        """Validate a mapping without retaining supplied secret material."""
+        supplied_s3_fields = _ARTIFACT_S3_SECRET_FIELDS.intersection(sanitized)
+        secret: SecretStr | None = None
+        s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+        settings: Settings | None = None
+        try:
+            _normalize_artifact_s3_endpoint_input(sanitized)
+            secret = (
+                _extract_api_rate_limit_key_secret(sanitized)
+                if "api_rate_limit_key_secret" in sanitized
+                else None
+            )
+            s3_secrets = _extract_artifact_s3_static_secrets(sanitized)
+            if secret is not None:
+                sanitized["api_rate_limit_key_secret"] = None
+            for field_name in supplied_s3_fields:
+                sanitized[field_name] = None
+            restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+            try:
+                settings = validator(sanitized, **kwargs)
+            finally:
+                _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
+            if secret is not None:
+                settings._api_rate_limit_key_secret = secret
+            settings._set_artifact_s3_static_secrets(s3_secrets)
+            settings._validate_artifact_s3_secret_contract()
+            return settings
+        except ValueError:
+            if settings is not None:
+                _clear_settings_private_secrets(settings)
+            sanitized.clear()
+            secret = None
+            s3_secrets = _EMPTY_ARTIFACT_S3_SECRETS
+            settings = None
+            raise
 
     @classmethod
     def settings_customise_sources(
