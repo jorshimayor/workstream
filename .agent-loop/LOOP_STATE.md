@@ -32,7 +32,8 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: bounded 09D-B implementation. The inactive
+- Current gate: 09D-B implementation, deterministic proof, and required
+  internal review pass; ready PR publication and external checks remain. The inactive
   `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` is the next same-initiative gate; it
   changes no action availability. No service caller becomes executable before
   AUTH-09E.

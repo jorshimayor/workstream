@@ -1,5 +1,21 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-B Internal Review Passed
+
+- Identity-link revoke/reactivate implementation, real PostgreSQL concurrency,
+  exact rollback/evidence proof, and the contributor-foundation sequencing
+  repair passed all required reviewer tracks at exact head `bd0b063b`.
+- QA's four proof blockers, architecture/docs' three closeout blockers, and the
+  contributor-contract's two scope/allowlist blockers were repaired without a
+  production compatibility path, threshold reduction, skip, or lifecycle
+  expansion.
+- Exact evidence is 112 authorization tests at 90.11 percent branch coverage,
+  two mandatory PostgreSQL nodes in 241.09 seconds, the live HTTP drill, Ruff,
+  both stale scans, Markdown links, 87 Agent Gates, merge-intent validation,
+  and diff integrity.
+- Ready PR publication is the remaining local gate. The contributor foundation
+  remains inactive behind merge, signed memory, and a separate explicit start.
+
 ## 2026-07-18 - AUTH Contributor Foundation Sequence Reconciled
 
 - Current REV planning correctly identified that deferring assignment and

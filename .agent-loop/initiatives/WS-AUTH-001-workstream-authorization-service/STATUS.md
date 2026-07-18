@@ -109,8 +109,9 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 ## Active implementation chunk
 
 `WS-AUTH-001-09D-B` - Identity-Link Lifecycle And Race Closure. Exact contract
-`9ec6390b` passed required L1 preimplementation review. Bounded implementation
-is the current gate.
+`9ec6390b` passed required L1 preimplementation review. Implementation,
+deterministic proof, and required internal review pass. Ready PR publication is
+the current gate.
 
 ## Current review branch
 
@@ -143,7 +144,7 @@ is the current gate.
 | `WS-AUTH-001-09C` | Merged | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Merged as `0ffdabf`; signed memory `eeb3dc2` passed and stopped. |
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
-| `WS-AUTH-001-09D-B` | Active | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Exact contract `9ec6390b` passed required L1 preimplementation review. |
+| `WS-AUTH-001-09D-B` | Ready for PR | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Implementation, deterministic proof, and required internal review pass. |
 | `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Proposed | - | - | Contributor-field clean cut and canonical-human lineage after 09D-B. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after the contributor foundation. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
@@ -166,8 +167,9 @@ merged feature manifests and separate human starts exist.
 AUTH-09C has no remaining blocker. PR #146 merged as `0ffdabf` and signed
 memory passed at `eeb3dc2`. PR #148 merged AUTH-09D-A as `99ae4c9`; signed
 memory `cf8a3e8` passed and stopped. The user explicitly started AUTH-09D-B;
-exact contract `9ec6390b` passed required L1 review and bounded implementation
-is active. It must not add service grants,
+exact contract `9ec6390b` passed required L1 review. Implementation,
+deterministic proof, and required internal review pass; ready PR publication is
+the current gate. It must not add service grants,
 dynamic assignments, token-role authority, service admission, or consumer
 feature-action activation. The contributor foundation is the next
 same-initiative gate but remains inactive until merge/memory and an explicit
