@@ -19,9 +19,9 @@ gated 09D-B. This PR implements only 09D-A.
 ## What Changed
 
 - Added migration `0026_actor_profile_lifecycle` with profile reactivation
-  provenance, normalized 1-to-500-byte reason guards, fresh profile/link
-  transition attribution, truthful reactivation direction, and fail-closed
-  upgrade/downgrade checks.
+  provenance, API-equivalent whitespace normalization and 1-to-500-byte reason
+  guards, fresh profile/link transition attribution, truthful reactivation
+  direction, and fail-closed upgrade/downgrade checks.
 - Added exact profile suspend, reactivate, and terminal deactivate routes using
   reservation-first idempotency, the central AUTH kernel, serialized authority
   locks, one route-owned commit, and bounded responses.
@@ -53,7 +53,10 @@ changed.
 
 ## Tests And Checks Run
 
-- Five exact isolated PostgreSQL migration nodes: passed in 181.50 seconds.
+- Five exact isolated PostgreSQL migration nodes: passed in 250.95 seconds.
+- Repaired constraint and dirty-row nodes: passed in 111.55 seconds, covering
+  all 29 supported-runtime `str.strip()` whitespace code points and NBSP
+  previous-head refusal.
 - Expanded real lifecycle/service/failure matrix: passed in 100.36 seconds.
 - PostgreSQL-observed concurrency node: passed in 140.69 seconds.
 - Three historical owner-split migration nodes: passed in 199.52 seconds.
@@ -67,7 +70,8 @@ changed.
 ## Test Delta
 
 Tests assert exact action/permission/owner parity, normalized reason bounds,
-fresh transition provenance, denial privacy, service-target invariance, all nine
+API/database whitespace parity for all 29 supported-runtime points, fresh
+transition provenance, denial privacy, service-target invariance, all nine
 transaction failure stages, reusable failed idempotency keys, and actual
 PostgreSQL waiter observation. No test was skipped, weakened, or rewritten to
 conceal behavior.
@@ -82,7 +86,7 @@ modified. GitHub Backend remains authoritative for the full suite.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture,
 migration/data integrity, CI integrity, docs, reuse/dedup, and test delta all
-pass exact integrated head `cc7e6cc4c12d2f378c71a9ddd65ebe8f3bed9643`
+pass exact integrated head `ef80338a799b8e735987e712b85e9ed48fc4b362`
 after every valid finding was repaired.
 
 ## Remaining Risks

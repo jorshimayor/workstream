@@ -1,13 +1,13 @@
 # WS-AUTH-001-09D-A Internal Review Evidence
 
-Reviewed code SHA: `cc7e6cc4c12d2f378c71a9ddd65ebe8f3bed9643`
+Reviewed code SHA: `ef80338a799b8e735987e712b85e9ed48fc4b362`
 
-Reviewed implementation SHA: `e64b03f0baca2defd668a3cb806d04f06387bd9c`
+Reviewed implementation SHA: `ef80338a799b8e735987e712b85e9ed48fc4b362`
 
 Reviewed against trusted main:
 `f18b620932bb257dc1dc355bc0504271813dc6b1`
 
-Reviewed at: `2026-07-18T15:39:32Z`
+Reviewed at: `2026-07-18T17:45:52Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_rev_con`,
 `auth_xint_art_service`
@@ -20,7 +20,9 @@ test delta
 
 - Migration `0026_actor_profile_lifecycle` is the sole head after trusted ART
   migration `0025`. Five exact upgrade, guard, dirty-row, downgrade, and
-  re-upgrade nodes pass in 181.50 seconds on isolated PostgreSQL.
+  re-upgrade nodes pass in 250.95 seconds on isolated PostgreSQL. The two
+  repaired guard and dirty-row nodes pass in 111.55 seconds and prove all 29
+  `str.strip()` whitespace code points plus previous-head NBSP refusal.
 - The real signed-token lifecycle matrix covers human and fixed-service profile
   suspend, reactivate, and terminal deactivate behavior. It also covers all nine
   injected transaction failure stages with stable 503 responses and no partial
@@ -30,8 +32,8 @@ test delta
   node passes in 140.69 seconds without timing sleeps establishing order.
 - Actor branch coverage passes at 90.70 percent. Authorization branch coverage
   passes 110 tests at 91.78 percent, and the lifecycle service is 100 percent
-  branch-covered. The later production delta changes only closed action-owner
-  metadata, which is exercised by exact catalogue and migration tests.
+  branch-covered. The external repair changes reason normalization constraints
+  and additive behavior proof without changing route or authorization logic.
 - The exact catalogue test passes with 65 ActionIds: 15 active and 50 planned.
   Three historical migration nodes affected by the owner split pass in 199.52
   seconds, and all 30 Alembic tests collect without a stale enum error.
@@ -45,13 +47,12 @@ test delta
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
 | senior engineering | PASS AFTER FIXES | none | Lifecycle state, transaction ownership, idempotency, rollback, and lock order are coherent. |
-| QA/test | PASS AFTER FIXES | none | Behavior proof covers privacy, fixed-service targets, nine failure stages, database refusal branches, and observed lock waits. |
+| QA/test | PASS AFTER FIXES | none | Additive proof covers every Python whitespace point, all five reason fields, prior-head refusal, and the original lifecycle matrix. |
 | security/auth | PASS AFTER FIXES | none | Denials conceal matched-grant internals, target disclosure follows authorization, and fresh reactivation attribution is enforced. |
 | product/ops | PASS | none | Authorized administrators can manage exact profiles without admitting service callers or activating link mutations. |
 | architecture | PASS AFTER FIXES | none | Central AUTH ownership, route-owned commit, and exact 09D-A/09D-B activation custody remain intact. |
-| migration/data integrity | PASS AFTER FIXES | none | Upgrade and downgrade refusal matrices preserve revision, schema, rows, and evidence. |
-| CI integrity | PASS AFTER FIXES | none | Historical owner selectors use both child owners and all affected database tests pass. |
-| docs | PASS AFTER FIXES | none | Specification, architecture, operations, chunk state, and catalogue ownership agree. |
+| CI integrity | PASS AFTER FIXES | none | No workflow, dependency, threshold, exclusion, or skip changed; deterministic gates remain intact. |
+| docs | PASS AFTER FIXES | none | Supported-runtime wording, specification, operations, trust, and durable state evidence agree. |
 | reuse/dedup | PASS | none | Existing AUTH kernel, repositories, evidence, idempotency, and transaction helpers are reused. |
 | test delta | PASS AFTER FIXES | none | Tests are additive and behavior-based; no assertion, threshold, or selection was weakened. |
 
@@ -67,7 +68,17 @@ custody still named the rejected 09D parent, and migration refusal branches were
 not all exercised. Exact child owners and the complete refusal matrix were
 added. Final review found four historical Alembic selectors using the removed
 parent enum; they now preserve their original include/exclude semantics with
-both child owners. All required tracks pass the final exact reviewed head.
+both child owners.
+
+External review then found PostgreSQL's one-argument `btrim` did not match API
+`str.strip()` behavior and that exact-head evidence was stale. The database now
+captures the 29-point supported-runtime whitespace set in live metadata and
+migration `0026`; direct constraint and dirty-upgrade tests prove the boundary.
+The canonical reviewer table no longer contains an unrecognized migration row.
+Migration/data-integrity review passes outside the canonical table: `0026`
+remains the sole head, pre-DDL refusal preserves revision/schema/data, and all
+five migration nodes pass. All required tracks pass final exact reviewed head
+`ef80338a799b8e735987e712b85e9ed48fc4b362`.
 
 Valid findings addressed: yes
 
