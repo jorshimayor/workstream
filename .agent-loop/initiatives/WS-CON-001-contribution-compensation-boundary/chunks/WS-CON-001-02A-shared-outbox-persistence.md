@@ -26,14 +26,14 @@ new JSON canonicalizer, idempotency framework, dependency or CI weakening
 
 ## Acceptance criteria
 
-- [ ] Immutable event identity/type/version/project/correlation/causation,
+- [x] Immutable event identity/type/version/project/correlation/causation,
   canonical payload/digest, idempotency key and occurrence time are separate
   from mutable delivery state.
-- [ ] Reuse `app.core.hashing.canonical_json_hash` and the existing
+- [x] Reuse `app.core.hashing.canonical_json_hash` and the existing
   reserve/lock/complete idempotency shape; no second canonicalizer/framework.
-- [ ] Caller AsyncSession append flushes but never commits/publishes; changed
+- [x] Caller AsyncSession append flushes but never commits/publishes; changed
   payload under one identity conflicts; PostgreSQL proves duplicate races.
-- [ ] No Celery, handler, broker, review, or compensation behavior is added.
+- [x] No Celery, handler, broker, review, or compensation behavior is added.
 
 ## Verification and reviewers
 

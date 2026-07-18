@@ -2,9 +2,9 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `053242b`, merged AUTH-09B PR #143 and REV
-  PR #128, including AUTH-09A, AUTH PR #140, and the earlier WS-XINT PR #139
-  boundary;
+- trusted `origin/main` refreshed to `e118e33`, including merged CON-01 PR #144,
+  AUTH-09B PR #143, REV PR #128, AUTH-09A, AUTH PR #140, and the earlier
+  WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -46,6 +46,38 @@
   action, permission, or CON dependency.
 - No shared transactional outbox exists with the required generic dispatcher,
   claim fencing, replay, and typed handler outcome contract.
+
+## CON-02A focused discovery
+
+- The current Alembic head is `0024_service_link_verification`; CON-02A owns
+  the next linear revision and must import its model through
+  `backend/app/db/models.py` so metadata and migration truth agree.
+- `app.core.hashing.canonical_json_hash` is the only repository canonical JSON
+  encoder. It sorts object keys, rejects non-finite numbers, uses compact UTF-8
+  JSON, and returns a `sha256:` digest. The outbox must call it directly and
+  must not introduce another serializer or digest helper.
+- `AuthorityIdempotencyRepository` establishes the local concurrency pattern:
+  insert with PostgreSQL `ON CONFLICT DO NOTHING`, lock the existing namespace
+  row, compare the canonical digest, and complete through the caller's
+  `AsyncSession` without committing. Outbox append can reuse this sequence
+  without importing AUTH or creating a second generic idempotency framework.
+- The common event envelope requires stable event ID, type, version, producer,
+  project, correlation, causation, idempotency key, canonical object payload,
+  and database-authoritative occurrence time. Delivery attempt/state fields
+  are operational metadata and must be independently mutable without allowing
+  immutable envelope drift.
+- CON-02B has no migration allowance. CON-02A must therefore land the complete
+  feature-neutral persistence shape needed later for pending/claimed/retryable/
+  acknowledged/dead-letter dispatch, claim generation/lease, attempts,
+  eligibility, bounded failure evidence, and retention while exposing only
+  append/replay behavior in this chunk.
+- Existing audit and AUTH repositories flush and refresh on the supplied
+  session but never commit or publish. PostgreSQL triggers are already used for
+  append-only/immutable custody and guarded downgrade checks; the shared outbox
+  should follow those repository conventions.
+- There is no existing outbox module, delivery executor, route, dispatcher registry,
+  broker publication seam, or permission to reuse. CON-02A therefore remains
+  feature-neutral and authorization-neutral.
 
 ## Canonical merged changes affecting CON
 
