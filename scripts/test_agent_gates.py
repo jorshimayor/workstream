@@ -125,7 +125,7 @@ BACKEND_MINIO_START_COMMAND = "\n".join(
     (
         f"image='{MINIO_IMAGE}'",
         "docker run --detach --rm --name workstream-minio \\",
-        "  --publish 9000:9000 \\",
+        "  --publish 127.0.0.1:9000:9000 \\",
         "  --env MINIO_ROOT_USER=workstream-minio \\",
         "  --env MINIO_ROOT_PASSWORD=workstream-minio-secret-key \\",
         '  "$image" server /data --address :9000',
