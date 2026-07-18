@@ -204,6 +204,19 @@ MinIO, and AWS S3, including region, bucket or private-root identity, normalized
 endpoint identity where applicable, private prefix, and addressing style; it
 contains no credential or resolved secret.
 
+Every descriptor also carries the reserved `adapter`, `backend`, and
+`provider_profile` keys. S3-compatible profiles then require exactly these
+additional keys; missing, unknown, or extra keys fail closed:
+
+| Provider profile | Exact additional descriptor keys |
+|---|---|
+| `minio-v1` | `addressing_style`, `bucket`, `endpoint_identity`, `private_prefix`, `region` |
+| `aws-s3-v1` | `addressing_style`, `bucket`, `private_prefix`, `region` |
+
+`endpoint_identity` is the non-secret SHA-256 identity of the normalized MinIO
+endpoint. It is required for `minio-v1` and forbidden for native `aws-s3-v1`,
+which has no configured endpoint.
+
 For LocalStorage, the durable root must already exist with owner-private
 permissions before application startup. Its descriptor stores only a hash over
 the normalized path plus filesystem device/inode identity. Replacing or

@@ -4809,6 +4809,27 @@ def test_agent_gate_dependencies_and_workflow_are_pinned() -> None:
     )
 
 
+def test_local_minio_compose_is_regression_protected() -> None:
+    """Keep the repository-managed MinIO proof pinned and loopback-only."""
+    compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+    minio = compose["services"]["minio"]
+    assert set(minio) == {
+        "image",
+        "command",
+        "environment",
+        "ports",
+        "healthcheck",
+        "volumes",
+    }
+    assert minio["image"] == MINIO_IMAGE
+    assert minio["command"] == "server /data --address :9000"
+    assert minio["environment"] == {
+        "MINIO_ROOT_USER": "workstream-minio",
+        "MINIO_ROOT_PASSWORD": "workstream-minio-secret-key",
+    }
+    assert minio["ports"] == ["127.0.0.1:9000:9000"]
+
+
 def test_backend_coverage_thresholds_are_regression_protected() -> None:
     """Keep both the approved global floor and stricter artifact floor fail closed."""
     workflow_path = ROOT / ".github/workflows/backend.yml"
@@ -5867,6 +5888,7 @@ def main() -> int:
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
         test_agent_gate_dependencies_and_workflow_are_pinned,
+        test_local_minio_compose_is_regression_protected,
         test_backend_coverage_thresholds_are_regression_protected,
         test_artifact_coverage_phase_is_derived_from_work_queue,
         test_stale_artifact_contracts_cutover_rejects_reached_terms_only,
