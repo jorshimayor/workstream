@@ -2253,21 +2253,29 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             for response in concealed_responses
         } == {("Actor not found", "actor_not_found", "Actor not found", False)}
         async with db_session.get_session_factory()() as session:
+            await session.execute(text("alter table actor_profiles disable trigger user"))
+            await session.execute(
+                text("alter table actor_identity_links disable trigger user")
+            )
             await session.execute(
                 text(
                     "update actor_profiles set status='active',suspended_by=null,"
-                    "suspended_at=null,suspension_reason=null where id=:actor"
+                    "suspended_at=null,suspension_reason=null,reactivated_by=null,"
+                    "reactivated_at=null,reactivation_reason=null where id=:actor"
                 ),
                 {"actor": str(concealed_targets["suspended"])},
             )
             await session.execute(
                 text(
                     "update actor_identity_links set status='active',revoked_by=null,"
-                    "revoked_at=null,revoked_reason=null "
+                    "revoked_at=null,revoked_reason=null,reactivated_by=null,"
+                    "reactivated_at=null,reactivation_reason=null "
                     "where actor_profile_id=:actor"
                 ),
                 {"actor": str(concealed_targets["no_active_link"])},
             )
+            await session.execute(text("alter table actor_identity_links enable trigger user"))
+            await session.execute(text("alter table actor_profiles enable trigger user"))
             await session.commit()
 
         malformed_responses = [
@@ -3369,14 +3377,17 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
 
     async def reset_profile(actor_id: UUID) -> None:
         async with db_session.get_session_factory()() as session:
+            await session.execute(text("alter table actor_profiles disable trigger user"))
             await session.execute(
                 text(
                     "update actor_profiles set status='active',suspended_by=null,"
                     "suspended_at=null,suspension_reason=null,deactivated_by=null,"
-                    "deactivated_at=null,deactivation_reason=null where id=:actor"
+                    "deactivated_at=null,deactivation_reason=null,reactivated_by=null,"
+                    "reactivated_at=null,reactivation_reason=null where id=:actor"
                 ),
                 {"actor": str(actor_id)},
             )
+            await session.execute(text("alter table actor_profiles enable trigger user"))
             await session.commit()
 
     async def revoke_link(actor_id: UUID, custodian_id: UUID) -> None:
@@ -3395,11 +3406,19 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
     async def reset_link(actor_id: UUID) -> None:
         async with db_session.get_session_factory()() as session:
             await session.execute(
+                text("alter table actor_identity_links disable trigger user")
+            )
+            await session.execute(
                 text(
                     "update actor_identity_links set status='active',revoked_by=null,"
-                    "revoked_at=null,revoked_reason=null where actor_profile_id=:actor"
+                    "revoked_at=null,revoked_reason=null,reactivated_by=null,"
+                    "reactivated_at=null,reactivation_reason=null "
+                    "where actor_profile_id=:actor"
                 ),
                 {"actor": str(actor_id)},
+            )
+            await session.execute(
+                text("alter table actor_identity_links enable trigger user")
             )
             await session.commit()
 
