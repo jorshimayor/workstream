@@ -4171,6 +4171,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
             "Inactive until 02A3 merge and explicit user start" in work_queue
         )
         assert "ART-02B1 remains inactive" in loop_state
+        assert "Do not start AUTH-09C" not in work_queue
+        assert "external checks remain pending" not in work_queue
     elif selected_phase == artifact_phases[0]:
         assert selected_phase in work_queue
         assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status

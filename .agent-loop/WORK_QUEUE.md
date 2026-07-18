@@ -88,17 +88,16 @@ AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
 merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
 and its AUTH owner reconciliation merged through PR #140 as `d541521`.
 AUTH-09A merged through PR #132 as `299363a`, and signed schema-v2 memory
-stopped. AUTH-09B merged through PR #143 as `053242b`. Do not start AUTH-09C or
+stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
+started AUTH-09C, whose PR #146 is in external repair. Do not start AUTH-09D or
 POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
-`WS-ART-001-01`, the AWS-first planning amendment, `02A1`, and `02A2` are
-merged. R2 and Flow Node are deferred. The user explicitly started `02A3` on
-2026-07-16. Its merged-main deterministic proof and exact-SHA internal review
-are complete; external checks remain pending and `02B1` must not start
-automatically.
+`WS-ART-001-01`, the AWS-first planning amendment, `02A1`, `02A2`, and `02A3`
+are merged; PR #141 merged `02A3` as `a10d901`. R2 and Flow Node are deferred.
+`02B1` remains inactive until a separate explicit user start.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.
