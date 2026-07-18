@@ -287,16 +287,19 @@ migration, audit-history treatment, cutover ownership, and rollback proof.
 WS-REV, WS-CON, and the artifact-storage specification continue to own their
 resources and state transitions.
 
-Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
-solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
-AUTH-08 uses `0022`, and the AUTH-09A fixed-service identity foundation uses
-`0023`. AUTH-09B uses `0024` for service-link verification timestamps. AUTH-10
-uses `0025`, AUTH-11 uses `0026`, AUTH-12 uses `0027`, AUTH-13 uses `0028`,
-AUTH-14 uses `0029`, and AUTH-15 uses `0030`
+At D15 acceptance, migration custody was recorded as follows: AUTH-05A owned
+`0018`, AUTH-05B solely owned `0019`, AUTH-06 used `0020`, AUTH-07A action
+evidence used `0021`, AUTH-08 used `0022`, and the AUTH-09A fixed-service
+identity foundation used `0023`. AUTH-09B used `0024` for service-link
+verification timestamps. AUTH-10 used `0025`, AUTH-11 used `0026`, AUTH-12 used
+`0027`, AUTH-13 used `0028`, AUTH-14 used `0029`, and AUTH-15 used `0030`
 so every new protected surface receives typed/PostgreSQL ActionId evidence
 parity in its owning cutover. Feature-gated REV/ART additive registrations use
 the next trusted-main migration head when their complete contracts become
 executable; they do not reserve a number while blocked.
+
+D29 supersedes only D15's future AUTH-10 through AUTH-15 migration allocation.
+The merged historical ownership through AUTH-09B `0024` remains unchanged.
 
 ## D16: Split AUTH-07 at the catalogue and executable-kernel boundary
 
@@ -454,7 +457,7 @@ idempotency hashes the requested role; revoke derives the role from the locked
 grant. Same key/different role mismatches, new-key duplicate same-role issue is
 a stable audited conflict, and replay reauthorizes before disclosure.
 
-AUTH-10 replaces current typed and PostgreSQL validators in migration `0025`
+AUTH-10 replaces current typed and PostgreSQL validators in migration `0026`
 without editing `0018`, `0019`, or `0022`. It fails closed if obsolete combined
 or replacement evidence exists and refuses an unsafe downgrade rather than
 converting or deleting evidence. Only issued and revoked success events remain.
@@ -571,8 +574,8 @@ PermissionId mapping, canonical target, principal class, candidates, guards,
 surface, and revalidation rule before runtime edits. Each owning migration
 updates current typed and PostgreSQL audit validation; no chunk may promise an
 active surface whose ActionId is absent. AUTH-11 therefore owns migration
-`0026`, and later migration reservations shift through AUTH-15 as recorded in
-D15 and D28. AUTH-16 aggregates proof; it does not discover or backfill missing
+`0027`, and later migration reservations shift through AUTH-15 as recorded in
+D29. AUTH-16 aggregates proof; it does not discover or backfill missing
 registrations.
 
 ## D28: Service provisioning records an unverified issuer binding
@@ -593,9 +596,10 @@ Provisioning is not proof that the service presented a token. AUTH-09B migration
 service links, removes its implicit default, and requires human links to remain
 verified. Human first access writes database time explicitly. New service
 profiles and links keep `last_seen_at` and `last_verified_at` null until AUTH-09E
-successfully verifies that exact service token. The migration allocation shifts
-AUTH-10 through AUTH-15 to `0025` through `0030`; historical migrations remain
-immutable.
+successfully verifies that exact service token. The migration allocation then
+shifted AUTH-10 through AUTH-15 to `0025` through `0030`; D29 supersedes only
+that future allocation after ART claimed the next trusted-main head. Historical
+migrations remain immutable.
 
 Both central AUTH and legacy actor dependencies reject service subjects before
 actor resolution or timestamp mutation until AUTH-09E. Provisioning a service
@@ -614,3 +618,17 @@ invalidation direction because the new binding invalidates cached negative
 identity-absence projections. It does not claim that a service permission was
 previously or is now executable. AUTH-09E remains the only runtime service
 admission owner.
+
+## D29: ART `0025` shifts future AUTH migration custody
+
+Status: accepted cross-initiative reconciliation on 2026-07-17.
+
+AUTH-09B remains the immutable owner of migration `0024`. WS-ART-001-02A3 owns
+migration `0025` for the ArtifactStore v2 clean cut. Future, inactive AUTH
+reservations therefore shift exactly once: AUTH-10 owns `0026`, AUTH-11 owns
+`0027`, AUTH-12 owns `0028`, AUTH-13 owns `0029`, AUTH-14 owns `0030`, and
+AUTH-15 owns `0031`.
+
+This decision supersedes only the future migration-number allocations in D15,
+D27, and D28. It does not modify any merged migration, action ownership,
+authorization behavior, or feature activation boundary.

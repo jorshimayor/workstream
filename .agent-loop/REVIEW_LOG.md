@@ -2136,3 +2136,173 @@ creation while preserving the stabilized submission artifact digest as lineage.
 Current gate: commit the planning baseline, run required internal plan review,
 repair valid findings, publish one planning PR, and stop. No runtime chunk starts
 from this record.
+
+## 2026-07-16 - WS-ART-001-02A3 Pre-Main Review Passed (Superseded)
+
+Reviewed code SHA: `935b1a2bb4663828ecde173b3f91c682250a1aed`.
+
+ArtifactStore v1 was replaced by the byte-only v2 contract, LocalStorage and
+the empty pre-production schema were cleanly cut over, the deployment namespace
+fence and scratch cleanup were activated, and no product ingest, verification,
+recovery, S3, or AUTH action was activated.
+
+All nine required tracks passed for that pre-main revision after repair.
+Deterministic proof includes
+real PostgreSQL cancellation state, concurrent-writer migration refusal, 90
+percent changed-subsystem coverage, stale-contract/wording checks, and the
+engineering evidence gate.
+
+Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A3-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A3-pr-trust-bundle.md`
+
+This review was invalidated for publication when merged-main reconciliation
+changed the candidate. The current gate is final exact-SHA review and fresh
+evidence for the merged-main ART-02A3 revision. Do not publish, merge, or start
+`WS-ART-001-02B1` from this historical record.
+
+## 2026-07-17 - WS-ART-001-02A3 Merged-Main Review Passed Before Gate Repair
+
+Reviewed code SHA: `441d39230a341f2c43dd548776a2437ae6b2395d`.
+
+All nine required tracks passed with no remaining findings after atomic
+provider-replica finalization and LocalStorage cleanup ownership were repaired.
+Every reviewer session was closed. GitHub Agent Gates then found a process-only
+successor-heading mismatch and a stale durable-state assertion. This record is
+historical; the process-only repair must receive fresh exact-SHA review and
+evidence before publication resumes.
+
+## 2026-07-17 - WS-ART-001-02A3 AUTH-Reconciled Review Repair
+
+The first internal review after merging AUTH PR #140 found four valid issues:
+provider initialization preceded the startup namespace fence, the LocalStorage
+fingerprint did not distinguish same-path root replacement, the Operator read
+port used vague generic methods, and same-item `replay_required` recovery lacked
+an end-to-end accounting/receipt regression.
+
+The repair now claims and validates the namespace before adapter construction,
+binds LocalStorage to a pre-provisioned private root's hashed filesystem
+identity, exposes exact Operator read method names, and proves one same-item
+replay produces one content, replica, receipt, and accounting transition.
+Deterministic proof passed 81 ART/PostgreSQL/conformance tests plus 177
+preparation/config/application tests with 93.35 percent combined changed-scope
+coverage. The first review results are superseded; fresh exact-SHA review and
+evidence remain mandatory before PR #141 is republished.
+
+## 2026-07-17 - WS-ART-001-02A3 Startup Claim Repair
+
+The first exact-SHA review of `ddc9dad` found a residual LocalStorage startup
+race and a typed-factory sequencing mismatch. Namespace validation observed a
+root before adapter construction, so a same-path replacement could still
+receive layout mutation. Real `s3_compatible` startup also failed in local-only
+namespace preflight instead of through the canonical typed unavailable-provider
+error. Product/ops additionally found that the planned Operator port retained
+free-form resource-type strings and one stale generic method summary.
+
+The repair keeps `ArtifactStore` byte-only and introduces a separate
+composition-only bootstrap. The typed factory first opens and holds the existing
+private root without layout mutation, PostgreSQL admits that exact namespace
+identity, and initialization rechecks the configured path before writing only
+through the held descriptor. `s3_compatible` now fails at the single typed
+factory boundary before namespace work. Operator binding and audit lookups use
+closed resource vocabularies and exact method names. All prior reviewer sessions
+were closed; this candidate requires fresh deterministic coverage and all nine
+exact-SHA reviewer tracks before evidence can be refreshed.
+
+The first review of the startup-claim candidate then found two Low issues. A
+future provider descriptor could collide with canonical `backend`, `adapter`,
+or `provider_profile` keys, and the glossary retained two v1 provider-reference
+phrases. The interface now rejects every reserved descriptor key, regression
+coverage pins that rule, and the glossary uses the exact opaque
+`provider_object_ref` term. Those reviewer sessions were closed; no prior pass
+or pass-with-risk result is reusable for the repaired revision.
+
+The next review round found one remaining Low documentation mismatch shared by
+five tracks: `ArtifactOperationReceipt` still claimed a response digest and
+provider/database timestamps that do not exist in the v2 model. The canonical
+glossary and artifact specification now enumerate the exact Workstream-owned
+put-acknowledgement fields, resolve adapter/namespace identity through the
+linked replica, and explicitly forbid a response digest or provider receipt.
+All reviewer sessions were closed, and this documentation repair requires one
+final exact-SHA review round.
+
+That review found one High and one Medium implementation issue plus one Low
+documentation mismatch. LocalStorage enforced private mode but not runtime-user
+ownership, and `ArtifactStoreNamespaceIdentity` accepted a mutable list despite
+being frozen. Local directory, marker, and object descriptor checks now require
+the current effective UID; root revalidation also requires exact `0700` mode.
+Namespace descriptor containers must be tuples, with regression tests for both
+rules. ADR 0013 and the artifact specification now describe the actual
+factory-bootstrap, PostgreSQL-claim, byte-store initialization sequence. All
+reviewer sessions were closed; the repaired SHA requires fresh review.
+
+The next exact-SHA review found that provider descriptor keys were only
+canonicalized, not closed by provider profile; the local layout marker accepted
+owner-executable mode; and three active summaries still named direct
+`ExternalServiceAdapterFactory[ArtifactStore]` construction. The namespace
+identity now rejects unsupported profiles and any missing or unknown
+`local-v2` key, the marker requires exact `0600`, and all active summaries use
+the bootstrap -> PostgreSQL namespace claim -> byte-store initialization
+sequence. The stale-evidence finding raised during the review was a sequencing
+false positive: exact-SHA evidence is written only after reviewer sessions
+complete. All reviewer sessions were closed; this repair requires fresh review.
+
+The next exact-SHA review found one Low LocalStorage layout issue: a root with a
+valid v2 marker could retain unknown top-level entries. Initialization now
+accepts only the marker, `objects`, `tmp`, and `locks` entries, with regression
+proof that an added legacy directory fails closed. All reviewer sessions were
+closed; the repaired SHA requires fresh review.
+
+During the next exact-SHA review, `origin/main` advanced through AUTH-09A PR
+#132. Review stopped immediately because the ART branch still carried a sibling
+`0023` migration and its diff would have obscured merged AUTH history. The
+latest `main` is now merged in full. AUTH's `0023_service_actor_identity`,
+service-identity runtime, merge intent, tests, and evidence remain unchanged;
+At that checkpoint ART was renumbered to `0024_artifact_store_v2` and descended
+from AUTH-09A. The
+authored queue records AUTH-09A complete and ART-02A3 at its independent gate.
+All reviewer sessions were closed; the merged candidate requires fresh
+deterministic proof and exact-SHA review.
+
+The final CI-integrity review found that the cumulative artifact-foundation
+coverage source set omitted the new closed product-capability interface module.
+The 90 percent workflow gate and its deterministic command-shape assertion now
+include `app/interfaces/artifact_operations.py`. All reviewer sessions were
+closed; the repaired SHA requires fresh exact-SHA review.
+
+The next review found two Low closure gaps. The active and next ART focused
+commands did not explicitly measure the operations interface, and bootstrap
+initialization closed descriptors for configuration and operating-system errors
+but not every sanitized `ArtifactStoreError`. Both focused commands now include
+the operations interface, and initialization closes on all store errors with a
+regression test for an integrity failure. All reviewer sessions were closed;
+the repaired SHA requires fresh review.
+
+The next review found that claim validation still occurred before the cleanup
+guard and that exact root names did not constrain nested LocalStorage contents.
+All namespace-claim failures now close pinned descriptors. Existing marked
+stores are validated before mutation against the real local grammar: one
+`objects/sha256` tree with canonical digest names, bounded private put
+temporaries, canonical digest locks, and matched crash-recovery hard links.
+Foreign nested entries, owners, modes, link counts, and recovery links fail
+closed. Regression proof covers mismatched/repeated claims, foreign entries at
+every level, and reopening a valid populated store. All reviewer sessions were
+closed; the repaired SHA requires fresh review.
+
+## 2026-07-17 - WS-ART-001-02A3 Merged-Main Final Review
+
+The branch merged trusted `main` at `0302bcf`, preserving the independently
+owned REV planning and the canonical AUTH `0023_service_actor_identity` -> ART
+then-current `0024_artifact_store_v2` migration order. Deterministic proof then
+passed 268
+ART-focused tests at 93.18 percent changed-scope coverage, 56 byte-store
+contract tests at 91.08 percent, four real PostgreSQL migration-safety cases,
+Ruff, 92.0 percent docstring coverage, 80 agent-gate tests, stale-contract and
+wording scans, Markdown links, and diff hygiene.
+
+The final internal review found no remaining implementation, architecture, QA,
+security, product/ops, reuse, or test-delta defect. Docs and CI correctly
+rejected the stale pre-final evidence record. This state-transition commit is
+therefore the exact review target; its evidence-only descendant must bind the
+reviewed SHA, record every reviewer run, pass the evidence gate, and then receive
+final CI/docs confirmation before external checks resume.

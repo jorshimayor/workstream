@@ -79,12 +79,13 @@ access.
 
 S3CompatibleArtifactStore and LocalStorageAdapter are registered explicitly
 through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Only the artifact-storage
-orchestration service receives the writable port through composition-root
-dependency injection. Product modules and Celery jobs receive typed artifact
+`ExternalServiceAdapterFactory[ArtifactStoreBootstrap]`. The composition root
+claims the bootstrap's exact namespace in PostgreSQL before initialization
+yields the writable `ArtifactStore`. Only artifact-storage orchestration
+receives that port. Product modules and Celery jobs receive typed artifact
 operations from that owner. No service locator, plugin discovery, concrete
-import, fallback constructor, dual factory, or bypassing writable-port
-injection exists.
+import, fallback constructor, dual factory, or bypassing writable-port injection
+exists.
 
 ## D13 - Private S3 Deployment
 
@@ -101,7 +102,11 @@ access mutation are denied. Static credentials are local/CI MinIO only.
 ## D14 - Clean Cut
 
 The `flow_node` backend value and ArtifactStore v1 contract are removed in
-02A3. Pre-production data may be rebuilt. No backward compatibility is retained.
+02A3. Migration `0025` refuses populated v1 artifact tables before DDL and
+preserves their prior schema and rows. An empty pre-production environment may
+be reprovisioned out of band and authoritative bytes reingested through v2; the
+migration performs no fabricated backfill. No backward compatibility is
+retained.
 
 ## D15 - Route Deployment Claims
 
@@ -244,8 +249,8 @@ must not invent a service principal, inspect AUTH grants or static matrix
 membership, or activate an authorization action.
 
 The seven fixed service identities and complete 25-action custody transfer are
-defined in
-`../WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_ART_HANDOFF.md`. Operator
-verification retry remains an independently authorized human action. Service
-identity, Celery executor identity, and execution-generation fencing never
-substitute for one another.
+defined canonically in
+`../WS-AUTH-001-workstream-authorization-service/ACTIVATION_CUSTODY.md` and its
+`WS-AUTH-001-ART-CUSTODY` chunk contract. Operator verification retry remains
+an independently authorized human action. Service identity, Celery executor
+identity, and execution-generation fencing never substitute for one another.

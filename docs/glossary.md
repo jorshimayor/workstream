@@ -84,7 +84,7 @@ protocol observations are replica details, not this record's identity.
 
 The per-item mutable upload-operation ledger inside an
 `ArtifactUploadSession`. It owns byte reservation, logical role, scoped
-idempotency, request digest, CAS state, provider operation reference, and the
+idempotency, request digest, CAS state, opaque `provider_object_ref`, and the
 resulting `ArtifactContent`. It is not an `ArtifactBinding`.
 
 ## ArtifactBinding
@@ -96,15 +96,19 @@ records Workstream meaning and provenance, not storage-provider state.
 
 ## ArtifactReplica
 
-One provider copy of `ArtifactContent`, identified by opaque provider artifact
-and optional bounded protocol observations. Verification, availability, and
-integrity states belong here and do not create task or review states. Logical
-Workstream references are represented only by `ArtifactBinding`.
+One provider copy of `ArtifactContent`, identified by an opaque
+`provider_object_ref` and optional bounded protocol observations. Verification,
+availability, and integrity states belong here and do not create task or review
+states. Logical Workstream references are represented only by
+`ArtifactBinding`.
 
 ## ArtifactOperationReceipt
 
-An append-only record of an idempotent storage-provider operation, canonical
-request/response digests, provider reference, bounded outcome, and timestamps.
+Append-only Workstream evidence for one immutable put acknowledgement. It links
+the exact upload item and replica and records operation, idempotency key,
+`request_digest`, opaque `provider_object_ref`, replay observation, bounded
+outcome/details, attempt number, correlation ID, and creation time. It contains
+no response digest or provider receipt.
 
 ## ArtifactSetManifest
 
@@ -271,11 +275,23 @@ Proof supporting task completion or review decision. Examples: logs, hashes, tes
 ## Artifact Store
 
 The provider-neutral typed capability through which Workstream stores and reads
-private immutable bytes. `LocalStorageAdapter` implements it for development
-and focused tests. `S3CompatibleArtifactStore` implements it for MinIO
-integration and AWS S3 v0.1 production deployments. Providers do
+private immutable bytes. Its v0.1 byte-only operations are `put`, read-only
+`observe_put_result`, `open`, and `head`. `LocalStorageAdapter` implements it
+for development and focused tests. `S3CompatibleArtifactStore` implements it
+for MinIO integration and AWS S3 v0.1 production deployments. Providers do
 not own Workstream authorization, binding, lifecycle, audit, or integrity
 decisions.
+
+## Artifact Storage Namespace
+
+The immutable deployment-level PostgreSQL fence that binds Workstream to one
+configured artifact backend, adapter, provider profile, and non-secret storage
+namespace fingerprint. Startup and every provider operation must validate the
+same singleton before provider I/O. Changing a populated deployment requires a
+separately reviewed storage migration.
+For LocalStorage, the pre-provisioned private root's normalized path and
+filesystem identity are hashed into that fingerprint, so replacing the root at
+the same path fails closed before adapter construction mutates it.
 
 ## Artifact Verification Job
 

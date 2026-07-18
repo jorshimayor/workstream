@@ -5,45 +5,53 @@
 - This authored file is reviewed planning/history context, not canonical live
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
-- Active initiatives include parallel `WS-AUTH-001` and `WS-ART-001`.
-- PR #132 merged `WS-AUTH-001-09A` into `main` as `299363a` on
-  2026-07-17; signed schema-v2 memory recorded the stopped checkpoint.
-- Active implementation chunk: `WS-AUTH-001-09B` on
-  `codex/ws-auth-001-09b-controlled-service-provisioning` after explicit user
-  start.
-- AUTH-09B is bounded to one controlled service-actor provisioning route and
-  activates only `actor.service.provision`. AUTH-09C remains inactive.
-- Start basis: trusted `main` at `299363a` after PR #132, integrated through
-  `a947b86` after PR #142 before publication.
+- Active initiatives include independently owned `WS-AUTH-001`, `WS-ART-001`,
+  `WS-REV-001`, and `WS-CON-001`. The planning-only `WS-XINT-001` boundary
+  reconciliation merged through PR #139 as `5d353b6` and starts no runtime.
+- AUTH's owner reconciliation merged through PR #140 as `d541521`; it defines
+  fixed-service admission, prepared mutation authority, and activation custody
+  without activating ART, REV, or CON feature behavior.
+- AUTH-09A merged through PR #132 as `299363a`; its fixed service identity
+  foundation is preserved as migration `0023_service_actor_identity`.
+- AUTH-09B merged through PR #143 as `053242b`; it adds controlled service
+  actor provisioning and leaves service runtime admission plus feature actions
+  inactive.
+- Active ART implementation chunk: `WS-ART-001-02A3` on
+  `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
+- Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
+  branch consumes their merged handoff contracts without editing or activating
+  their runtime behavior.
+- Start basis: PR #129 merged ART-02A2 into `main` as `9a04434`, and PR #139
+  then merged the cross-initiative boundary reconciliation as `5d353b6`.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: PR #143's replacement Backend run passed all 1,242 tests but
-  exposed 89.75 percent authorization coverage at the new 90 percent gate. The
-  behavior-test repair passes every required reviewer track at exact SHA
-  `127615f` and projects 90.31 percent on the unchanged 1,600-statement
-  denominator. Replacement GitHub checks and evidence rebinding remain; no
-  service caller becomes executable before AUTH-09E.
+- Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit
+  human review after reconciling merged AUTH-09B and rebinding exact-SHA ART
+  evidence. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 65
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active. AUTH-09A defines seven fixed artifact service identities and eleven
-  exact planned static matrix memberships. The
-  plan now requires availability-neutral ART/REV custody transfer, fixed-service
-  admission, prepared mutation authority, feature-owned hidden behavior, and
-  exact AUTH-only activation chunks. This planning amendment activates nothing.
-- Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
-  merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
-  checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
-  isolated parallel worktree but has no open PR at this checkpoint.
+  active, plus the AUTH-09B `actor.service.provision` action. Merged AUTH-09A
+  defines seven fixed artifact
+  service identities and eleven exact planned static matrix memberships. ART
+  feature chunks supply hidden canonical behavior/resource composition. Merged
+  AUTH planning requires availability-neutral ART custody transfer, fixed-service
+  admission, prepared mutation authority, and exact AUTH-only activation chunks;
+  neither reconciliation PR activates feature behavior.
+- Parallel artifact checkpoint: ART-02A1 merged through PR #127 as `f64a8e5`
+  and ART-02A2 merged through PR #129 as `9a04434`. ART-02A3 completed
+  merged-main deterministic repair, deterministic proof, and exact-SHA internal
+  review. PR #141 is open; refreshed evidence, external checks, and explicit
+  human merge approval remain. ART-02B1 remains inactive.
 - Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
-  #130, #131, and #132. Signed memory stopped after 09A, and the user explicitly
-  started 09B.
+  #130, #131, and #132; AUTH-09B merged through PR #143 as `053242b`.
+  AUTH-09C remains inactive until a separate explicit user start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
