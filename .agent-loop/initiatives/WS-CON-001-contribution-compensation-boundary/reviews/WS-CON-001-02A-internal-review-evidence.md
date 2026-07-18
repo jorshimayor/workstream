@@ -50,19 +50,29 @@ outbox coverage: 95.43% (required: at least 90%)
 1 passed, 25 deselected in 96.33s (migration/downgrade guard)
 16 passed in 180.79s (isolated database runner self-tests in a quiet window)
 real API contract end-to-end: passed
-80 passed in 46.15s (agent-loop gates)
+1347 passed in 17741.96s / 4:55:41 (exact isolated PostgreSQL full suite)
+repository coverage: 85.35% (required: at least 78%)
+isolated evidence database: workstream_test_d513fb2f03b1
+isolated evidence tree: f72bb6e6dc71cb38dcb397b34caf9db6f916db4c
+isolated evidence Alembic head: 0026_shared_transactional_outbox
+87 passed (agent-loop gates)
 Ruff: passed
-Docstring coverage: passed at 91.6%
-Markdown links: passed for 8 changed Markdown files
+Docstring coverage: passed at 91.5%
+Markdown links: passed for 15 changed Markdown files
 Workstream stale wording: passed
 AUTH stale documentation: passed
 ART stale contract: passed at phase artifact_store_cutover
+REV stale contract: passed
 git diff --check: passed
 local roadmap workbook: absent, so the one-sheet export check is not applicable
 ```
 
-The repository-wide isolated PostgreSQL suite and exact-SHA reviewer results
-will be recorded after the implementation revision is frozen.
+The full suite used the unchanged test command, isolation rule, assertions, and
+coverage thresholds. Its measured 4:55:41 runtime completed under the repaired
+18,000-second fail-closed safety ceiling; the earlier 12,600-second ceiling had
+terminated the same clean suite at approximately 90 percent. Exact-SHA reviewer
+results remain pending until this deterministic evidence is committed as the
+frozen review candidate.
 
 ## Test Delta
 

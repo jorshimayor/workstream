@@ -54,22 +54,31 @@ feature chunks own execution behavior.
 
 ## Proof
 
-- Exact contract selector: 8 passed, 47 deselected.
+- Exact contract selector: 8 passed, 51 deselected.
 - Complete outbox suite: 33 passed with 95.43% focused coverage.
-- Migration/downgrade guard: 1 passed, 21 deselected.
+- Migration/downgrade guard: 1 passed, 25 deselected.
 - Isolated database runner self-tests: 16 passed with the required admin URL.
 - Real API contract end-to-end: passed.
-- Agent-loop gates: 80 passed.
-- Ruff, 91.5% docstring coverage, Markdown links, stale Workstream/AUTH/ART
+- Exact isolated PostgreSQL full suite: 1347 passed in 17741.96 seconds
+  (4:55:41), with 85.35% repository coverage against the 78% floor.
+- The isolated evidence records tree `f72bb6e`, database
+  `workstream_test_d513fb2f03b1`, and Alembic head
+  `0026_shared_transactional_outbox`.
+- Agent-loop gates: 87 passed.
+- Ruff, 91.5% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
-- Repository-wide isolated PostgreSQL result and exact-SHA internal reviewer
-  results will be frozen before publication.
+- Exact-SHA internal reviewer results will be frozen before publication.
 
 ## Test And CI Integrity
 
 No existing test was deleted, skipped, weakened, or rewritten to accept broken
 behavior. No workflow, dependency, package script, test runner, lint/typecheck
 command, coverage threshold, or CI configuration changed.
+
+The measured full-suite runtime completed under an 18,000-second fail-closed
+safety ceiling. The prior 12,600-second ceiling stopped the same clean command
+at approximately 90 percent; extending only the ceiling preserved every test,
+assertion, isolation control, and coverage requirement.
 
 ## Human Review Focus
 

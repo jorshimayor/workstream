@@ -99,11 +99,13 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation and focused evidence are complete after the
-explicit human start. It adds one linear migration, the shared outbox
+`WS-CON-001-02A` implementation and deterministic evidence are complete after
+the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
-migration/append tests. Required exact-SHA internal review and external PR
-checks remain. It stops before dispatcher mechanics and CON-02B.
+migration/append tests. The exact isolated full suite passed 1347 tests in
+4:55:41 with 85.35 percent repository coverage, and the outbox subsystem
+reached 95 percent focused coverage. Required exact-SHA internal review and
+external PR checks remain. It stops before dispatcher mechanics and CON-02B.
 
 | Chunk | Status | Notes |
 |---|---|---|
@@ -111,7 +113,7 @@ checks remain. It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Implementation complete; review pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
+| `WS-CON-001-02A` | Deterministic evidence complete; review pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
