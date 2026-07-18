@@ -29,6 +29,7 @@ backend/tests/test_audit.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_contract_e2e.py
 backend/scripts/api_contract_e2e.py
+scripts/test_agent_gates.py
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -208,6 +209,7 @@ architecture, CI integrity, docs, reuse/dedup, and test delta.
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py
+python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
