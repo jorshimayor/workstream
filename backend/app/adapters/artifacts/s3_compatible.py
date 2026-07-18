@@ -19,7 +19,11 @@ from aiobotocore.credentials import (
     AioInstanceMetadataProvider,
 )
 from aiobotocore.session import AioSession
-from aiobotocore.utils import AioInstanceMetadataFetcher, _RefCountedSession
+from aiobotocore.utils import (
+    AioContainerMetadataFetcher,
+    AioInstanceMetadataFetcher,
+    _RefCountedSession,
+)
 from botocore.exceptions import BotoCoreError, ClientError
 
 from app.adapters.artifacts.references import (
@@ -700,6 +704,12 @@ def create_isolated_aws_workload_identity_session(
                     "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
                 ]
             }
+        )
+        provider._fetcher = AioContainerMetadataFetcher(
+            session=_RefCountedSession(
+                timeout=settings.artifact_s3_connect_timeout_seconds,
+                proxies={},
+            )
         )
     elif selected == "iam-role":
         provider = AioInstanceMetadataProvider(

@@ -1107,7 +1107,8 @@ bytes in PostgreSQL.
 ## Verification Strategy
 
 - one conformance suite runs against LocalStorage and real MinIO;
-- a secret-free live smoke profile proves AWS S3 configuration;
+- inactive validation proves the closed AWS S3 configuration contract, while
+  Chunk 07 owns live deployment proof;
 - integration tests use real S3-compatible API calls, not monkeypatching;
 - concurrent puts cannot overwrite existing bytes;
 - acknowledgement loss, exact replay, oversized-object refusal, truncation,

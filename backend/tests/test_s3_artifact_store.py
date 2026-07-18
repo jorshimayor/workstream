@@ -608,6 +608,55 @@ async def test_uncertain_transport_put_requires_independent_observation(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("stored_bytes_match", [False, True])
+async def test_uncertain_transport_put_uses_real_minio_verification(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    stored_bytes_match: bool,
+) -> None:
+    """Classify acknowledgement loss only from the complete provider bytes."""
+    nonce = hashlib.sha256(os.urandom(16)).hexdigest()[:20]
+    private_prefix = f"uncertain/real-observation/{nonce}"
+    expected = b"exact committed bytes"
+    digest = hashlib.sha256(expected).hexdigest()
+    provider_ref = f"sha256/{digest[:2]}/{digest[2:]}"
+    stored = expected if stored_bytes_match else b"wrong existing bytes"
+    await raw_minio_put(f"{private_prefix}/{provider_ref}", stored)
+
+    store = initialize_minio_store(private_prefix=private_prefix)
+    original_client = store._client
+    client_calls = 0
+
+    class LostAcknowledgementClient:
+        async def put_object(self, **_kwargs: object) -> object:
+            raise OSError("connection closed after provider write")
+
+    @asynccontextmanager
+    async def lost_acknowledgement_then_real_provider() -> Any:
+        nonlocal client_calls
+        client_calls += 1
+        if client_calls == 1:
+            yield LostAcknowledgementClient()
+            return
+        async with original_client() as client:
+            yield client
+
+    monkeypatch.setattr(store, "_client", lost_acknowledgement_then_real_provider)
+    try:
+        async with minted_source(tmp_path / "scratch", expected) as source:
+            if stored_bytes_match:
+                result = await store.put(source)
+                assert result.provider_object_ref == provider_ref
+                assert result.replayed is True
+            else:
+                with pytest.raises(ArtifactIntegrityError):
+                    await store.put(source)
+        assert client_calls >= 3
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
 async def test_put_observation_requires_canonical_commitment() -> None:
     """Reject caller-assembled observation requests before provider I/O."""
     store = initialize_minio_store(private_prefix="negative/observation")

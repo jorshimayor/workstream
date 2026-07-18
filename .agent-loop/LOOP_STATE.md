@@ -38,8 +38,9 @@
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 65
-  ActionIds, with the two actor-self actions, seven AUTH-08 administrative
-  actions, and AUTH-09B `actor.service.provision` active. Merged AUTH-09A defines
+  ActionIds, with 12 active actions: the two actor-self actions, seven AUTH-08
+  administrative actions, AUTH-09B `actor.service.provision`, and AUTH-09C
+  `actor.profile.read` plus `actor.identity_link.read`. Merged AUTH-09A defines
   seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged

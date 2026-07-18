@@ -227,6 +227,18 @@ def test_isolated_session_contains_exactly_one_selected_provider(
                 }
             }
         }
+    if method == "container-role":
+        assert provider._environ == {
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+                "/v2/credentials/workstream-runtime"
+            )
+        }
+        assert (
+            provider._fetcher._session._proxy_config.proxy_url_for(
+                "http://169.254.170.2/v2/credentials/workstream-runtime"
+            )
+            is None
+        )
     if method == "iam-role":
         assert provider._role_fetcher._imds_v1_disabled is True
         assert (
@@ -390,6 +402,33 @@ def test_iam_metadata_session_ignores_ambient_proxy_environment(tmp_path: Path) 
     assert (
         provider._role_fetcher._session._proxy_config.proxy_url_for(
             "http://169.254.169.254/latest/meta-data/"
+        )
+        is None
+    )
+
+
+def test_container_metadata_session_ignores_ambient_proxy_environment(
+    tmp_path: Path,
+) -> None:
+    session = s3_compatible.create_isolated_aws_workload_identity_session(
+        _aws_settings(tmp_path, "container-role"),
+        environ=_container_environment(
+            tmp_path,
+            HTTP_PROXY="http://127.0.0.1:9",
+            HTTPS_PROXY="http://127.0.0.1:9",
+            ALL_PROXY="http://127.0.0.1:9",
+        ),
+    )
+    provider = session.get_component("credential_provider").providers[0]
+
+    assert provider._environ == {
+        "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+            "/v2/credentials/workstream-runtime"
+        )
+    }
+    assert (
+        provider._fetcher._session._proxy_config.proxy_url_for(
+            "http://169.254.170.2/v2/credentials/workstream-runtime"
         )
         is None
     )
