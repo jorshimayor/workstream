@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -8,6 +9,7 @@ import pytest
 from aiobotocore.credentials import (
     AioAssumeRoleWithWebIdentityProvider,
 )
+from botocore.exceptions import MetadataRetrievalError, ReadTimeoutError
 
 from app.adapters.artifacts import s3_compatible
 from app.core.config import Settings
@@ -765,3 +767,274 @@ def test_imds_invalid_expiration_is_never_logged(
             (record.msg, record.args, record.exc_info, record.exc_text),
             secret,
         )
+
+
+async def test_sanitized_imds_fetcher_success_paths() -> None:
+    async def ready(value: object) -> object:
+        return value
+
+    token_response = SimpleNamespace(
+        status_code=200,
+        text=ready("imds-v2-token"),
+    )
+
+    class Transport:
+        def __init__(self, response: object) -> None:
+            self.response = response
+
+        async def send(self, _request: object) -> object:
+            return self.response
+
+    class Acquisition:
+        def __init__(self, transport: Transport) -> None:
+            self.transport = transport
+
+        async def __aenter__(self) -> Transport:
+            return self.transport
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Pool:
+        def __init__(self, response: object) -> None:
+            self.transport = Transport(response)
+
+        def acquire(self) -> Acquisition:
+            return Acquisition(self.transport)
+
+    fetcher = s3_compatible._SanitizedInstanceMetadataFetcher(  # noqa: SLF001
+        env={"AWS_EC2_METADATA_V1_DISABLED": "true"},
+        config={"ec2_metadata_v1_disabled": True},
+        session=Pool(token_response),  # type: ignore[arg-type]
+    )
+    assert await fetcher._fetch_metadata_token() == "imds-v2-token"  # noqa: SLF001
+
+    metadata_response = SimpleNamespace(status_code=200)
+    fetcher._session = Pool(metadata_response)
+
+    async def no_retry(_response: object) -> bool:
+        return False
+
+    assert (
+        await fetcher._get_request(  # noqa: SLF001
+            "latest/meta-data/iam/security-credentials/workstream-role",
+            no_retry,
+            token="imds-v2-token",
+        )
+        is metadata_response
+    )
+
+    async def token() -> str:
+        return "imds-v2-token"
+
+    async def role_name(_token: str) -> str:
+        return "workstream-role"
+
+    async def credentials(_role_name: str, _token: str) -> dict[str, str]:
+        return {
+            "AccessKeyId": "access-key",
+            "SecretAccessKey": "secret-key",
+            "Token": "session-token",
+            "Expiration": "2099-01-01T00:00:00Z",
+        }
+
+    fetcher._fetch_metadata_token = token  # type: ignore[method-assign]
+    fetcher._get_iam_role = role_name  # type: ignore[method-assign]
+    fetcher._get_credentials = credentials  # type: ignore[method-assign]
+    assert await fetcher.retrieve_iam_role_credentials() == {
+        "role_name": "workstream-role",
+        "access_key": "access-key",
+        "secret_key": "secret-key",
+        "token": "session-token",
+        "expiry_time": "2099-01-01T00:00:00Z",
+    }
+
+
+async def test_sanitized_container_provider_success_path() -> None:
+    class Fetcher:
+        async def retrieve_full_uri(
+            self,
+            _full_uri: str,
+            *,
+            headers: dict[str, str],
+        ) -> dict[str, str]:
+            assert headers == {"Authorization": "Bearer identity-token"}
+            return {
+                "AccessKeyId": "access-key",
+                "SecretAccessKey": "secret-key",
+                "Token": "session-token",
+                "Expiration": "2099-01-01T00:00:00Z",
+                "AccountId": "123456789012",
+            }
+
+    provider = s3_compatible._SanitizedContainerProvider(  # noqa: SLF001
+        environ={
+            "AWS_CONTAINER_CREDENTIALS_FULL_URI": (
+                "http://169.254.170.2/v2/credentials/workstream-runtime"
+            ),
+            "AWS_CONTAINER_AUTHORIZATION_TOKEN": "Bearer identity-token",
+        }
+    )
+    provider._fetcher = Fetcher()
+    fetch_credentials = provider._create_fetcher(  # noqa: SLF001
+        "http://169.254.170.2/v2/credentials/workstream-runtime"
+    )
+
+    assert await fetch_credentials() == {
+        "access_key": "access-key",
+        "secret_key": "secret-key",
+        "token": "session-token",
+        "expiry_time": "2099-01-01T00:00:00Z",
+        "account_id": "123456789012",
+    }
+
+
+@pytest.mark.parametrize(
+    ("status_code", "body", "match"),
+    [
+        (500, b'{"SecretAccessKey":"provider-secret"}', "non-200"),
+        (200, b"[]", "invalid document"),
+    ],
+)
+async def test_sanitized_container_fetcher_rejects_response_shapes(
+    status_code: int,
+    body: bytes,
+    match: str,
+) -> None:
+    class Transport:
+        async def send(self, _request: object) -> object:
+            async def content() -> bytes:
+                return body
+
+            return SimpleNamespace(status_code=status_code, content=content())
+
+    class Acquisition:
+        async def __aenter__(self) -> Transport:
+            return Transport()
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Pool:
+        def acquire(self) -> Acquisition:
+            return Acquisition()
+
+    fetcher = s3_compatible._SanitizedContainerMetadataFetcher(  # noqa: SLF001
+        session=Pool(),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(MetadataRetrievalError, match=match):
+        await fetcher._get_response(  # noqa: SLF001
+            "http://169.254.170.2/v2/credentials/workstream-runtime",
+            {"Accept": "application/json"},
+            1.0,
+        )
+
+
+async def test_sanitized_container_fetcher_accepts_headers_and_document() -> None:
+    observed_headers: dict[str, str] = {}
+
+    class Transport:
+        async def send(self, request: object) -> object:
+            observed_headers.update(dict(request.headers.items()))
+
+            async def content() -> bytes:
+                return b'{"AccessKeyId":"access-key"}'
+
+            return SimpleNamespace(status_code=200, content=content())
+
+    class Acquisition:
+        async def __aenter__(self) -> Transport:
+            return Transport()
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Pool:
+        def acquire(self) -> Acquisition:
+            return Acquisition()
+
+    fetcher = s3_compatible._SanitizedContainerMetadataFetcher(  # noqa: SLF001
+        session=Pool(),  # type: ignore[arg-type]
+    )
+
+    assert await fetcher._retrieve_credentials(  # noqa: SLF001
+        "http://169.254.170.2/v2/credentials/workstream-runtime",
+        {"Authorization": "Bearer identity-token"},
+    ) == {"AccessKeyId": "access-key"}
+    assert observed_headers["Authorization"] == "Bearer identity-token"
+
+
+async def test_sanitized_imds_fetcher_failure_and_empty_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Transport:
+        def __init__(self, response: object | None = None) -> None:
+            self.response = response
+            self.raise_timeout = False
+
+        async def send(self, _request: object) -> object:
+            if self.raise_timeout:
+                raise ReadTimeoutError(endpoint_url="http://169.254.169.254")
+            return self.response
+
+    class Acquisition:
+        def __init__(self, transport: Transport) -> None:
+            self.transport = transport
+
+        async def __aenter__(self) -> Transport:
+            return self.transport
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Pool:
+        def __init__(self, transport: Transport) -> None:
+            self.transport = transport
+
+        def acquire(self) -> Acquisition:
+            return Acquisition(self.transport)
+
+    forbidden = Transport(SimpleNamespace(status_code=403, text="forbidden"))
+    fetcher = s3_compatible._SanitizedInstanceMetadataFetcher(  # noqa: SLF001
+        env={"AWS_EC2_METADATA_V1_DISABLED": "true"},
+        config={"ec2_metadata_v1_disabled": True},
+        session=Pool(forbidden),  # type: ignore[arg-type]
+    )
+    assert await fetcher._fetch_metadata_token() is None  # noqa: SLF001
+
+    timeout = Transport()
+    timeout.raise_timeout = True
+    fetcher._session = Pool(timeout)
+    with pytest.raises(fetcher._RETRIES_EXCEEDED_ERROR_CLS):  # noqa: SLF001
+        await fetcher._get_request(  # noqa: SLF001
+            "latest/meta-data/iam/security-credentials/workstream-role",
+            lambda _response: False,
+            token="imds-v2-token",
+        )
+
+    async def retries_exceeded() -> str:
+        raise fetcher._RETRIES_EXCEEDED_ERROR_CLS()  # noqa: SLF001
+
+    fetcher._fetch_metadata_token = retries_exceeded  # type: ignore[method-assign]
+    assert await fetcher.retrieve_iam_role_credentials() == {}
+
+    fetcher._evaluate_expiration({})  # noqa: SLF001
+    monkeypatch.setattr(
+        s3_compatible,
+        "get_current_datetime",
+        lambda: datetime.datetime(2026, 1, 1),
+    )
+    monkeypatch.setattr(s3_compatible.random, "randint", lambda _start, _end: 120)
+    expiring = {"expiry_time": "2026-01-01T00:01:00Z"}
+    fetcher._evaluate_expiration(expiring)  # noqa: SLF001
+    assert expiring["expiry_time"] == "2026-01-01T00:12:00Z"
+
+    class EmptyRoleFetcher:
+        async def retrieve_iam_role_credentials(self) -> dict[str, str]:
+            return {}
+
+    provider = s3_compatible._SanitizedInstanceMetadataProvider(  # noqa: SLF001
+        iam_role_fetcher=EmptyRoleFetcher()
+    )
+    assert await provider.load() is None
