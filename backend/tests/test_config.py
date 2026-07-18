@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
 from app.adapters.artifacts import create_artifact_store_bootstrap
+from app.adapters.artifacts.s3_compatible import create_minio_artifact_store_bootstrap
 from app.adapters.auth.flow import FlowAuthVerifier
 from app.api.deps.auth import get_application_auth_verifier
 from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
@@ -22,7 +23,10 @@ from app.core.s3_validation import (
     is_canonical_s3_prefix,
     validate_s3_namespace_descriptor,
 )
-from app.interfaces.artifacts import ArtifactProviderLiveProofRequiredError
+from app.interfaces.artifacts import (
+    ArtifactConfigurationError,
+    ArtifactProviderLiveProofRequiredError,
+)
 from app.interfaces.external_services import (
     ExternalServiceConfigurationError,
     UnknownExternalServiceProviderError,
@@ -649,6 +653,15 @@ def test_minio_settings_and_factory_construct_closed_namespace(tmp_path: Path) -
         ({"artifact_s3_bucket": "bucket..name"}, "requires a canonical bucket"),
         ({"artifact_s3_bucket": "bucket.-name"}, "requires a canonical bucket"),
         ({"artifact_s3_bucket": "bucket-.name"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "xn--bucket"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "sthree-bucket"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "amzn-s3-demo-bucket"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket-s3alias"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket--ol-s3"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket.mrap"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket--x-s3"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket--table-s3"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket-an"}, "requires a canonical bucket"),
         ({"artifact_s3_private_prefix": "/bad"}, "private prefix is invalid"),
         ({"artifact_maximum_bytes": 512 * 1024 * 1024 + 1}, "maximum exceeds"),
         ({"environment": "production"}, "MinIO artifact storage is restricted"),
@@ -669,6 +682,54 @@ def test_minio_settings_fail_closed(
 ) -> None:
     with pytest.raises((ValidationError, ValueError), match=message):
         _minio_settings(tmp_path, **overrides)
+
+
+def test_mutated_minio_settings_cannot_retain_credentials_in_constructor_error(
+    tmp_path: Path,
+) -> None:
+    access_key = "minio-mutated-access-key"
+    secret_key = "minio-mutated-secret-key"
+    settings = _minio_settings(
+        tmp_path,
+        artifact_s3_access_key_id=access_key,
+        artifact_s3_secret_access_key=secret_key,
+    )
+    settings.artifact_s3_bucket = "bucket.-invalid"
+
+    with pytest.raises(ArtifactConfigurationError) as caught:
+        create_minio_artifact_store_bootstrap(settings)
+
+    assert caught.value.__cause__ is None
+    assert caught.value.__context__ is None
+    assert_secret_not_retained(
+        caught.value,
+        access_key,
+        traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
+    )
+    assert_secret_not_retained(
+        caught.value,
+        secret_key,
+        traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
+    )
+
+    with pytest.raises(ExternalServiceConfigurationError) as public_error:
+        create_artifact_store_bootstrap(settings)
+    assert_secret_not_retained(
+        public_error.value,
+        access_key,
+        traceback_module_prefixes=(
+            "app.adapters.artifacts.s3_compatible",
+            "app.interfaces.external_services",
+        ),
+    )
+    assert_secret_not_retained(
+        public_error.value,
+        secret_key,
+        traceback_module_prefixes=(
+            "app.adapters.artifacts.s3_compatible",
+            "app.interfaces.external_services",
+        ),
+    )
 
 
 @pytest.mark.parametrize(

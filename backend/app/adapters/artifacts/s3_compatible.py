@@ -892,40 +892,60 @@ def create_minio_artifact_store_bootstrap(
     settings: Settings,
 ) -> S3CompatibleArtifactStoreBootstrap:
     """Construct the only S3 runtime profile enabled by this chunk."""
+    bootstrap, error_message = _try_create_minio_artifact_store_bootstrap(settings)
+    if error_message is not None:
+        del settings
+        raise ArtifactConfigurationError(error_message) from None
+    if bootstrap is None:
+        del settings
+        raise ArtifactConfigurationError("MinIO artifact configuration is invalid") from None
+    return bootstrap
+
+
+def _try_create_minio_artifact_store_bootstrap(
+    settings: Settings,
+) -> tuple[S3CompatibleArtifactStoreBootstrap | None, str | None]:
+    """Build MinIO state without propagating a secret-bearing failure frame."""
     if settings.artifact_s3_provider_profile != "minio":
-        raise ArtifactConfigurationError("MinIO artifact profile is not configured")
+        return None, "MinIO artifact profile is not configured"
     access_key = settings.artifact_s3_access_key_id
     secret_key = settings.artifact_s3_secret_access_key
     if access_key is None or secret_key is None:
-        raise ArtifactConfigurationError("MinIO artifact credentials are unavailable")
-    session = AioSession()
-    session.set_credentials(
-        access_key.get_secret_value(),
-        secret_key.get_secret_value(),
-        settings.artifact_s3_session_token.get_secret_value()
-        if settings.artifact_s3_session_token is not None
-        else None,
-    )
-    return S3CompatibleArtifactStoreBootstrap(
-        S3CompatibleArtifactStore(
-            provider_profile="minio",
-            region=_required(settings.artifact_s3_region),
-            endpoint_url=_required(settings.artifact_s3_endpoint_url),
-            bucket=_required(settings.artifact_s3_bucket),
-            private_prefix=settings.artifact_s3_private_prefix,
-            addressing_style=settings.artifact_s3_addressing_style,
-            session=session,
-            buffer_bytes=settings.artifact_stream_buffer_bytes,
-            connect_timeout_seconds=settings.artifact_s3_connect_timeout_seconds,
-            read_timeout_seconds=settings.artifact_s3_read_timeout_seconds,
-            write_timeout_seconds=settings.artifact_s3_write_timeout_seconds,
-            pool_timeout_seconds=settings.artifact_s3_pool_timeout_seconds,
-            operation_total_timeout_seconds=(
-                settings.artifact_s3_operation_total_timeout_seconds
-            ),
-            max_pool_connections=settings.artifact_s3_max_pool_connections,
+        return None, "MinIO artifact credentials are unavailable"
+    try:
+        session = AioSession()
+        session.set_credentials(
+            access_key.get_secret_value(),
+            secret_key.get_secret_value(),
+            settings.artifact_s3_session_token.get_secret_value()
+            if settings.artifact_s3_session_token is not None
+            else None,
         )
-    )
+        bootstrap = S3CompatibleArtifactStoreBootstrap(
+            S3CompatibleArtifactStore(
+                provider_profile="minio",
+                region=_required(settings.artifact_s3_region),
+                endpoint_url=_required(settings.artifact_s3_endpoint_url),
+                bucket=_required(settings.artifact_s3_bucket),
+                private_prefix=settings.artifact_s3_private_prefix,
+                addressing_style=settings.artifact_s3_addressing_style,
+                session=session,
+                buffer_bytes=settings.artifact_stream_buffer_bytes,
+                connect_timeout_seconds=settings.artifact_s3_connect_timeout_seconds,
+                read_timeout_seconds=settings.artifact_s3_read_timeout_seconds,
+                write_timeout_seconds=settings.artifact_s3_write_timeout_seconds,
+                pool_timeout_seconds=settings.artifact_s3_pool_timeout_seconds,
+                operation_total_timeout_seconds=(
+                    settings.artifact_s3_operation_total_timeout_seconds
+                ),
+                max_pool_connections=settings.artifact_s3_max_pool_connections,
+            )
+        )
+    except ArtifactConfigurationError as error:
+        return None, str(error)
+    except Exception:
+        return None, "MinIO artifact configuration is invalid"
+    return bootstrap, None
 
 
 def validate_aws_workload_identity_environment(
