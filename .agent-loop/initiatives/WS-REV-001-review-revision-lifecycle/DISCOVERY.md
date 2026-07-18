@@ -3,13 +3,14 @@
 ## Baseline
 
 Discovery was refreshed read-only from trusted main
-`f18b620932bb257dc1dc355bc0504271813dc6b1` after REV parent chunk 02 merged
-through PR #147. The active planning chunk makes no backend/runtime changes.
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed` after REV parent chunk 02 merged
+through PR #147 and AUTH-09D-A merged through PR #148. The active planning chunk
+makes no backend/runtime changes.
 
 ## Current backend
 
 - FastAPI/Python, async SQLAlchemy 2.x, Alembic, Pydantic, PostgreSQL.
-- Single Alembic head: `0025_artifact_store_v2`.
+- Single Alembic head: `0026_actor_profile_lifecycle`.
 - `Submission` is the existing versioned submission entity; no separate
   SubmissionVersion is needed.
 - Both retired task-subsystem contributor-identity storage fields remain on
@@ -27,16 +28,18 @@ through PR #147. The active planning chunk makes no backend/runtime changes.
 ## AUTH discovery
 
 - Trusted catalogue: 74 PermissionIds, 65 ActionIds, 12 active, 53 planned.
-- AUTH-09A/09B/09C are merged; 09C activates only bounded actor/profile reads.
-- Trusted AUTH planning still names combined 09D/09E and assigns future
-  migration `0026` to AUTH-10 and the contributor rename to AUTH-13.
-- An AUTH worktree contains unmerged AUTH-09D-A migration
-  `0026_actor_profile_lifecycle`. The user has directed AUTH to follow it with a
-  bounded contributor/canonical-human foundation. Neither is merged authority;
-  the latter has no trusted-main chunk ID or PR/SHA.
-- AUTH-PREP, REV custody, AUTH-10 through 14, and matching feature activations
-  remain unmerged. AUTH-13/14 contracts require later amendment for prepared
-  revision/replacement facts and cannot be treated as current runtime gates.
+- AUTH-09A/09B/09C and 09D-A are merged. PR #148 merged 09D-A as
+  `99ae4c963e53f317175dcb308b9e47c93ccf19ed` from reviewed head
+  `9c5ef8a1feffd6324acfd947e67042921955320b`, establishing database-backed
+  ActorProfile lifecycle status/provenance and migration
+  `0026_actor_profile_lifecycle`.
+- 09D-A intentionally leaves both retired task-subsystem contributor-identity
+  fields unchanged. The user-directed contributor/canonical-human foundation
+  remains separate and has no trusted-main chunk ID, PR/SHA, or migration.
+- AUTH-09D-B, 09E, AUTH-PREP, REV custody, AUTH-10 through 14, and matching
+  feature activations remain unmerged. AUTH-13/14 contracts require later
+  amendment for prepared revision/replacement facts and cannot be treated as
+  current runtime gates.
 - All 24 REV lifecycle actions remain unavailable. REV never registers,
   provisions, evaluates, or activates them.
 

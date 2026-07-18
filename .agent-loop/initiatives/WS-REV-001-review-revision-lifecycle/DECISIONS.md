@@ -498,10 +498,12 @@ chunk. Parent 02 is therefore a non-executable split record:
 -> 02C Submission attribution/context/immediate-predecessor immutability
 ```
 
-Trusted main does not assign REV a migration and does not contain AUTH-09D-A or
-the contributor foundation. AUTH-09D-A's `0026` exists only on an unmerged
-worktree; it is prospective evidence. After that work merges, AUTH owns the
-separately reviewed contributor-field foundation from the then-current head.
+Trusted main does not assign REV a migration and does not contain the contributor
+foundation. AUTH-09D-A merged through PR #148 as
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed`, establishing migration
+`0026_actor_profile_lifecycle` and database-backed ActorProfile lifecycle
+provenance without renaming either retired task field. AUTH next owns the
+separately reviewed contributor-field foundation from that then-current head.
 That foundation clean-cuts both retired task-subsystem contributor-identity
 fields to `contributor_id`, preserves current behavior, and supplies database-backed
 canonical-human ActorProfile lineage. REV records its exact merged PR/SHA and

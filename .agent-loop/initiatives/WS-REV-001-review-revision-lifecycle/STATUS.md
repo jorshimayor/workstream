@@ -2,31 +2,35 @@
 
 ## Current status
 
-Trusted main is `f18b620932bb257dc1dc355bc0504271813dc6b1`, merge of REV
-parent chunk 02 through PR #147. Parent 02 is a merged non-executable split
-record. `WS-REV-001-PLAN2` is the active planning/specification-only refresh.
-No backend runtime, migration, model, repository, service, route, or persistence
-test is authorized in this chunk.
+Trusted main is `99ae4c963e53f317175dcb308b9e47c93ccf19ed`, which includes REV
+parent chunk 02 through PR #147 and AUTH-09D-A through PR #148. Parent 02 is a
+merged non-executable split record. `WS-REV-001-PLAN2` is the active planning/
+specification-only refresh. No backend runtime, migration, model, repository,
+service, route, or persistence test is authorized in this chunk.
 
 The user previously started 02A preparation, then accepted AUTH's runtime block
 and explicitly authorized continued planning/read-only work. After this refresh,
 02A requires a renewed explicit start because its exact runtime dependencies are
-not merged.
+not all merged.
 
 ## Trusted dependency truth
 
-- Single Alembic head: `0025_artifact_store_v2`.
+- Single Alembic head: `0026_actor_profile_lifecycle`.
 - Both retired task-subsystem contributor-identity fields remain on trusted main.
 - AUTH catalogue: 74 PermissionIds, 65 ActionIds, 12 active, 53 planned.
 - All 24 REV lifecycle action dependencies remain unavailable.
-- AUTH-09D-A/`0026` exists only in an unmerged worktree. The human-approved
-  contributor clean cut has no trusted-main chunk ID/PR/SHA/migration.
+- AUTH-09D-A merged through PR #148 at
+  `99ae4c963e53f317175dcb308b9e47c93ccf19ed` with reviewed head
+  `9c5ef8a1feffd6324acfd947e67042921955320b`. Its ActorProfile lifecycle
+  status/provenance and direct-SQL guards are trusted dependencies. The separate
+  human-approved contributor clean cut still has no trusted-main chunk
+  ID/PR/SHA/migration, and both retired task fields remain.
 - ART v2 LocalStorage merged through PR #141 at `a10d901`, but ART has no
   scheduled review packet-read, review-evidence candidate/finalize, or
   server-derived Submission artifact-digest owner chunk.
 - CON-01 merged its specification. CON runtime chunks 02A onward remain
-  proposed on trusted main. Unmerged CON outbox work also claims `0026`; it is
-  not consumable and must rebase/renumber after the winning migration merges.
+  proposed on trusted main. Any unmerged CON work that previously claimed
+  `0026` must rebase from AUTH-09D-A's merged head before it is consumable.
 - Sibling AUTH/ART/CON status files contain stale post-merge wording. REV records
   actual merge facts but does not edit owner initiative memory.
 

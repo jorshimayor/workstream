@@ -12,10 +12,14 @@ L1 schema, migration, authorization preservation, and concurrency.
 
 ## Preconditions
 
-- AUTH-09D-A and the AUTH-owned contributor/canonical-human foundation have
-  real trusted-main chunk IDs and are merged with exact PR/SHA, migration,
-  constraints, and regression evidence. An unmerged branch, worktree, proposed
-  migration number, or prose handoff does not satisfy this gate.
+- AUTH-09D-A is merged through PR #148 at
+  `99ae4c963e53f317175dcb308b9e47c93ccf19ed`, with migration
+  `0026_actor_profile_lifecycle` and database-backed ActorProfile lifecycle
+  evidence.
+- The separate AUTH-owned contributor/canonical-human foundation has a real
+  trusted-main chunk ID and is merged with exact PR/SHA, migration, constraints,
+  and regression evidence. An unmerged branch, worktree, proposed migration
+  number, or prose handoff does not satisfy this remaining gate.
 - Current-main refresh records the single Alembic head. REV allocates only the
   then-current next migration and does not reserve a number in planning.
 - The user separately starts this child after `WS-REV-001-PLAN2` merges.

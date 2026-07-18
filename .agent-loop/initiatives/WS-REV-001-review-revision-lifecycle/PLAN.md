@@ -3,15 +3,15 @@
 ## Planning authority
 
 This plan is reconciled from trusted main
-`f18b620932bb257dc1dc355bc0504271813dc6b1`, which contains merged REV parent
-chunk 02 through PR #147. Worktree branches, unmerged PRs, and proposed owner
-changes are discovery evidence only. They are not runtime dependencies until
-their exact owner chunk, PR, merge SHA, schema head, typed contract, and tests
-exist on trusted main.
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed`, which contains merged REV parent
+chunk 02 through PR #147 and merged AUTH-09D-A through PR #148. Worktree
+branches, unmerged PRs, and proposed owner changes are discovery evidence only.
+They are not runtime dependencies until their exact owner chunk, PR, merge SHA,
+schema head, typed contract, and tests exist on trusted main.
 
 Current merged facts are:
 
-- the single Alembic head is `0025_artifact_store_v2`;
+- the single Alembic head is `0026_actor_profile_lifecycle`;
 - task assignment and submission attribution still use the retired contributor-
   identity storage names;
 - the AUTH catalogue contains 74 PermissionIds and 65 ActionIds, with 12 active
@@ -24,8 +24,11 @@ Current merged facts are:
   contribution-policy, contribution/award, freeze, and atomic participant
   runtime chunks remain proposed.
 
-AUTH-09D-A and an AUTH-owned contributor clean cut are human-approved
-prospective work, not merged authority. REV-02 runtime remains blocked until AUTH
+AUTH-09D-A is merged through PR #148 at
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed` (reviewed branch head
+`9c5ef8a1feffd6324acfd947e67042921955320b`) and supplies database-backed
+ActorProfile lifecycle status/provenance and migration `0026`. It does not rename
+task/submission contributor fields. REV-02 runtime remains blocked until AUTH
 publishes a real contributor-foundation chunk ID and merges it with exact
 `contributor_id`, database-backed canonical-human ActorProfile constraints,
 migration, regression tests, and PR/SHA evidence. REV never codes against

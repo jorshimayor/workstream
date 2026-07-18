@@ -214,17 +214,22 @@ archival files remain literal-hash and trusted-base-diff protected inputs.
 Parent `WS-REV-001-02` merged through PR #147 at trusted main
 `f18b620932bb257dc1dc355bc0504271813dc6b1`. It is a non-executable split
 record. `WS-REV-001-PLAN2` refreshes planning/specification only from that
-base.
+base and was rebased after AUTH-09D-A merged.
+
+AUTH-09D-A merged through PR #148 at trusted main
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed` from reviewed branch head
+`9c5ef8a1feffd6324acfd947e67042921955320b`. Its exact migration
+`0026_actor_profile_lifecycle`, ActorProfile lifecycle fields/constraints,
+direct-SQL history guards, service behavior, and tests are merged authority.
 
 The following are explicitly unmerged discovery evidence and not authority:
 
-- AUTH worktree branch `codex/ws-auth-001-09d-actor-identity-lifecycle`, which
-  contains prospective `0026_actor_profile_lifecycle`;
 - the human-directed but unnamed AUTH contributor/canonical-human foundation;
-- an unmerged CON outbox worktree that also claims `0026`.
+- any unmerged CON outbox work that still claims the now-consumed `0026` number.
 
-Trusted main has the single head `0025_artifact_store_v2`, retains both retired
-task contributor storage names, and contains no merged contributor foundation.
+Trusted main has the single head `0026_actor_profile_lifecycle`, retains both
+retired task contributor storage names, and contains no merged contributor
+foundation.
 Current Submission storage also has no immutable causal field for the exact
 needs-revision CheckerRun that admits a corrected checker-remediation N+1. 02C
 owns the planned server-derived `remediation_source_checker_run_id`, exact
@@ -245,4 +250,7 @@ After the initial exact-SHA review, the branch pulled merged CON PR #142 at
 archive-integrity proofs remain fixed. The branch then pulled merged AUTH-09B
 PR #143 at `053242b90d927ace3fab92eeca72da27a61cecec` and merged CON-01 PR
 #144 at `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`; final PR scope and
-exact-SHA review use the newest merged-main boundary.
+exact-SHA review use the newest merged-main boundary. The branch then rebased
+cleanly onto merged AUTH-09D-A PR #148 at
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed`; the post-rebase review base is
+that trusted commit.

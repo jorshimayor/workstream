@@ -16,8 +16,11 @@ L1 planning and cross-initiative contract integrity.
 ## Preconditions
 
 - `WS-REV-001-02` is merged through PR #147 on trusted main.
+- AUTH-09D-A is merged through PR #148 at
+  `99ae4c963e53f317175dcb308b9e47c93ccf19ed`; its profile-lifecycle behavior and
+  migration `0026` are trusted, while the separate contributor foundation is not.
 - The user explicitly authorized planning and read-only preparation while the
-  AUTH runtime dependency remains unmerged.
+  remaining AUTH contributor-foundation runtime dependency remains unmerged.
 - No AUTH, ART, CON, backend runtime, migration, or persistence test is edited.
 
 ## Allowed files
