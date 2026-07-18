@@ -24,7 +24,7 @@ participant "FastAPI\nBackend" as API
 participant "Flow Auth\nVerifier" as Auth
 participant "Workstream\nAuthorization" as Authorization
 database "Postgres" as DB
-participant "Storage\nAbstraction" as Storage
+participant "ART v2\nCapabilities" as Artifacts
 participant "Checker\nRunner" as Checks
 
 PM -> UI : create project, guide, tasks,\nsetup/checker/review/revision configuration
@@ -72,35 +72,61 @@ API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : require submission create + candidate grant\n+ ownership/resource/lifecycle guards
 Authorization --> API : allowed with matched submitter grant
-API -> Storage : store/read artifact references
+API -> Artifacts : finalize verified artifact bindings
 API -> DB : create immutable submission version
 
 API -> Checks : run automated checks async
-Checks -> Storage : read artifacts
+Checks -> Artifacts : read exact authorized artifacts
 Checks -> DB : persist checker results
 
-Reviewer -> UI : submit review decision
-UI -> API : accept / needs_revision / reject
+Reviewer -> UI : request current work
+UI -> API : GET current work
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
-Authorization -> Authorization : require review decision + candidate grant\n+ assignment/resource/lifecycle guards
+Authorization -> Authorization : require review.queue.read\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched reviewer grant
-API -> DB : lock active ReviewLease with frozen reviewer\nContributionPolicyVersion
-API -> DB : store review decision
-API -> DB : create reviewer completed_review contribution\n+ applicable award when payable
+API --> UI : active lease / one server-selected offer / none
+
+Reviewer -> UI : claim server-selected offer
+UI -> API : POST claim
+API -> Auth : verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : PREP review.claim with exact request bindings
+Authorization --> API : opaque single-use prepared handle
+API -> DB : lock idempotency, lifecycle fence, queue;\nlock task, assignment, Submission, CheckerRun;\nrecompose canonical final facts
+API -> Authorization : consume prepared handle and evaluate final facts
+Authorization --> API : allowed; authorization evidence staged
+API -> DB : freeze reviewer policy; create ReviewLease\n+ ReviewPacketManifest; commit once
+API --> UI : exact leased Review Context
+
+Reviewer -> UI : submit accept / needs_revision / reject
+UI -> API : POST decision + immutable findings/resolutions
+API -> Auth : freshly verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : PREP review.decision with exact request bindings
+Authorization --> API : opaque single-use prepared handle
+API -> DB : lock idempotency, lifecycle fence, queue, lease;\nlock task, assignment, Submission, predecessor/evidence;\nrecompose canonical final facts
+API -> Authorization : consume prepared handle and evaluate final facts
+Authorization --> API : allowed; authorization evidence staged
+API -> DB : append immutable Review/findings/resolutions;\nconsume lease and close queue
+API -> DB : CON reviewer completed_review\n+ applicable award when payable
 
 alt needs_revision
-  API -> DB : create revision requirements
-  Contributor -> UI : submit revision replay
-  UI -> API : new submission version
-  API -> Checks : rerun checks
+  API -> DB : task needs_revision; keep assignment active
 else accept
-  API -> DB : create submitter accepted_submission contribution
+  API -> DB : append FinalAcceptance; accept task; complete assignment
+  API -> DB : CON submitter accepted_submission from FinalAcceptance
   API -> DB : create applicable submitter award when payable
-  API -> DB : create reputation event
 else reject
-  API -> DB : store rejection findings
-  API -> DB : apply reviewer reputation effects\n+ no submitter contribution
+  API -> DB : block assignment; reject task\n+ no FinalAcceptance or submitter contribution
+end
+API -> DB : stage shared audit/outbox and commit once\n(no ART call in decision transaction)
+
+opt needs_revision after decision commit
+  API -> DB : in a later authorized transaction, append frozen\nRevisionContextPreparation
+  Contributor -> UI : submit finding responses
+  UI -> API : replacement Submission bound to preparation head
+  API -> Checks : rerun checks
 end
 @enduml

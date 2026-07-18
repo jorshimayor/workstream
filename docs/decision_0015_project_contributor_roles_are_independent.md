@@ -31,7 +31,8 @@ act as the sole reviewer of their own work even when they separately hold a
 reviewer grant.
 
 The adjudicator grant is recognized now, but it authorizes no adjudication
-operation until WS-REV defines the lifecycle and AUTH activates exact actions.
+operation in v0.1. A future separately approved initiative must define the
+lifecycle before AUTH can register and activate exact actions.
 
 ## Consequences
 
@@ -39,8 +40,7 @@ operation until WS-REV defines the lifecycle and AUTH activates exact actions.
   role.
 - Submitter revocation is consumed by task-assignment reconciliation.
 - Reviewer revocation is consumed by review-lease and queue reconciliation.
-- Adjudicator revocation is consumed by adjudication-assignment reconciliation
-  only after that lifecycle is enabled.
+- Adjudicator revocation has no review-lifecycle consumer in v0.1.
 - Revoking one contributor role does not change another contributor role or an
   AdminRoleGrant.
 - The prior combined-role portion of Decision 0012 is superseded. Its identity,

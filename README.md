@@ -12,7 +12,7 @@ It is not a workspace and it is not blockchain-first. Operators can work with
 any local tools, human-agent workflow, or external execution environment.
 Workstream owns the project guide, task queue, submission packet, automated
 checks, human review, revision loop, contribution record, conditional
-compensation award and fulfillment state, and reputation record.
+compensation award and fulfillment state, and reputation signals.
 
 Workstream is source-agnostic, but v0.1 is manual-first. External origin onboarding, source adapters, automated routing, owner-agent execution workspaces, and on-chain settlement remain later adapters until the internal evaluation loop is proven.
 
@@ -28,10 +28,10 @@ Project Guide
 -> Platform Checkers
 -> Human Review
 -> Needs Revision / Accepted / Rejected
--> Final Acceptance on Accepted
+-> FinalAcceptance on Accepted
 -> Contribution Record
 -> Compensation Award / Fulfillment when payable
--> Reputation Update
+-> Reputation projection when separately implemented
 -> Lessons Learned
 ```
 
@@ -49,13 +49,14 @@ Different projects speak different domain languages, but serious task evaluation
 - every submission has required artifacts, evidence references, hashes, and contributor attestation
 - every invalid submission packet is blocked before submission creation
 - every submission passes automated checks before human review
-- every review creates a decision
-- every revision must close prior feedback
+- every valid human decision appends an immutable Review; submitted findings
+  and later resolutions are immutable
+- every revision responds to unresolved blocking feedback without rewriting it
 - every valid human review creates a reviewer contribution
 - every accepted Review creates one immutable FinalAcceptance
 - every submitter accepted_submission contribution consumes FinalAcceptance
 - every payable contribution updates compensation fulfillment; all contributions
-  can update reputation
+  may feed a separately implemented reputation projection
 
 Workstream turns that operating knowledge into reusable infrastructure.
 
@@ -89,6 +90,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Workspace And Packet Convention](docs/operations_workspace_packet_convention.md)
 - [Reviewer Workflow](docs/operations_reviewer_workflow.md)
 - [Revision Replay](docs/operations_revision_replay.md)
+- [Review And Revision Lifecycle](docs/spec_review_lifecycle.md)
 - [Roles And Permissions](docs/operations_roles_permissions.md)
 - [Authorization Service](docs/spec_authorization_service.md)
 - [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
@@ -133,7 +135,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0007: Execution Is Async-First](docs/decision_0007_async_first_execution.md)
 - [ADR 0008: Files Use An Object-Storage Abstraction](docs/decision_0008_object_storage_abstraction.md)
 - [ADR 0009: Review Decisions Are Canonical](docs/decision_0009_review_decisions_are_canonical.md)
-- [ADR 0010: Revision Context Rebase Is Controlled By Policy](docs/decision_0010_revision_context_rebase.md)
+- [ADR 0010: Revision Context Rebase Uses The Active Project Guide](docs/decision_0010_revision_context_rebase.md)
 - [ADR 0011: Submission Artifact Policy Drives Pre-Submit Intake](docs/decision_0011_submission_artifact_policy_drives_pre_submit.md)
 - [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
 - [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)
@@ -272,9 +274,10 @@ Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
 Create reviewer contribution for every valid human review
-On accept, create FinalAcceptance then create the submitter contribution only from it
+For accept, create FinalAcceptance
+Use FinalAcceptance as the sole source of the submitter contribution
 Record compensation status only for payable contribution awards
-Update reputation from review outcome
+Project reputation only after its separate implementation
 Review lessons learned
 ```
 
@@ -295,8 +298,10 @@ Governance:
 Lifecycle and revision:
 
 - status is a ledger, not a loose label
-- revisions replay prior findings one by one
-- revision context is prepared before resubmission when guide or policy versions change
+- revisions append one response and later resolution per required prior finding
+- revision context is prepared from the active Project Guide before
+  resubmission; exact stamped identity/activation-sequence match keeps context,
+  and any different valid active pair rebases forward or backward
 
 Artifacts, evidence, and auditing:
 
@@ -307,8 +312,7 @@ Artifacts, evidence, and auditing:
 Contribution and compensation:
 
 - every valid human review creates a reviewer contribution from locked evidence
-- accepted work creates an immutable FinalAcceptance, which is the sole source
-  for the submitter contribution
+- for an accept decision, FinalAcceptance alone sources the submitter contribution
 - only payable contributions create immutable awards and fulfillment tracking;
   explicit unpaid rules create none
 - compensation fulfillment is recorded separately from task acceptance

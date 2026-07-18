@@ -1,13 +1,11 @@
 # Task Lifecycle Sequence
 
 This sequence shows the v0.1 operating loop from project guide to reviewer and
-submitter contributions, conditional compensation awards, fulfillment, and
-reputation records.
+submitter contributions, conditional compensation awards, and fulfillment.
 
 It is intentionally separate from the future identity and settlement diagram.
-v0.1 records immutable awards, fulfillment receipts/projections, and reputation
-events internally; it does not execute on-chain settlement or write portable
-agent reputation.
+v0.1 records immutable awards and fulfillment receipts/projections; reputation
+events and portable reputation are deferred.
 
 ```mermaid
 sequenceDiagram
@@ -21,7 +19,7 @@ sequenceDiagram
   participant Auth as Flow Auth Verifier
   participant Authorization as Workstream Authorization
   participant DB as Postgres
-  participant Storage as Storage Abstraction
+  participant Artifacts as ART v2 Capabilities
   participant Checks as Checker Runner
 
   PM->>UI: Create project, guide, tasks, and setup/checker/review/revision configuration
@@ -72,41 +70,66 @@ sequenceDiagram
   Auth-->>API: Verified external identity
   API->>Authorization: require(submission.create, candidates, ownership/resource/lifecycle guards)
   Authorization-->>API: Allowed with matched submitter grant
-  API->>Storage: Store or reference artifacts through storage abstraction
+  API->>Artifacts: Finalize verified artifact bindings
   API->>DB: Create immutable submission version
   API->>DB: Lock submission version and audit submitter-owned finalization
 
   API->>Checks: Enqueue automated checks through Celery
-  Checks->>Storage: Read referenced artifacts
+  Checks->>Artifacts: Read exact authorized artifacts
   Checks->>DB: Persist checker run and results
   Checks->>DB: Keep task EVALUATION_PENDING while pre-review gate runs
   Checks->>DB: Move to REVIEW_PENDING, NEEDS_REVISION, or internal task_setup_blocked
 
-  Reviewer->>UI: Review packet
-  UI->>API: Submit review decision
+  Reviewer->>UI: Request current work
+  UI->>API: GET current work
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
-  Authorization->>Authorization: require(review.decision, candidates, assignment/resource/lifecycle guards)
+  Authorization->>Authorization: require(review.queue.read, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched reviewer grant
-  API->>DB: Store decision: accept, needs_revision, or reject
-  API->>DB: Create reviewer completed_review contribution and applicable award
+  API-->>UI: Active lease, one server-selected offer, or none
+
+  Reviewer->>UI: Claim server-selected offer
+  UI->>API: POST claim
+  API->>Auth: Verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: PREP review.claim with exact request bindings
+  Authorization-->>API: Opaque single-use prepared handle
+  API->>DB: Lock idempotency, lifecycle fence, queue, Task, Assignment, Submission, and CheckerRun; recompose canonical final facts
+  API->>Authorization: Consume prepared handle and evaluate final facts
+  Authorization-->>API: Allowed; authorization evidence staged
+  API->>DB: Freeze reviewer policy; create ReviewLease and ReviewPacketManifest; commit once
+  API-->>UI: Exact leased Review Context
+
+  Reviewer->>UI: Submit accept, needs_revision, or reject
+  UI->>API: POST decision with immutable findings/resolutions
+  API->>Auth: Freshly verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: PREP review.decision with exact request bindings
+  Authorization-->>API: Opaque single-use prepared handle
+  API->>DB: Lock idempotency, lifecycle fence, queue, lease, Task, Assignment, Submission, predecessor, and evidence; recompose canonical final facts
+  API->>Authorization: Consume prepared handle and evaluate final facts
+  Authorization-->>API: Allowed; authorization evidence staged
+  API->>DB: Append Review/findings/resolutions; consume lease; close queue
+  API->>DB: CON reviewer completed_review and applicable award
 
   alt needs_revision
-    API->>DB: Create revision requirements from findings
-    Contributor->>UI: Submit revision replay
-    UI->>API: POST revision replay and new submission version
-    API->>DB: Link replay to prior findings
-    API->>Checks: Run checks again
+    API->>DB: Set needs_revision and keep assignment active
   else accept
-    API->>DB: Create submitter accepted_submission contribution
+    API->>DB: Append FinalAcceptance; accept task; complete assignment
+    API->>DB: CON submitter accepted_submission from FinalAcceptance
     API->>DB: Create applicable submitter CompensationAward
-    API->>DB: Create reputation event
-    API->>DB: Audit acceptance
   else reject
-    API->>DB: Store rejection decision and findings
-    API->>DB: Apply reviewer reputation effects; no submitter contribution
-    API->>DB: Audit rejection
+    API->>DB: Block assignment and reject task
+    API->>DB: No FinalAcceptance or submitter contribution
+  end
+  API->>DB: Stage shared audit/outbox and commit once; no ART call
+
+  opt needs_revision after decision commit
+    API->>DB: In a later authorized transaction, append frozen RevisionContextPreparation
+    Contributor->>UI: Submit one response per unresolved blocking finding
+    UI->>API: Create replacement Submission bound to preparation head
+    API->>Checks: Run checks again
   end
 ```
 
@@ -116,8 +139,9 @@ sequenceDiagram
   `ContributionPolicyVersion` to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
-- `needs_revision` starts a revision loop and must replay prior findings.
-- Every valid human review creates a reviewer contribution. Accepted work
-  additionally creates a submitter contribution before compensation or
-  reputation records.
+- `needs_revision` commits the immutable Review and task effect first. Before
+  contributor access, Workstream appends frozen preparation and later requires
+  immutable responses and resolutions for prior blocking findings.
+- Every valid human Review creates a reviewer contribution. Accept additionally
+  creates FinalAcceptance, which alone sources the submitter contribution.
 - Compensation fulfillment status is separate from task acceptance.

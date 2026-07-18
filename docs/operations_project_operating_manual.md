@@ -232,7 +232,8 @@ The output is one of:
 
 Before review decision:
 
-- read active guide version
+- read the Project Guide identity/version/activation sequence stamped on the
+  exact leased Submission; no guide rebase occurs during review
 - read task acceptance criteria
 - inspect checker results
 - inspect evidence
@@ -268,7 +269,16 @@ checker expectations, it must become the applicable guide, policy, template,
 or checker update before it is enforced. Chat and Slack messages can announce
 the change, but they are not the source of truth.
 
-When a task already in `NEEDS_REVISION` is affected by a new guide or policy version, revision policy decides whether the next attempt is rebased. The contributor must see the prior version, next version, and change summary before resubmitting.
+For human-review revision, Workstream compares the prior Submission's stamped
+guide identity/activation sequence with the currently active Project Guide.
+Exact match keeps; any different valid pair rebases forward or backward; unsafe
+context blocks. Task Context returns the frozen preparation, and the contributor
+sees the prior/next versions, direction, and change summary before resubmitting.
+
+The planned review/revision surface remains unavailable until its owning REV
+chunks, exact AUTH activations, and REV-13 joint release. Every valid decision
+appends an immutable Review and reviewer contribution. Accept additionally
+creates FinalAcceptance, which alone sources the submitter contribution.
 
 Each lesson must have an action owner and one target:
 

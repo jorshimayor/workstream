@@ -1,3 +1,4 @@
+# Immutable archival inputs only. Active review contract: docs/spec_review_lifecycle.md
 547176dcedf41895ed896d5262a6ab8c6c029d71dac50bd17ed9da65f692b9b3  docs/reference_specs/WS-ARCH-001-workstream-v0.1-architecture-baseline.pdf
 464a7afb032e950b83e8fdb8c04fafe0b9ebddf549c4475dca684946740869a9  docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md
 69670ed59006b29cb7f60d12101cedf250c82a3488497f07d6c27e140aef1d2e  docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.pdf

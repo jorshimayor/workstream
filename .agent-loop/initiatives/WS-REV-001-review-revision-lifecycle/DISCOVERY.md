@@ -75,12 +75,13 @@ before producing the reconciled active contract.
   `ActorProfile.id`, not external subject, email, legacy typed-profile ID, or
   role labels. Review authority requires the independent exact-project
   `reviewer` grant; `submitter` and `adjudicator` grants do not substitute.
-- AUTH-09A now supplies the fixed-service enum/schema/migration and the closed
-  seven-identity ART matrix, but it provisions no service actor and admits no
-  service token. Protected review jobs still require AUTH-09B provisioning,
-  AUTH-09E admission, and separately reviewed enum/constraint/matrix extensions
-  for each of REV's six exact identities. A generic system-principal or
-  fabricated human is not allowed.
+- AUTH-09A supplies the fixed-service enum/schema/migration and the closed
+  seven-identity ART matrix. Merged AUTH-09B supplies controlled provisioning
+  only for that closed registry and admits no service token. Protected review
+  jobs still require separately reviewed enum/constraint/matrix extensions for
+  each of REV's six exact identities, provisioning through the merged AUTH-09B
+  capability, and AUTH-09E admission. A generic system-principal or fabricated
+  human is not allowed.
 - `review.queue.override` is present in the merged 74-PermissionId catalogue;
   the review actions mapped to it remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
@@ -105,9 +106,10 @@ contracts assign the final `TaskAssignment.contributor_id` and
   counts from current trusted main and account for its delta independently.
   REV feature chunks build hidden behavior and typed facts; exact AUTH activation
   custodians alone integrate evaluators and change availability. Current trusted
-  main contains 65 ActionIds: 9 active and 56 planned. The eight AUTH-09A
-  additions do not change the 24 REV dependencies, all of which remain
-  unavailable.
+  main after AUTH-09C contains 65 ActionIds: 12 active and 53 planned.
+  AUTH-09B activated `actor.service.provision`; AUTH-09C activates only the two
+  bounded actor-registry reads. No REV identity or action was added, and all 24
+  REV dependencies remain unavailable.
 
 The merged AUTH plan contains an execution cycle: full AUTH-13/14 require
 prepared revision/replacement behavior owned by REV-09A, while REV-02 needs
@@ -137,9 +139,9 @@ route-owned transaction. Its internal evidence records 275 focused behavior
 tests, 90.17 percent branch-aware focused coverage, and 17 isolated Alembic
 tests. Final PR checks passed Backend, Agent Gates, and CodeRabbit. REV runtime
 chunks must preserve these merged invariants and still wait for the later AUTH
-  definition-of-done gate owned by each consumer, AUTH-09B/09E plus the exact
-  REV identity extensions for protected service callers, and the matching AUTH
-  activation checkpoint. Reads consume
+  definition-of-done gate owned by each consumer, exact REV identity extensions
+  and provisioning through merged AUTH-09B, AUTH-09E admission for protected
+  service callers, and the matching AUTH activation checkpoint. Reads consume
   request-scoped `AuthorizationService.require`; mutations consume the future
   authority-first prepared protocol and exactly one final evaluation without
   importing grant persistence into the review module.
@@ -147,19 +149,21 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 ## Artifact boundary
 
 - `ArtifactContent`, immutable `ArtifactBinding`, `ArtifactReplica`, operation
-  receipts, upload staging, a provider-neutral `ArtifactStore`, and a
-  LocalStorage adapter exist.
-- Current ArtifactStore v1 operations cover store, recover committed store,
-  open, stat, verify, retain, release, and receipt lookup. They are discovery
-  state only: WS-XINT-001 requires ART v2 as the sole future provider boundary,
-  and REV must not consume the v1 provider contract.
+  receipts, upload staging, the byte-only provider-neutral ART v2
+  `ArtifactStore`, and `LocalStorageAdapter` exist.
 - Merged ART-02A2 PR #129 at trusted main
   `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final head
   `32aab89262a3944f305e9e5dc4c65a2d31e2e144`, adds an inactive
   `PreparedArtifact`/`CommittedArtifactSource` boundary, bounded private
   `ArtifactScratchManager`, deterministic cleanup mechanics, and shared bounded
-  file locking. Active ArtifactStore v1, provider selection, schema, routes, and
-  lifecycle behavior remain unchanged.
+  file locking. Those preparation types remain internal ART mechanics.
+- Merged ART-02A3 PR #141 at trusted main
+  `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, final branch head
+  `7606798e751abf40218d23886779c3659b76e974`, removes ArtifactStore v1 and
+  activates the byte-only v2 LocalStorage clean cut, namespace fencing, typed
+  product capabilities, migration, and scratch-cleanup wiring. It does not
+  implement S3/MinIO, submission/checker artifact cutovers, review packet read,
+  or review-evidence candidate/finalize behavior.
 - ART scratch is bounded private ephemeral processing state, not artifact
   storage or a product reference. REV never imports ART preparation/scratch
   types, persists their paths or ledger identities, or creates a second scratch
@@ -302,9 +306,10 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 
 - Exact merged AUTH service, resource-context, invalidation, and system-actor
   interfaces.
-- Exact later merged ART v2, S3, admission, verification/publication, read,
+- Exact later merged ART S3, admission, verification/publication, read,
   binding, intake, retention, recovery, service-scope, checker, and projection
-  interfaces. ART-02A2 does not provide those product capabilities.
+  interfaces. ART-02A3 provides the byte foundation and typed composition
+  boundary, not those review-facing capabilities.
 - Exact WS-CON policy-freeze and transaction-participant interfaces.
 - Whether a shared outbox foundation lands before the first review consumer.
 - Production timer schedule and operational alert thresholds.

@@ -60,9 +60,21 @@ from the pre-ADR-0012 runtime do not grant product authority.
 
 Blocking pre-submit failures prevent submission creation. They do not create durable post-submit checker runs and they do not create human review decisions.
 
-Revision policy is not optional. It defines the revision loop contract, including revision limits, revision deadlines, allowed resubmission states, and automatic rejection behavior after the limit.
+Revision policy is not optional. It defines revision limits, revision deadlines,
+allowed resubmission states, and reviewer-return preference. Reaching a limit or
+deadline blocks further preparation and submission; it never creates a reject
+Review. A covered Project Manager may later use the reason-bound administrative
+closure defined by the active review lifecycle contract.
 
-Guide and policy changes do not silently mutate submitted attempts. A submitted attempt stays tied to the guide and policy versions stamped on that submission. When a task enters `NEEDS_REVISION`, revision policy controls whether the next attempt keeps the prior context or rebases to the latest active guide and policy context.
+Guide and policy changes do not silently mutate submitted attempts. A submitted
+attempt stays tied to the guide and policy versions stamped on that Submission.
+After a human `needs_revision` Review, preparation compares the prior
+Submission's stamped Project Guide identity and activation sequence with the
+project's currently active pair. An exact match keeps context, any different
+internally consistent active pair rebases forward or backward, and missing or
+unsafe context blocks for manager repair. RevisionPolicy does not select among
+those outcomes. The reviewer always uses the context stamped on the exact leased
+Submission and performs no separate rebase.
 
 Rules that affect acceptance judgment may be encoded in the human-facing
 project guide, review policy, revision policy, task template, or checker

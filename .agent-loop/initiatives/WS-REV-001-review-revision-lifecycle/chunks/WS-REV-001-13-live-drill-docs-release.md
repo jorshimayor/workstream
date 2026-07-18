@@ -134,8 +134,9 @@ AUTH-13/14 command, participant-binding, task-submission behavior, or migration 
   derives exact counts and SHAs from current trusted main, separately inventories
   the four additive REV actions and
   `artifact.review_evidence.binding.create`, and rejects missing/extra or early
-  activation. Neither historical 57/9/48 nor current-main AUTH-09A 65/9/56 is a
-  fixed expected total for this later release gate.
+  activation. Historical 57/9/48, 65/9/56, and AUTH-09B 65/10/55 plus
+  current-main AUTH-09C 65/12/53 are snapshots, not fixed expected totals for
+  this later release gate.
   AUTH-14 proof specifically covers one `submission.create` action for initial
   and prepared revision submission, the merged REV-09A preparation/replay
   participant, final locked-fact recomposition, misuse/denial behavior, and no
