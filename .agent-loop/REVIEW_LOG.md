@@ -1,5 +1,19 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-A Deterministic Evidence Passed
+
+- Candidate `a4029bd` implements migration `0026`, truthful linked lifecycle
+  invalidation, and only the three reviewed actor-profile lifecycle routes.
+- The five exact migration proofs, expanded PostgreSQL lifecycle matrix and
+  blocker-controlled race proof, focused regression repairs, and the real HTTP
+  API contract pass. No timing sleeps establish concurrency order.
+- Focused branch coverage passes at 90.70 percent for actors and 91.78 percent
+  for authorization; the new lifecycle service is 100 percent branch-covered.
+- Ruff, stale wording and authorization scans, Markdown links, 87 Agent Gates,
+  merge-intent validation, and diff integrity pass. Exact-head internal review,
+  PR publication, external checks, and explicit human merge approval remain.
+  `WS-AUTH-001-09D-B` and `WS-AUTH-001-09E` remain inactive.
+
 ## 2026-07-18 - WS-AUTH-001-09D-A Preimplementation Review Passed
 
 - Exact reviewed contract SHA: `7f941a53b4a30e6116d9a13fce6246f7aa943ac3`.

@@ -33,9 +33,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: implement the exact reviewed AUTH-09D-A contract, then run its
-  deterministic proof and exact-head internal review. No service caller becomes
-  executable before AUTH-09E.
+- Current gate: AUTH-09D-A implementation and deterministic proof passed at
+  `a4029bd`; run exact-head internal review, address valid findings, and publish
+  one ready PR. No service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
