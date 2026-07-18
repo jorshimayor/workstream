@@ -1,13 +1,13 @@
 # WS-AUTH-001-09C Internal Review Evidence
 
-Reviewed code SHA: `6791381ceb9cb0c7f6ba163d4525c6c770c02ca6`
+Reviewed code SHA: `2f4711fd55462898c32f82489a149ae53d6af192`
 
 Reviewed implementation SHA: `4331a6aec2f70d2efb001cb1d61bf1541bea36b9`
 
 Reviewed against trusted main:
-`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
-Reviewed at: `2026-07-18T01:31:40Z`
+Reviewed at: `2026-07-18T05:11:01Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`,
 `auth_xint_rev_con`
@@ -15,10 +15,34 @@ Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`,
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
 architecture, CI integrity, docs, reuse/dedup, and test delta
 
-## Deterministic Evidence
+## External Repair Exact-Head Addendum
 
-- Current `main` at `e118e33` is the merge base. PR #144's WS-CON specification,
-  ADR, review evidence, inventory, and merge intent are preserved unchanged.
+- PR #146's original Backend, Agent Gates, and CodeRabbit checks passed.
+  CodeRabbit run `313d93f6-0386-4cce-97a6-d9442bdeebb3` produced five valid
+  proof findings against published head `f08f443`.
+- Test-only repair `c64bcc7` correlates the exact transition PostgreSQL backend,
+  asserts exact self-target timestamp updates and authorization-kernel facts,
+  and covers both routes for missing-resource rollback and project-scoped Audit
+  Authority denial.
+- Trusted main through PR #141 at `a10d901` is integrated. The fresh isolated
+  database upgraded through migration `0025_artifact_store_v2`; 2 real
+  PostgreSQL lifecycle/race tests passed in 241.10 seconds. Ten focused route
+  and kernel unit tests, Ruff, and all 80 Agent Gates passed.
+- Internal review found and repaired two additional lifecycle-gate defects: stale
+  AUTH-09C/ART-02A3 queue prose and an initially overbroad negative phrase
+  assertion. The final gate rejects only the exact obsolete normalized
+  sentences and preserves both pre-merge ART branches.
+- Senior engineering, QA/test, security/auth, product/ops, architecture, CI
+  integrity, docs, reuse/dedup, and test-delta tracks all pass exact reviewed
+  lifecycle head `2f4711fd55462898c32f82489a149ae53d6af192` with no open
+  findings. No AUTH or ART production behavior, workflow, dependency, threshold,
+  skip, or exclusion changed.
+
+## Original Implementation Deterministic Evidence
+
+- The original implementation review used `e118e33` as its merge base. PR
+  #144's WS-CON specification, ADR, review evidence, inventory, and merge intent
+  were preserved unchanged.
 - The catalogue remains 74 PermissionIds and 65 ActionIds: exactly 12 active and
   53 planned. This chunk activates only `actor.profile.read` and
   `actor.identity_link.read`.
@@ -77,7 +101,7 @@ Valid findings addressed: yes
 
 Open sub-agent sessions: none
 
-The first exact-head review rejected a stale-main candidate and identified
+The original exact-head review rejected a stale-main candidate and identified
 incomplete SQL-stage, self-target, deterministic-race, persisted-evidence, and
 log-privacy proof. Current main was integrated without discarding WS-CON. The
 repair refreshes self-target response timestamps after the one caller touch,
@@ -91,6 +115,6 @@ tests pass.
 
 These APIs intentionally expose exact lifecycle timestamps and the closed local
 service identity to system authorities. They do not expose external identity,
-grant contents, list/search, mutation, or service admission. GitHub Backend,
-Agent Gates, CodeRabbit, and explicit human merge approval remain external
-gates. AUTH-09D must not start automatically.
+grant contents, list/search, mutation, or service admission. Replacement GitHub
+Backend, Agent Gates, CodeRabbit, and explicit human merge approval remain
+external gates. AUTH-09D must not start automatically.
