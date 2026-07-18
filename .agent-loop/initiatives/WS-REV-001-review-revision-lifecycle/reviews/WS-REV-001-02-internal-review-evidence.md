@@ -9,6 +9,18 @@
 - Runtime status: blocked; no backend model, service, migration, persistence
   test, frontend, workflow, or dependency file changed
 
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+## Reviewed revision
+
+Reviewed code SHA: 4b00cd3a7c0886f3fa0e6cf4b4b280aa58bc1a10
+
+Reviewed at: 2026-07-18T12:19:40Z
+
+Reviewer run IDs: /root/rev01_senior_arch_reuse@4b00cd3a7c0886f3fa0e6cf4b4b280aa58bc1a10, WS-REV-001-02/qa-product-test-delta/rebind-4b00cd3-20260718, WS-REV-001-02/security-docs-ci/4b00cd3a/2026-07-18T12:19:40Z
+
 ## Circuit breaker
 
 `SPLIT REQUIRED` on the original parent contract, then `PASS` after repair.
@@ -17,11 +29,17 @@ Submission lineage are owned separately by 02A, 02B, and 02C.
 
 ## Reviewer results
 
-| Tracks | Agent | Final result |
-|---|---|---|
-| Senior engineering, architecture, reuse/dedup, circuit breaker | `/root/rev01_senior_arch_reuse` | PASS |
-| QA/test, product/ops, test-delta | `/root/rev01_qa_product_test` | PASS |
-| Security/auth, docs, CI integrity, ownership boundaries | `/root/rev01_security_docs_ci` | PASS |
+| Reviewer | Result | Blocking findings | Notes |
+|---|---:|---|---|
+| Senior engineering | PASS AFTER FIXES | None | The split, stop condition, publication order, lineage predicate, and dormant cancellation reason are explicit and bounded. |
+| QA/test | PASS AFTER FIXES | None | The planning matrix covers migrations, direct SQL, races, rollback, active-human checks, attribution, and immutability without adding executable tests. |
+| Security/auth | PASS AFTER FIXES | None | AUTH owns canonical-human and contributor-field foundations; REV remains blocked and adds no early authorization or schema behavior. |
+| Product/ops | PASS | None | The v0.1 accept, needs-revision, and reject effects remain exact; adjudication stays dormant and out of implementation scope. |
+| Architecture | PASS AFTER FIXES | None | Parent 02 is non-executable and the 02A, 02B, and 02C boundaries separate guide, policy/task, and Submission ownership. |
+| CI integrity | PASS AFTER FIXES | None | Canonical exact-SHA provenance, statements, and per-track rows now satisfy the fail-closed evidence contract. |
+| Docs | PASS AFTER FIXES | None | Active planning consistently records runtime blockers, current authorities, split ownership, and the explicit successor start gate. |
+| Reuse/dedup | PASS | None | The contracts require reuse of existing project-guide, task, Submission, assignment, audit, and locking boundaries. |
+| Test delta | PASS | None | No executable tests or gates changed, and no assertion, coverage, or workflow behavior was weakened. |
 
 All reviewer sessions completed. No Critical, High, or Medium finding remains.
 
