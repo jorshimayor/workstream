@@ -169,7 +169,7 @@ PostgreSQL.
 ## Required reviewers
 
 Senior engineering, QA/test, security/auth, product/ops, architecture,
-reuse/dedup, docs, and test-delta.
+reuse/dedup, docs, test-delta, and CI integrity.
 
 ## Human review focus
 
