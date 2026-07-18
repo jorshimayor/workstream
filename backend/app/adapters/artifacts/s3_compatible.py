@@ -846,7 +846,16 @@ async def resolve_isolated_aws_workload_credentials(
     expected_method: str,
 ) -> object:
     """Resolve credentials and require the exact selected SDK method."""
-    credentials = await session.get_credentials()
+    resolution_failed = False
+    try:
+        credentials = await session.get_credentials()
+    except Exception:
+        resolution_failed = True
+        credentials = None
+    if resolution_failed:
+        raise ArtifactConfigurationError(
+            "AWS workload identity credentials could not be resolved"
+        ) from None
     if credentials is None or getattr(credentials, "method", None) != expected_method:
         raise ArtifactConfigurationError("AWS workload identity method did not match")
     return credentials

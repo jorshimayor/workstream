@@ -14,6 +14,7 @@ from aiobotocore.credentials import (
 from app.adapters.artifacts import s3_compatible
 from app.core.config import Settings
 from app.interfaces.artifacts import ArtifactConfigurationError
+from tests.assertion_helpers import assert_secret_not_retained
 
 
 def _aws_settings(tmp_path: Path, method: str = "container-role") -> Settings:
@@ -588,3 +589,28 @@ async def test_resolved_workload_identity_method_must_match() -> None:
         expected_method="container-role",
     )
     assert getattr(resolved, "method") == "container-role"
+
+
+async def test_credential_resolution_failure_is_sanitized() -> None:
+    secret = "provider-response-secret"
+
+    class FakeSession:
+        async def get_credentials(self) -> object:
+            raise RuntimeError(f"credential endpoint returned {secret}")
+
+    with pytest.raises(
+        ArtifactConfigurationError,
+        match="AWS workload identity credentials could not be resolved",
+    ) as caught:
+        await s3_compatible.resolve_isolated_aws_workload_credentials(
+            FakeSession(),  # type: ignore[arg-type]
+            expected_method="container-role",
+        )
+
+    assert caught.value.__cause__ is None
+    assert caught.value.__context__ is None
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
+    )
