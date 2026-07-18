@@ -204,22 +204,42 @@ so crossed profile/grant loss cannot commit both transitions.
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts/api_contract_e2e.py)
-(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> \
-  .venv/bin/python scripts/run_isolated_tests.py --timeout-seconds 1800 -- \
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/migration.json" --timeout-seconds 1800 -- \
+  bash -lc '.venv/bin/alembic downgrade -1 && .venv/bin/alembic upgrade head && \
+  .venv/bin/python -m pytest -q tests/test_alembic.py')
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/focused.json" --timeout-seconds 3600 -- \
   .venv/bin/python -m pytest -q \
+  tests/test_actors.py tests/test_authorization.py tests/test_audit.py \
+  tests/test_api_controls.py tests/test_api_rate_controls.py tests/test_alembic.py \
   tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_matrix \
   tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_concurrency)
-(cd backend && .venv/bin/python -m pytest -q \
-  tests/test_actors.py tests/test_authorization.py tests/test_audit.py \
-  tests/test_api_controls.py tests/test_api_rate_controls.py tests/test_alembic.py)
-(cd backend && .venv/bin/coverage erase && .venv/bin/coverage run --branch \
-  --source=app/modules/actors -m pytest -q tests/test_actors.py \
-  tests/test_auth.py -k 'actor_profile_lifecycle' && \
-  .venv/bin/coverage report --fail-under=90)
-(cd backend && .venv/bin/coverage erase && .venv/bin/coverage run --branch \
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/actor-coverage.json" --timeout-seconds 3600 -- \
+  bash -lc '.venv/bin/coverage erase && .venv/bin/coverage run --branch \
+  --source=app/modules/actors -m pytest -q tests/test_actors.py tests/test_auth.py \
+  -k "actor_profile_lifecycle" && \
+  .venv/bin/coverage report --precision=2 --fail-under=90')
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/authorization-coverage.json" --timeout-seconds 3600 -- \
+  bash -lc '.venv/bin/coverage erase && .venv/bin/coverage run --branch \
   --source=app/modules/authorization -m pytest -q tests/test_authorization.py \
-  tests/test_auth.py -k 'actor_profile_lifecycle or admin_role' && \
-  .venv/bin/coverage report --fail-under=90)
+  tests/test_auth.py -k "actor_profile_lifecycle or admin_role" && \
+  .venv/bin/coverage report --precision=2 --fail-under=90')
+(metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/api-contract.json" --timeout-seconds 3600 -- \
+  .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py
