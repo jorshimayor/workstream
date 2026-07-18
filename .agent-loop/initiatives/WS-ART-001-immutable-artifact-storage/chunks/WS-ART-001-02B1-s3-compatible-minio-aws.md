@@ -20,6 +20,9 @@ credential-delivery contract.
   `minio-v1` and `aws-s3-v1` namespace profiles, their exact descriptor keys,
   and the stable AWS live-proof-required error;
 - AWS/MinIO settings in `backend/app/core/config.py`;
+- `backend/app/workers/celery_app.py` and `backend/app/workers/artifacts.py`
+  only to enforce the shared AWS runtime-ineligible guard before Celery startup
+  or artifact scratch cleanup;
 - `backend/pyproject.toml` with exact `aiobotocore==3.7.0` and
   `botocore==1.43.0` pins; this repository has no backend dependency lockfile,
   so dependency tests must inspect the exact manifest pins and installed

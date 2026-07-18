@@ -21,7 +21,7 @@ def assert_secret_not_retained(
     if isinstance(value, str):
         assert secret not in value
     elif isinstance(value, SecretStr):
-        assert value.get_secret_value() != secret
+        assert secret not in value.get_secret_value()
     elif isinstance(value, BaseException):
         if isinstance(value, ValidationError):
             assert_secret_not_retained(value.errors(), secret, seen)
