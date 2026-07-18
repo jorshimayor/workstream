@@ -144,48 +144,30 @@ Task guide ID, version, and activation sequence are nullable only together while
 draft and complete thereafter. PostgreSQL validates that the triplet names one
 same-project guide and rejects every valid-to-valid mutation after allocation.
 
-## Origin-neutral revision obligation
+## Human Review revision preparation
 
-Checker-caused remediation is an existing supported product path and must not be
-misclassified as legacy. A new immutable task-owned `RevisionObligation` is the
-origin-neutral episode root.
+Controlled Project Guide rebase is rooted only in an immutable
+`Review(needs_revision)` and its exact prior Submission. Checker-caused
+`needs_revision` remains a distinct supported upstream remediation path anchored
+to its final CheckerRun. It keeps the Task's existing locked context, creates no
+Review/ReviewFinding/reviewer contribution, consumes no human ReviewPolicy
+revision round/deadline, and does not use D6 close or human finding replay.
 
-Required lineage includes project, task, prior Submission, source
-TaskAssignment, `origin_kind`, source identity, round number, database
-`required_at`, frozen deadline, frozen RevisionPolicy inputs, and audit/
-authorization lineage appropriate to the source. v0.1 origin kinds are exactly:
-
-- `human_review`, with one source `Review(needs_revision)`; or
-- `checker_run`, with one final CheckerRun whose routing result is
-  `needs_revision` for the exact prior Submission.
-
-An XOR constraint requires exactly one source. Partial uniqueness gives one
-obligation per source and one per prior Submission. Composite/deferred checks
-bind the source to the same project, task, Submission, and source assignment.
-No checker outcome fabricates a Review, finding, reviewer contribution, or
-human actor.
-
-`RevisionContextPreparation` is task-owned and references the obligation, not a
-Review directly. It forms an immutable non-branching root/successor chain with
-one head. The task participant owns guide resolution, Task Context, and N+1
-validation; REV and checker orchestration invoke it through typed origin facts
-without importing task/project repositories.
-
-Atomic origin behavior is:
+`RevisionContextPreparation` is task-owned and directly references the exact
+Review and prior Submission. It forms an immutable non-branching root/successor
+chain with one head. The task participant owns guide resolution, Task Context,
+and N+1 validation; REV invokes it through typed human-review facts without
+importing task/project repositories.
 
 ```text
-final CheckerRun(needs_revision)
--> checker-rooted RevisionObligation + initial preparation
--> Task needs_revision -> audit/outbox -> checker transaction commits once
-
 Review(needs_revision) after reviewer CON operation
--> human-rooted RevisionObligation + initial preparation
+-> append the Review-rooted initial preparation
 -> Task needs_revision -> REV audit/outbox -> review transaction commits once
 ```
 
-No contributor-readable `needs_revision` state may exist without one obligation
-and one preparation head. Unsafe context creates a blocked head rather than a
-missing root.
+No contributor-readable human-review-caused `needs_revision` state may exist
+without one preparation head. Unsafe context creates a blocked head rather than
+a missing root.
 
 Preparation compares the prior Submission guide identity/sequence to the
 currently active guide:
@@ -199,31 +181,25 @@ It freezes guide/source/task-execution policy context, not contribution policy.
 Task Context returns the exact head. Submission N+1 acknowledges the head ID and
 digest; a later guide activation does not silently change it.
 
-Human-review origins require one immutable response for every unresolved
-blocking ReviewFinding and later resolution during review. Checker origins show
-only contributor-safe checker messages/fixes, create no fake ReviewFinding responses,
-and return to ordinary open routing after corrected checker admission. Human
-revision returns prefer the prior reviewer.
+Human revision requires one immutable response for every unresolved blocking
+ReviewFinding and later resolution during review, and returns prefer the prior
+reviewer. Checker remediation shows contributor-safe checker messages/fixes,
+creates no fake ReviewFinding response/resolution, preserves current guide/task
+context, and returns to ordinary open routing after corrected checker admission.
 
 ## Revision limits and deadlines
 
-`revision_round_number` equals the number of earlier immutable obligations for
-the task plus one. Checker and human obligations both count because both consume
-a contributor resubmission cycle. A new resubmission is permitted only when the
-round is at or below `max_revision_rounds` and database time is strictly before
-the frozen `revision_deadline_at`; equality is expired.
+The exact human Review revision-round counting source, deadline anchor, and
+boundary remain a human-owned product decision before 09A1. They are not
+inferred from checker retries, task SLA, current time, or archival examples.
+Whatever values are approved freeze on the Review-rooted episode and use
+database time. At exhaustion, Task remains `needs_revision` and assignment
+active; context repair cannot bypass exhaustion, and only exact D6 close may
+terminate the human revision obligation. No synthetic reject is created.
 
-For v0.1, `revision_deadline_at = required_at + revision_deadline_hours` for the
-obligation. A future task-global deadline would be a separate product decision.
-At an exhausted gate, preparation records a blocked head with the exact reason;
-Task remains `needs_revision` and the assignment remains active. Context-invalid
-or revoked heads may use authorized repair. Limit/deadline exhaustion permits
-only the exact D6 close; repair cannot bypass frozen exhaustion. No synthetic
-reject is created.
-
-Historical checker-rooted `needs_revision` rows may be recovered only from an
-exact durable CheckerRun, prior Submission, and matching audit lineage.
-Ambiguous or genuinely rootless history is
+An exact final CheckerRun proves a checker-remediation task is not a rootless
+human revision. Only state that claims human Review revision but has no
+unambiguous originating Review/preparation is
 `legacy_revision_context_unrecoverable`; migration never fabricates a Review.
 
 ## Artifact boundary
@@ -241,7 +217,7 @@ provider adapters/references, scratch paths, or raw repository access.
   grant no byte access.
 - Reviewer finding evidence uses an ART-owned candidate/finalize port and an
   exact binding service action. Revision response evidence is owned only by the
-  human-origin revision chunk.
+  human Review revision chunk.
 - Core Review/CON transactions copy stabilized digest lineage and make no ART
   call.
 
@@ -312,9 +288,9 @@ are:
 - 06A claim/freeze; 06B release/decline/preferences; 06C expiry/lazy recovery.
 - 07A lease-bounded context; 07B reviewer finding evidence only.
 - 08 pure decision schemas, validation, and typed participant inputs only.
-- 09A1 obligation/preparation schema; 09A2 checker-origin atomic preparation,
-  Task Context, and a flush-only human-origin participant first consumed by 10;
-  09A3 human response evidence; 09A4 internal prepared N+1 task/checker behavior;
+- 09A1 Review-rooted preparation schema; 09A2 preparation resolver and Task
+  Context; 09A3 human response evidence; 09A4 internal prepared human N+1 plus
+  preserved distinct checker-remediation behavior;
   09A5 replacement-assignment transfer; 09B replay/resolution/return routing.
 - 10 first hidden canonical Review/FinalAcceptance/CON transaction.
 - 11A privileged queue/lease commands; 11B PM repair/D6 close; 11C
@@ -338,12 +314,12 @@ allow bounded readiness/administrative reads while denying product mutations.
 Forward reactivation reuses static router registration and AUTH mappings after
 phase, drain, service, and dependency checks pass.
 
-Checker revision routing/preparation is one server-derived checker-completion
-class: it is allowed with checker completion through `revision_cutover_fenced`
-and denied from `admission_fenced`. It creates only checker-rooted obligation,
-preparation, Task needs_revision, audit, and outbox. Human-rooted preparation is
-an internal consequence of leased `review.decision` and shares that completion
-class; it is never an independently phase-enabled command.
+Checker needs-revision routing is one server-derived checker-completion class:
+it is allowed with checker completion through `revision_cutover_fenced` and
+denied from `admission_fenced`. It creates only CheckerRun-rooted task state,
+audit, and outbox under the existing locked task context. Human Review
+preparation is an internal consequence of leased `review.decision` and shares
+that completion class; it is never an independently phase-enabled command.
 
 Chunk 13C is the only product router-registration and active-release-document
 point. Earlier chunks keep routes absent, build hidden composition, add reusable
@@ -364,7 +340,7 @@ skip, or rewrite existing checker-caused revision coverage.
 
 ## Stop rule
 
-`WS-REV-001-02A-PREP` changes planning/specification only. After it merges,
+`WS-REV-001-PLAN2` changes planning/specification only. After it merges,
 automated memory names `WS-REV-001-02A` with an explicit-start gate. Runtime
 starts only after the exact AUTH contributor foundation and all 02A-specific
 conditions merge and the user explicitly starts 02A. No chunk starts its

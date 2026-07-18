@@ -4,7 +4,7 @@
 
 Trusted main is `f18b620932bb257dc1dc355bc0504271813dc6b1`, merge of REV
 parent chunk 02 through PR #147. Parent 02 is a merged non-executable split
-record. `WS-REV-001-02A-PREP` is the active planning/specification-only refresh.
+record. `WS-REV-001-PLAN2` is the active planning/specification-only refresh.
 No backend runtime, migration, model, repository, service, route, or persistence
 test is authorized in this chunk.
 
@@ -41,9 +41,10 @@ not merged.
   the children in `CHUNK_MAP.md` may later receive implementation contracts.
 - Chunk 08 is pure contract/validation only. Chunk 10 remains the first canonical
   Review/FinalAcceptance/CON transaction.
-- Revision uses immutable task-owned `RevisionObligation` with exactly one
-  `human_review` or `checker_run` origin. Checker-caused `needs_revision` remains
-  a supported path and never fabricates Review/finding/reviewer contribution.
+- Controlled revision preparation remains task-owned and rooted in an exact
+  human `Review(needs_revision)`. Checker-caused `needs_revision` remains a
+  distinct supported CheckerRun path, keeps existing task context, and never
+  fabricates Review/finding/reviewer contribution or consumes human rebase/D6.
 - Limit/deadline exhaustion cannot be repaired around; only exact D6 close may
   terminate that frozen obligation.
 - Persisted release phase denies command execution. It does not unregister
@@ -72,9 +73,12 @@ not merged.
 - Separate 02A start after this refresh merges.
 - Exact positive `review_preference_window_seconds` and
   `review_lease_duration_seconds` before 02B. Neither derives from `sla_hours`.
+- Exact human Review revision-round counting, deadline anchor, and boundary
+  before 09A1; checker retries are excluded unless a separate product/ADR
+  amendment is explicitly approved.
 - Every later external owner dependency and child start as listed in the map.
 
 ## Stop condition
 
-Publish only `WS-REV-001-02A-PREP`, let automated memory name 02A with an
+Publish only `WS-REV-001-PLAN2`, let automated memory name 02A with an
 explicit-start gate, and stop. Do not implement 02A, 02A2, or 02B from this PR.

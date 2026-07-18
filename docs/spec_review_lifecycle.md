@@ -6,7 +6,7 @@ This document is the active normative implementation contract for the planned
 Workstream v0.1 human review and revision lifecycle. The lifecycle described
 here is not yet available in the production API. Each owning REV chunk must
 merge hidden behavior, AUTH must activate the exact registered actions, and
-`WS-REV-001-13` must pass the joint release gate before any surface is exposed.
+`WS-REV-001-13C` must pass the joint release gate before any surface is exposed.
 
 The implementation sequence is defined by
 `WS-REV-001-review-revision-lifecycle/CHUNK_MAP.md` under `.agent-loop`. This
@@ -90,7 +90,7 @@ availability.
 
 All of these endpoints remain planned and unavailable until the owning REV
 chunks provide hidden behavior, AUTH registers and activates their dependencies,
-and REV-13 releases the product surface.
+and REV-13C releases the product surface.
 
 `GET /api/v1/reviews/current` is a concealed read, not a claim:
 
@@ -168,7 +168,6 @@ REV adds these lifecycle records in later hidden chunks:
 - `Review`
 - `ReviewFinding`
 - `ReviewEvidenceArtifact`
-- `RevisionObligation`
 - `RevisionContextPreparation`
 - `SubmissionFindingResponse`
 - `FindingResolution`
@@ -209,12 +208,13 @@ may admit the exact immutable Submission to human review. Admission records the
 exact CheckerRun ID and verified binding facts. A retry, supersession, or
 different Submission cannot silently replace that anchor.
 
-Checker routing is not human judgment. A final needs-revision CheckerRun
-atomically appends one checker-origin RevisionObligation and initial preparation,
-then moves the Task to contributor-readable `needs_revision` in the same checker
-transaction. It creates no Review, ReviewFinding, reviewer contribution, or
-synthetic human actor. Checker remediation follows that exact CheckerRun lineage
-and must pass the normal submission/checker spine before human review.
+Checker routing is not human judgment. A final needs-revision CheckerRun moves
+the Task to contributor-readable `needs_revision` in the existing checker
+transaction while retaining the Task's locked context. It creates no Review,
+ReviewFinding, RevisionContextPreparation, reviewer contribution, or synthetic
+human actor, consumes no human revision round/deadline, and does not use D6
+closure. Checker remediation follows that exact CheckerRun lineage and must pass
+the normal submission/checker spine before human review.
 
 Queue schema migration performs no blanket historical backfill. A later audited
 reconciliation may admit only an unambiguous latest finalized Submission with a
@@ -354,7 +354,7 @@ Review(accept)
 ```text
 Review(needs_revision)
 -> reviewer completed_review already created
--> append human-review-origin RevisionObligation and initial preparation
+-> append Review-rooted initial RevisionContextPreparation
 -> Task.status = needs_revision
 -> TaskAssignment remains active
 -> no FinalAcceptance
@@ -455,13 +455,9 @@ lock. Each Submission stamps the exact guide ID, version, immutable per-project
 activation sequence, source snapshot, and task-execution policy IDs, versions,
 and hashes used for that attempt.
 
-Every supported `needs_revision` transition first appends one immutable
-task-owned `RevisionObligation`. Its v0.1 origin is exactly one immutable human
-`Review(needs_revision)` or one final CheckerRun whose exact routing result for
-the prior Submission is `needs_revision`. An XOR and same-chain constraints bind
-the source to the exact project, task, prior Submission, and source
-TaskAssignment. Checker origin creates no Review, ReviewFinding, reviewer
-contribution, or synthetic human actor.
+Controlled revision preparation applies only after an immutable human
+`Review(needs_revision)`. Checker-caused remediation remains the distinct
+CheckerRun-rooted path above and performs no guide rebase or human finding replay.
 
 Revision preparation compares the prior Submission's stamped guide identity and
 activation sequence with the project's currently active Project Guide pair:
@@ -476,14 +472,14 @@ Version strings are never ordered. Activation sequence records chronology but
 does not overrule which guide is currently active.
 
 `RevisionContextPreparation` is immutable and rooted in the exact
-RevisionObligation and prior Submission. It freezes the complete selected
+`needs_revision` Review and prior Submission. It freezes the complete selected
 next-attempt guide/source/task-execution policy context, context digest, outcome,
 direction, change summary, source TaskAssignment, currently authorized target
 TaskAssignment, preparation sequence, preparing actor/process, and audit link.
 It does not contain or rebase a ContributionPolicyVersion.
 
-Each episode forms one non-branching preparation chain: one root per obligation,
-one child per preparation, same task/obligation/source lineage across an edge, and
+Each episode forms one non-branching preparation chain: one root per Review,
+one child per preparation, same task/Review/source lineage across an edge, and
 sequence increasing by exactly one. The head is the row with no successor.
 Task Context selects that head and then validates it; it never falls back to an
 older preparation when the head is blocked, corrupt, revoked, or stale.
@@ -529,11 +525,10 @@ the replacement. The old contributor cannot submit.
 
 ## Revision Limits, Repair, And Legacy Recovery
 
-The next revision round is the count of prior immutable obligations for the task
-plus one; checker and human origins both count. A resubmission is allowed only
-when that round is at or below the frozen maximum and database time is strictly
-before `revision_deadline_at = required_at + revision_deadline_hours`; equality
-is expired.
+Exact human Review revision-round counting, deadline anchor, and boundary require
+separate human approval before implementation. They are not inferred from
+checker retries, task SLA, current time, or archival examples. Approved values
+freeze on the Review-rooted episode and use database time.
 
 Reaching a revision limit or deadline blocks new revision preparation and
 `submission.create` with a stable policy error. It does not automatically reject
@@ -554,9 +549,10 @@ acknowledges the exact current head ID/digest and reason; the command appends on
 validated successor after project setup correction. It cannot edit history,
 branch the chain, create an episode root, or bypass a frozen limit/deadline.
 
-A historical checker-rooted task is recovered only from exact durable
-CheckerRun, Submission, and matching audit lineage; it is not legacy solely
-because no Review exists. A genuinely rootless or ambiguous task cannot use
+A historical checker-rooted task is proven by exact durable CheckerRun,
+Submission, and matching audit lineage; it is not legacy solely because no
+Review exists. A task that claims human Review revision but has no unambiguous
+Review/root cannot use
 normal repair. Reconciliation records the defect. An Operator may use the
 planned evidence-linked `review.revision_context.legacy_close` command to set
 the task `cancelled`, release the assignment, and close any queue with terminal
@@ -592,7 +588,7 @@ The exact delivery order is:
 AUTH planned registration and activation custody
 -> required ART/CON capability plus REV hidden behavior and canonical facts
 -> AUTH evaluator integration and exact action activation
--> REV-13 joint product-surface release
+-> REV-13C joint product-surface release
 ```
 
 `WS-AUTH-001-REV-CUSTODY` transfers the 19 registered planned review rows to
@@ -601,7 +597,7 @@ availability. `WS-AUTH-001-PREP` supplies the prepared mutation protocol.
 `WS-AUTH-001-REV-REG` registers the four additions below as planned.
 `WS-AUTH-001-REV-05/06/07/08/09A/11/12` integrate and activate only their exact
 merged hidden features. `WS-AUTH-001-REV-LIFECYCLE` activates the four additions
-only after the REV-11 and REV-12A hidden manifests are complete. REV-13 alone
+only after the REV-11A-D and REV-12A1-A4 hidden manifests are complete. REV-13C alone
 exposes the already-active coherent product surface.
 
 ## Four-Action Registration Manifest
@@ -618,15 +614,15 @@ revalidation.
 - Candidate: active covered Project Manager grant only.
 - Planned surface: `POST /api/v1/tasks/{task_id}/revision-context/repair`.
 - Resource facts: exact project, task, current/source assignments, prior
-  Submission, exact RevisionObligation origin, episode, current head
+  Submission, originating `needs_revision` Review, episode, current head
   ID/digest, and current guide/policy facts.
-- Guards: covered project, exact obligation-rooted episode, exact current blocked or
+- Guards: covered project, exact Review-rooted episode, exact current blocked or
   invalid head, nonterminal task, no crossed lineage, append one validated
   successor only, no root/edit/branch.
 - Transaction revalidation: authority, project, task, assignments, prior
-  Submission, source Review or CheckerRun, obligation, head, and current guide/policies under canonical
+  Submission, Review, episode, head, and current guide/policies under canonical
   locks.
-- Hidden behavior dependency: `WS-REV-001-11` and the task-owned revision
+- Hidden behavior dependency: `WS-REV-001-11B` and the task-owned revision
   participant.
 
 ### `review.revision_context.legacy_close`
@@ -637,13 +633,13 @@ revalidation.
   `POST /api/v1/admin/review-reconciliation/{finding_id}/legacy-revision-close`.
 - Resource facts: exact unresolved
   `legacy_revision_context_unrecoverable` finding, project, task, assignment,
-  optional queue, and server-proven absence of a recoverable Review/CheckerRun
-  obligation root.
+  optional queue, absence of a recoverable human Review/root, and proof that the
+  state is not exact CheckerRun remediation.
 - Guards: exact unresolved current finding, legacy task still
-  `needs_revision`, no healthy or recoverable obligation, exact replay only.
+  `needs_revision`, no healthy/recoverable Review root, exact replay only.
 - Effects: task cancelled, assignment released, queue administratively closed;
   no synthetic Review, FinalAcceptance, or CON record.
-- Hidden behavior dependency: `WS-REV-001-11`.
+- Hidden behavior dependency: `WS-REV-001-11D`.
 
 ### `review.revision_obligation.close`
 
@@ -652,20 +648,21 @@ revalidation.
   not substitute.
 - Planned surface:
   `POST /api/v1/tasks/{task_id}/revision-obligation/close`.
-- Resource facts: exact project, task, assignment, RevisionObligation, its exact
-  source Review or CheckerRun, current preparation head, frozen limit/deadline,
-  and server proof of the selected reached cause.
+- Resource facts: exact project, task, assignment, originating human
+  `needs_revision` Review, current preparation head, approved frozen
+  limit/deadline facts, and server proof of the selected reached cause.
+- CheckerRun-rooted remediation is not an eligible resource for this command.
 - Guards: exact current head/cause, task still `needs_revision`, and terminal
   reason exactly `revision_limit_reached` or `revision_deadline_expired`;
   missing, not-reached, stale, arbitrary, crossed, or cross-project input denies.
-- Hidden behavior dependency: `WS-REV-001-11`.
+- Hidden behavior dependency: `WS-REV-001-11B`.
 
 ### `review.lifecycle.activation.manage`
 
 - Permission: existing `operations.reconcile.run`.
 - Candidate: Operator AdminRoleGrant only; no service actor or background replay.
 - Planned surface: authenticated lifecycle-control status and adjacent-phase
-  transition commands; REV-12A/13 lock the exact URI before exposure.
+  transition commands; REV-12A1-A4/13C lock the exact URI before exposure.
 - Resource facts: operation, singleton ID, expected generation/current phase,
   target phase, reviewed manifest digest, server-derived drain observations,
   bounded batch/deadline, and reason.
@@ -674,7 +671,7 @@ revalidation.
   conflict. Lease force release keeps its own action.
 - Transaction revalidation: prepared authority, shared/exclusive advisory fence,
   row locks, final observations, one caller commit.
-- Hidden behavior dependency: `WS-REV-001-12A`.
+- Hidden behavior dependency: `WS-REV-001-12A1` through `WS-REV-001-12A4`.
 
 ## Fixed Service Identity Manifests
 
@@ -701,7 +698,7 @@ by the caller.
 
 ## Planned API Surface
 
-All routes remain unavailable until REV-13. The final coherent `/api/v1`
+All routes remain unavailable until REV-13C. The final coherent `/api/v1`
 surface includes separate capabilities for:
 
 - reviewer current work;
@@ -756,7 +753,7 @@ authority or advances a phase. Reactivation requires a newly reviewed manifest.
 
 This controller is product release state, not AUTH action availability. REV-12A
 exposes no public route; AUTH activates the exact management action only after
-the hidden manifests merge, and REV-13 exposes and drills it.
+the hidden manifests merge, and REV-13C exposes and drills it.
 
 ## Error, Concurrency, And Idempotency Rules
 

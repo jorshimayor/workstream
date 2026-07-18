@@ -1,4 +1,4 @@
-# Chunk Contract: WS-REV-001-02A-PREP - REV-02A Runtime Readiness Plan Refresh
+# Chunk Contract: WS-REV-001-PLAN2 - REV-02A Runtime Readiness Plan Refresh
 
 ## Parent initiative
 
@@ -24,7 +24,7 @@ L1 planning and cross-initiative contract integrity.
 
 ```text
 .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**
-.agent-loop/merge-intents/WS-REV-001-02A-PREP.json
+.agent-loop/merge-intents/WS-REV-001-PLAN2.json
 docs/spec_review_lifecycle.md
 docs/architecture_data_model.md
 docs/architecture_lifecycle_state_machine.md

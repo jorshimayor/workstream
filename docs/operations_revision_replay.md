@@ -3,7 +3,7 @@
 ## Status And Purpose
 
 This is the planned v0.1 operating contract. Revision behavior remains
-unavailable until its owning REV chunks, exact AUTH activation, and REV-13 joint
+unavailable until its owning REV chunks, exact AUTH activation, and REV-13C joint
 release complete.
 
 Revision replay preserves an immutable answer to three questions: what the
@@ -11,12 +11,12 @@ reviewer required, how the submitter responded, and how a later reviewer
 resolved each issue. No participant edits a prior Review, finding, response, or
 resolution.
 
-## Origin-Rooted Preparation
+## Review-Rooted Preparation
 
-Every revision begins with one immutable task-owned RevisionObligation. Its
-source is exactly one `Review(needs_revision)` or one final needs-revision
-CheckerRun for the prior Submission. Checker remediation does not fabricate a
-Review, finding, reviewer contribution, or human actor.
+Controlled revision replay begins only from one immutable
+`Review(needs_revision)`. Checker remediation remains a separate CheckerRun-
+rooted resubmission path using the Task's existing locked context; it does not
+fabricate a Review, finding, preparation, reviewer contribution, or human actor.
 
 Before contributor access, Workstream appends a RevisionContextPreparation. It
 compares the prior Submission's stamped Project Guide identity and activation
@@ -27,7 +27,7 @@ sequence with the currently active guide:
 - missing, incomplete, inconsistent, revoked, or unsafe context: `blocked`.
 
 The preparation freezes the selected guide/source/task-execution policy context,
-context digest, prior Submission, originating obligation, source and target
+context digest, prior Submission, originating Review, source and target
 TaskAssignments, and change summary. Task Context returns the validated head,
 not a moving live guide. No guide rebase occurs during review; the reviewer
 reads the context stamped on the leased Submission.
@@ -37,7 +37,7 @@ ReviewLease freeze never change because guide context rebases.
 
 ## Submitter Response
 
-For a human-review origin, each unresolved blocking ReviewFinding requires one
+For each unresolved blocking ReviewFinding, the assigned submitter creates one
 immutable SubmissionFindingResponse containing:
 
 - finding ID;
@@ -48,8 +48,9 @@ immutable SubmissionFindingResponse containing:
 
 Advisory findings may be answered but do not block resubmission unless the locked
 policy explicitly requires a response. Vague aggregate “fixed all” text cannot
-replace per-finding responses. A checker origin uses only contributor-safe checker
-messages/fixes and requires no fabricated ReviewFinding response or resolution.
+replace per-finding responses. The distinct checker-remediation path uses only
+contributor-safe checker messages/fixes and requires no fabricated
+ReviewFinding response or resolution.
 
 ## Resubmission And Checks
 
@@ -58,8 +59,8 @@ immediate predecessor, and stamps the frozen context. The normal finalization
 and checker spine reruns. Only a current successful `allow_review` may create a
 new queue entry.
 
-Human-origin return initially prefers the reviewer who requested revision;
-checker-origin return enters open routing. Expiry,
+Human Review return initially prefers the reviewer who requested revision. The
+distinct corrected checker path enters open routing. Expiry,
 decline, or invalidation opens the entry without resetting queue age.
 
 ## Reviewer Resolution
@@ -76,9 +77,10 @@ new ReviewFinding on the later Review.
 
 ## Limits And Recovery
 
-The next round counts all earlier immutable checker/human obligations. Database
-time must be strictly before the frozen per-obligation deadline; equality is
-expired. A reached revision limit or deadline blocks further preparation and
+Exact human Review round counting, deadline anchor, and boundary require human
+approval before implementation and exclude checker retries. Approved values use
+database time and freeze on the Review-rooted episode. A reached revision limit
+or deadline blocks further preparation and
 `submission.create`; it does not automatically reject or cancel the task. The
 task remains `needs_revision` until a covered Project Manager explicitly invokes
 the planned reason-bound obligation-close command. That administrative closure
@@ -87,8 +89,8 @@ or contribution.
 
 A blocked or invalid context preparation can be repaired only by appending one
 successor through the planned covered-manager repair command. Repair cannot
-bypass limit/deadline exhaustion. Exact durable checker history is recoverable
-without fabricating Review; only ambiguous or truly rootless legacy state uses
+bypass limit/deadline exhaustion. Exact durable CheckerRun remediation is not
+legacy; only ambiguous or truly rootless claimed human Review state uses
 Operator evidence-linked close.
 
 ## Required Proof

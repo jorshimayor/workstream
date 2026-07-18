@@ -68,12 +68,13 @@ through PR #147. The active planning chunk makes no backend/runtime changes.
 ## Product findings
 
 - All reviewer decisions/findings/resolutions are append-only.
-- Checker-caused and human-review-caused revision need one origin-neutral durable
-  obligation. Treating checker remediation as legacy would regress a supported
-  path and block AUTH-14 strict cutover.
-- Revision context is task-owned. REV supplies human decision/finding origin
-  facts through a typed task participant; checker orchestration supplies checker
-  origin facts through the same participant.
+- Checker-caused remediation is supported but accepted ADRs scope controlled
+  guide rebase/preparation to human Review revision. The plan must preserve a
+  distinct CheckerRun-rooted N+1 path rather than treating it as legacy or
+  silently applying human RevisionPolicy/D6 behavior.
+- Human revision context is task-owned. REV supplies exact human decision/
+  finding facts through a typed task participant. Checker remediation retains
+  its existing task/checker path and locked context.
 - Task guide identity and reviewer packet access require database-enforced
   immutability/lease scope, not service convention.
 - The exact decision lock order must put AUTH authority first, then

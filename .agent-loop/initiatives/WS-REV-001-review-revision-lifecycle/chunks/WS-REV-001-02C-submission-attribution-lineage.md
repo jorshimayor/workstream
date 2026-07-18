@@ -153,4 +153,4 @@ downgrade refusal.
 - Stop if the AUTH foundation is incomplete or a retired contributor-identity
   storage name remains.
 - Stop if attribution or guide context cannot be proved for every migrated row.
-- Merge, record automated memory, and stop. Do not start 03 automatically.
+- Merge, record automated memory, and stop. Do not start 03A automatically.

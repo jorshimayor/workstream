@@ -185,7 +185,7 @@ effect.
 The normal D6 command maps to existing `project.task.manage` and is not an
 Operator reconciliation shortcut. Operator-only `review.queue.close` and
 `review.revision_context.legacy_close` remain distinct recovery commands and
-cannot close a healthy origin-rooted obligation merely because a limit or
+cannot close a healthy Review-rooted revision merely because a limit or
 deadline exists.
 
 ### D7 - Artifact Preflight Does Not Hold Review Locks Across Remote Calls
@@ -229,7 +229,7 @@ exposes current-work, claim, release, decline, context,
 decision, revision preparation/resubmission, chain reads, and authorized admin
 operations together only when AUTH, ART, WS-CON, audit, outbox, recovery,
 reconciliation, projection jobs, and live preflight are mandatory and
-proven. REV-13 changes product composition, not AUTH availability.
+proven. REV-13C changes product composition, not AUTH availability.
 
 **Human confirmed 2026-07-15.**
 
@@ -459,7 +459,7 @@ allocates its server-derived monotonic ordinal. The exclusive
 atomically stores the CON-derived maximum ordinal as the immutable generation
 cutoff. During `delivery_draining`, dispatch and callbacks may only complete a
 same-generation root at or below that cutoff; root creation, requeue, successor,
-and repair work remains denied. REV-13 exposes and exercises the merged,
+and repair work remains denied. REV-13C exposes and exercises the merged,
 AUTH-active foundation, performs the ordered writer fence, migration, and
 process cutover, and prohibits downgrade after protected rows exist.
 
@@ -479,7 +479,7 @@ hidden behavior and feature-manifest deltas; the exact
 `WS-AUTH-001-REV-05/06/07/08/09A/11/12` gates later activate their action groups.
 `WS-AUTH-001-REV-REG` registers the four approved additions and
 `WS-AUTH-001-REV-LIFECYCLE` activates them only after all hidden manifests merge.
-REV-13 performs the separate product-surface release. The 24 REV dependencies
+REV-13C performs the separate product-surface release. The 24 REV dependencies
 are one registered planned submission action, 19 registered planned review
 actions, and four approved but unregistered additions; none is active. The
 separate ART review-evidence binding proposal is not one of the 24, so future
@@ -517,27 +517,23 @@ The review preference and lease durations are independent positive policy
 values. Neither may be inferred from `ReviewPolicy.sla_hours`; their exact v0.1
 migration defaults remain a human decision before 02B can start.
 
-### D22 - RevisionObligation Is Origin Neutral And Task Owned
+### D22 - Checker Remediation Remains Distinct From Human Revision Rebase
 
-D22 supersedes D5/D18 wording that roots every revision episode directly in a
-Review. `RevisionObligation` is the immutable task-owned episode root and has
-exactly one v0.1 origin: `human_review` or `checker_run`. An XOR plus same-chain
-constraints bind the source Review(needs_revision) or final CheckerRun
-(needs_revision) to the exact prior Submission/task/assignment. Checker origin
-creates no synthetic Review, finding, reviewer contribution, or human actor.
+D22 preserves the existing CheckerRun-rooted `needs_revision` path without
+expanding ADR 0010. Checker remediation keeps the Task's locked guide context,
+creates no Review/finding/reviewer contribution, consumes no human ReviewPolicy
+revision round/deadline, and does not use finding replay or D6 close. Controlled
+RevisionContextPreparation remains rooted in an exact
+`Review(needs_revision)`. Treating exact checker history as legacy is prohibited.
 
-`RevisionContextPreparation` references the obligation and remains a task-owned
-non-branching immutable chain. Human decision and checker orchestration invoke
-the same flush-only task participant through distinct typed origin facts.
+### D23 - Human Revision Exhaustion Semantics Require Explicit Approval
 
-### D23 - Revision Exhaustion Is Frozen And Cannot Be Repaired Around
-
-The next obligation round is the count of prior immutable obligations plus one;
-checker and human origins both count. A valid resubmission requires the round at
-or below `max_revision_rounds` and database time strictly before the frozen
-`revision_deadline_at = required_at + revision_deadline_hours`; equality is
-expired. Context-invalid/revoked heads may be repaired. A limit/deadline blocked
-head may only use the exact D6 close; repair cannot bypass frozen exhaustion.
+D6 fixes the outcome of an exhausted human Review revision but does not define
+the round counting source, deadline anchor, or inclusive/exclusive boundary.
+Those values remain a human-owned decision before 09A1. They cannot be inferred
+from checker retries, task SLA, current time, or archival examples. Whatever is
+approved freezes on the Review-rooted episode, uses database time, and cannot be
+bypassed through context repair.
 
 ### D24 - Guide Chronology Precedes Hidden Authorized Reactivation
 

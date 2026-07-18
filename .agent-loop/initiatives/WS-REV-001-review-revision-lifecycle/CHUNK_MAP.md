@@ -15,7 +15,7 @@ typed symbol/manifest, and tests.
 | `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L1 | None | Merged PR #128 |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | PLAN | Merged PR #145 |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | 01 | Merged PR #147; non-executable split record |
-| `WS-REV-001-02A-PREP` | REV-02A Runtime Readiness Plan Refresh | L1 | 02; planning-only human start | Active planning/specification chunk; no runtime |
+| `WS-REV-001-PLAN2` | REV-02A Runtime Readiness Plan Refresh | L1 | 02; planning-only human start | Active planning/specification chunk; no runtime |
 | `WS-REV-001-02A` | Project Guide Activation Sequence And Publication Locking | L1 | Exact merged AUTH contributor foundation; refreshed SHA/head; separate human start | Runtime blocked |
 | `WS-REV-001-02B` | Locked Review Policy And Dormant Task Lifecycle Compatibility | L1 | 02A; approved duration defaults; separate start | Proposed |
 | `WS-REV-001-02C` | Submission Attribution, Context, And Immutable Lineage | L1 | 02B; merged AUTH canonical contributor constraints; separate start | Proposed |
@@ -38,10 +38,10 @@ typed symbol/manifest, and tests.
 | `WS-REV-001-08` | Pure Decision, Final Acceptance, And Task-Effect Contract | L1 | 07B; typed participant contracts | Proposed; executable contract after repair, no canonical write |
 | `WS-REV-001-02A2` | Prepared Superseded Guide Reactivation | L1 | 08; merged AUTH-PREP/custody; AUTH-12 contract amendment; `project.guide.activate` remains unavailable | Proposed hidden behavior; manifest gates AUTH-12 evaluator/cutover/activation |
 | `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08 | Non-executable split record |
-| `WS-REV-001-09A1` | Revision Obligation And Preparation Persistence | L1 | 02A2; migration/head refresh | Proposed; no contract yet |
-| `WS-REV-001-09A2` | Checker-Origin Preparation, Task Context, And Human Flush-Only Participant | L1 | 09A1; checker and decision origin participant contracts | Proposed; human participant is first consumed by 10 |
+| `WS-REV-001-09A1` | Review-Rooted Revision Preparation Persistence | L1 | 02A2; approved human round/deadline semantics; migration/head refresh | Proposed; no contract yet |
+| `WS-REV-001-09A2` | Revision Context Resolver And Task Context | L1 | 09A1 | Proposed; no transaction composition |
 | `WS-REV-001-09A3` | Human Revision Response Evidence Finalize | L1 | 09A2; ART evidence port and exact AUTH action | Proposed; owner chunk unscheduled |
-| `WS-REV-001-09A4` | Hidden Prepared N+1 Submission And Checker Context | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; AUTH-14 later owns public schema/cutover/guard/activation |
+| `WS-REV-001-09A4` | Hidden Human Prepared N+1 And Checker Context Compatibility | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; preserves distinct checker remediation; AUTH-14 owns public schema/cutover/guard/activation |
 | `WS-REV-001-09A5` | Hidden Replacement Assignment Preparation Transfer | L1 | 09A4; merged AUTH-13 contract amendment only | Proposed; AUTH-13 later owns public command/cutover/activation |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Preferred Return Routing | L1 | 09A5 | Proposed |
 | `WS-REV-001-10` | Canonical Review, Final Acceptance, And CON Atomic Integration | L1 | 09B; merged `WS-CON-001-03C` and `07`; stabilized digest owner chunk | Proposed; first canonical decision commit |
@@ -67,7 +67,7 @@ typed symbol/manifest, and tests.
 ## Same-initiative order
 
 ```text
-PLAN -> 01 -> 02(parent) -> 02A-PREP -> 02A -> 02B -> 02C
+PLAN -> 01 -> 02(parent) -> PLAN2 -> 02A -> 02B -> 02C
 -> 03(parent) -> 03A -> 03B
 -> 04(parent) -> 04A -> 04B
 -> 05(parent) -> 05A -> 05B
@@ -117,7 +117,7 @@ configuration, or coverage changes add CI integrity.
 
 ## Stop condition
 
-Complete and merge only `WS-REV-001-02A-PREP`, then stop. Its schema-v2 merge
+Complete and merge only `WS-REV-001-PLAN2`, then stop. Its schema-v2 merge
 intent names `WS-REV-001-02A` and requires a separate explicit start after the
 exact AUTH runtime foundation merges. Do not begin 02A or any later child from
 this planning PR.

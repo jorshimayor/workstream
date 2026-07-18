@@ -50,8 +50,7 @@ Task
       ReviewEvidenceArtifact
       FindingResolution
       FinalAcceptance (accept only)
-    RevisionObligation
-      RevisionContextPreparation
+    RevisionContextPreparation
     SubmissionFindingResponse
   ContributionRecord
     CompensationAward
@@ -1469,41 +1468,13 @@ unless locked policy requires them.
 finding. Its result is `resolved`, `unresolved`, or `not_applicable`; it carries
 bounded rationale/evidence and never edits the finding or response.
 
-## RevisionObligation
-
-Fields:
-
-- `id`
-- `project_id`
-- `task_id`
-- `prior_submission_id`
-- `source_task_assignment_id`
-- `origin_kind`: `human_review | checker_run`
-- `source_review_id` (nullable)
-- `source_checker_run_id` (nullable)
-- `revision_round_number`
-- `required_at`
-- `revision_deadline_at`
-- frozen RevisionPolicy identity and limit inputs
-- source-appropriate authorization/audit lineage
-
-Purpose:
-
-This immutable task-owned record is the origin-neutral revision episode. An XOR
-requires exactly one source. Human origin references the exact immutable
-`Review(needs_revision)`; checker origin references the exact final CheckerRun
-whose routing for the prior Submission is `needs_revision`. Same-chain and
-partial-unique constraints bind one obligation to its exact project, task,
-Submission, assignment, and source. Checker origin creates no synthetic Review,
-finding, reviewer contribution, or human actor.
-
 ## RevisionContextPreparation
 
 Fields:
 
 - `id`
 - `task_id`
-- `revision_obligation_id`
+- `originating_review_id`
 - `source_task_assignment_id`
 - `target_task_assignment_id`
 - `prior_submission_id`
@@ -1536,9 +1507,9 @@ Fields:
 
 Purpose:
 
-This immutable obligation-rooted record is created atomically before a
-contributor can observe either checker- or human-review-caused revision. Exact
-prior Submission guide identity/activation-sequence
+This immutable Review-rooted record is created atomically before a contributor
+can observe human-review-caused revision. Checker remediation retains the Task's
+locked context and creates no preparation. Exact prior Submission guide identity/activation-sequence
 match with the currently active guide keeps context. Any different valid active
 pair rebases forward or backward. Missing, inconsistent, revoked, or unsafe
 context blocks for manager repair. Task Context returns the validated chain

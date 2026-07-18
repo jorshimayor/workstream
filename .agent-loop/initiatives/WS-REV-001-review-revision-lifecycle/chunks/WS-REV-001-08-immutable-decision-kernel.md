@@ -72,4 +72,4 @@ reuse/dedup, docs, and test-delta.
 
 ## Stop condition
 
-Merge, record automated memory, and stop. Do not start 09A1 automatically.
+Merge, record automated memory, and stop. Do not start 02A2 automatically.

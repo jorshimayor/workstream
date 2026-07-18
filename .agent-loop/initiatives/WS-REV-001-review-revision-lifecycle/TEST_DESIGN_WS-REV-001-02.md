@@ -85,57 +85,61 @@ Missing evidence stops before REV generates a migration.
   `artifact_hash`; overwrite/caller promotion fails.
 - Concurrent initial creates yield exactly one v1; loser exact replay/conflict.
   They never yield v2.
-- Concurrent creates against one later preparation head yield exactly one N+1;
-  loser exact replay/conflict. They never yield N+2. N+2 requires a later
-  committed checker/Review revision obligation and head.
+- Concurrent creates against one human preparation head yield exactly one N+1;
+  loser exact replay/conflict. Concurrent checker-remediation creates likewise
+  yield one N+1 from the exact current CheckerRun state. Neither yields N+2;
+  that requires a later committed human Review/preparation or final
+  needs-revision CheckerRun.
 
-## RevisionObligation and preparation
+## Human Review preparation and distinct checker remediation
 
-### Origin constraints
+### Human preparation constraints
 
-- XOR human Review(needs_revision) versus final CheckerRun(needs_revision).
-- Bind source to exact project/task/prior Submission/source assignment.
-- Reject accept/reject Review, allow_review checker, crossed source, duplicate
-  source, duplicate prior Submission, mutable source, service-as-human actor.
-- Superseding a CheckerRun later does not rewrite its obligation.
+- Bind one root to the exact Review(needs_revision), project/task/prior
+  Submission/source assignment.
+- Reject accept/reject Review, crossed/duplicate source, duplicate prior
+  Submission episode, mutable source, and service-as-human actor.
+- A CheckerRun cannot be used as a RevisionContextPreparation root.
 
 ### Atomic creation
 
-- Checker transaction: final needs_revision run -> checker obligation -> initial
-  preparation -> Task needs_revision -> audit/outbox -> one commit. Fault after
-  every stage rolls all back; no Review/finding/CON record exists.
-- Human transaction in 10: immutable Review + reviewer CON operation -> human
-  obligation/preparation -> Task needs_revision -> audit/outbox -> one commit.
+- Existing checker transaction remains CheckerRun -> Task needs_revision ->
+  audit/outbox -> one commit using unchanged task context. Fault rolls back its
+  state; no Review/finding/CON/preparation record exists.
+- Human transaction in 10: immutable Review + reviewer CON operation -> initial
+  preparation -> Task needs_revision -> audit/outbox -> one commit.
   Fault rolls back all review/contribution/revision effects.
-- No contributor-readable needs_revision state lacks an obligation/head; unsafe
-  context creates a blocked head.
+- No contributor-readable human-review needs_revision state lacks a head; unsafe
+  context creates a blocked head. Exact CheckerRun lineage distinguishes the
+  separate checker path from rootless legacy human state.
 
-### Origin-specific behavior
+### Path-specific behavior
 
-- Human origin requires responses for unresolved blocking ReviewFindings,
+- Human Review revision requires responses for unresolved blocking ReviewFindings,
   response evidence where policy requires it, later resolutions, and preferred
   prior-reviewer return.
-- Checker origin exposes only contributor-safe checker message/fix, requires no fake
-  ReviewFinding/response/resolution, and returns to open routing after correction.
+- Checker remediation exposes only contributor-safe checker message/fix, keeps
+  existing guide/task context, consumes no human revision limit/deadline, requires
+  no fake ReviewFinding/response/resolution, and returns to open routing.
 
 ### Limits and deadline
 
-- Round is prior obligation count + 1 across both origins.
-- Before deadline permits; equality/after expires using DB time.
-- Per-obligation deadline freezes from required time plus configured hours.
+- No test is locked until the human approves exact human Review round count,
+  deadline anchor, and inclusive/exclusive boundary.
+- Approved semantics exclude checker retries and freeze/use database time.
 - Limit/deadline blocked head cannot use repair; exact D6 close only.
 - Context invalid/revoked head may append one authorized repair successor.
 
 ### Legacy
 
-- Deterministically recover checker-rooted current needs_revision only from exact
-  CheckerRun + Submission + matching durable audit lineage.
-- Classify valid human root, recoverable checker root, ambiguous source, and
-  truly rootless legacy separately. Never fabricate Review.
+- Prove exact CheckerRun + Submission + matching durable audit lineage remains a
+  valid checker-remediation path and is never classified as legacy human state.
+- Classify valid human Review root, valid checker remediation, ambiguous claimed
+  human source, and truly rootless human legacy separately. Never fabricate Review.
 
 ## Release phase
 
-- Checker allow_review and checker needs_revision routing/preparation share the
+- Checker allow_review and checker needs_revision routing share the
   allowed checker-completion phases through `revision_cutover_fenced`; both deny
   from `admission_fenced`.
 - Human preparation is inseparable from leased review.decision completion and

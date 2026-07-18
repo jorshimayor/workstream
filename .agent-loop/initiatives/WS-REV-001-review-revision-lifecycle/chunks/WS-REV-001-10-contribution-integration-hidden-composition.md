@@ -138,9 +138,10 @@ reputation scoring
   revocation, binding-state drift, and duplicate/changed replay in both orders.
   Fault injection after every REV, task, CON, audit, and outbox stage proves
   zero partial state and bounded database retry behavior.
-- The needs-revision branch invokes the 09A2 task-owned human-origin participant
-  after the reviewer CON operation. It appends the exact RevisionObligation and
-  initial preparation before Task becomes contributor-readable. Failure rolls
+- The needs-revision branch invokes the task-owned preparation participant
+  implemented and consumed in this chunk after the reviewer CON operation. It
+  appends the exact Review-rooted initial preparation before Task becomes
+  contributor-readable. Failure rolls
   back Review, Task/Assignment, lease/queue, obligation/preparation, reviewer
   contribution/award, audit, and outbox together.
 - Same-reviewer and takeover matrices prove v1 `needs_revision` then v2
@@ -187,4 +188,4 @@ contribution creation matrix, replay, rollback, and route absence.
 
 ## Stop condition
 
-Merge, record automated memory, and stop. Do not start 11.
+Merge, record automated memory, and stop. Do not start 11A.

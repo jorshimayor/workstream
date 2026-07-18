@@ -213,7 +213,7 @@ archival files remain literal-hash and trusted-base-diff protected inputs.
 
 Parent `WS-REV-001-02` merged through PR #147 at trusted main
 `f18b620932bb257dc1dc355bc0504271813dc6b1`. It is a non-executable split
-record. `WS-REV-001-02A-PREP` refreshes planning/specification only from that
+record. `WS-REV-001-PLAN2` refreshes planning/specification only from that
 base.
 
 The following are explicitly unmerged discovery evidence and not authority:

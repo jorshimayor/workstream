@@ -2,25 +2,29 @@
 
 ## Status
 
-Non-executable split record. The former Review-only episode model is retired
-because checker-caused `needs_revision` is an active supported path.
+Non-executable split record. Controlled rebase remains rooted only in a human
+`Review(needs_revision)`. Checker-caused remediation remains a distinct
+CheckerRun-rooted path and is not treated as legacy.
 
 ## Children
 
-- `WS-REV-001-09A1`: immutable origin-neutral RevisionObligation and task-owned
-  non-branching RevisionContextPreparation persistence.
-- `WS-REV-001-09A2`: atomic checker-origin creation, Task Context, and a
-  flush-only human-origin participant first consumed by chunk 10.
-- `WS-REV-001-09A3`: human-review-origin finding responses/evidence only.
-- `WS-REV-001-09A4`: hidden prepared N+1 task/checker participant and lineage;
+- `WS-REV-001-09A1`: immutable Review-rooted, task-owned non-branching
+  RevisionContextPreparation persistence after human approval of exact round/
+  deadline semantics.
+- `WS-REV-001-09A2`: guide-context resolver and Task Context read only; decision
+  transaction composition remains in chunk 10.
+- `WS-REV-001-09A3`: human Review finding responses/evidence only.
+- `WS-REV-001-09A4`: hidden prepared human N+1 task/checker participant and
+  compatibility proof for the separate existing checker-remediation path;
   later AUTH-14 owns public request acknowledgement, legacy cutover, strict DB
   guard, and activation after its contract amendment merges.
 - `WS-REV-001-09A5`: hidden replacement-assignment preparation transfer; later
   AUTH-13 owns public command/cutover/activation after its contract amendment.
 
-Checker origins create no Review/finding/reviewer contribution and return to
-open routing. Human origins require blocking-finding responses and later prefer
-the prior reviewer. Both count toward the frozen round/deadline policy.
+Checker remediation creates no Review/finding/reviewer contribution, performs no
+guide rebase, consumes no human revision round/deadline, and returns to open
+routing. Human Review revision requires blocking-finding responses and later
+prefers the prior reviewer.
 
 ## Stop condition
 
