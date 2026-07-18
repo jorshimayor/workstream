@@ -27,7 +27,7 @@ makes no backend/runtime changes.
 
 ## AUTH discovery
 
-- Trusted catalogue: 74 PermissionIds, 65 ActionIds, 12 active, 53 planned.
+- Trusted catalogue: 74 PermissionIds, 65 ActionIds, 15 active, 50 planned.
 - AUTH-09A/09B/09C and 09D-A are merged. PR #148 merged 09D-A as
   `99ae4c963e53f317175dcb308b9e47c93ccf19ed` from reviewed head
   `9c5ef8a1feffd6324acfd947e67042921955320b`, establishing database-backed

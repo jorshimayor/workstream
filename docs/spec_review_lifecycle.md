@@ -566,14 +566,14 @@ or CON record.
 ## Action Inventory And Activation Custody
 
 Merged AUTH-08 is historical provenance: 74 PermissionIds and 57 ActionIds,
-with 9 active and 48 planned. Trusted main after merged AUTH-09C contains 74
-PermissionIds and 65 ActionIds, with 12 active and 53 planned. AUTH-09A added
+with 9 active and 48 planned. Trusted main after merged AUTH-09D-A contains 74
+PermissionIds and 65 ActionIds, with 15 active and 50 planned. AUTH-09A added
 the common fixed-service schema and seven ART identities with eleven
-memberships. AUTH-09B activates `actor.service.provision` for identities
-already in AUTH's closed registry. AUTH-09C activates only
-`actor.profile.read` and `actor.identity_link.read`. Neither admits a
-service token, activates a review action, or contains any of REV's six future
-service identities.
+memberships. AUTH-09B activates `actor.service.provision` for identities already
+in AUTH's closed registry. AUTH-09C activates `actor.profile.read` and
+`actor.identity_link.read`; AUTH-09D-A activates `actor.profile.suspend`,
+`actor.profile.reactivate`, and `actor.profile.deactivate`. These merges do not
+activate a review action or contain any of REV's six future service identities.
 
 The review lifecycle currently depends on 24 unavailable actions:
 

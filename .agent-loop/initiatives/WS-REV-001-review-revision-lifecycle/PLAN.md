@@ -14,8 +14,8 @@ Current merged facts are:
 - the single Alembic head is `0026_actor_profile_lifecycle`;
 - task assignment and submission attribution still use the retired contributor-
   identity storage names;
-- the AUTH catalogue contains 74 PermissionIds and 65 ActionIds, with 12 active
-  and 53 planned;
+- the AUTH catalogue contains 74 PermissionIds and 65 ActionIds, with 15 active
+  and 50 planned;
 - all 24 REV lifecycle action dependencies remain unavailable;
 - ART v2 LocalStorage is merged, but review packet reads, review-evidence
   candidate/finalize, and server-derived stabilized Submission artifact lineage

@@ -17,7 +17,7 @@ not all merged.
 
 - Single Alembic head: `0026_actor_profile_lifecycle`.
 - Both retired task-subsystem contributor-identity fields remain on trusted main.
-- AUTH catalogue: 74 PermissionIds, 65 ActionIds, 12 active, 53 planned.
+- AUTH catalogue: 74 PermissionIds, 65 ActionIds, 15 active, 50 planned.
 - All 24 REV lifecycle action dependencies remain unavailable.
 - AUTH-09D-A merged through PR #148 at
   `99ae4c963e53f317175dcb308b9e47c93ccf19ed` with reviewed head
