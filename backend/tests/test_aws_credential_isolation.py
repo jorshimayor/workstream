@@ -252,10 +252,18 @@ def test_isolated_session_contains_exactly_one_selected_provider(
             "container-role",
             lambda tmp_path: {
                 "HOME": str(tmp_path),
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI": "https://credentials.example.test",
+            },
+            "container full credential URI is forbidden",
+        ),
+        (
+            "container-role",
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
                 "AWS_CONTAINER_CREDENTIALS_FULL_URI": "http://127.0.0.1:9/full",
                 "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/relative",
             },
-            "container identity location is invalid",
+            "container full credential URI is forbidden",
         ),
         (
             "container-role",
@@ -271,6 +279,16 @@ def test_isolated_session_contains_exactly_one_selected_provider(
             "iam-role",
             lambda tmp_path: {"HOME": str(tmp_path), "AWS_EC2_METADATA_DISABLED": "true"},
             "instance identity metadata is disabled",
+        ),
+        (
+            "iam-role",
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
+                "AWS_EC2_METADATA_SERVICE_ENDPOINT": (
+                    "https://metadata.example.test/latest"
+                ),
+            },
+            "custom AWS metadata endpoint is forbidden",
         ),
     ],
 )

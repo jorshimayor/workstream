@@ -779,6 +779,38 @@ The preparation settings use the standard `WORKSTREAM_` environment prefix:
 | `WORKSTREAM_ARTIFACT_STREAM_BUFFER_BYTES` | `1048576` | Bounded streaming buffer, limited to at most 1 MiB. |
 | `WORKSTREAM_ARTIFACT_OPERATION_LOCK_TIMEOUT_SECONDS` | `1800` | Maximum wait for a private cross-process artifact-store operation lock before failing closed. |
 
+The S3-compatible provider settings use the same prefix:
+
+| Environment variable | Default | Contract |
+|---|---:|---|
+| `WORKSTREAM_ARTIFACT_STORE_BACKEND` | `disabled` | Set to `s3_compatible` to select the S3 protocol adapter. |
+| `WORKSTREAM_ARTIFACT_S3_PROVIDER_PROFILE` | unset | Closed value: `minio` for local/CI or `aws_s3` for the inactive native AWS profile. |
+| `WORKSTREAM_ARTIFACT_S3_REGION` | unset | Required canonical S3 region. |
+| `WORKSTREAM_ARTIFACT_S3_ENDPOINT_URL` | unset | Required HTTP(S) endpoint for MinIO; forbidden for native AWS. |
+| `WORKSTREAM_ARTIFACT_S3_BUCKET` | unset | Required private bucket name. |
+| `WORKSTREAM_ARTIFACT_S3_PRIVATE_PREFIX` | `workstream/artifacts` | Canonical private key prefix; object references remain server-derived SHA-256 paths. |
+| `WORKSTREAM_ARTIFACT_S3_ADDRESSING_STYLE` | `virtual` | Closed value: `path` or `virtual`; local compose uses `path`. |
+| `WORKSTREAM_ARTIFACT_S3_CREDENTIAL_MODE` | unset | MinIO requires `local_static`; native AWS requires `aws_workload_identity`. |
+| `WORKSTREAM_ARTIFACT_S3_AWS_WORKLOAD_IDENTITY_METHOD` | unset | Native AWS selection: `assume-role-with-web-identity`, `container-role`, or `iam-role`; never used by MinIO. |
+| `WORKSTREAM_ARTIFACT_S3_ACCESS_KEY_ID` | unset | MinIO local/CI secret only; forbidden for native AWS. |
+| `WORKSTREAM_ARTIFACT_S3_SECRET_ACCESS_KEY` | unset | MinIO local/CI secret only; forbidden for native AWS. |
+| `WORKSTREAM_ARTIFACT_S3_SESSION_TOKEN` | unset | Optional MinIO local/CI secret only; forbidden for native AWS. |
+| `WORKSTREAM_ARTIFACT_S3_CONNECT_TIMEOUT_SECONDS` | `5` | Provider connection timeout, at most 60 seconds. |
+| `WORKSTREAM_ARTIFACT_S3_READ_TIMEOUT_SECONDS` | `60` | Provider read timeout, at most 1800 seconds. |
+| `WORKSTREAM_ARTIFACT_S3_WRITE_TIMEOUT_SECONDS` | `1800` | Provider write timeout, at most 3600 seconds. |
+| `WORKSTREAM_ARTIFACT_S3_POOL_TIMEOUT_SECONDS` | `5` | Client-pool acquisition timeout, at most 60 seconds. |
+| `WORKSTREAM_ARTIFACT_S3_OPERATION_TOTAL_TIMEOUT_SECONDS` | `1800` | Total provider-operation timeout, at most 3600 seconds. |
+| `WORKSTREAM_ARTIFACT_S3_MAX_POOL_CONNECTIONS` | `16` | Bounded client connection pool, from 1 through 256. |
+| `WORKSTREAM_ARTIFACT_MAXIMUM_BYTES` | `536870912` | Hard object maximum; configuration cannot exceed 512 MiB. |
+
+MinIO is the only runtime-eligible S3 profile in this chunk and is restricted
+to local, development, and test environments. Native AWS configuration rejects
+static credentials, configured endpoints, unselected or ambient credential
+sources, arbitrary container credential URLs, and custom instance-metadata
+endpoints. Even valid native AWS settings fail with
+`artifact_provider_live_proof_required` before credential-source probing,
+factory construction, namespace claim, resolver loading, or provider I/O.
+
 Every process sharing a scratch root must use the identical complete setting
 set. The root marker binds a canonical fingerprint of those limits and startup
 fails closed on mismatch; changing limits therefore requires an empty,

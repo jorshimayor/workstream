@@ -359,6 +359,8 @@ class S3CompatibleArtifactStore:
                         if observed != expected:
                             raise ArtifactIntegrityError("S3 artifact object was truncated")
             except ClientError as error:
+                if _provider_http_status(error) == 403:
+                    raise ArtifactStoreUnavailableError("S3 artifact read failed") from None
                 code = _provider_error_code(error)
                 if code in _MISSING_ERROR_CODES:
                     raise ArtifactObjectMissingError("artifact object is missing") from None
@@ -390,6 +392,8 @@ class S3CompatibleArtifactStore:
                 byte_count=byte_count,
             )
         except ClientError as error:
+            if _provider_http_status(error) == 403:
+                raise ArtifactStoreUnavailableError("S3 artifact head failed") from None
             code = _provider_error_code(error)
             if code in _MISSING_ERROR_CODES:
                 return ArtifactObjectHead(provider_object_ref, exists=False)
@@ -649,11 +653,11 @@ def validate_aws_workload_identity_environment(
         if not token_path.is_absolute() or not token_path.is_file():
             raise ArtifactConfigurationError("AWS web identity token path is invalid")
     elif selected == "container-role":
-        locations = _CONTAINER_ENVIRONMENT.intersection(environment) & {
-            "AWS_CONTAINER_CREDENTIALS_FULL_URI",
-            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
-        }
-        if len(locations) != 1:
+        if "AWS_CONTAINER_CREDENTIALS_FULL_URI" in environment:
+            raise ArtifactConfigurationError(
+                "AWS container full credential URI is forbidden"
+            )
+        if "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" not in environment:
             raise ArtifactConfigurationError("AWS container identity location is invalid")
         auth = _CONTAINER_ENVIRONMENT.intersection(environment) & {
             "AWS_CONTAINER_AUTHORIZATION_TOKEN",
@@ -661,8 +665,11 @@ def validate_aws_workload_identity_environment(
         }
         if len(auth) > 1:
             raise ArtifactConfigurationError("AWS container identity token is ambiguous")
-    elif environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
-        raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
+    else:
+        if "AWS_EC2_METADATA_SERVICE_ENDPOINT" in environment:
+            raise ArtifactConfigurationError("custom AWS metadata endpoint is forbidden")
+        if environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
+            raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
 
 
 def create_isolated_aws_workload_identity_session(
@@ -754,6 +761,14 @@ def _provider_error_code(error: ClientError) -> str:
     metadata = response.get("ResponseMetadata") if isinstance(response, dict) else None
     status = metadata.get("HTTPStatusCode") if isinstance(metadata, dict) else None
     return str(status) if type(status) is int else "unknown"
+
+
+def _provider_http_status(error: ClientError) -> int | None:
+    """Return the provider HTTP status independently from its error code."""
+    response = error.response if isinstance(error.response, dict) else {}
+    metadata = response.get("ResponseMetadata") if isinstance(response, dict) else None
+    status = metadata.get("HTTPStatusCode") if isinstance(metadata, dict) else None
+    return status if type(status) is int else None
 
 
 def _required(value: str | None) -> str:

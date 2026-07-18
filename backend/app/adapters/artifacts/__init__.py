@@ -32,11 +32,6 @@ def create_artifact_store_bootstrap(settings: Settings) -> ArtifactStoreBootstra
         settings.artifact_store_backend == "s3_compatible"
         and settings.artifact_s3_provider_profile == "aws_s3"
     ):
-        from app.adapters.artifacts.s3_compatible import (
-            validate_aws_workload_identity_environment,
-        )
-
-        validate_aws_workload_identity_environment(settings)
         raise ArtifactProviderLiveProofRequiredError(
             "AWS artifact provider requires live deployment proof"
         )

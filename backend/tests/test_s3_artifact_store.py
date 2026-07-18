@@ -171,6 +171,35 @@ async def test_adversarial_first_writer_cannot_be_accepted_as_replay(
 
 
 @pytest.mark.asyncio
+async def test_cross_project_prefix_cannot_occupy_another_content_key(
+    tmp_path: Path,
+) -> None:
+    """Keep identical digest references isolated by claimed project namespace."""
+    nonce = hashlib.sha256(os.urandom(16)).hexdigest()[:20]
+    attacker_prefix = f"projects/attacker-{nonce}"
+    target_prefix = f"projects/target-{nonce}"
+    content = b"target project exact bytes"
+    digest = hashlib.sha256(content).hexdigest()
+    provider_ref = f"sha256/{digest[:2]}/{digest[2:]}"
+    await raw_minio_put(f"{attacker_prefix}/{provider_ref}", b"attacker bytes")
+
+    attacker_store = initialize_minio_store(private_prefix=attacker_prefix)
+    target_store = initialize_minio_store(private_prefix=target_prefix)
+    try:
+        async with minted_source(tmp_path / "attacker-scratch", content) as source:
+            with pytest.raises(ArtifactIntegrityError):
+                await attacker_store.put(source)
+        async with minted_source(tmp_path / "target-scratch", content) as source:
+            result = await target_store.put(source)
+        assert result.provider_object_ref == provider_ref
+        assert result.replayed is False
+        assert b"".join([chunk async for chunk in target_store.open(provider_ref)]) == content
+    finally:
+        attacker_store.close()
+        target_store.close()
+
+
+@pytest.mark.asyncio
 async def test_unsealed_client_selected_commitment_fails_before_provider_io(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -337,6 +366,9 @@ async def test_head_maps_only_404_to_missing_and_rejects_invalid_size(
         client.response = _client_error("AccessDenied", 403)
         with pytest.raises(ArtifactStoreUnavailableError):
             await store.head(provider_ref)
+        client.response = _client_error("NoSuchKey", 403)
+        with pytest.raises(ArtifactStoreUnavailableError):
+            await store.head(provider_ref)
         client.response = {}
         with pytest.raises(ArtifactIntegrityError, match="exact size"):
             await store.head(provider_ref)
@@ -417,6 +449,33 @@ async def test_open_maps_provider_404_to_missing(
     try:
         with pytest.raises(ArtifactObjectMissingError):
             _ = [chunk async for chunk in store.open(provider_ref, ArtifactByteRange())]
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+async def test_open_403_precedes_missing_like_provider_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Never turn denied reads into authoritative object absence."""
+    store = initialize_minio_store(private_prefix="negative/denied-open")
+    provider_ref = "sha256/00/" + "0" * 62
+
+    class Client:
+        async def head_object(self, **_kwargs: object) -> dict[str, int]:
+            return {"ContentLength": 1}
+
+        async def get_object(self, **_kwargs: object) -> object:
+            raise _client_error("NoSuchKey", 403)
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    try:
+        with pytest.raises(ArtifactStoreUnavailableError):
+            _ = [chunk async for chunk in store.open(provider_ref)]
     finally:
         store.close()
 

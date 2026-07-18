@@ -779,10 +779,19 @@ def test_aws_factory_fails_with_live_proof_before_constructing_provider(
         events.append("resolver")
         raise AssertionError("credential resolver constructed before live proof failure")
 
+    def credentials_must_not_be_probed(*_args: object, **_kwargs: object) -> None:
+        events.append("credential-probe")
+        raise AssertionError("credential sources probed before live proof failure")
+
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/v2/credentials/runtime")
     monkeypatch.setattr(artifacts_module, "ExternalServiceAdapterFactory", FactoryMustNotConstruct)
     monkeypatch.setattr(s3_compatible, "AioSession", session_must_not_construct)
+    monkeypatch.setattr(
+        s3_compatible,
+        "validate_aws_workload_identity_environment",
+        credentials_must_not_be_probed,
+    )
 
     with pytest.raises(ArtifactProviderLiveProofRequiredError) as caught:
         create_artifact_store_bootstrap(settings)
