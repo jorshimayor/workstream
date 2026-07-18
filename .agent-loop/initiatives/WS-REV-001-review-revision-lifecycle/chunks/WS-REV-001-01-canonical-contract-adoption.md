@@ -295,6 +295,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
 git diff --name-status --no-renames 0ffdabf3dbb77e4e066683fde1a095d744ff1f43...HEAD | LC_ALL=C sort -k2,2 -k1,1 | diff -u .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-01-reviewed-scope.txt -
 git diff --check
 ```
