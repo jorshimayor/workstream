@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `694c02ac8f961da9c445f1751e318fc7c479bda4`
+Reviewed code SHA: `f2493df551315f86f4506ff92a42ad1dcd735e9f`
 
 Trusted main SHA: `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
 
-Reviewed at: `2026-07-18T00:14:16Z`
+Reviewed at: `2026-07-18T00:59:38Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -16,15 +16,15 @@ Valid findings addressed: yes
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| Senior engineering | PASS | None | Exact lifecycle, dependency boundaries, scope, checker admission, and prior repairs verified |
-| QA/test | PASS | None | Acceptance behavior, edge cases, structural regressions, and 87 agent gates verified |
-| Security/auth | PASS | None | Concealment, AUTH PREP bindings, lock/evaluate/stage order, grants, leases, and artifact privacy verified |
-| Product/ops | PASS | None | Decision effects, CheckerResult versus Review-rooted revision, FinalAcceptance, contributions, and unavailable surfaces verified |
-| Architecture | PASS | None | REV/AUTH/ART/CON ownership, canonical ordered one-commit transaction, immutable lineage, and deferred boundaries verified |
-| Docs | PASS | None | Active-contract precedence, exact CheckerRun admission, archive provenance, operational order, diagrams, and stale wording verified |
-| Reuse/dedup | PASS | None | Existing canonical records, shared ports, renderer pattern, and scanner structure verified |
-| Test delta | PASS | None | Tests add coverage without removed or weakened assertions |
-| CI integrity | PASS | None | No workflow, coverage threshold, package script, or gate weakening |
+| Senior engineering | PASS | None | External repairs are maintainable, scoped, and consistent with canonical lifecycle ownership |
+| QA/test | PASS | None | All CodeRabbit repairs, edge cases, structural regressions, and 87 agent gates verified |
+| Security/auth | PASS | None | AUTH PREP order, grants, lease privacy, exact admission, and unavailable surfaces verified |
+| Product/ops | PASS | None | Decision effects, checker versus human revision, no synthetic reject, and contribution lineage verified |
+| Architecture | PASS | None | REV/AUTH/ART/CON ownership, FinalAcceptance ordering, ART v2 capabilities, and deferred boundaries verified |
+| Docs | PASS | None | Exact CheckerRun guards, TaskAssignment fields, templates, renderer, and storage terminology verified |
+| Reuse/dedup | PASS | None | Existing canonical records, capability ports, renderer, and scanner were reused without parallel abstractions |
+| Test delta | PASS | None | Base 80 tests and all assertions retained; seven REV tests add coverage |
+| CI integrity | PASS | None | Ruff, mandatory gates, workflows, coverage thresholds, and failure handling verified |
 
 ## Finding Disposition
 
@@ -39,21 +39,33 @@ successor heading to the reviewed schema-v2 merge-intent title without starting
 Chunk 02. CON-01's active specification and ADR 0016 were then adopted as
 canonical CON authority without claiming runtime or removing downstream gates.
 Candidate `694c02ac` received a fresh complete review rather than inheriting any
-earlier approval.
+earlier approval. CodeRabbit then reported nine actionable findings and one
+Markdown lint nit. The repair made FinalAcceptance an accept side effect,
+strengthened exact CheckerRun transition guards, clarified TaskAssignment
+attribution, aligned both ART v2 storage passages, generated all `--all`
+PlantUML sources before conversion, repaired template tables, required explicit
+false revision-limit auto-reject configuration with runtime enforcement deferred
+to Chunk 02, and narrowed the scanner to reject truthy forms without rejecting
+the required false form. A first repair candidate failed CI integrity only on
+Ruff formatting; that mechanical defect was corrected. Candidate `f2493df`
+then passed the plan gate and all nine reviewer tracks from fresh exact-SHA
+review.
 
 ## Deterministic Evidence
 
 - `python3 scripts/test_agent_gates.py`: 87 passed.
 - All stale artifact, authorization, review-contract, and Workstream wording
   scanners passed.
-- Markdown link validation passed for 53 changed Markdown files.
+- Markdown link validation passed for 55 changed Markdown files.
 - Ruff format and lint passed for both changed Python gate files.
 - All reference-spec checksums passed; the WS-REV and WS-IMP archival pairs are
   byte-identical to trusted base.
 - PlantUML 1.2026.6 matched SHA-256
   `89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690`.
-  Two full pinned renders produced byte-identical changed SVG, PNG, and PDF
-  outputs; visual inspection found no clipping or incoherent overlap.
+  Pinned `--review-context` and isolated `--all` renders succeeded. The `--all`
+  run proved all four SVG sources render before conversion; out-of-scope future
+  diagram output was not committed. Prior repeated review-context renders
+  remained byte-identical, and visual inspection found no clipping or overlap.
 - The two unrelated context images remain byte-identical to trusted base.
 - Both local roadmap exports remain absent and no `sheets/` file is tracked.
 - Exactly one merge-intent file exists for this chunk and `git diff --check`

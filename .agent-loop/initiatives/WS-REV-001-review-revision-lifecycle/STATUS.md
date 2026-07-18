@@ -88,13 +88,16 @@ security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. All 80 current-main agent tests and seven REV additions are retained;
 87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is published as PR #145. Its initial merge-intent repair passed
-internal review and replacement Agent Gates, but CON-01 PR #144 then advanced
-main and invalidated that exact-SHA evidence. The reconciled candidate
-`694c02ac8f961da9c445f1751e318fc7c479bda4` passed all nine internal tracks
-against `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9` and awaits replacement CI.
-CodeRabbit was rate-limited and produced no findings. This chunk activates no
-review action or endpoint and does not authorize merge.
+Chunk 01 is published as PR #145. After the CON-01 main reconciliation,
+CodeRabbit reported nine actionable findings and one Markdown lint nit. Every
+finding was repaired without runtime or successor-scope expansion. Candidate
+`f2493df551315f86f4506ff92a42ad1dcd735e9f` passed the plan gate and all nine
+internal reviewer tracks against
+`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`; 87 agent gates, Ruff, scanners,
+links, checksums, renderer checks, and merge-intent validation pass. The prior
+published Backend, Agent Gates, and CodeRabbit checks passed; replacement checks
+are required on the repaired head. This chunk activates no review action or
+endpoint and does not authorize merge.
 
 ## Stop condition
 

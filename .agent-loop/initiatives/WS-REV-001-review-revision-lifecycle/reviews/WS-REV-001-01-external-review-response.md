@@ -4,7 +4,8 @@
 
 - PR: `#145`
 - Initial published head: `9ad0420e4c8f3ce0933a85fc75f133a340f91fcd`
-- Trusted base: `053242b90d927ace3fab92eeca72da27a61cecec`
+- Reviewed repair candidate: `f2493df551315f86f4506ff92a42ad1dcd735e9f`
+- Trusted base: `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
 
 ## Comments Addressed
 
@@ -14,30 +15,43 @@
 - The successor heading now uses the canonical schema-v2 form and exactly
   matches `Locked Review Policy And Task Lifecycle Alignment` from
   `.agent-loop/merge-intents/WS-REV-001-01.json`.
+- CodeRabbit's nine actionable comments were addressed: explicit pinned
+  PlantUML precondition; four-source `--all` rendering; FinalAcceptance as an
+  accept side effect; exact durable/final/current CheckerRun transition guards;
+  complete TaskAssignment attribution; both ART v2 storage passages; exact
+  checker routing outcomes; valid Markdown table cells; and explicit
+  `auto_reject_after_limit=false` configuration with runtime enforcement owned
+  by `WS-REV-001-02`.
+- Its Markdown lint nit was addressed by reflowing the PR reference so a line
+  no longer begins with `#143`.
+- The revision scanner now permits the required false configuration while
+  rejecting unquoted, quoted, JSON, and backticked truthy forms. The first
+  repair candidate's Ruff formatting failure was also corrected.
 
 ## Comments Deferred
 
-- CodeRabbit did not perform a review because the organization review limit was
-  reached. Its comment reported that another review could be requested after
-  the stated cooldown. No CodeRabbit finding exists to address.
+- None. The ART comment's highlighted lower passage was already correct, but
+  its body identified an earlier raw `ArtifactStore` stack bullet; that earlier
+  occurrence was also updated rather than dismissing the finding as stale.
 
 ## Human Decisions Needed
 
-- None for this repair. The change aligns existing reviewed metadata and does
-  not start or alter the successor chunk.
+- None. The repairs preserve the approved Chunk 01 contract and do not start
+  or implement Chunk 02.
 
 ## Commands Rerun
 
 - `python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main`
 - `python3 scripts/test_agent_gates.py`
-- Internal evidence gate and stale-contract checks are rerun after exact-SHA
-  reviewer completion.
+- Ruff format/lint for both changed Python gate files.
+- Stale artifact, authorization, review, and Workstream wording scanners.
+- Markdown links, reference checksums, pinned PlantUML rendering, table-column
+  checks, scope checks, and `git diff --check`.
+- Exact-SHA plan gate and all nine required internal reviewer tracks.
 
 ## Remaining Risks
 
-- CodeRabbit review remains unavailable until its rate-limit cooldown expires
-  or organization billing enables additional reviews.
-- CON-01 PR #144 advanced main while replacement Backend was running. That run
-  is historical. Candidate `694c02ac8f961da9c445f1751e318fc7c479bda4`
-  is internally reviewed against `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
-  and requires new replacement checks.
+- Replacement GitHub checks and any CodeRabbit follow-up on the repaired PR
+  head remain required after push.
+- Runtime concurrency, rollback, and AUTH/ART/CON integration remain owned by
+  later implementation chunks.

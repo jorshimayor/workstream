@@ -33,6 +33,8 @@ not v0.1 behavior.
   or action.
 - Reconciled merged CON-01's active specification and ADR 0016 while retaining
   its no-runtime status and downstream persistence/participant gates.
+- Addressed external lifecycle, checker-admission, ART terminology, rendering,
+  template, and revision-policy findings without expanding runtime scope.
 
 ## Why It Changed
 
@@ -94,8 +96,8 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 
 ## Reviewer Results
 
-All nine required tracks passed exact SHA
-`694c02ac8f961da9c445f1751e318fc7c479bda4` against trusted main
+The plan gate and all nine required reviewer tracks passed exact SHA
+`f2493df551315f86f4506ff92a42ad1dcd735e9f` against trusted main
 `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
@@ -103,11 +105,15 @@ integrity. No blocking findings remain.
 ## External Review
 
 PR #145's initial Agent Gates run found a successor-heading/merge-intent title
-mismatch. The heading was aligned to the existing reviewed title and the exact
-validator and internal loop were rerun. CodeRabbit did not review because its
-organization rate limit was reached; it produced no findings. Backend and
-replacement PR checks remain external gates. External checks supplement the
-completed internal review and do not replace it.
+mismatch, which was repaired without starting Chunk 02. After its cooldown,
+CodeRabbit reported nine actionable findings and one Markdown lint nit. All
+were addressed: accept ordering, exact checker guards, TaskAssignment and ART
+wording, renderer source generation, template table structure, PlantUML
+preconditions, and explicit false revision-limit configuration. The resulting
+scanner also rejects quoted and unquoted truthy variants. The prior published
+backend and Agent Gates runs passed; replacement checks on the repaired head
+remain external gates. External checks supplement internal review and do not
+replace it.
 
 ## Remaining Risks
 
