@@ -27,7 +27,7 @@ backend/app/modules/actors/service.py
 backend/app/modules/authorization/catalogue.py
 backend/app/modules/authorization/runtime.py
 backend/app/modules/authorization/kernel.py
-backend/app/modules/authorization/admin_repository.py
+backend/app/modules/authorization/repository.py
 backend/app/modules/authorization/schemas.py
 backend/app/modules/authorization/service.py
 backend/app/modules/authorization/router.py
@@ -236,7 +236,8 @@ so crossed profile/grant loss cannot commit both transitions.
 | different keys, same transition | one success and one state-conflict denial; one success/invalidation pair; one denial; losing key reusable |
 | active suspend versus deactivate | suspend-first permits later deactivation; deactivate-first makes suspend terminal-conflict; final state deactivated |
 | suspended reactivate versus deactivate | reactivate-first permits later deactivation; deactivate-first makes reactivate terminal-conflict; final state deactivated |
-| two effective admins, different-target loss | one loss commits, one `last_access_administrator` denial; exactly one effective human admin remains |
+| two effective admins, reciprocal loss | one loss commits; the second request's caller is now inactive and fails current-authority revalidation; exactly one effective human admin remains |
+| three effective admins, one caller targets the other two | both serialized losses may commit; the unchanged caller remains the one effective human admin |
 | profile loss versus grant revoke | singleton order permits at most one final-authority loss; exactly one effective human admin remains |
 
 Every race asserts no deadlock, no pending claim, exact success/invalidation/
