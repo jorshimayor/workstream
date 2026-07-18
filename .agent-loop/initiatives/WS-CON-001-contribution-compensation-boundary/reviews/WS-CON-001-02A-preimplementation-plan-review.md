@@ -18,6 +18,11 @@
   canonical review specification preserves the exact FinalAcceptance,
   two-operation CON participant, shared-outbox, and single-commit boundaries;
   it adds no backend runtime or migration and does not alter this plan.
+- The canonical isolated full-suite command later reached 90 percent with no
+  failures but hit its 12,600-second process ceiling. The ceiling is raised to
+  18,000 seconds for the unchanged complete test set and unchanged 78/90
+  percent coverage gates; no test, assertion, or CI policy is skipped or
+  weakened.
 
 ## Proposed implementation
 

@@ -12,7 +12,7 @@ EVIDENCE_JSON="$(pwd)/.agent-loop/initiatives/WS-CON-001-contribution-compensati
 mkdir -p "$(dirname "$EVIDENCE_JSON")"
 test ! -e "$EVIDENCE_JSON"
 (cd backend && .venv/bin/python -m coverage erase)
-(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$EVIDENCE_JSON" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$EVIDENCE_JSON" --timeout-seconds 18000 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
 (cd backend && .venv/bin/python -m coverage report --include='<EACH SUBSYSTEM PATTERN FROM THE ROW>' --fail-under=90)
 (cd backend && .venv/bin/ruff check <RUFF_TARGETS>)
 python3 scripts/check_markdown_links.py
@@ -47,3 +47,8 @@ git diff --check
 
 If a named path differs after prerequisite merges, the chunk stops and its
 contract is re-reviewed; it may not silently broaden a glob or skip the target.
+
+The 18,000-second runner cap is a fail-closed process ceiling, not a test or
+coverage relaxation. The prior 12,600-second ceiling terminated a clean CON-02A
+attempt after 90 percent of the expanded suite had passed; no test selection,
+assertion, isolation rule, or coverage threshold changed.
