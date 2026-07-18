@@ -86,7 +86,7 @@ add any of REV's six identities. Later gates derive counts from then-current
 trusted main, and the separate ART evidence-binding proposal is not counted
 among the 24 REV dependencies.
 
-AUTH-09B PR #143 later merged to current trusted main
+AUTH-09B PR #143 later merged to then-current trusted main
 `053242b90d927ace3fab92eeca72da27a61cecec` from final branch head
 `9ee5646`. It activates only `actor.service.provision`, producing 74
 PermissionIds and 65 ActionIds split into 10 active and 55 planned. The
