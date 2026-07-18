@@ -33,6 +33,7 @@ from app.interfaces.artifacts import (
     artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
+from tests.assertion_helpers import assert_secret_not_retained
 from tests.artifact_store_helpers import minted_source
 from tests.test_artifact_store_conformance import ArtifactStoreConformanceTests
 
@@ -129,10 +130,12 @@ def initialize_minio_store(*, private_prefix: str) -> S3CompatibleArtifactStore:
 @pytest.mark.asyncio
 async def test_wrong_minio_credentials_map_403_to_unavailable() -> None:
     """Never misclassify forbidden provider access as authoritative absence."""
+    access_key = "unknown-minio-user"
+    secret_key = "unknown-minio-password"
     settings = minio_settings(
         private_prefix="negative/forbidden",
-        access_key="unknown-minio-user",
-        secret_key="unknown-minio-password",
+        access_key=access_key,
+        secret_key=secret_key,
     )
     bootstrap = create_artifact_store_bootstrap(settings)
     namespace = bootstrap.namespace_identity
@@ -145,8 +148,13 @@ async def test_wrong_minio_credentials_map_403_to_unavailable() -> None:
         ArtifactStoreNamespaceClaim(bootstrap.identity, namespace, fingerprint)
     )
     try:
-        with pytest.raises(ArtifactStoreUnavailableError):
+        with pytest.raises(ArtifactStoreUnavailableError) as caught:
             await store.head("sha256/00/" + "0" * 62)
+        assert str(caught.value) == "S3 artifact head failed"
+        assert caught.value.code == "artifact_storage_unavailable"
+        assert caught.value.__cause__ is None
+        assert_secret_not_retained(caught.value, access_key)
+        assert_secret_not_retained(caught.value, secret_key)
     finally:
         bootstrap.close()
 
@@ -312,18 +320,40 @@ def test_s3_constructor_and_bootstrap_reject_invalid_runtime_values() -> None:
 
 async def test_s3_operation_client_ignores_ambient_proxy_environment(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Keep signed object requests and bytes off ambient process proxies."""
-    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:9")
-    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:9")
-    monkeypatch.setenv("ALL_PROXY", "http://127.0.0.1:9")
-    store = initialize_minio_store(private_prefix="negative/proxy-isolation")
+    for name in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    ):
+        monkeypatch.setenv(name, "http://127.0.0.1:9")
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    monkeypatch.delenv("no_proxy", raising=False)
+    namespace = hashlib.sha256(os.fspath(tmp_path).encode()).hexdigest()[:16]
+    store = initialize_minio_store(
+        private_prefix=f"negative/proxy-isolation/{namespace}"
+    )
     try:
         async with store._client() as client:
             proxy = client._endpoint.http_session._proxy_config.proxy_url_for(
                 MINIO_ENDPOINT
             )
             assert proxy is None
+        payload = b"real object I/O bypasses poisoned ambient proxies"
+        async with minted_source(tmp_path / "scratch", payload) as source:
+            result = await store.put(source)
+        observed = await store.head(result.provider_object_ref)
+        received = b"".join(
+            [chunk async for chunk in store.open(result.provider_object_ref)]
+        )
+        assert observed.exists is True
+        assert observed.byte_count == len(payload)
+        assert received == payload
     finally:
         store.close()
 
