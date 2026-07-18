@@ -35,6 +35,8 @@ identifier or migration. Historical CON-01 evidence above remains exact.
 Trusted main then advanced to `b2b9016` through REV-01 PR #145, which publishes
 the canonical review specification without changing the backend migration head
 or the CON-02A outbox boundary.
+REV-02 PR #147 then advanced trusted main to `f18b620` with planning-only chunk
+decomposition and no backend, migration, or 02A boundary change.
 
 ## Inspected and already aligned
 

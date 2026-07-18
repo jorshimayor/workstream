@@ -22,6 +22,11 @@ review specification preserves the two ordered CON flush-only operations,
 accept-only FinalAcceptance source, REV-owned single commit, and same-transaction
 shared outbox staging. It adds no backend runtime or migration and therefore
 does not change the 02A implementation boundary.
+Trusted `main` then advanced to `f18b620` through REV-02 PR #147. That
+planning-only merge splits future guide activation, ReviewPolicy/task
+lifecycle, and submission attribution work into explicit REV chunks. It adds no
+backend runtime, migration, or shared outbox behavior and leaves CON-02A
+unchanged.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation

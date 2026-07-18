@@ -2,8 +2,8 @@
 
 ## Current baseline
 
-Trusted `main` is `b2b9016` after merged REV-01 PR #145, layered on AUTH-09C PR
-#146, ART PR #141, AUTH-09B PR #143, merged REV planning PR #128,
+Trusted `main` is `f18b620` after merged REV-02 PR #147 and REV-01 PR #145,
+layered on AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, merged REV planning PR #128,
 AUTH-09A/AUTH PR #140, and the
 earlier WS-XINT PR #139 boundary. The runtime catalogue contains 74
 PermissionIds and 65 ActionIds: 12 active and 53 planned. AUTH-09B activates
