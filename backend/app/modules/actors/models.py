@@ -74,11 +74,11 @@ class ActorProfile(Base):
             name="reactivation_fields",
         ),
         CheckConstraint(
-            "(suspension_reason is null or (suspension_reason = btrim(suspension_reason) and "
+            "(suspension_reason is null or (suspension_reason = btrim(suspension_reason, E' \\t\\n\\r\\f\\013') and "
             "octet_length(suspension_reason) between 1 and 500)) and "
-            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason) and "
+            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and "
             "octet_length(reactivation_reason) between 1 and 500)) and "
-            "(deactivation_reason is null or (deactivation_reason = btrim(deactivation_reason) and "
+            "(deactivation_reason is null or (deactivation_reason = btrim(deactivation_reason, E' \\t\\n\\r\\f\\013') and "
             "octet_length(deactivation_reason) between 1 and 500))",
             name="lifecycle_reason_bounds",
         ),
@@ -140,9 +140,9 @@ class ActorIdentityLink(Base):
             name="reactivation_fields",
         ),
         CheckConstraint(
-            "(revoked_reason is null or (revoked_reason = btrim(revoked_reason) and "
+            "(revoked_reason is null or (revoked_reason = btrim(revoked_reason, E' \\t\\n\\r\\f\\013') and "
             "octet_length(revoked_reason) between 1 and 500)) and "
-            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason) and "
+            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and "
             "octet_length(reactivation_reason) between 1 and 500))",
             name="lifecycle_reason_bounds",
         ),

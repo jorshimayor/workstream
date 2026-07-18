@@ -310,11 +310,11 @@ def _dirty_lifecycle_rows(bind) -> bool:
                 "(reactivated_by is null)::int + (reactivated_at is null)::int + "
                 "(reactivation_reason is null)::int not in (0,3)) or exists("
                 "select 1 from actor_profiles where "
-                "(suspension_reason is not null and (suspension_reason<>btrim(suspension_reason) or octet_length(suspension_reason) not between 1 and 500)) or "
-                "(deactivation_reason is not null and (deactivation_reason<>btrim(deactivation_reason) or octet_length(deactivation_reason) not between 1 and 500))) or exists("
+                "(suspension_reason is not null and (suspension_reason<>btrim(suspension_reason, E' \\t\\n\\r\\f\\013') or octet_length(suspension_reason) not between 1 and 500)) or "
+                "(deactivation_reason is not null and (deactivation_reason<>btrim(deactivation_reason, E' \\t\\n\\r\\f\\013') or octet_length(deactivation_reason) not between 1 and 500))) or exists("
                 "select 1 from actor_identity_links where "
-                "(revoked_reason is not null and (revoked_reason<>btrim(revoked_reason) or octet_length(revoked_reason) not between 1 and 500)) or "
-                "(reactivation_reason is not null and (reactivation_reason<>btrim(reactivation_reason) or octet_length(reactivation_reason) not between 1 and 500)))"
+                "(revoked_reason is not null and (revoked_reason<>btrim(revoked_reason, E' \\t\\n\\r\\f\\013') or octet_length(revoked_reason) not between 1 and 500)) or "
+                "(reactivation_reason is not null and (reactivation_reason<>btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') or octet_length(reactivation_reason) not between 1 and 500)))"
             )
         ).scalar_one()
     )
@@ -339,9 +339,9 @@ def upgrade() -> None:
     op.create_check_constraint(
         op.f("ck_actor_profiles_lifecycle_reason_bounds"),
         "actor_profiles",
-        "(suspension_reason is null or (suspension_reason=btrim(suspension_reason) and octet_length(suspension_reason) between 1 and 500)) and "
-        "(reactivation_reason is null or (reactivation_reason=btrim(reactivation_reason) and octet_length(reactivation_reason) between 1 and 500)) and "
-        "(deactivation_reason is null or (deactivation_reason=btrim(deactivation_reason) and octet_length(deactivation_reason) between 1 and 500))",
+        "(suspension_reason is null or (suspension_reason=btrim(suspension_reason, E' \\t\\n\\r\\f\\013') and octet_length(suspension_reason) between 1 and 500)) and "
+        "(reactivation_reason is null or (reactivation_reason=btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and octet_length(reactivation_reason) between 1 and 500)) and "
+        "(deactivation_reason is null or (deactivation_reason=btrim(deactivation_reason, E' \\t\\n\\r\\f\\013') and octet_length(deactivation_reason) between 1 and 500))",
     )
     op.create_check_constraint(
         op.f("ck_actor_identity_links_reactivation_fields"),
@@ -352,8 +352,8 @@ def upgrade() -> None:
     op.create_check_constraint(
         op.f("ck_actor_identity_links_lifecycle_reason_bounds"),
         "actor_identity_links",
-        "(revoked_reason is null or (revoked_reason=btrim(revoked_reason) and octet_length(revoked_reason) between 1 and 500)) and "
-        "(reactivation_reason is null or (reactivation_reason=btrim(reactivation_reason) and octet_length(reactivation_reason) between 1 and 500))",
+        "(revoked_reason is null or (revoked_reason=btrim(revoked_reason, E' \\t\\n\\r\\f\\013') and octet_length(revoked_reason) between 1 and 500)) and "
+        "(reactivation_reason is null or (reactivation_reason=btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and octet_length(reactivation_reason) between 1 and 500))",
     )
     _replace_denial_registry(add=True)
     _replace_linked_authority_guard(lifecycle_reactivation=True)

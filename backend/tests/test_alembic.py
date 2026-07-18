@@ -1495,6 +1495,40 @@ def test_actor_profile_lifecycle_constraint_and_trigger_parity(
                 with pytest.raises(DBAPIError):
                     async with engine.begin() as connection:
                         await connection.execute(text(statement), {"actor": actor_id})
+            invalid_reason_updates = (
+                (
+                    "actor_profiles",
+                    "update actor_profiles set status='suspended',suspended_by=:actor,"
+                    "suspended_at=clock_timestamp(),suspension_reason=chr(9)||'hold' "
+                    "where id=:actor",
+                ),
+                (
+                    "actor_profiles",
+                    "update actor_profiles set reactivation_reason='restored'||chr(10) "
+                    "where id=:actor",
+                ),
+                (
+                    "actor_profiles",
+                    "update actor_profiles set status='deactivated',deactivated_by=:actor,"
+                    "deactivated_at=clock_timestamp(),deactivation_reason=chr(13)||'terminal' "
+                    "where id=:actor",
+                ),
+                (
+                    "actor_identity_links",
+                    "update actor_identity_links set revoked_reason=chr(12)||'link review' "
+                    "where actor_profile_id=:actor",
+                ),
+                (
+                    "actor_identity_links",
+                    "update actor_identity_links set reactivation_reason='link restored'||chr(11) "
+                    "where actor_profile_id=:actor",
+                ),
+            )
+            for table, statement in invalid_reason_updates:
+                with pytest.raises(DBAPIError):
+                    async with engine.begin() as connection:
+                        await connection.execute(text(f"alter table {table} disable trigger user"))
+                        await connection.execute(text(statement), {"actor": actor_id})
             async with engine.begin() as connection:
                 await connection.execute(text("alter table actor_profiles disable trigger user"))
                 await connection.execute(
@@ -1556,6 +1590,14 @@ def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
         ),
         (
             str(uuid4()),
+            "tab-padded-profile-suspension",
+            "update actor_profiles set status='suspended',suspended_by=:actor,"
+            "suspended_at=clock_timestamp(),suspension_reason=chr(9)||'padded' "
+            "where id=:actor",
+            "update actor_profiles set suspension_reason='valid suspension' where id=:actor",
+        ),
+        (
+            str(uuid4()),
             "multibyte-profile-deactivation",
             "update actor_profiles set status='deactivated',deactivated_by=:actor,"
             "deactivated_at=clock_timestamp(),deactivation_reason=repeat(chr(233),251) "
@@ -1567,6 +1609,15 @@ def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
             "padded-link-revocation",
             "update actor_identity_links set status='revoked',revoked_by=:actor,"
             "revoked_at=clock_timestamp(),revoked_reason=' padded ' "
+            "where actor_profile_id=:actor",
+            "update actor_identity_links set revoked_reason='valid revocation' "
+            "where actor_profile_id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "newline-padded-link-revocation",
+            "update actor_identity_links set status='revoked',revoked_by=:actor,"
+            "revoked_at=clock_timestamp(),revoked_reason='padded'||chr(10) "
             "where actor_profile_id=:actor",
             "update actor_identity_links set revoked_reason='valid revocation' "
             "where actor_profile_id=:actor",

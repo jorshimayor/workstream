@@ -3763,6 +3763,7 @@ def test_every_operation_has_one_strict_canonical_request_variant() -> None:
 def test_actor_profile_lifecycle_public_schemas_are_strict_bounded_and_typed() -> None:
     target = uuid4()
     assert ActorLifecycleBody(reason="  approved correction  ").reason == "approved correction"
+    assert ActorLifecycleBody(reason="\tapproved correction\n").reason == "approved correction"
     assert ActorLifecycleBody(reason="é" * 250).reason == "é" * 250
     for value in ("", "   ", "contains\x00null", "é" * 251, "x" * 501, 1, None):
         with pytest.raises(ValidationError):
