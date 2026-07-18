@@ -238,12 +238,13 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 65 rows after AUTH-09B: ten active actions
-and 55 planned rows. AUTH-08 adds seven active administrative definition,
+The closed action registry contains 65 rows after AUTH-09C: 12 active actions
+and 53 planned rows. AUTH-08 adds seven active administrative definition,
 grant-history, issue, revoke, and local-bootstrap actions without adding a
 permission. AUTH-09A adds eight planned actor, identity-link, and service
 provisioning actions without activating a route; AUTH-09B activates only
-`actor.service.provision`. The other planned rows cover
+`actor.service.provision`, and AUTH-09C activates only `actor.profile.read` and
+`actor.identity_link.read`. The other planned rows cover
 three Operator recovery actions, 25 artifact actions, canonical
 `submission.create`, and 19 review actions. An action becomes active only when
 its feature owner has merged the canonical resource composer, guards, surface or
@@ -278,10 +279,10 @@ AUTH-09A registers these exact planned actions through migration `0023`:
 | `actor.service.provision` | `actor.service.provision` | `WS-AUTH-001-09B` |
 
 AUTH-09B activates only `actor.service.provision` through the controlled route
-described below. The other seven remain unavailable until their exact AUTH
-owner supplies the route, typed resource context, evaluator, guards,
-transaction proof, and availability change. AUTH-09A supplies none of those
-runtime paths.
+described below. AUTH-09C activates only the two bounded actor-registry reads.
+The other five remain unavailable until AUTH-09D supplies the mutation route,
+typed resource context, evaluator, guards, transaction proof, and availability
+change. AUTH-09A supplies none of those runtime paths.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -683,7 +684,7 @@ Canonical route families use `/api/v1`:
 GET|PATCH /api/v1/actors/me
 GET /api/v1/authorization/permissions
 GET /api/v1/authorization/admin-role-definitions
-GET|PATCH /api/v1/actors/{actor_profile_id}
+GET /api/v1/actors/{actor_profile_id}
 POST /api/v1/actors/{actor_profile_id}/suspend|reactivate|deactivate
 GET /api/v1/actors/{actor_profile_id}/identity-links
 POST /api/v1/actor-identity-links/{link_id}/revoke|reactivate
@@ -704,7 +705,9 @@ selection is only the requested grant; it never supplies the caller's authority.
 
 AUTH-07B cuts existing `GET|PATCH /api/v1/actors/me` behavior over to the
 kernel. AUTH-08 activates the two definition reads, scoped grant/history reads,
-issue/revoke APIs, and local bootstrap command. Project-scoped
+issue/revoke APIs, and local bootstrap command. AUTH-09C activates exact actor
+and identity-link reads for effective system Access Administrator or Audit
+Authority grants. Project-scoped
 `GET /api/v1/actors/me/authorization-context` begins in AUTH-10 after
 exact-project grant and canonical project capability composition exists.
 

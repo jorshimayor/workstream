@@ -1620,6 +1620,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
     auth_database_env: str,
     rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Prove the supported bootstrap, grant, replay, scope, and revoke flow."""
     private_key, jwk = rsa_signing_material
@@ -1646,6 +1647,41 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
     audit_headers = {"Authorization": f"Bearer {audit_token}"}
     original_commit = AsyncSession.commit
     fail_feature_commit = False
+    fail_evidence_action: ActionId | None = None
+    fail_target_lookup: str | None = None
+    fail_touch = False
+    original_add_authority_event = AuditService.add_authority_event
+    original_profile_read = ActorService.read_admin_profile
+    original_link_read = ActorService.read_admin_identity_link
+    original_touch = ActorService.touch_after_authorization
+
+    async def add_authority_event_with_failure(service, value):
+        nonlocal fail_evidence_action
+        if fail_evidence_action is not None and value.action_id is fail_evidence_action:
+            fail_evidence_action = None
+            raise SQLAlchemyError("forced authorization evidence failure")
+        return await original_add_authority_event(service, value)
+
+    async def profile_read_with_failure(service, actor_profile_id):
+        nonlocal fail_target_lookup
+        if fail_target_lookup == "profile":
+            fail_target_lookup = None
+            raise SQLAlchemyError("forced profile lookup failure")
+        return await original_profile_read(service, actor_profile_id)
+
+    async def link_read_with_failure(service, actor_profile_id):
+        nonlocal fail_target_lookup
+        if fail_target_lookup == "identity_link":
+            fail_target_lookup = None
+            raise SQLAlchemyError("forced identity-link lookup failure")
+        return await original_link_read(service, actor_profile_id)
+
+    async def touch_with_failure(service, resolved):
+        nonlocal fail_touch
+        if fail_touch:
+            fail_touch = False
+            raise SQLAlchemyError("forced caller timestamp touch failure")
+        return await original_touch(service, resolved)
 
     async def commit_with_one_feature_failure(session: AsyncSession) -> None:
         nonlocal fail_feature_commit
@@ -1664,6 +1700,10 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
         await original_commit(session)
 
     monkeypatch.setattr(AsyncSession, "commit", commit_with_one_feature_failure)
+    monkeypatch.setattr(AuditService, "add_authority_event", add_authority_event_with_failure)
+    monkeypatch.setattr(ActorService, "read_admin_profile", profile_read_with_failure)
+    monkeypatch.setattr(ActorService, "read_admin_identity_link", link_read_with_failure)
+    monkeypatch.setattr(ActorService, "touch_after_authorization", touch_with_failure)
 
     async def actor_state(actor_id: UUID) -> tuple:
         async with db_session.get_session_factory()() as session:
@@ -1752,9 +1792,17 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "suspended": uuid4(),
             "no_active_link": uuid4(),
         }
+        private_provenance = {
+            "created_by": f"auth09c-created-by-{uuid4()}",
+            "linked_by": f"auth09c-linked-by-{uuid4()}",
+            "lifecycle_by": f"auth09c-lifecycle-by-{uuid4()}",
+        }
         project_one, project_two = uuid4(), uuid4()
         now = datetime.now(UTC)
         async with db_session.get_session_factory()() as session:
+            target_row = await session.get(ActorProfile, str(target_id))
+            assert target_row is not None
+            target_row.contact_email = "auth09c-private-contact@example.test"
             session.add_all(
                 [
                     Project(
@@ -1775,15 +1823,15 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         status="active",
                         provisioning_method="manual_service_provisioning",
                         service_identity="workstream.artifact.verifier",
-                        created_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
                     ),
                     ActorProfile(
                         id=str(concealed_targets["suspended"]),
                         actor_kind="human",
                         status="suspended",
                         provisioning_method="automatic_first_access",
-                        created_by=str(admin_id),
-                        suspended_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
+                        suspended_by=private_provenance["lifecycle_by"],
                         suspended_at=now,
                         suspension_reason="Concealment fixture",
                     ),
@@ -1792,7 +1840,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         actor_kind="human",
                         status="active",
                         provisioning_method="automatic_first_access",
-                        created_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
                     ),
                 ]
             )
@@ -1806,7 +1854,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-service-target",
                         subject_kind="service",
                         status="active",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                     ),
                     ActorIdentityLink(
                         id=str(uuid4()),
@@ -1815,7 +1863,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-suspended-target",
                         subject_kind="human",
                         status="active",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                         last_verified_at=now,
                     ),
                     ActorIdentityLink(
@@ -1825,15 +1873,254 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-revoked-link-target",
                         subject_kind="human",
                         status="revoked",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                         last_verified_at=now,
-                        revoked_by=str(admin_id),
+                        revoked_by=private_provenance["lifecycle_by"],
                         revoked_at=now,
                         revoked_reason="Concealment fixture",
                     ),
                 ]
             )
             await session.commit()
+
+        profile_fields = {
+            "actor_profile_id",
+            "actor_kind",
+            "status",
+            "provisioning_method",
+            "service_identity",
+            "display_name",
+            "created_at",
+            "updated_at",
+            "last_seen_at",
+            "suspended_at",
+            "deactivated_at",
+        }
+        link_fields = {
+            "identity_link_id",
+            "actor_profile_id",
+            "subject_kind",
+            "status",
+            "linked_at",
+            "last_verified_at",
+            "revoked_at",
+            "reactivated_at",
+        }
+        caplog.clear()
+        caplog.set_level(logging.DEBUG, logger="app")
+        before_admin_actor_read = await actor_state(admin_id)
+        before_target_actor_read = await actor_state(target_id)
+        target_admin_profile = await client.get(
+            f"/api/v1/actors/{target_id}",
+            headers=admin_headers,
+        )
+        target_admin_link = await client.get(
+            f"/api/v1/actors/{target_id}/identity-links",
+            headers=admin_headers,
+        )
+        service_admin_profile = await client.get(
+            f"/api/v1/actors/{concealed_targets['service']}",
+            headers=admin_headers,
+        )
+        service_admin_link = await client.get(
+            f"/api/v1/actors/{concealed_targets['service']}/identity-links",
+            headers=admin_headers,
+        )
+        suspended_admin_profile = await client.get(
+            f"/api/v1/actors/{concealed_targets['suspended']}",
+            headers=admin_headers,
+        )
+        revoked_admin_link = await client.get(
+            f"/api/v1/actors/{concealed_targets['no_active_link']}/identity-links",
+            headers=admin_headers,
+        )
+        assert [
+            response.status_code
+            for response in (
+                target_admin_profile,
+                target_admin_link,
+                service_admin_profile,
+                service_admin_link,
+                suspended_admin_profile,
+                revoked_admin_link,
+            )
+        ] == [200] * 6
+        assert set(target_admin_profile.json()) == profile_fields
+        assert set(target_admin_link.json()) == link_fields
+        assert target_admin_profile.json()["actor_kind"] == "human"
+        assert target_admin_profile.json()["service_identity"] is None
+        assert service_admin_profile.json()["actor_kind"] == "service"
+        assert service_admin_profile.json()["service_identity"] == (
+            ServiceIdentity.ARTIFACT_VERIFIER.value
+        )
+        assert service_admin_profile.json()["last_seen_at"] is None
+        assert service_admin_link.json()["last_verified_at"] is None
+        assert suspended_admin_profile.json()["status"] == "suspended"
+        assert revoked_admin_link.json()["status"] == "revoked"
+        serialized_admin_reads = json.dumps(
+            [
+                target_admin_profile.json(),
+                target_admin_link.json(),
+                service_admin_profile.json(),
+                service_admin_link.json(),
+                suspended_admin_profile.json(),
+                revoked_admin_link.json(),
+            ],
+            sort_keys=True,
+        )
+        for private_value in (
+            "auth08-target",
+            "auth08-service-target",
+            "auth08-suspended-target",
+            "auth08-revoked-link-target",
+            "https://identity.test",
+            "Concealment fixture",
+            "auth09c-private-contact@example.test",
+            admin_token,
+            target_token,
+            bootstrap["grant_id"],
+            *private_provenance.values(),
+        ):
+            assert private_value not in serialized_admin_reads
+            assert private_value not in caplog.text
+        assert await actor_state(target_id) == before_target_actor_read
+        after_admin_actor_read = await actor_state(admin_id)
+        assert after_admin_actor_read[1] > before_admin_actor_read[1]
+        assert after_admin_actor_read[2] > before_admin_actor_read[2]
+
+        async with db_session.get_session_factory()() as session:
+            target_allow_events = (
+                await session.scalars(
+                    select(AuditEvent).where(
+                        AuditEvent.event_type == "SensitiveAuthorizationAllowed",
+                        AuditEvent.action_id.in_(
+                            ("actor.profile.read", "actor.identity_link.read")
+                        ),
+                        AuditEvent.resource_id == str(target_id),
+                    )
+                )
+            ).all()
+        assert len(target_allow_events) == 2
+        expected_evidence = {
+            "actor.profile.read": ("actor.profile.read_any", target_admin_profile),
+            "actor.identity_link.read": ("actor.identity_link.read", target_admin_link),
+        }
+        assert {event.action_id for event in target_allow_events} == set(expected_evidence)
+        for event in target_allow_events:
+            expected_permission, route_response = expected_evidence[event.action_id]
+            assert event.permission_id == expected_permission
+            assert event.actor_id == str(admin_id)
+            assert event.target_actor_ref == str(target_id)
+            assert event.target_ref_id == str(target_id)
+            assert event.matched_grant_id == bootstrap["grant_id"]
+            assert event.project_id is None
+            assert event.after_facts == {"allowed": True}
+            assert UUID(str(event.request_id)) == UUID(route_response.headers["x-request-id"])
+            assert UUID(str(event.correlation_id)) == UUID(
+                route_response.headers["x-correlation-id"]
+            )
+
+        async def actor_admin_state() -> tuple[datetime, datetime, datetime]:
+            async with db_session.get_session_factory()() as session:
+                return tuple(
+                    (
+                        await session.execute(
+                            text(
+                                "select p.updated_at,p.last_seen_at,l.last_verified_at "
+                                "from actor_profiles p join actor_identity_links l "
+                                "on l.actor_profile_id=p.id where p.id=:actor"
+                            ),
+                            {"actor": str(admin_id)},
+                        )
+                    ).one()
+                )
+
+        before_self_profile = await actor_admin_state()
+        before_self_profile_counts = await authority_counts()
+        self_profile = await client.get(
+            f"/api/v1/actors/{admin_id}",
+            headers=admin_headers,
+        )
+        assert self_profile.status_code == 200, self_profile.text
+        after_self_profile = await actor_admin_state()
+        assert after_self_profile[0] > before_self_profile[0]
+        assert after_self_profile[1] > before_self_profile[1]
+        assert after_self_profile[2] > before_self_profile[2]
+        assert datetime.fromisoformat(self_profile.json()["updated_at"]) == after_self_profile[0]
+        assert datetime.fromisoformat(self_profile.json()["last_seen_at"]) == after_self_profile[1]
+        after_self_profile_counts = await authority_counts()
+        assert after_self_profile_counts[:2] == before_self_profile_counts[:2]
+        assert after_self_profile_counts[2] == before_self_profile_counts[2] + 1
+
+        before_self_link = await actor_admin_state()
+        before_self_link_counts = await authority_counts()
+        self_link = await client.get(
+            f"/api/v1/actors/{admin_id}/identity-links",
+            headers=admin_headers,
+        )
+        assert self_link.status_code == 200, self_link.text
+        after_self_link = await actor_admin_state()
+        assert after_self_link[0] > before_self_link[0]
+        assert after_self_link[1] > before_self_link[1]
+        assert after_self_link[2] > before_self_link[2]
+        assert datetime.fromisoformat(self_link.json()["last_verified_at"]) == after_self_link[2]
+        after_self_link_counts = await authority_counts()
+        assert after_self_link_counts[:2] == before_self_link_counts[:2]
+        assert after_self_link_counts[2] == before_self_link_counts[2] + 1
+
+        before_missing_reads = await actor_state(admin_id)
+        before_missing_authority_counts = await authority_counts()
+        absent_id = uuid4()
+        missing_profile = await client.get(
+            f"/api/v1/actors/{absent_id}",
+            headers=admin_headers,
+        )
+        missing_link = await client.get(
+            f"/api/v1/actors/{absent_id}/identity-links",
+            headers=admin_headers,
+        )
+        assert missing_profile.status_code == missing_link.status_code == 404
+        concealed_missing_bodies = []
+        for response in (missing_profile, missing_link):
+            body = response.json()
+            UUID(body["error"].pop("correlation_id"))
+            concealed_missing_bodies.append(body)
+        assert concealed_missing_bodies[0] == concealed_missing_bodies[1]
+        assert concealed_missing_bodies[0]["error"]["code"] == "actor_resource_not_found"
+        assert await actor_state(admin_id) == before_missing_reads
+        assert await authority_counts() == before_missing_authority_counts
+
+        async def assert_failed_admin_read(path: str) -> None:
+            before_failure_state = await actor_state(admin_id)
+            before_failure_counts = await authority_counts()
+            failed_response = await client.get(path, headers=admin_headers)
+            assert_retryable_service_unavailable(failed_response)
+            assert await actor_state(admin_id) == before_failure_state
+            assert await authority_counts() == before_failure_counts
+
+        profile_path = f"/api/v1/actors/{target_id}"
+        link_path = f"/api/v1/actors/{target_id}/identity-links"
+        for action_id, path in (
+            (ActionId.ACTOR_PROFILE_READ, profile_path),
+            (ActionId.ACTOR_IDENTITY_LINK_READ, link_path),
+        ):
+            fail_evidence_action = action_id
+            await assert_failed_admin_read(path)
+
+        for lookup_kind, path in (
+            ("profile", profile_path),
+            ("identity_link", link_path),
+        ):
+            fail_target_lookup = lookup_kind
+            await assert_failed_admin_read(path)
+
+        for path in (profile_path, link_path):
+            fail_touch = True
+            await assert_failed_admin_read(path)
+
+        for path in (profile_path, link_path):
+            fail_feature_commit = True
+            await assert_failed_admin_read(path)
 
         before_read = await actor_state(admin_id)
         fail_feature_commit = True
@@ -2071,6 +2358,14 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             headers=audit_headers,
             params={"scope_type": "project", "scope_project_id": str(project_one)},
         )
+        project_audit_actor_read = await client.get(
+            f"/api/v1/actors/{target_id}",
+            headers=audit_headers,
+        )
+        project_audit_link_read = await client.get(
+            f"/api/v1/actors/{target_id}/identity-links",
+            headers=audit_headers,
+        )
         audit_wrong_scope = await client.get(
             "/api/v1/admin-role-grants",
             headers=audit_headers,
@@ -2098,6 +2393,9 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             str(project_one)
         }
         assert audit_wrong_scope.status_code == audit_mutation.status_code == 403
+        for project_audit_read in (project_audit_actor_read, project_audit_link_read):
+            assert project_audit_read.status_code == 403
+            assert project_audit_read.json()["error"]["code"] == "permission_not_granted"
         assert audit_wrong_scope.json()["error"]["code"] == "scope_not_authorized"
         assert audit_mutation.json()["error"]["code"] == "permission_not_granted"
         assert audit_history_visible.status_code == 200
@@ -2134,8 +2432,13 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                 headers=audit_headers,
                 params={"scope_type": "system", "status": "all"},
             ),
+            await client.get(f"/api/v1/actors/{target_id}", headers=audit_headers),
+            await client.get(
+                f"/api/v1/actors/{target_id}/identity-links",
+                headers=audit_headers,
+            ),
         ]
-        assert [response.status_code for response in system_audit_reads] == [200] * 4
+        assert [response.status_code for response in system_audit_reads] == [200] * 6
         assert system_audit_reads[0].json()["total"] == 74
         assert system_audit_reads[1].json()["total"] == 5
         assert system_audit_reads[2].json()["total"] == 2
@@ -2953,6 +3256,281 @@ async def test_admin_bootstrap_replay_and_cross_revoke_are_concurrency_safe(
     assert denied_second_issue == 1
     assert forbidden_second_issue_state == 0
     await db_session.dispose_engine()
+
+
+async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
+    auth_database_env: str,
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prove lifecycle and grant changes serialize after both bounded reads."""
+    private_key, jwk = rsa_signing_material
+    settings = production_verifier_settings(database_url=auth_database_env)
+    app = create_app(settings)
+    app.state.auth_verifier = FlowAuthVerifier(settings, jwks_transport=jwks_transport(jwk))
+    reader_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09c-profile-reader", "jti": "auth09c-profile-reader-token"},
+    )
+    link_reader_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09c-link-reader", "jti": "auth09c-link-reader-token"},
+    )
+    custodian_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09c-custodian", "jti": "auth09c-custodian-token"},
+    )
+    target_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09c-target", "jti": "auth09c-target-token"},
+    )
+    reader_headers = {"Authorization": f"Bearer {reader_token}"}
+    link_reader_headers = {"Authorization": f"Bearer {link_reader_token}"}
+    custodian_headers = {"Authorization": f"Bearer {custodian_token}"}
+    pause_kind: str | None = None
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    transition_backend_pids: asyncio.Queue[int] = asyncio.Queue()
+    captured_grant_transition_tasks: set[asyncio.Task] = set()
+    original_profile_read = ActorService.read_admin_profile
+    original_link_read = ActorService.read_admin_identity_link
+    original_get_grant = AdminAuthorizationRepository.get_grant
+
+    async def pause_profile_read(service: ActorService, actor_profile_id: UUID):
+        if pause_kind == "profile":
+            entered.set()
+            await release.wait()
+        return await original_profile_read(service, actor_profile_id)
+
+    async def pause_link_read(service: ActorService, actor_profile_id: UUID):
+        if pause_kind == "identity_link":
+            entered.set()
+            await release.wait()
+        return await original_link_read(service, actor_profile_id)
+
+    async def capture_grant_transition_backend(repository, *args, **kwargs):
+        task = asyncio.current_task()
+        if (
+            task is not None
+            and task.get_name() == "auth09c-grant-revocation-transition"
+            and task not in captured_grant_transition_tasks
+        ):
+            captured_grant_transition_tasks.add(task)
+            backend_pid = await repository._session.scalar(text("select pg_backend_pid()"))
+            transition_backend_pids.put_nowait(int(backend_pid))
+        return await original_get_grant(repository, *args, **kwargs)
+
+    monkeypatch.setattr(ActorService, "read_admin_profile", pause_profile_read)
+    monkeypatch.setattr(ActorService, "read_admin_identity_link", pause_link_read)
+    monkeypatch.setattr(
+        AdminAuthorizationRepository,
+        "get_grant",
+        capture_grant_transition_backend,
+    )
+
+    async def capture_transition_backend(session: AsyncSession) -> None:
+        backend_pid = await session.scalar(text("select pg_backend_pid()"))
+        transition_backend_pids.put_nowait(int(backend_pid))
+
+    async def actor_timestamps(actor_id: UUID) -> tuple[datetime | None, datetime | None]:
+        async with db_session.get_session_factory()() as session:
+            return tuple(
+                (
+                    await session.execute(
+                        text(
+                            "select p.last_seen_at,l.last_verified_at from actor_profiles p "
+                            "join actor_identity_links l on l.actor_profile_id=p.id "
+                            "where p.id=:actor"
+                        ),
+                        {"actor": str(actor_id)},
+                    )
+                ).one()
+            )
+
+    async def set_profile_state(actor_id: UUID, custodian_id: UUID, state: str) -> None:
+        async with db_session.get_session_factory()() as session:
+            await capture_transition_backend(session)
+            if state == "suspended":
+                statement = (
+                    "update actor_profiles set status='suspended',suspended_by=:by,"
+                    "suspended_at=clock_timestamp(),suspension_reason='race proof' "
+                    "where id=:actor"
+                )
+            else:
+                statement = (
+                    "update actor_profiles set status='deactivated',deactivated_by=:by,"
+                    "deactivated_at=clock_timestamp(),deactivation_reason='race proof' "
+                    "where id=:actor"
+                )
+            await session.execute(text(statement), {"actor": str(actor_id), "by": str(custodian_id)})
+            await session.commit()
+
+    async def reset_profile(actor_id: UUID) -> None:
+        async with db_session.get_session_factory()() as session:
+            await session.execute(
+                text(
+                    "update actor_profiles set status='active',suspended_by=null,"
+                    "suspended_at=null,suspension_reason=null,deactivated_by=null,"
+                    "deactivated_at=null,deactivation_reason=null where id=:actor"
+                ),
+                {"actor": str(actor_id)},
+            )
+            await session.commit()
+
+    async def revoke_link(actor_id: UUID, custodian_id: UUID) -> None:
+        async with db_session.get_session_factory()() as session:
+            await capture_transition_backend(session)
+            await session.execute(
+                text(
+                    "update actor_identity_links set status='revoked',revoked_by=:by,"
+                    "revoked_at=clock_timestamp(),revoked_reason='race proof' "
+                    "where actor_profile_id=:actor"
+                ),
+                {"actor": str(actor_id), "by": str(custodian_id)},
+            )
+            await session.commit()
+
+    async def reset_link(actor_id: UUID) -> None:
+        async with db_session.get_session_factory()() as session:
+            await session.execute(
+                text(
+                    "update actor_identity_links set status='active',revoked_by=null,"
+                    "revoked_at=null,revoked_reason=null where actor_profile_id=:actor"
+                ),
+                {"actor": str(actor_id)},
+            )
+            await session.commit()
+
+    async def wait_for_transition_lock(
+        transition_task: asyncio.Task,
+        transition_backend_pid: int,
+    ) -> None:
+        for _ in range(250):
+            if transition_task.done():
+                raise AssertionError("disabling transition bypassed the read lock")
+            async with db_session.get_session_factory()() as session:
+                waiting = await session.scalar(
+                    text(
+                        "select coalesce(cardinality(pg_blocking_pids(:pid)),0)>0"
+                    ),
+                    {"pid": transition_backend_pid},
+                )
+            if waiting:
+                return
+            await asyncio.sleep(0.02)
+        raise AssertionError("disabling transition never reached a PostgreSQL lock wait")
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        reader = await client.get("/api/v1/actors/me", headers=reader_headers)
+        link_reader = await client.get("/api/v1/actors/me", headers=link_reader_headers)
+        custodian = await client.get("/api/v1/actors/me", headers=custodian_headers)
+        target = await client.get(
+            "/api/v1/actors/me",
+            headers={"Authorization": f"Bearer {target_token}"},
+        )
+        reader_id = UUID(reader.json()["actor_profile_id"])
+        link_reader_id = UUID(link_reader.json()["actor_profile_id"])
+        custodian_id = UUID(custodian.json()["actor_profile_id"])
+        target_id = UUID(target.json()["actor_profile_id"])
+        bootstrap_code, _bootstrap = await run_admin_bootstrap(custodian_id, execute=True)
+        assert bootstrap_code == 0
+        reader_grants: dict[UUID, str] = {}
+        for current_reader_id in (reader_id, link_reader_id):
+            reader_grant = await client.post(
+                "/api/v1/admin-role-grants",
+                headers={**custodian_headers, "Idempotency-Key": str(uuid4())},
+                json={
+                    "target_actor_profile_id": str(current_reader_id),
+                    "role": "access_administrator",
+                    "scope_type": "system",
+                    "scope_project_id": None,
+                    "reason": "AUTH-09C concurrency reader",
+                },
+            )
+            assert reader_grant.status_code == 201, reader_grant.text
+            reader_grants[current_reader_id] = reader_grant.json()["resource_id"]
+
+        for current_kind, path_suffix, current_headers, current_reader_id in (
+            ("profile", "", reader_headers, reader_id),
+            ("identity_link", "/identity-links", link_reader_headers, link_reader_id),
+        ):
+            current_grant_id = reader_grants[current_reader_id]
+            for transition in ("suspended", "link_revoked", "grant_revoked", "deactivated"):
+                pause_kind = current_kind
+                entered = asyncio.Event()
+                release = asyncio.Event()
+                read_task = asyncio.create_task(
+                    client.get(
+                        f"/api/v1/actors/{target_id}{path_suffix}",
+                        headers=current_headers,
+                    )
+                )
+                await asyncio.wait_for(entered.wait(), timeout=5)
+                if transition in {"suspended", "deactivated"}:
+                    transition_task = asyncio.create_task(
+                        set_profile_state(current_reader_id, custodian_id, transition)
+                    )
+                elif transition == "link_revoked":
+                    transition_task = asyncio.create_task(
+                        revoke_link(current_reader_id, custodian_id)
+                    )
+                else:
+                    transition_task = asyncio.create_task(
+                        client.post(
+                            f"/api/v1/admin-role-grants/{current_grant_id}/revoke",
+                            headers={
+                                **custodian_headers,
+                                "Idempotency-Key": str(uuid4()),
+                            },
+                            json={"reason": "AUTH-09C matched grant race"},
+                        ),
+                        name="auth09c-grant-revocation-transition",
+                    )
+                transition_backend_pid = await asyncio.wait_for(
+                    transition_backend_pids.get(),
+                    timeout=5,
+                )
+                await wait_for_transition_lock(transition_task, transition_backend_pid)
+                release.set()
+                read_response = await read_task
+                transition_result = await transition_task
+                assert read_response.status_code == 200, read_response.text
+                if transition == "grant_revoked":
+                    assert transition_result.status_code == 200, transition_result.text
+                disabled_timestamps = await actor_timestamps(current_reader_id)
+                denied = await client.get(
+                    f"/api/v1/actors/{target_id}{path_suffix}",
+                    headers=current_headers,
+                )
+                assert denied.status_code == 403
+                assert await actor_timestamps(current_reader_id) == disabled_timestamps
+
+                if transition in {"suspended", "deactivated"}:
+                    if transition == "suspended":
+                        await reset_profile(current_reader_id)
+                elif transition == "link_revoked":
+                    await reset_link(current_reader_id)
+                else:
+                    replacement = await client.post(
+                        "/api/v1/admin-role-grants",
+                        headers={
+                            **custodian_headers,
+                            "Idempotency-Key": str(uuid4()),
+                        },
+                        json={
+                            "target_actor_profile_id": str(current_reader_id),
+                            "role": "access_administrator",
+                            "scope_type": "system",
+                            "scope_project_id": None,
+                            "reason": "Restore AUTH-09C reader authority",
+                        },
+                    )
+                    assert replacement.status_code == 201, replacement.text
+                    current_grant_id = replacement.json()["resource_id"]
+                pause_kind = None
 
 
 async def test_controlled_service_actor_provisioning_is_atomic_private_and_concurrent(
