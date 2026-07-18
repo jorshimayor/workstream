@@ -41,6 +41,7 @@ _EMPTY_ARTIFACT_S3_SECRETS: tuple[SecretStr | None, SecretStr | None, SecretStr 
     None,
     None,
 )
+_MISSING_SECRET = object()
 _ALTERNATE_VALIDATION_RESTORES_SECRETS: ContextVar[bool] = ContextVar(
     "alternate_validation_restores_secrets",
     default=False,
@@ -505,27 +506,25 @@ def _clear_settings_private_secrets(settings: object) -> None:
 
 def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr | None:
     """Resolve and validate the key without entering Pydantic's input graph."""
-    missing = object()
-    raw_value = values.pop("api_rate_limit_key_secret", missing)
-    if raw_value is missing:
-        raw_value = os.environ.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", missing)
-    if raw_value is missing:
-        env_file = values.get("_env_file", ".env")
-        if env_file is not None:
-            env_encoding = values.get("_env_file_encoding", "utf-8")
-            env_files = (env_file,) if isinstance(env_file, (str, os.PathLike)) else tuple(env_file)
-            for path in env_files:
-                dotenv = dotenv_values(path, encoding=env_encoding)
-                raw_value = dotenv.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", raw_value)
-    if raw_value is missing or raw_value is None:
+    raw_value = _pop_optional_secret_source(
+        values,
+        field_name="api_rate_limit_key_secret",
+        environment_name="WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+    )
+    if raw_value is _MISSING_SECRET or raw_value is None:
         return None
     if isinstance(raw_value, SecretStr):
         secret = raw_value
     elif isinstance(raw_value, str):
         secret = SecretStr(raw_value)
     else:
+        del raw_value
         raise ValueError("invalid API rate limit key secret")
-    decode_api_rate_limit_key_secret(secret)
+    try:
+        decode_api_rate_limit_key_secret(secret)
+    except ValueError:
+        del raw_value, secret
+        raise
     return secret
 
 
@@ -563,21 +562,12 @@ def _extract_optional_secret(
     environment_name: str,
 ) -> SecretStr | None:
     """Resolve one bounded secret without retaining it in Pydantic input."""
-    missing = object()
-    raw_value = values.pop(field_name, missing)
-    if raw_value is missing:
-        raw_value = os.environ.get(environment_name, missing)
-    if raw_value is missing:
-        env_file = values.get("_env_file", ".env")
-        if env_file is not None:
-            env_encoding = values.get("_env_file_encoding", "utf-8")
-            env_files = (env_file,) if isinstance(env_file, (str, os.PathLike)) else tuple(env_file)
-            for path in env_files:
-                raw_value = dotenv_values(path, encoding=env_encoding).get(
-                    environment_name,
-                    raw_value,
-                )
-    if raw_value is missing or raw_value is None:
+    raw_value = _pop_optional_secret_source(
+        values,
+        field_name=field_name,
+        environment_name=environment_name,
+    )
+    if raw_value is _MISSING_SECRET or raw_value is None:
         return None
     if isinstance(raw_value, SecretStr):
         secret = raw_value
@@ -597,10 +587,34 @@ def _extract_optional_secret(
     return secret
 
 
+def _pop_optional_secret_source(
+    values: dict[str, object],
+    *,
+    field_name: str,
+    environment_name: str,
+) -> object:
+    """Remove one optional secret from direct, environment, or dotenv input."""
+    raw_value = values.pop(field_name, _MISSING_SECRET)
+    if raw_value is _MISSING_SECRET:
+        raw_value = os.environ.get(environment_name, _MISSING_SECRET)
+    if raw_value is _MISSING_SECRET:
+        env_file = values.get("_env_file", ".env")
+        if env_file is not None:
+            env_encoding = values.get("_env_file_encoding", "utf-8")
+            env_files = (env_file,) if isinstance(env_file, (str, os.PathLike)) else tuple(env_file)
+            for path in env_files:
+                raw_value = dotenv_values(path, encoding=env_encoding).get(
+                    environment_name,
+                    raw_value,
+                )
+    return raw_value
+
+
 def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:
     """Decode one canonical padded Base64 rate-control key."""
     secret = value.get_secret_value()
     if not secret.isascii():
+        del value, secret
         raise ValueError("invalid API rate limit key secret")
     invalid = False
     try:
@@ -611,7 +625,9 @@ def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:
         encoded = b""
         decoded = b""
     if invalid:
+        del value, secret, encoded, decoded
         raise ValueError("invalid API rate limit key secret")
     if not 32 <= len(decoded) <= 64 or base64.b64encode(decoded) != encoded:
+        del value, secret, encoded, decoded
         raise ValueError("invalid API rate limit key secret")
     return decoded

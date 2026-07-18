@@ -339,8 +339,9 @@ class S3CompatibleArtifactStore:
                 status in {409, 412}
                 and _provider_error_code(error) in _PRECONDITION_ERROR_CODES
             ):
-                await self._verify_exact(provider_object_ref, commitment)
-                return ArtifactPutResult(provider_object_ref, replayed=True)
+                if await self._matches_commitment(provider_object_ref, commitment):
+                    return ArtifactPutResult(provider_object_ref, replayed=True)
+                raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
             raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
         except ArtifactStoreError:
             raise

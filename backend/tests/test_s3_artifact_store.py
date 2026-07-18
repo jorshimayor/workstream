@@ -582,6 +582,9 @@ async def test_precondition_failure_requires_exact_replay_verification(
         async def put_object(self, **_kwargs: object) -> object:
             raise _client_error("PreconditionFailed", 412)
 
+        async def head_object(self, **_kwargs: object) -> object:
+            return {"ContentLength": 6}
+
     @asynccontextmanager
     async def fake_client() -> Any:
         yield Client()
@@ -596,6 +599,34 @@ async def test_precondition_failure_requires_exact_replay_verification(
             result = await store.put(source)
         assert result.replayed is True
         assert verified == [result.provider_object_ref]
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+async def test_precondition_failure_with_missing_replay_is_retryable(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Treat a not-yet-visible conditional-write winner as replay-required."""
+    store = initialize_minio_store(private_prefix="negative/precondition-missing")
+
+    class Client:
+        async def put_object(self, **_kwargs: object) -> object:
+            raise _client_error("PreconditionFailed", 412)
+
+        async def head_object(self, **_kwargs: object) -> object:
+            raise _client_error("NoSuchKey", 404)
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    try:
+        async with minted_source(tmp_path / "scratch", b"unverified-replay") as source:
+            with pytest.raises(ArtifactStoreUnavailableError):
+                await store.put(source)
     finally:
         store.close()
 

@@ -114,7 +114,11 @@ def test_rate_limit_secret_is_absent_from_unrelated_structured_errors() -> None:
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
-    assert_secret_not_retained(caught.value, encoded)
+    assert_secret_not_retained(
+        caught.value,
+        encoded,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 def test_environment_rate_limit_secret_is_absent_from_unrelated_structured_errors(
@@ -128,7 +132,11 @@ def test_environment_rate_limit_secret_is_absent_from_unrelated_structured_error
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
-    assert_secret_not_retained(caught.value, encoded)
+    assert_secret_not_retained(
+        caught.value,
+        encoded,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 def test_dotenv_rate_limit_secret_is_absent_from_unrelated_structured_errors(
@@ -146,7 +154,11 @@ def test_dotenv_rate_limit_secret_is_absent_from_unrelated_structured_errors(
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
-    assert_secret_not_retained(caught.value, encoded)
+    assert_secret_not_retained(
+        caught.value,
+        encoded,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 def test_model_validate_rejects_rate_limit_secret_without_structured_echo() -> None:
@@ -157,7 +169,11 @@ def test_model_validate_rejects_rate_limit_secret_without_structured_echo() -> N
 
     assert not isinstance(caught.value, ValidationError)
     assert invalid not in f"{caught.value!s} {caught.value!r}"
-    assert_secret_not_retained(caught.value, invalid)
+    assert_secret_not_retained(
+        caught.value,
+        invalid,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> None:
@@ -173,7 +189,11 @@ def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> N
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
-    assert_secret_not_retained(caught.value, encoded)
+    assert_secret_not_retained(
+        caught.value,
+        encoded,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize(
@@ -240,7 +260,11 @@ def test_alternate_validation_rejects_rate_limit_secret_without_echo(
 
     assert not isinstance(caught.value, ValidationError)
     assert invalid not in f"{caught.value!s} {caught.value!r}"
-    assert_secret_not_retained(caught.value, invalid)
+    assert_secret_not_retained(
+        caught.value,
+        invalid,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
@@ -259,7 +283,11 @@ def test_alternate_validation_secret_is_absent_from_unrelated_errors(
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
-    assert_secret_not_retained(caught.value, encoded)
+    assert_secret_not_retained(
+        caught.value,
+        encoded,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize(
@@ -307,7 +335,11 @@ def test_rate_limit_secret_rejects_invalid_values_without_echo(value: str) -> No
     assert not hasattr(caught.value, "json")
     if value.strip():
         assert value not in rendered
-        assert_secret_not_retained(caught.value, value)
+        assert_secret_not_retained(
+            caught.value,
+            value,
+            traceback_module_prefixes=("app.",),
+        )
 
 
 @pytest.mark.parametrize(
