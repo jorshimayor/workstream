@@ -4417,8 +4417,7 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
     ):
         failures = gate.scan_text("docs/template_project_guide.md", sample)
         assert any(
-            failure.endswith(": AUTO_REJECT_REVISION_LIMIT")
-            for failure in failures
+            failure.endswith(": AUTO_REJECT_REVISION_LIMIT") for failure in failures
         )
 
     adversarial_samples = {
