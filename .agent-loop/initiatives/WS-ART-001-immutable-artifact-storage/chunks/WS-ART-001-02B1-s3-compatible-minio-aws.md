@@ -57,6 +57,9 @@ credential-delivery contract.
 - explicit credentials, environment access keys, shared credential/config
   files, credential processes, login/SSO, legacy EC2/Boto sources, and every
   unselected workload provider fail startup before credential loading;
+- each selected workload method accepts only its exact closed `AWS_*`
+  environment allowlist; every other `AWS_*` or `BOTOCORE_*` SDK behavior
+  control fails before SDK session construction;
 - container role accepts only the relative metadata path, IAM role rejects a
   custom metadata endpoint and requires IMDSv2, and the isolated IAM fetcher
   disables IMDSv1;

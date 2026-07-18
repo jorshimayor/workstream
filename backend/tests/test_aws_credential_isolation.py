@@ -160,6 +160,42 @@ def test_service_specific_endpoint_override_fails_before_session_construction(
 
 
 @pytest.mark.parametrize(
+    "name",
+    [
+        "AWS_ACCOUNT_ID_ENDPOINT_MODE",
+        "AWS_DATA_PATH",
+        "AWS_DEFAULTS_MODE",
+        "AWS_ENDPOINT_DISCOVERY_ENABLED",
+        "AWS_MAX_ATTEMPTS",
+        "AWS_REGION",
+        "AWS_RETRY_MODE",
+        "BOTOCORE_CONFIG",
+    ],
+)
+@pytest.mark.parametrize(
+    ("method", "environment"),
+    [
+        ("assume-role-with-web-identity", _web_identity_environment),
+        ("container-role", _container_environment),
+        ("iam-role", _iam_environment),
+    ],
+)
+def test_unapproved_sdk_environment_controls_fail_before_session_construction(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    name: str,
+    method: str,
+    environment: Any,
+) -> None:
+    _assert_rejects_before_session_construction(
+        monkeypatch,
+        _aws_settings(tmp_path, method),
+        environment(tmp_path, **{name: "poison"}),
+        "unsupported AWS SDK environment configuration is forbidden",
+    )
+
+
+@pytest.mark.parametrize(
     ("relative_path", "contents"),
     [
         (".aws/credentials", "[default]\naws_access_key_id = poison\n"),
@@ -385,6 +421,15 @@ def test_isolated_session_contains_exactly_one_selected_provider(
                 ),
             },
             "custom AWS metadata endpoint is forbidden",
+        ),
+        (
+            "iam-role",
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
+                "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE": "ipv6",
+                "AWS_EC2_METADATA_V1_DISABLED": "true",
+            },
+            "custom AWS metadata endpoint mode is forbidden",
         ),
     ],
 )

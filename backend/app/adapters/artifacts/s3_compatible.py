@@ -96,10 +96,10 @@ _FORBIDDEN_AWS_NETWORK_ENVIRONMENT = frozenset(
         "SSL_CERT_FILE",
     }
 )
-_WEB_IDENTITY_ENVIRONMENT = frozenset(
+_WEB_IDENTITY_SOURCE_ENVIRONMENT = frozenset(
     {"AWS_ROLE_ARN", "AWS_ROLE_SESSION_NAME", "AWS_WEB_IDENTITY_TOKEN_FILE"}
 )
-_CONTAINER_ENVIRONMENT = frozenset(
+_CONTAINER_SOURCE_ENVIRONMENT = frozenset(
     {
         "AWS_CONTAINER_AUTHORIZATION_TOKEN",
         "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
@@ -107,7 +107,7 @@ _CONTAINER_ENVIRONMENT = frozenset(
         "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
     }
 )
-_IAM_ROLE_ENVIRONMENT = frozenset(
+_IAM_ROLE_SOURCE_ENVIRONMENT = frozenset(
     {
         "AWS_EC2_METADATA_DISABLED",
         "AWS_EC2_METADATA_SERVICE_ENDPOINT",
@@ -115,6 +115,16 @@ _IAM_ROLE_ENVIRONMENT = frozenset(
         "AWS_EC2_METADATA_V1_DISABLED",
     }
 )
+_ALLOWED_AWS_ENVIRONMENT_BY_METHOD = {
+    "assume-role-with-web-identity": _WEB_IDENTITY_SOURCE_ENVIRONMENT,
+    "container-role": frozenset({"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"}),
+    "iam-role": frozenset({"AWS_EC2_METADATA_V1_DISABLED"}),
+}
+_AWS_SOURCE_ENVIRONMENT_BY_METHOD = {
+    "assume-role-with-web-identity": _WEB_IDENTITY_SOURCE_ENVIRONMENT,
+    "container-role": _CONTAINER_SOURCE_ENVIRONMENT,
+    "iam-role": _IAM_ROLE_SOURCE_ENVIRONMENT,
+}
 
 
 class S3CompatibleArtifactStoreBootstrap:
@@ -652,16 +662,47 @@ def validate_aws_workload_identity_environment(
         raise ArtifactConfigurationError("ambient AWS network configuration is forbidden")
     _reject_default_credential_files(environment)
 
-    allowed_by_method = {
-        "assume-role-with-web-identity": _WEB_IDENTITY_ENVIRONMENT,
-        "container-role": _CONTAINER_ENVIRONMENT,
-        "iam-role": _IAM_ROLE_ENVIRONMENT,
-    }
     unselected = set().union(
-        *(values for method, values in allowed_by_method.items() if method != selected)
+        *(
+            values
+            for method, values in _AWS_SOURCE_ENVIRONMENT_BY_METHOD.items()
+            if method != selected
+        )
     )
     if unselected.intersection(environment):
         raise ArtifactConfigurationError("unselected AWS workload source is configured")
+    if selected == "container-role":
+        if "AWS_CONTAINER_CREDENTIALS_FULL_URI" in environment:
+            raise ArtifactConfigurationError(
+                "AWS container full credential URI is forbidden"
+            )
+        if {
+            "AWS_CONTAINER_AUTHORIZATION_TOKEN",
+            "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+        }.intersection(environment):
+            raise ArtifactConfigurationError("AWS container identity token is forbidden")
+    elif selected == "iam-role":
+        if "AWS_EC2_METADATA_SERVICE_ENDPOINT" in environment:
+            raise ArtifactConfigurationError("custom AWS metadata endpoint is forbidden")
+        if "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE" in environment:
+            raise ArtifactConfigurationError(
+                "custom AWS metadata endpoint mode is forbidden"
+            )
+        if environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
+            raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
+
+    allowed_environment = _ALLOWED_AWS_ENVIRONMENT_BY_METHOD[selected]
+    unsupported_sdk_environment = {
+        name
+        for name in environment
+        if (name.startswith("AWS_") or name.startswith("BOTOCORE_"))
+        and name not in allowed_environment
+    }
+    if unsupported_sdk_environment:
+        raise ArtifactConfigurationError(
+            "unsupported AWS SDK environment configuration is forbidden"
+        )
+
     if selected == "assume-role-with-web-identity":
         if not {"AWS_ROLE_ARN", "AWS_WEB_IDENTITY_TOKEN_FILE"}.issubset(environment):
             raise ArtifactConfigurationError("AWS web identity configuration is incomplete")
@@ -669,26 +710,13 @@ def validate_aws_workload_identity_environment(
         if not token_path.is_absolute() or not token_path.is_file():
             raise ArtifactConfigurationError("AWS web identity token path is invalid")
     elif selected == "container-role":
-        if "AWS_CONTAINER_CREDENTIALS_FULL_URI" in environment:
-            raise ArtifactConfigurationError(
-                "AWS container full credential URI is forbidden"
-            )
         relative_uri = environment.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
         if (
             not isinstance(relative_uri, str)
             or _CONTAINER_RELATIVE_URI.fullmatch(relative_uri) is None
         ):
             raise ArtifactConfigurationError("AWS container identity location is invalid")
-        if {
-            "AWS_CONTAINER_AUTHORIZATION_TOKEN",
-            "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
-        }.intersection(environment):
-            raise ArtifactConfigurationError("AWS container identity token is forbidden")
     else:
-        if "AWS_EC2_METADATA_SERVICE_ENDPOINT" in environment:
-            raise ArtifactConfigurationError("custom AWS metadata endpoint is forbidden")
-        if environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
-            raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
         if environment.get("AWS_EC2_METADATA_V1_DISABLED", "false").lower() != "true":
             raise ArtifactConfigurationError("AWS instance identity requires IMDSv2")
 
@@ -757,12 +785,6 @@ def create_isolated_aws_workload_identity_session(
                 env=dict(environment),
                 user_agent=session.user_agent(),
                 config={
-                    "ec2_metadata_service_endpoint": environment.get(
-                        "AWS_EC2_METADATA_SERVICE_ENDPOINT"
-                    ),
-                    "ec2_metadata_service_endpoint_mode": environment.get(
-                        "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE"
-                    ),
                     "ec2_metadata_v1_disabled": True,
                 },
                 session=_RefCountedSession(
