@@ -28,6 +28,14 @@ LEGACY_PROFILE_TYPES = ("worker", "reviewer", "admin", "project_manager", "proje
 LEGACY_PROFILE_STATUSES = ("observed", "active", "disabled")
 GLOBAL_PROFILE_SCOPE_TYPE = "global"
 GLOBAL_PROFILE_SCOPE_ID = "global"
+# PostgreSQL equivalent of Python 3.13 str.strip() for database/API parity.
+_PYTHON_STRIP_CHARACTERS_SQL = (
+    "(E' \\t\\n\\r\\f\\013'"
+    "||chr(28)||chr(29)||chr(30)||chr(31)||chr(133)||chr(160)||chr(5760)"
+    "||chr(8192)||chr(8193)||chr(8194)||chr(8195)||chr(8196)||chr(8197)"
+    "||chr(8198)||chr(8199)||chr(8200)||chr(8201)||chr(8202)||chr(8232)"
+    "||chr(8233)||chr(8239)||chr(8287)||chr(12288))"
+)
 
 
 def _sql_values(values: tuple[str, ...]) -> str:
@@ -74,11 +82,11 @@ class ActorProfile(Base):
             name="reactivation_fields",
         ),
         CheckConstraint(
-            "(suspension_reason is null or (suspension_reason = btrim(suspension_reason, E' \\t\\n\\r\\f\\013') and "
+            f"(suspension_reason is null or (suspension_reason = btrim(suspension_reason, {_PYTHON_STRIP_CHARACTERS_SQL}) and "
             "octet_length(suspension_reason) between 1 and 500)) and "
-            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and "
+            f"(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, {_PYTHON_STRIP_CHARACTERS_SQL}) and "
             "octet_length(reactivation_reason) between 1 and 500)) and "
-            "(deactivation_reason is null or (deactivation_reason = btrim(deactivation_reason, E' \\t\\n\\r\\f\\013') and "
+            f"(deactivation_reason is null or (deactivation_reason = btrim(deactivation_reason, {_PYTHON_STRIP_CHARACTERS_SQL}) and "
             "octet_length(deactivation_reason) between 1 and 500))",
             name="lifecycle_reason_bounds",
         ),
@@ -140,9 +148,9 @@ class ActorIdentityLink(Base):
             name="reactivation_fields",
         ),
         CheckConstraint(
-            "(revoked_reason is null or (revoked_reason = btrim(revoked_reason, E' \\t\\n\\r\\f\\013') and "
+            f"(revoked_reason is null or (revoked_reason = btrim(revoked_reason, {_PYTHON_STRIP_CHARACTERS_SQL}) and "
             "octet_length(revoked_reason) between 1 and 500)) and "
-            "(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, E' \\t\\n\\r\\f\\013') and "
+            f"(reactivation_reason is null or (reactivation_reason = btrim(reactivation_reason, {_PYTHON_STRIP_CHARACTERS_SQL}) and "
             "octet_length(reactivation_reason) between 1 and 500))",
             name="lifecycle_reason_bounds",
         ),

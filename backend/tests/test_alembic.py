@@ -1529,6 +1529,56 @@ def test_actor_profile_lifecycle_constraint_and_trigger_parity(
                     async with engine.begin() as connection:
                         await connection.execute(text(f"alter table {table} disable trigger user"))
                         await connection.execute(text(statement), {"actor": actor_id})
+            python_strip_code_points = (
+                9,
+                10,
+                11,
+                12,
+                13,
+                28,
+                29,
+                30,
+                31,
+                32,
+                133,
+                160,
+                5760,
+                8192,
+                8193,
+                8194,
+                8195,
+                8196,
+                8197,
+                8198,
+                8199,
+                8200,
+                8201,
+                8202,
+                8232,
+                8233,
+                8239,
+                8287,
+                12288,
+            )
+            assert python_strip_code_points == tuple(
+                code_point
+                for code_point in range(0x110000)
+                if chr(code_point).isspace()
+            )
+            for code_point in python_strip_code_points:
+                with pytest.raises(DBAPIError):
+                    async with engine.begin() as connection:
+                        await connection.execute(
+                            text("alter table actor_profiles disable trigger user")
+                        )
+                        await connection.execute(
+                            text(
+                                "update actor_profiles set status='suspended',"
+                                "suspended_by=:actor,suspended_at=clock_timestamp(),"
+                                "suspension_reason=chr(:code_point)||'hold' where id=:actor"
+                            ),
+                            {"actor": actor_id, "code_point": code_point},
+                        )
             async with engine.begin() as connection:
                 await connection.execute(text("alter table actor_profiles disable trigger user"))
                 await connection.execute(
@@ -1601,6 +1651,14 @@ def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
             "multibyte-profile-deactivation",
             "update actor_profiles set status='deactivated',deactivated_by=:actor,"
             "deactivated_at=clock_timestamp(),deactivation_reason=repeat(chr(233),251) "
+            "where id=:actor",
+            "update actor_profiles set deactivation_reason='valid deactivation' where id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "nbsp-profile-deactivation",
+            "update actor_profiles set status='deactivated',deactivated_by=:actor,"
+            "deactivated_at=clock_timestamp(),deactivation_reason=chr(160)||'padded' "
             "where id=:actor",
             "update actor_profiles set deactivation_reason='valid deactivation' where id=:actor",
         ),
