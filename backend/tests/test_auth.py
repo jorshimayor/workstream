@@ -1792,6 +1792,11 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "suspended": uuid4(),
             "no_active_link": uuid4(),
         }
+        private_provenance = {
+            "created_by": f"auth09c-created-by-{uuid4()}",
+            "linked_by": f"auth09c-linked-by-{uuid4()}",
+            "lifecycle_by": f"auth09c-lifecycle-by-{uuid4()}",
+        }
         project_one, project_two = uuid4(), uuid4()
         now = datetime.now(UTC)
         async with db_session.get_session_factory()() as session:
@@ -1818,15 +1823,15 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         status="active",
                         provisioning_method="manual_service_provisioning",
                         service_identity="workstream.artifact.verifier",
-                        created_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
                     ),
                     ActorProfile(
                         id=str(concealed_targets["suspended"]),
                         actor_kind="human",
                         status="suspended",
                         provisioning_method="automatic_first_access",
-                        created_by=str(admin_id),
-                        suspended_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
+                        suspended_by=private_provenance["lifecycle_by"],
                         suspended_at=now,
                         suspension_reason="Concealment fixture",
                     ),
@@ -1835,7 +1840,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         actor_kind="human",
                         status="active",
                         provisioning_method="automatic_first_access",
-                        created_by=str(admin_id),
+                        created_by=private_provenance["created_by"],
                     ),
                 ]
             )
@@ -1849,7 +1854,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-service-target",
                         subject_kind="service",
                         status="active",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                     ),
                     ActorIdentityLink(
                         id=str(uuid4()),
@@ -1858,7 +1863,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-suspended-target",
                         subject_kind="human",
                         status="active",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                         last_verified_at=now,
                     ),
                     ActorIdentityLink(
@@ -1868,9 +1873,9 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject="auth08-revoked-link-target",
                         subject_kind="human",
                         status="revoked",
-                        linked_by=str(admin_id),
+                        linked_by=private_provenance["linked_by"],
                         last_verified_at=now,
-                        revoked_by=str(admin_id),
+                        revoked_by=private_provenance["lifecycle_by"],
                         revoked_at=now,
                         revoked_reason="Concealment fixture",
                     ),
@@ -1971,7 +1976,10 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "https://identity.test",
             "Concealment fixture",
             "auth09c-private-contact@example.test",
+            admin_token,
             target_token,
+            bootstrap["grant_id"],
+            *private_provenance.values(),
         ):
             assert private_value not in serialized_admin_reads
             assert private_value not in caplog.text
@@ -1993,20 +2001,24 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                 )
             ).all()
         assert len(target_allow_events) == 2
-        expected_permissions = {
-            "actor.profile.read": "actor.profile.read_any",
-            "actor.identity_link.read": "actor.identity_link.read",
+        expected_evidence = {
+            "actor.profile.read": ("actor.profile.read_any", target_admin_profile),
+            "actor.identity_link.read": ("actor.identity_link.read", target_admin_link),
         }
+        assert {event.action_id for event in target_allow_events} == set(expected_evidence)
         for event in target_allow_events:
-            assert event.permission_id == expected_permissions[event.action_id]
+            expected_permission, route_response = expected_evidence[event.action_id]
+            assert event.permission_id == expected_permission
             assert event.actor_id == str(admin_id)
             assert event.target_actor_ref == str(target_id)
             assert event.target_ref_id == str(target_id)
             assert event.matched_grant_id == bootstrap["grant_id"]
             assert event.project_id is None
             assert event.after_facts == {"allowed": True}
-            UUID(str(event.request_id))
-            UUID(str(event.correlation_id))
+            assert UUID(str(event.request_id)) == UUID(route_response.headers["x-request-id"])
+            assert UUID(str(event.correlation_id)) == UUID(
+                route_response.headers["x-correlation-id"]
+            )
 
         async def actor_admin_state() -> tuple[datetime, datetime, datetime]:
             async with db_session.get_session_factory()() as session:
