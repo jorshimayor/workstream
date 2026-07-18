@@ -220,11 +220,15 @@ PermissionId substitutes.
 
 ### Contribution gate
 
-The merged WS-XINT `REV_CON_HANDOFF.md` remains the trusted-main boundary, with
-the human-approved 2026-07-17 amendment that `FinalAcceptance` is the sole
-submitter-acceptance source and REV, rather than CON, stages shared audit/outbox
-records. Any sibling WS-CON worktree remains discovery evidence until its owning
-contracts merge to trusted main.
+Merged CON-01 at `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9` publishes
+`docs/spec_contribution_compensation.md` and ADR 0016 as the canonical CON
+boundary. They require FinalAcceptance as the sole submitter-acceptance source,
+REV-owned decision orchestration and sole commit, ordered flush-only CON
+operations, and REV staging of shared audit/outbox inputs returned by CON. The
+older WS-XINT `REV_CON_HANDOFF.md` remains historical supporting handoff
+material; it no longer outranks the merged CON contract. CON-01 implements no
+runtime, so its later persistence, freeze, lineage, and participant chunks still
+gate canonical Review composition.
 
 The cross-initiative sequence is explicit:
 

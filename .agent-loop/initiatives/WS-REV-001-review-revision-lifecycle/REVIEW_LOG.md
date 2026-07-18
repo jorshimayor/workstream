@@ -848,3 +848,9 @@ reviewer/accept-only submitter operations, FinalAcceptance-only submitter
 trigger, frozen policies, and no ART call. It adds no runtime. The prior PR
 candidate and replacement checks are historical; fresh exact-SHA internal and
 external gates are required against `e118e33`.
+
+The first CON-01 reconciliation plan gate found one stale central PLAN paragraph
+that still called the older WS-XINT handoff current and treated CON as unmerged
+sibling evidence. The repair names merged CON-01 `e118e33`, its active
+specification, and ADR 0016 as canonical authority while retaining XINT only as
+historical supporting context and preserving every downstream runtime gate.
