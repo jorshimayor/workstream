@@ -539,7 +539,8 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
                             ActionOwner.AUTH_08,
                             ActionOwner.AUTH_09B,
                             ActionOwner.AUTH_09C,
-                            ActionOwner.AUTH_09D,
+                            ActionOwner.AUTH_09D_A,
+                            ActionOwner.AUTH_09D_B,
                         }
                     ),
                 )
@@ -692,7 +693,8 @@ def test_bootstrap_admin_grant_schema_is_immutable_and_guarded(
                         not in {
                             ActionOwner.AUTH_09B,
                             ActionOwner.AUTH_09C,
-                            ActionOwner.AUTH_09D,
+                            ActionOwner.AUTH_09D_A,
+                            ActionOwner.AUTH_09D_B,
                         }
                     ),
                 )
@@ -767,7 +769,8 @@ def test_fixed_service_identity_schema_mapping_and_guarded_downgrade(
                         in {
                             ActionOwner.AUTH_09B,
                             ActionOwner.AUTH_09C,
-                            ActionOwner.AUTH_09D,
+                            ActionOwner.AUTH_09D_A,
+                            ActionOwner.AUTH_09D_B,
                         }
                     ),
                 )
@@ -842,7 +845,8 @@ def test_fixed_service_identity_schema_mapping_and_guarded_downgrade(
                 in {
                     ActionOwner.AUTH_09B,
                     ActionOwner.AUTH_09C,
-                    ActionOwner.AUTH_09D,
+                    ActionOwner.AUTH_09D_A,
+                    ActionOwner.AUTH_09D_B,
                 }
             )
             assert len(auth09_definitions) == 8
