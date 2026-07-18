@@ -4165,14 +4165,21 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "Merged through PR #141 as `a10d901`" in work_queue
     )
     if artifact_02a3_merged:
+        normalized_work_queue = " ".join(work_queue.split())
         assert "PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901`" in loop_state
         assert (
             "`WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | "
             "Inactive until 02A3 merge and explicit user start" in work_queue
         )
         assert "ART-02B1 remains inactive" in loop_state
-        assert "Do not start AUTH-09C" not in work_queue
-        assert "external checks remain pending" not in work_queue
+        assert "Do not start AUTH-09C or POL-002-04 automatically." not in (
+            normalized_work_queue
+        )
+        assert (
+            "Its merged-main deterministic proof and exact-SHA internal review are "
+            "complete; external checks remain pending and `02B1` must not start "
+            "automatically." not in normalized_work_queue
+        )
     elif selected_phase == artifact_phases[0]:
         assert selected_phase in work_queue
         assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
