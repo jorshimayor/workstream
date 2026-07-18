@@ -915,3 +915,34 @@ authorization/Workstream/review/artifact scanners, Markdown links, 87 agent
 gates, diff integrity, and the schema-v2 merge-intent validator pass. Remaining
 gates are the dependency-owned AUTH merges, a separate 02A start, and the two
 human-owned duration defaults before 02B.
+
+## WS-REV-001-PLAN2 Runtime Readiness Reconciliation - 2026-07-18
+
+The user authorized a complete planning-only refresh while REV runtime remained
+blocked on AUTH's contributor-field foundation. The refresh contracts the older
+initiative, splits oversized runtime parents, separates pure decision contracts
+from canonical transaction composition, preserves accept-only FinalAcceptance,
+and keeps adjudication disabled in v0.1.
+
+Internal review found and repaired ambiguous checker/human revision wording, a
+missing immutable causal CheckerRun relation, stale successor and merge-intent
+identity, incomplete Project-first writer locking, future focused-coverage/CI
+scope, and AUTH-14 source-constraint ownership drift. Final planning assigns
+server-derived `remediation_source_checker_run_id` to 02C and the final
+human/checker source XOR to 09A4.
+
+The branch rebased cleanly onto AUTH-09D-A PR #148 at trusted main
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed`. The final candidate records sole
+migration head `0026_actor_profile_lifecycle`, exact merged ActorProfile
+lifecycle proof, the unchanged retired task contributor fields, and the live
+AUTH catalogue split of 15 active / 50 planned. All 24 REV dependencies remain
+unavailable, and the separate contributor foundation is still the only
+unmerged AUTH runtime gate for 02A.
+
+Candidate `f6c41d5a42ec598b513b25b4677f6ac725645920` passes senior engineering,
+QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test delta,
+and CI-integrity review. Diff integrity, all four stale scanners, Markdown links,
+87 agent gates, Alembic single-head proof, catalogue arithmetic, changed scope,
+and the schema-v2 PLAN2 merge intent pass. No runtime, migration, test, workflow,
+reference, or cross-owner file changed. PLAN2 may publish; 02A remains stopped
+until its exact contributor foundation merges and the user explicitly starts it.
