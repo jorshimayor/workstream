@@ -7,8 +7,6 @@ from typing import Any
 import pytest
 from aiobotocore.credentials import (
     AioAssumeRoleWithWebIdentityProvider,
-    AioContainerProvider,
-    AioInstanceMetadataProvider,
 )
 
 from app.adapters.artifacts import s3_compatible
@@ -273,8 +271,18 @@ def test_unselected_workload_identity_sources_fail_before_resolver_loading(
             AioAssumeRoleWithWebIdentityProvider,
             "assume-role-with-web-identity",
         ),
-        ("container-role", _container_environment, AioContainerProvider, "container-role"),
-        ("iam-role", _iam_environment, AioInstanceMetadataProvider, "iam-role"),
+        (
+            "container-role",
+            _container_environment,
+            s3_compatible._SanitizedContainerProvider,  # noqa: SLF001
+            "container-role",
+        ),
+        (
+            "iam-role",
+            _iam_environment,
+            s3_compatible._SanitizedInstanceMetadataProvider,  # noqa: SLF001
+            "iam-role",
+        ),
     ],
 )
 def test_isolated_session_contains_exactly_one_selected_provider(
@@ -614,3 +622,146 @@ async def test_credential_resolution_failure_is_sanitized() -> None:
         secret,
         traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
     )
+
+
+async def test_container_metadata_error_body_is_never_logged_or_retained(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "ecs-response-secret"
+
+    class Transport:
+        async def send(self, _request: object) -> object:
+            async def content() -> bytes:
+                return f'{{"SecretAccessKey":"{secret}"'.encode()
+
+            return SimpleNamespace(status_code=200, content=content())
+
+    class Acquisition:
+        async def __aenter__(self) -> Transport:
+            return Transport()
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class Pool:
+        def acquire(self) -> Acquisition:
+            return Acquisition()
+
+    async def no_sleep(_delay: float) -> None:
+        return None
+
+    fetcher = s3_compatible._SanitizedContainerMetadataFetcher(  # noqa: SLF001
+        session=Pool(),  # type: ignore[arg-type]
+        sleep=no_sleep,
+    )
+    provider = s3_compatible._SanitizedContainerProvider(  # noqa: SLF001
+        environ={
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+                "/v2/credentials/workstream-runtime"
+            )
+        }
+    )
+    provider._fetcher = fetcher
+
+    class FakeSession:
+        async def get_credentials(self) -> object:
+            return await provider.load()
+
+    caplog.set_level("DEBUG")
+    with pytest.raises(ArtifactConfigurationError) as caught:
+        await s3_compatible.resolve_isolated_aws_workload_credentials(
+            FakeSession(),  # type: ignore[arg-type]
+            expected_method="container-role",
+        )
+
+    assert secret not in caplog.text
+    for record in caplog.records:
+        assert_secret_not_retained(
+            (record.msg, record.args, record.exc_info, record.exc_text),
+            secret,
+            traceback_module_prefixes=(
+                "aiobotocore.credentials",
+                "app.adapters.artifacts.s3_compatible",
+            ),
+        )
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
+    )
+
+
+async def test_imds_error_responses_are_never_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "imds-response-secret"
+    fetcher = s3_compatible._SanitizedInstanceMetadataFetcher(  # noqa: SLF001
+        env={"AWS_EC2_METADATA_V1_DISABLED": "true"},
+        config={"ec2_metadata_v1_disabled": True},
+    )
+
+    response = SimpleNamespace(
+        status_code=500,
+        url="http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+        content=secret.encode(),
+    )
+    caplog.set_level("DEBUG")
+
+    assert await fetcher._is_non_ok_response(response) is True  # noqa: SLF001
+
+    async def token() -> str:
+        return "imds-v2-token"
+
+    async def role_name(_token: str) -> str:
+        return "workstream-role"
+
+    async def credentials(_role_name: str, _token: str) -> dict[str, str]:
+        return {"Code": "Error", "Message": secret}
+
+    fetcher._fetch_metadata_token = token  # type: ignore[method-assign]
+    fetcher._get_iam_role = role_name  # type: ignore[method-assign]
+    fetcher._get_credentials = credentials  # type: ignore[method-assign]
+    assert await fetcher.retrieve_iam_role_credentials() == {}
+
+    class FakeRoleFetcher:
+        async def retrieve_iam_role_credentials(self) -> dict[str, str]:
+            return {
+                "role_name": secret,
+                "access_key": "access-key",
+                "secret_key": "secret-key",
+                "token": "session-token",
+                "expiry_time": "2099-01-01T00:00:00Z",
+            }
+
+    provider = s3_compatible._SanitizedInstanceMetadataProvider(  # noqa: SLF001
+        iam_role_fetcher=FakeRoleFetcher()
+    )
+    assert await provider.load() is not None
+    assert secret not in caplog.text
+    for record in caplog.records:
+        assert_secret_not_retained(
+            (record.msg, record.args, record.exc_info, record.exc_text),
+            secret,
+        )
+
+
+def test_imds_invalid_expiration_is_never_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "imds-expiration-secret"
+    fetcher = s3_compatible._SanitizedInstanceMetadataFetcher(  # noqa: SLF001
+        env={"AWS_EC2_METADATA_V1_DISABLED": "true"},
+        config={"ec2_metadata_v1_disabled": True},
+    )
+    credentials = {"expiry_time": secret}
+    caplog.set_level("DEBUG")
+
+    fetcher._evaluate_expiration(credentials)  # noqa: SLF001
+
+    assert credentials == {"expiry_time": secret}
+    assert secret not in caplog.text
+    for record in caplog.records:
+        assert_secret_not_retained(
+            (record.msg, record.args, record.exc_info, record.exc_text),
+            secret,
+        )

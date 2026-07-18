@@ -5,9 +5,13 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
+import datetime
 import hashlib
+import inspect
+import json
 import os
 from pathlib import Path
+import random
 import re
 from typing import Any
 
@@ -17,6 +21,7 @@ from aiobotocore.credentials import (
     AioContainerProvider,
     AioCredentialResolver,
     AioInstanceMetadataProvider,
+    AioRefreshableCredentials,
 )
 from aiobotocore.session import AioSession
 from aiobotocore.utils import (
@@ -25,7 +30,21 @@ from aiobotocore.utils import (
     _RefCountedSession,
 )
 from botocore import UNSIGNED
-from botocore.exceptions import BotoCoreError, ClientError
+from botocore.awsrequest import AWSRequest
+from botocore.exceptions import (
+    BotoCoreError,
+    ClientError,
+    CredentialRetrievalError,
+    HTTPClientError,
+    InvalidIMDSEndpointError,
+    MetadataRetrievalError,
+    ReadTimeoutError,
+)
+from botocore.utils import (
+    BadIMDSRequestError,
+    RETRYABLE_HTTP_ERRORS,
+    get_current_datetime,
+)
 
 from app.adapters.artifacts.references import (
     artifact_provider_object_ref,
@@ -88,6 +107,233 @@ _FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT = frozenset(
         "BOTO_CONFIG",
     }
 )
+
+
+class _SanitizedContainerMetadataFetcher(AioContainerMetadataFetcher):
+    """Fetch ECS credentials without SDK logging response or exception data."""
+
+    async def _retrieve_credentials(
+        self,
+        full_url: str,
+        extra_headers: Mapping[str, str] | None = None,
+    ) -> dict[str, Any]:
+        headers = {"Accept": "application/json"}
+        if extra_headers is not None:
+            headers.update(extra_headers)
+        failed = False
+        for attempt in range(self.RETRY_ATTEMPTS):
+            try:
+                return await self._get_response(
+                    full_url,
+                    headers,
+                    self.TIMEOUT_SECONDS,
+                )
+            except MetadataRetrievalError:
+                if attempt + 1 >= self.RETRY_ATTEMPTS:
+                    failed = True
+                    break
+                await self._sleep(self.SLEEP_TIME)
+        if failed:
+            raise MetadataRetrievalError(
+                error_msg="container metadata request failed"
+            ) from None
+        raise MetadataRetrievalError(error_msg="container metadata request failed")
+
+    async def _get_response(
+        self,
+        full_url: str,
+        headers: Mapping[str, str],
+        timeout: float,
+    ) -> dict[str, Any]:
+        try:
+            async with self._session.acquire() as session:
+                request = AWSRequest(method="GET", url=full_url, headers=dict(headers))
+                response = await session.send(request.prepare())
+                response_text = (await response.content).decode("utf-8")
+                if response.status_code != 200:
+                    raise MetadataRetrievalError(
+                        error_msg="container metadata returned a non-200 response"
+                    )
+                try:
+                    parsed = json.loads(response_text)
+                except ValueError:
+                    raise MetadataRetrievalError(
+                        error_msg="container metadata returned invalid JSON"
+                    ) from None
+                if not isinstance(parsed, dict):
+                    raise MetadataRetrievalError(
+                        error_msg="container metadata returned an invalid document"
+                    )
+                return parsed
+        except RETRYABLE_HTTP_ERRORS:
+            raise MetadataRetrievalError(
+                error_msg="container metadata request failed"
+            ) from None
+
+
+class _SanitizedInstanceMetadataFetcher(AioInstanceMetadataFetcher):
+    """Fetch IMDSv2 credentials without SDK logging response or exception data."""
+
+    async def _fetch_metadata_token(self) -> str | None:
+        self._assert_enabled()
+        url = self._construct_url(self._TOKEN_PATH)
+        headers = {"x-aws-ec2-metadata-token-ttl-seconds": self._TOKEN_TTL}
+        self._add_user_agent(headers)
+        request = AWSRequest(method="PUT", url=url, headers=headers)
+        async with self._session.acquire() as session:
+            for _ in range(self._num_attempts):
+                try:
+                    response = await session.send(request.prepare())
+                    if response.status_code == 200:
+                        return await response.text
+                    if response.status_code in (403, 404, 405):
+                        return None
+                    if response.status_code == 400:
+                        raise BadIMDSRequestError(request)
+                except ReadTimeoutError:
+                    return None
+                except RETRYABLE_HTTP_ERRORS:
+                    continue
+                except HTTPClientError as error:
+                    nested_error = error.kwargs.get("error")
+                    name_resolution_failed = (
+                        nested_error
+                        and getattr(nested_error, "errno", None) == 8
+                    ) or str(getattr(nested_error, "os_error", None)) == (
+                        "Domain name not found"
+                    )
+                    if name_resolution_failed:
+                        raise InvalidIMDSEndpointError(
+                            endpoint=url,
+                            error=error,
+                        ) from None
+                    raise
+        return None
+
+    async def _get_request(
+        self,
+        url_path: str,
+        retry_func: Any,
+        token: str | None = None,
+    ) -> object:
+        self._assert_enabled()
+        if not token:
+            self._assert_v1_enabled()
+        retry_func = retry_func or self._default_retry
+        url = self._construct_url(url_path)
+        headers: dict[str, str] = {}
+        if token is not None:
+            headers["x-aws-ec2-metadata-token"] = token
+        self._add_user_agent(headers)
+        async with self._session.acquire() as session:
+            for _ in range(self._num_attempts):
+                try:
+                    request = AWSRequest(method="GET", url=url, headers=headers)
+                    response = await session.send(request.prepare())
+                    should_retry = retry_func(response)
+                    if inspect.isawaitable(should_retry):
+                        should_retry = await should_retry
+                    if not should_retry:
+                        return response
+                except RETRYABLE_HTTP_ERRORS:
+                    continue
+        raise self._RETRIES_EXCEEDED_ERROR_CLS()
+
+    async def _log_imds_response(
+        self,
+        response: object,
+        reason_to_log: str,
+        log_body: bool = False,
+    ) -> None:
+        return None
+
+    async def retrieve_iam_role_credentials(self) -> dict[str, Any]:
+        try:
+            token = await self._fetch_metadata_token()
+            role_name = await self._get_iam_role(token)
+            credentials = await self._get_credentials(role_name, token)
+            if not self._contains_all_credential_fields(credentials):
+                return {}
+            resolved = {
+                "role_name": role_name,
+                "access_key": credentials["AccessKeyId"],
+                "secret_key": credentials["SecretAccessKey"],
+                "token": credentials["Token"],
+                "expiry_time": credentials["Expiration"],
+            }
+            self._evaluate_expiration(resolved)
+            return resolved
+        except (self._RETRIES_EXCEEDED_ERROR_CLS, BadIMDSRequestError):
+            return {}
+
+    def _evaluate_expiration(self, credentials: dict[str, Any]) -> None:
+        expiration = credentials.get("expiry_time")
+        if expiration is None:
+            return
+        try:
+            parsed_expiration = datetime.datetime.strptime(
+                expiration,
+                "%Y-%m-%dT%H:%M:%SZ",
+            )
+        except (TypeError, ValueError):
+            return
+        refresh_interval = self._config.get(
+            "ec2_credential_refresh_window",
+            60 * 10,
+        )
+        refresh_offset = datetime.timedelta(
+            seconds=refresh_interval + random.randint(120, 600)
+        )
+        current_time = get_current_datetime()
+        if current_time >= parsed_expiration - refresh_offset:
+            credentials["expiry_time"] = (current_time + refresh_offset).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
+
+
+class _SanitizedContainerProvider(AioContainerProvider):
+    """Build ECS credentials without SDK exception logging."""
+
+    def _create_fetcher(self, full_uri: str, *_args: object, **_kwargs: object) -> Any:
+        async def fetch_credentials() -> dict[str, Any]:
+            retrieval_failed = False
+            try:
+                headers = self._build_headers()
+                response = await self._fetcher.retrieve_full_uri(
+                    full_uri,
+                    headers=headers,
+                )
+            except MetadataRetrievalError:
+                retrieval_failed = True
+                response = {}
+            if retrieval_failed:
+                raise CredentialRetrievalError(
+                    provider=self.METHOD,
+                    error_msg="container metadata request failed",
+                ) from None
+            return {
+                "access_key": response["AccessKeyId"],
+                "secret_key": response["SecretAccessKey"],
+                "token": response["Token"],
+                "expiry_time": response["Expiration"],
+                "account_id": response.get("AccountId"),
+            }
+
+        return fetch_credentials
+
+
+class _SanitizedInstanceMetadataProvider(AioInstanceMetadataProvider):
+    """Build IMDS credentials without SDK response-derived logging."""
+
+    async def load(self) -> object | None:
+        metadata = await self._role_fetcher.retrieve_iam_role_credentials()
+        if not metadata:
+            return None
+        return AioRefreshableCredentials.create_from_metadata(
+            metadata,
+            method=self.METHOD,
+            refresh_using=self._role_fetcher.retrieve_iam_role_credentials,
+        )
 _FORBIDDEN_AWS_NETWORK_ENVIRONMENT = frozenset(
     {
         "AWS_CA_BUNDLE",
@@ -805,22 +1051,22 @@ def create_isolated_aws_workload_identity_session(
             disable_env_vars=True,
         )
     elif selected == "container-role":
-        provider = AioContainerProvider(
+        provider = _SanitizedContainerProvider(
             environ={
                 "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": environment[
                     "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
                 ]
             }
         )
-        provider._fetcher = AioContainerMetadataFetcher(
+        provider._fetcher = _SanitizedContainerMetadataFetcher(
             session=_RefCountedSession(
                 timeout=settings.artifact_s3_connect_timeout_seconds,
                 proxies={},
             )
         )
     elif selected == "iam-role":
-        provider = AioInstanceMetadataProvider(
-            iam_role_fetcher=AioInstanceMetadataFetcher(
+        provider = _SanitizedInstanceMetadataProvider(
+            iam_role_fetcher=_SanitizedInstanceMetadataFetcher(
                 timeout=settings.artifact_s3_connect_timeout_seconds,
                 num_attempts=1,
                 env=dict(environment),
