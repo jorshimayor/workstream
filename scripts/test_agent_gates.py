@@ -4154,14 +4154,21 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "complete" in artifact_status
     )
     if selected_phase == artifact_phases[0]:
-        assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
-        assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
-    else:
-        assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
-            artifact_status.replace("\n", " ")
+        assert (
+            "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
         )
-        assert "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit" in (
-            loop_state.replace("\n", " ")
+        assert (
+            "Current gate: complete all nine exact-SHA internal reviewer tracks"
+            in loop_state
+        )
+    else:
+        assert (
+            "The current gate is GitHub Actions, CodeRabbit, and explicit human review"
+            in (artifact_status.replace("\n", " "))
+        )
+        assert (
+            "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit"
+            in (loop_state.replace("\n", " "))
         )
     assert "No\nlater artifact chunk starts automatically" in artifact_status
 
