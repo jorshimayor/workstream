@@ -1391,6 +1391,16 @@ def test_actor_profile_lifecycle_constraint_and_trigger_parity(
                     ),
                     {"actor": actor_id},
                 )
+            with pytest.raises(DBAPIError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update actor_profiles set status='active',suspended_by=null,"
+                            "suspended_at=null,suspension_reason=null where id=:actor"
+                        ),
+                        {"actor": actor_id},
+                    )
+            async with engine.begin() as connection:
                 await connection.execute(
                     text(
                         "update actor_profiles set status='active',suspended_by=null,"
@@ -1399,11 +1409,83 @@ def test_actor_profile_lifecycle_constraint_and_trigger_parity(
                     ),
                     {"actor": actor_id},
                 )
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='suspended',suspended_by=:actor,"
+                        "suspended_at=clock_timestamp(),suspension_reason='second review' "
+                        "where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            with pytest.raises(DBAPIError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update actor_profiles set status='active',suspended_by=null,"
+                            "suspended_at=null,suspension_reason=null where id=:actor"
+                        ),
+                        {"actor": actor_id},
+                    )
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='active',suspended_by=null,"
+                        "suspended_at=null,suspension_reason=null,reactivated_by=:actor,"
+                        "reactivated_at=clock_timestamp(),reactivation_reason='restored again' "
+                        "where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='revoked',revoked_by=:actor,"
+                        "revoked_at=clock_timestamp(),revoked_reason='link review' "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            with pytest.raises(DBAPIError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update actor_identity_links set status='active',revoked_by=null,"
+                            "revoked_at=null,revoked_reason=null where actor_profile_id=:actor"
+                        ),
+                        {"actor": actor_id},
+                    )
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='active',revoked_by=null,"
+                        "revoked_at=null,revoked_reason=null,reactivated_by=:actor,"
+                        "reactivated_at=clock_timestamp(),reactivation_reason='link restored' "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='revoked',revoked_by=:actor,"
+                        "revoked_at=clock_timestamp(),revoked_reason='second link review' "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            with pytest.raises(DBAPIError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update actor_identity_links set status='active',revoked_by=null,"
+                            "revoked_at=null,revoked_reason=null where actor_profile_id=:actor"
+                        ),
+                        {"actor": actor_id},
+                    )
             invalid = (
                 "update actor_profiles set reactivation_reason='rewritten' where id=:actor",
                 "update actor_profiles set status='suspended',suspended_by=:actor,"
                 "suspended_at=clock_timestamp(),suspension_reason=' padded ' where id=:actor",
-                "update actor_identity_links set reactivated_by=:actor where actor_profile_id=:actor",
+                "update actor_identity_links set reactivation_reason='rewritten' "
+                "where actor_profile_id=:actor",
             )
             for statement in invalid:
                 with pytest.raises(DBAPIError):
@@ -1419,6 +1501,21 @@ def test_actor_profile_lifecycle_constraint_and_trigger_parity(
                     {"actor": actor_id},
                 )
                 await connection.execute(text("alter table actor_profiles enable trigger user"))
+                await connection.execute(
+                    text("alter table actor_identity_links disable trigger user")
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='active',revoked_by=null,"
+                        "revoked_at=null,revoked_reason=null,reactivated_by=null,"
+                        "reactivated_at=null,reactivation_reason=null "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text("alter table actor_identity_links enable trigger user")
+                )
         finally:
             await engine.dispose()
 

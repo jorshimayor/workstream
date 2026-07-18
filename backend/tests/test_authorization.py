@@ -1159,9 +1159,19 @@ async def test_actor_lifecycle_service_applies_success_and_guards_conflicts() ->
 
     class Mutation:
         completed = None
+        mismatch = None
 
         async def complete(self, **kwargs):
             self.completed = kwargs
+
+        async def record_mismatch_denial(self, **kwargs):
+            self.mismatch = kwargs
+
+    class Audit:
+        event = None
+
+        async def add_authority_event(self, event):
+            self.event = event
 
     session = Session()
     profile = SimpleNamespace(
@@ -1182,6 +1192,8 @@ async def test_actor_lifecycle_service_applies_success_and_guards_conflicts() ->
     service = ActorLifecycleService(session)  # type: ignore[arg-type]
     service._repository = repository  # type: ignore[assignment]
     service._mutation = mutation  # type: ignore[assignment]
+    audit = Audit()
+    service._audit = audit  # type: ignore[assignment]
     claim = AuthorityClaimHandle(
         record_id=uuid4(),
         idempotency_key=uuid4(),
@@ -1251,6 +1263,20 @@ async def test_actor_lifecycle_service_applies_success_and_guards_conflicts() ->
             decision=crossed,
             code="actor_already_suspended",
         )
+
+    await service.record_mismatch(
+        actor_profile_id=caller,
+        request=request,
+        decision=_actor_lifecycle_decision(request, existing=True),
+    )
+    assert mutation.mismatch["context"].matched_grant_id is None
+    await service.record_conflict(
+        actor_profile_id=caller,
+        request=request,
+        decision=decision,
+        code="actor_already_suspended",
+    )
+    assert audit.event.matched_grant_id is None
 
 
 async def test_admin_kernel_conceals_targets_until_permission_and_scope_match() -> None:

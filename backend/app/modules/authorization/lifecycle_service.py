@@ -187,7 +187,7 @@ class ActorLifecycleService:
                 event_id=uuid4(),
                 request_id=decision.request_id,
                 correlation_id=decision.correlation_id,
-                matched_grant_id=decision.matched_grant_id,
+                matched_grant_id=None,
             ),
         )
 
@@ -215,7 +215,7 @@ class ActorLifecycleService:
                 correlation_id=decision.correlation_id,
                 target_actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
                 target_actor_ref=str(request.actor_profile_id),
-                matched_grant_id=str(decision.matched_grant_id),
+                matched_grant_id=None,
                 permission_id=_PERMISSION[request.operation],
                 action_id=_ACTION[request.operation],
                 resource_type="actor_profile",

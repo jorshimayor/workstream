@@ -217,6 +217,9 @@ def _replace_lifecycle_guards(*, upgraded: bool) -> None:
           end if;
           if old.status='suspended' and new.status='active' and
              ((new.suspended_by,new.suspended_at,new.suspension_reason) is distinct from (null,null,null)
+              or (new.reactivated_by,new.reactivated_at,new.reactivation_reason) is not distinct from (null,null,null)
+              or (new.reactivated_by,new.reactivated_at,new.reactivation_reason) is not distinct from
+                 (old.reactivated_by,old.reactivated_at,old.reactivation_reason)
               or (new.deactivated_by,new.deactivated_at,new.deactivation_reason) is distinct from
                  (old.deactivated_by,old.deactivated_at,old.deactivation_reason)) then
             raise exception 'invalid actor reactivation attribution' using errcode='23514';
@@ -255,7 +258,10 @@ def _replace_lifecycle_guards(*, upgraded: bool) -> None:
             raise exception 'invalid identity link revocation attribution' using errcode='23514';
           end if;
           if old.status='revoked' and new.status='active' and
-             (new.revoked_by,new.revoked_at,new.revoked_reason) is distinct from (null,null,null) then
+             ((new.revoked_by,new.revoked_at,new.revoked_reason) is distinct from (null,null,null)
+              or (new.reactivated_by,new.reactivated_at,new.reactivation_reason) is not distinct from (null,null,null)
+              or (new.reactivated_by,new.reactivated_at,new.reactivation_reason) is not distinct from
+                 (old.reactivated_by,old.reactivated_at,old.reactivation_reason)) then
             raise exception 'invalid identity link reactivation attribution' using errcode='23514';
           end if;
           if new.status <> old.status and not (

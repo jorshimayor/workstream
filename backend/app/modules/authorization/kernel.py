@@ -425,7 +425,7 @@ class AuthorizationService:
                     target_actor_ref=str(decision.resource_id) if target_is_actor else None,
                     matched_grant_id=(
                         str(decision.matched_grant_id)
-                        if decision.matched_grant_id is not None
+                        if decision.allowed and decision.matched_grant_id is not None
                         else None
                     ),
                     permission_id=decision.permission_id,
