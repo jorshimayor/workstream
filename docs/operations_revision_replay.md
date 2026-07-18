@@ -97,7 +97,13 @@ Operator evidence-linked close.
 
 ## Required Proof
 
-A revision cannot return to human review unless every unresolved blocking
-finding has one response, the exact preparation is still current, Submission
-lineage is immediate and same-task, evidence bindings are finalized, and the
-new CheckerRun is current for that Submission.
+A human-Review revision cannot return to human review unless every unresolved
+blocking finding has one response, the exact preparation is still current,
+Submission lineage is immediate and same-task, evidence bindings are finalized,
+and the new `allow_review` CheckerRun is current for that Submission.
+
+A checker-remediation submission cannot enter human review unless it binds the
+exact final needs-revision CheckerRun that caused remediation, preserves the
+Task's existing locked context, has immediate same-task Submission lineage, and
+has a new current `allow_review` CheckerRun. It has no preparation or
+ReviewFinding response requirement.

@@ -711,7 +711,8 @@ surface includes separate capabilities for:
 - finding and response evidence intake;
 - review decision;
 - Task Context revision preparation read;
-- revision submission with responses;
+- human-Review revision submission with responses and distinct checker-
+  remediation resubmission;
 - administrative queue inspection, routing correction, force release,
   reconciliation, revision repair/closure, and lifecycle control.
 
