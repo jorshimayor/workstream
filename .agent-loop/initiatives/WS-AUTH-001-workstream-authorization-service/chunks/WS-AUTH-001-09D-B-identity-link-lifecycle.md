@@ -123,9 +123,10 @@ Self-link revoke returns 403 `resource_guard_denied` before target disclosure.
 A caller whose own link is revoked fails authentication and cannot reactivate
 itself. An authorized missing link returns the existing privacy-safe 404
 `resource_not_found` code after exact permission match. It rolls back the
-reservation and staged allow, commits one privacy-safe denial in a clean
-transaction, leaves no pending claim, advances no timestamp, and leaves the key
-reusable.
+reservation and provisional denial, then restages and commits exactly one
+privacy-safe denial in a clean transaction. It leaves no pending claim,
+advances no timestamp, and leaves the key reusable. No allow decision exists
+for a missing target.
 
 Each domain conflict rolls back the pending reservation and staged allow, then
 commits one `SensitiveAuthorizationDenied` row in a clean transaction with the
