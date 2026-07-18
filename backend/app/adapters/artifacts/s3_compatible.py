@@ -670,6 +670,8 @@ def validate_aws_workload_identity_environment(
             raise ArtifactConfigurationError("custom AWS metadata endpoint is forbidden")
         if environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
             raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
+        if environment.get("AWS_EC2_METADATA_V1_DISABLED", "false").lower() != "true":
+            raise ArtifactConfigurationError("AWS instance identity requires IMDSv2")
 
 
 def create_isolated_aws_workload_identity_session(
@@ -713,10 +715,7 @@ def create_isolated_aws_workload_identity_session(
                     "ec2_metadata_service_endpoint_mode": environment.get(
                         "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE"
                     ),
-                    "ec2_metadata_v1_disabled": environment.get(
-                        "AWS_EC2_METADATA_V1_DISABLED", "false"
-                    ).lower()
-                    == "true",
+                    "ec2_metadata_v1_disabled": True,
                 },
             )
         )

@@ -633,7 +633,6 @@ def test_minio_settings_and_factory_construct_closed_namespace(tmp_path: Path) -
         ({"artifact_s3_endpoint_url": None}, "requires an endpoint"),
         ({"artifact_s3_endpoint_url": "https://user:pass@minio.test"}, "endpoint is invalid"),
         ({"artifact_s3_endpoint_url": "http://minio.test/path"}, "endpoint is invalid"),
-        ({"artifact_s3_endpoint_url": "http://minio.test/"}, "endpoint is invalid"),
     ],
 )
 def test_minio_settings_fail_closed(
@@ -734,6 +733,30 @@ def test_minio_secret_values_from_env_and_dotenv_are_absent_from_errors(
         )
     assert dotenv_secret not in repr(dotenv_error.value.errors())
     _assert_secret_not_retained(dotenv_error.value, dotenv_secret)
+
+
+def test_minio_endpoint_is_normalized_before_namespace_identity(tmp_path: Path) -> None:
+    """Equivalent MinIO origins must produce one endpoint and namespace identity."""
+    common = {
+        "environment": "test",
+        "artifact_store_backend": "s3_compatible",
+        "artifact_scratch_root": tmp_path / "scratch",
+        "artifact_s3_provider_profile": "minio",
+        "artifact_s3_region": "us-east-1",
+        "artifact_s3_bucket": "workstream-artifacts-test",
+        "artifact_s3_credential_mode": "local_static",
+        "artifact_s3_access_key_id": "local-access",
+        "artifact_s3_secret_access_key": "local-secret",
+    }
+    canonical = Settings(**common, artifact_s3_endpoint_url="http://localhost")
+    equivalent = Settings(**common, artifact_s3_endpoint_url="HTTP://LOCALHOST:80/")
+
+    assert canonical.artifact_s3_endpoint_url == "http://localhost"
+    assert equivalent.artifact_s3_endpoint_url == "http://localhost"
+    assert (
+        create_artifact_store_bootstrap(canonical).namespace_identity
+        == create_artifact_store_bootstrap(equivalent).namespace_identity
+    )
 
 
 @pytest.mark.parametrize(

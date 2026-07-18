@@ -54,7 +54,10 @@ def _web_identity_environment(tmp_path: Path, **overrides: str) -> dict[str, str
 
 
 def _iam_environment(tmp_path: Path, **overrides: str) -> dict[str, str]:
-    environment = {"HOME": str(tmp_path)}
+    environment = {
+        "HOME": str(tmp_path),
+        "AWS_EC2_METADATA_V1_DISABLED": "true",
+    }
     environment.update(overrides)
     return environment
 
@@ -224,6 +227,8 @@ def test_isolated_session_contains_exactly_one_selected_provider(
                 }
             }
         }
+    if method == "iam-role":
+        assert provider._role_fetcher._imds_v1_disabled is True
 
 
 @pytest.mark.parametrize(
@@ -277,8 +282,25 @@ def test_isolated_session_contains_exactly_one_selected_provider(
         ),
         (
             "iam-role",
-            lambda tmp_path: {"HOME": str(tmp_path), "AWS_EC2_METADATA_DISABLED": "true"},
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
+                "AWS_EC2_METADATA_DISABLED": "true",
+                "AWS_EC2_METADATA_V1_DISABLED": "true",
+            },
             "instance identity metadata is disabled",
+        ),
+        (
+            "iam-role",
+            lambda tmp_path: {"HOME": str(tmp_path)},
+            "instance identity requires IMDSv2",
+        ),
+        (
+            "iam-role",
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
+                "AWS_EC2_METADATA_V1_DISABLED": "false",
+            },
+            "instance identity requires IMDSv2",
         ),
         (
             "iam-role",

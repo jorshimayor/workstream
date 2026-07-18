@@ -403,7 +403,9 @@ class Settings(BaseSettings):
             raise ValueError("MinIO artifact storage requires local static credentials")
         if self.artifact_s3_aws_workload_identity_method is not None:
             raise ValueError("MinIO artifact storage cannot select AWS workload identity")
-        _validate_minio_endpoint(self.artifact_s3_endpoint_url)
+        self.artifact_s3_endpoint_url = _canonical_minio_endpoint(
+            self.artifact_s3_endpoint_url
+        )
 
     def _validate_native_aws_storage(self) -> None:
         """Validate native AWS configuration without activating its runtime."""
@@ -526,22 +528,33 @@ def _is_canonical_s3_prefix(value: str) -> bool:
     return all(_S3_PREFIX_SEGMENT.fullmatch(segment) is not None for segment in segments)
 
 
-def _validate_minio_endpoint(value: str | None) -> None:
-    """Require one canonical noncredentialed HTTP(S) MinIO origin."""
+def _canonical_minio_endpoint(value: str | None) -> str:
+    """Return one normalized noncredentialed HTTP(S) MinIO origin."""
     if not isinstance(value, str) or not value or len(value) > 2048:
         raise ValueError("MinIO artifact storage requires an endpoint")
     parsed = urlsplit(value)
+    try:
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("MinIO artifact storage endpoint is invalid") from error
     if (
-        parsed.scheme not in {"http", "https"}
+        parsed.scheme.lower() not in {"http", "https"}
         or not parsed.hostname
         or parsed.username is not None
         or parsed.password is not None
         or parsed.query
         or parsed.fragment
         or parsed.path not in {"", "/"}
-        or value.endswith("/")
+        or parsed.hostname.endswith(".")
     ):
         raise ValueError("MinIO artifact storage endpoint is invalid")
+    scheme = parsed.scheme.lower()
+    hostname = parsed.hostname.lower()
+    if ":" in hostname:
+        hostname = f"[{hostname}]"
+    if port is not None and port != {"http": 80, "https": 443}[scheme]:
+        hostname = f"{hostname}:{port}"
+    return f"{scheme}://{hostname}"
 
 
 def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:

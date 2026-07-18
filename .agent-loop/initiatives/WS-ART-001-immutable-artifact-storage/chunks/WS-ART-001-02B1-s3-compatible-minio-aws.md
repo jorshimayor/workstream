@@ -56,6 +56,9 @@ credential-delivery contract.
 - explicit credentials, environment access keys, shared credential/config
   files, credential processes, login/SSO, legacy EC2/Boto sources, and every
   unselected workload provider fail startup before credential loading;
+- container role accepts only the relative metadata path, IAM role rejects a
+  custom metadata endpoint and requires IMDSv2, and the isolated IAM fetcher
+  disables IMDSv1;
 - isolation tests poison nonselected file, process, cache, metadata, and network
   sources and prove none is accessed; MinIO static credentials are local/CI
   only and never survive error/log object graphs;

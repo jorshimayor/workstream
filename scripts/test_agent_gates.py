@@ -62,7 +62,10 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
         "coverage report --include='app/workers/*' --precision=2 --fail-under=90",
         "coverage report --include='app/main.py' --precision=2 --fail-under=90",
     ),
-    "02B1": (),
+    "02B1": (
+        "coverage report --include='app/adapters/artifacts/s3_compatible.py' "
+        "--precision=2 --fail-under=90",
+    ),
     "02C1": (
         "coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90",
     ),
@@ -110,6 +113,29 @@ BACKEND_API_CONTRACT_E2E_COMMAND = "\n".join(
         "python scripts/run_isolated_tests.py "
         '--metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- '
         "python scripts/api_contract_e2e.py",
+    )
+)
+MINIO_IMAGE = (
+    "quay.io/minio/minio:latest@"
+    "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e"
+)
+BACKEND_MINIO_START_COMMAND = "\n".join(
+    (
+        f"image='{MINIO_IMAGE}'",
+        "docker run --detach --rm --name workstream-minio \\",
+        "  --publish 9000:9000 \\",
+        "  --env MINIO_ROOT_USER=workstream-minio \\",
+        "  --env MINIO_ROOT_PASSWORD=workstream-minio-secret-key \\",
+        '  "$image" server /data --address :9000',
+        "for attempt in $(seq 1 60); do",
+        "  if curl --fail --silent "
+        "http://127.0.0.1:9000/minio/health/live >/dev/null; then",
+        "    exit 0",
+        "  fi",
+        "  sleep 1",
+        "done",
+        "docker logs workstream-minio",
+        "exit 1",
     )
 )
 AUTH_09B_COVERAGE_COMMANDS = (
@@ -4130,7 +4156,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     ).read_text(encoding="utf-8")
     artifact_contract = Path(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
-        "WS-ART-001-02A3-artifact-store-v2-local-clean-cut.md"
+        "WS-ART-001-02B1-s3-compatible-minio-aws.md"
     ).read_text(encoding="utf-8")
     work_queue = Path(".agent-loop/WORK_QUEUE.md").read_text(encoding="utf-8")
     loop_state = Path(".agent-loop/LOOP_STATE.md").read_text(encoding="utf-8")
@@ -4445,6 +4471,12 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     test_job = parsed_workflow["jobs"]["test"]
     assert set(test_job) == {"runs-on", "timeout-minutes", "services", "steps"}
     steps = test_job["steps"]
+    minio_steps = [
+        step for step in steps if step.get("name") == "Start real MinIO artifact provider"
+    ]
+    assert len(minio_steps) == 1
+    assert set(minio_steps[0]) == {"name", "run"}
+    assert str(minio_steps[0]["run"]).strip() == BACKEND_MINIO_START_COMMAND
     full_suite_steps = [
         step for step in steps if step.get("name") == "Backend full-suite coverage"
     ]
@@ -4454,13 +4486,15 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert full_suite_steps[0].get("env") == {
         "WORKSTREAM_TEST_ADMIN_DATABASE_URL": (
             "postgresql+asyncpg://workstream:workstream@localhost:5433/postgres"
-        )
+        ),
+        "WORKSTREAM_TEST_MINIO_ENDPOINT": "http://127.0.0.1:9000",
     }
     for forbidden_key in ("if", "continue-on-error", "shell"):
         assert forbidden_key not in full_suite_steps[0]
     assert full_suite_run.strip() == BACKEND_FULL_SUITE_COVERAGE_COMMAND
     assert "/tmp/workstream-database.json" not in workflow
     full_suite_index = steps.index(full_suite_steps[0])
+    assert steps.index(minio_steps[0]) < full_suite_index
     isolated_steps = [
         step for step in steps if step.get("name") == "Isolated database runner test"
     ]

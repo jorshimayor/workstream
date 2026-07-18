@@ -807,7 +807,8 @@ MinIO is the only runtime-eligible S3 profile in this chunk and is restricted
 to local, development, and test environments. Native AWS configuration rejects
 static credentials, configured endpoints, unselected or ambient credential
 sources, arbitrary container credential URLs, and custom instance-metadata
-endpoints. Even valid native AWS settings fail with
+endpoints. IAM-role validation requires IMDSv2 and the isolated fetcher disables
+IMDSv1. Even valid native AWS settings fail with
 `artifact_provider_live_proof_required` before credential-source probing,
 factory construction, namespace claim, resolver loading, or provider I/O.
 
