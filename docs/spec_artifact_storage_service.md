@@ -451,9 +451,11 @@ pinned botocore credential resolver to that provider before any provider is
 loaded, and verifies the resolved method. Explicit credentials, environment
 access keys, shared credential/config files, credential processes, login/SSO,
 legacy EC2/Boto sources, and every unselected workload provider are rejected.
-Tests poison every nonselected source and prove that it is never read, executed,
-or contacted. This is an allowlisted workload-identity contract, not authority
-to use the ambient SDK default chain.
+Web-identity STS, ECS container metadata, and EC2 instance metadata use
+explicit no-proxy sessions. Web identity also rejects ambient endpoint and CA
+overrides. Tests poison every nonselected source and prove that it is never
+read, executed, or contacted. This is an allowlisted workload-identity
+contract, not authority to use the ambient SDK default chain.
 
 Chunk 02B1 pins the async S3 SDK pair to `aiobotocore==3.7.0` and
 `botocore==1.43.0`. An SDK upgrade is a reviewed contract change because

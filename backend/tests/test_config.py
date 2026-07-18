@@ -358,7 +358,7 @@ def _flow_settings(**overrides) -> Settings:
     return Settings(**values)
 
 
-def _minio_settings(tmp_path: Path, **overrides: object) -> Settings:
+def _minio_setting_values(tmp_path: Path, **overrides: object) -> dict[str, object]:
     values: dict[str, object] = {
         "environment": "test",
         "artifact_store_backend": "s3_compatible",
@@ -374,7 +374,11 @@ def _minio_settings(tmp_path: Path, **overrides: object) -> Settings:
         "artifact_s3_secret_access_key": "minio-secret-key",
     }
     values.update(overrides)
-    return Settings(**values)
+    return values
+
+
+def _minio_settings(tmp_path: Path, **overrides: object) -> Settings:
+    return Settings(**_minio_setting_values(tmp_path, **overrides))
 
 
 def _aws_settings(tmp_path: Path, **overrides: object) -> Settings:
@@ -681,6 +685,30 @@ def test_minio_secret_values_are_absent_from_repr_and_validation_errors(
     assert secret not in repr(caught.value.errors())
     assert secret not in caught.value.json()
     _assert_secret_not_retained(caught.value, secret)
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    ["model_validate", "model_validate_json", "model_validate_strings"],
+)
+def test_alternate_validation_loads_minio_secrets_without_retaining_them(
+    tmp_path: Path,
+    method_name: str,
+) -> None:
+    secret = "alternate-minio-secret-value"
+    payload = _minio_setting_values(
+        tmp_path,
+        artifact_scratch_root=str(tmp_path / "scratch"),
+        artifact_s3_secret_access_key=secret,
+    )
+    method = getattr(Settings, method_name)
+
+    settings = method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert settings.artifact_s3_secret_access_key is not None
+    assert settings.artifact_s3_secret_access_key.get_secret_value() == secret
+    assert secret not in repr(settings)
+    assert secret not in repr(settings.model_dump())
 
 
 def test_minio_secret_values_from_env_and_dotenv_are_absent_from_errors(

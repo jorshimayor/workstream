@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+from contextvars import ContextVar
 import json
 import os
 import re
@@ -33,6 +34,10 @@ _ARTIFACT_S3_SECRET_FIELDS = frozenset(
 _S3_REGION = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 _S3_BUCKET = re.compile(r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
 _S3_PREFIX_SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_ALTERNATE_VALIDATION_RESTORES_SECRETS: ContextVar[bool] = ContextVar(
+    "alternate_validation_restores_secrets",
+    default=False,
+)
 
 
 class Settings(BaseSettings):
@@ -190,7 +195,8 @@ class Settings(BaseSettings):
         super().__init__(**values)
         self._api_rate_limit_key_secret = secret
         self._set_artifact_s3_static_secrets(s3_secrets)
-        self._validate_artifact_s3_secret_contract()
+        if not _ALTERNATE_VALIDATION_RESTORES_SECRETS.get():
+            self._validate_artifact_s3_secret_contract()
 
     @classmethod
     def model_validate(cls, obj: object, **kwargs: object) -> Self:
@@ -211,7 +217,11 @@ class Settings(BaseSettings):
             for field_name in _ARTIFACT_S3_SECRET_FIELDS:
                 if field_name in obj:
                     sanitized[field_name] = None
-            settings = super().model_validate(sanitized, **kwargs)
+            restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+            try:
+                settings = super().model_validate(sanitized, **kwargs)
+            finally:
+                _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
             if secret is not None:
                 settings._api_rate_limit_key_secret = secret
             settings._set_artifact_s3_static_secrets(s3_secrets)
@@ -260,7 +270,11 @@ class Settings(BaseSettings):
             for field_name in _ARTIFACT_S3_SECRET_FIELDS:
                 if field_name in obj:
                     sanitized[field_name] = None
-            settings = super().model_validate_strings(sanitized, **kwargs)
+            restore_token = _ALTERNATE_VALIDATION_RESTORES_SECRETS.set(True)
+            try:
+                settings = super().model_validate_strings(sanitized, **kwargs)
+            finally:
+                _ALTERNATE_VALIDATION_RESTORES_SECRETS.reset(restore_token)
             if secret is not None:
                 settings._api_rate_limit_key_secret = secret
             settings._set_artifact_s3_static_secrets(s3_secrets)

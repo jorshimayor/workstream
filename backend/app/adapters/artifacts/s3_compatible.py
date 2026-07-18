@@ -24,6 +24,7 @@ from aiobotocore.utils import (
     AioInstanceMetadataFetcher,
     _RefCountedSession,
 )
+from botocore import UNSIGNED
 from botocore.exceptions import BotoCoreError, ClientError
 
 from app.adapters.artifacts.references import (
@@ -79,6 +80,20 @@ _FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT = frozenset(
         "AWS_SESSION_TOKEN",
         "AWS_SHARED_CREDENTIALS_FILE",
         "BOTO_CONFIG",
+    }
+)
+_FORBIDDEN_AWS_NETWORK_ENVIRONMENT = frozenset(
+    {
+        "AWS_CA_BUNDLE",
+        "AWS_ENDPOINT_URL",
+        "AWS_ENDPOINT_URL_STS",
+        "AWS_STS_REGIONAL_ENDPOINTS",
+        "AWS_USE_DUALSTACK_ENDPOINT",
+        "AWS_USE_FIPS_ENDPOINT",
+        "CURL_CA_BUNDLE",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_DIR",
+        "SSL_CERT_FILE",
     }
 )
 _WEB_IDENTITY_ENVIRONMENT = frozenset(
@@ -285,7 +300,13 @@ class S3CompatibleArtifactStore:
                 )
             return ArtifactPutResult(provider_object_ref, replayed=False)
         except ClientError as error:
-            if _provider_error_code(error) in _PRECONDITION_ERROR_CODES:
+            status = _provider_http_status(error)
+            if status == 403:
+                raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
+            if (
+                status in {409, 412}
+                and _provider_error_code(error) in _PRECONDITION_ERROR_CODES
+            ):
                 await self._verify_exact(provider_object_ref, commitment)
                 return ArtifactPutResult(provider_object_ref, replayed=True)
             raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
@@ -629,6 +650,8 @@ def validate_aws_workload_identity_environment(
     environment = os.environ if environ is None else environ
     if _FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT.intersection(environment):
         raise ArtifactConfigurationError("ambient AWS credential source is forbidden")
+    if _FORBIDDEN_AWS_NETWORK_ENVIRONMENT.intersection(environment):
+        raise ArtifactConfigurationError("ambient AWS network configuration is forbidden")
     _reject_default_credential_files(environment)
 
     allowed_by_method = {
@@ -690,9 +713,26 @@ def create_isolated_aws_workload_identity_session(
         role_session_name = environment.get("AWS_ROLE_SESSION_NAME")
         if role_session_name is not None:
             profile["role_session_name"] = role_session_name
+
+        def create_isolated_sts_client(service_name: str, **_kwargs: object) -> object:
+            if service_name != "sts":
+                raise ArtifactConfigurationError("AWS web identity service is invalid")
+            return session.create_client(
+                "sts",
+                region_name=_required(settings.artifact_s3_region),
+                verify=True,
+                config=AioConfig(
+                    signature_version=UNSIGNED,
+                    connect_timeout=settings.artifact_s3_connect_timeout_seconds,
+                    read_timeout=settings.artifact_s3_read_timeout_seconds,
+                    retries={"max_attempts": 1, "mode": "standard"},
+                    proxies={},
+                ),
+            )
+
         provider = AioAssumeRoleWithWebIdentityProvider(
             load_config=lambda: {"profiles": {"workstream-isolated": profile}},
-            client_creator=session.create_client,
+            client_creator=create_isolated_sts_client,
             profile_name="workstream-isolated",
             cache={},
             disable_env_vars=True,

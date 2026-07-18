@@ -118,6 +118,34 @@ def test_forbidden_ambient_aws_sources_fail_before_resolver_loading(
 
 
 @pytest.mark.parametrize(
+    "name",
+    [
+        "AWS_CA_BUNDLE",
+        "AWS_ENDPOINT_URL",
+        "AWS_ENDPOINT_URL_STS",
+        "AWS_STS_REGIONAL_ENDPOINTS",
+        "AWS_USE_DUALSTACK_ENDPOINT",
+        "AWS_USE_FIPS_ENDPOINT",
+        "CURL_CA_BUNDLE",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_DIR",
+        "SSL_CERT_FILE",
+    ],
+)
+def test_web_identity_rejects_ambient_network_configuration_before_session(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    name: str,
+) -> None:
+    _assert_rejects_before_session_construction(
+        monkeypatch,
+        _aws_settings(tmp_path, "assume-role-with-web-identity"),
+        _web_identity_environment(tmp_path, **{name: "/tmp/poison"}),
+        "ambient AWS network configuration is forbidden",
+    )
+
+
+@pytest.mark.parametrize(
     ("relative_path", "contents"),
     [
         (".aws/credentials", "[default]\naws_access_key_id = poison\n"),
@@ -432,6 +460,40 @@ def test_container_metadata_session_ignores_ambient_proxy_environment(
         )
         is None
     )
+
+
+def test_web_identity_sts_client_ignores_ambient_proxy_environment(
+    tmp_path: Path,
+) -> None:
+    session = s3_compatible.create_isolated_aws_workload_identity_session(
+        _aws_settings(tmp_path, "assume-role-with-web-identity"),
+        environ=_web_identity_environment(
+            tmp_path,
+            HTTP_PROXY="http://127.0.0.1:9",
+            HTTPS_PROXY="http://127.0.0.1:9",
+            ALL_PROXY="http://127.0.0.1:9",
+        ),
+    )
+    provider = session.get_component("credential_provider").providers[0]
+    observed: dict[str, object] = {}
+    marker = object()
+
+    def capture_client(service_name: str, **kwargs: object) -> object:
+        observed["service_name"] = service_name
+        observed.update(kwargs)
+        return marker
+
+    session.create_client = capture_client  # type: ignore[method-assign]
+
+    created = provider._client_creator("sts", config=object())
+
+    assert created is marker
+    assert observed["service_name"] == "sts"
+    assert observed["region_name"] == "us-east-1"
+    assert observed["verify"] is True
+    config = observed["config"]
+    assert config.signature_version == s3_compatible.UNSIGNED
+    assert config.proxies == {}
 
 
 async def test_resolved_workload_identity_method_must_match() -> None:

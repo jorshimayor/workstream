@@ -569,6 +569,35 @@ async def test_nonprecondition_put_error_is_unavailable(
 
 
 @pytest.mark.asyncio
+async def test_put_403_precedes_precondition_like_provider_code(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Never classify denied writes as replay candidates."""
+    store = initialize_minio_store(private_prefix="negative/denied-precondition")
+
+    class Client:
+        async def put_object(self, **_kwargs: object) -> object:
+            raise _client_error("PreconditionFailed", 403)
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    async def verification_must_not_run(*_args: object) -> None:
+        raise AssertionError("denied writes cannot enter replay verification")
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    monkeypatch.setattr(store, "_verify_exact", verification_must_not_run)
+    try:
+        async with minted_source(tmp_path / "scratch", b"denied") as source:
+            with pytest.raises(ArtifactStoreUnavailableError):
+                await store.put(source)
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("committed", [False, True])
 async def test_uncertain_transport_put_requires_independent_observation(
     monkeypatch: pytest.MonkeyPatch,
