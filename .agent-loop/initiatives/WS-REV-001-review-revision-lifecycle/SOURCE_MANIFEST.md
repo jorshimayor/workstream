@@ -225,6 +225,13 @@ The following are explicitly unmerged discovery evidence and not authority:
 
 Trusted main has the single head `0025_artifact_store_v2`, retains both retired
 task contributor storage names, and contains no merged contributor foundation.
+Current Submission storage also has no immutable causal field for the exact
+needs-revision CheckerRun that admits a corrected checker-remediation N+1. 02C
+owns the planned server-derived `remediation_source_checker_run_id`, exact
+backfill, PostgreSQL lineage/uniqueness/immutability, and currentness locking;
+09A4 later adds the human preparation binding and final source XOR. AUTH-14 must
+own only public authorization/request cutover for that path after an exact
+contract amendment, not these REV lifecycle columns or constraints.
 Every runtime gate must replace worktree prose with exact owner chunk ID,
 merged PR/SHA, migration head, typed symbol/manifest, and tests.
 

@@ -41,7 +41,7 @@ typed symbol/manifest, and tests.
 | `WS-REV-001-09A1` | Review-Rooted Revision Preparation Persistence | L1 | 02A2; approved human round/deadline semantics; migration/head refresh | Proposed; no contract yet |
 | `WS-REV-001-09A2` | Revision Context Resolver And Task Context | L1 | 09A1 | Proposed; no transaction composition |
 | `WS-REV-001-09A3` | Human Revision Response Evidence Finalize | L1 | 09A2; ART evidence port and exact AUTH action | Proposed; owner chunk unscheduled |
-| `WS-REV-001-09A4` | Hidden Human Prepared N+1 And Checker Context Compatibility | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; preserves distinct checker remediation; AUTH-14 owns public schema/cutover/guard/activation |
+| `WS-REV-001-09A4` | Hidden Human Prepared N+1 And Checker Source Compatibility | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; adds preparation binding/source XOR while retaining 02C checker source; AUTH-14 owns public acknowledgement/auth cutover/activation |
 | `WS-REV-001-09A5` | Hidden Replacement Assignment Preparation Transfer | L1 | 09A4; merged AUTH-13 contract amendment only | Proposed; AUTH-13 later owns public command/cutover/activation |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Preferred Return Routing | L1 | 09A5 | Proposed |
 | `WS-REV-001-10` | Canonical Review, Final Acceptance, And CON Atomic Integration | L1 | 09B; merged `WS-CON-001-03C` and `07`; stabilized digest owner chunk | Proposed; first canonical decision commit |

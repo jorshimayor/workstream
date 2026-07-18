@@ -169,7 +169,9 @@ valid active pair rebases forward or backward. Missing, inconsistent, revoked,
 or unsafe context blocks for Project Manager repair. Checker-caused remediation
 remains a distinct CheckerRun-rooted path, keeps the Task's locked context, and
 creates no Review, ReviewFinding, preparation, reviewer contribution, or
-synthetic human actor.
+synthetic human actor. Its corrected Submission persists the unique immutable
+`remediation_source_checker_run_id` for the exact predecessor CheckerRun; a
+later retry cannot rewrite that causal lineage.
 
 A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The contributor and reviewer must see the prior version, the next version, and the guide or policy change summary.
 

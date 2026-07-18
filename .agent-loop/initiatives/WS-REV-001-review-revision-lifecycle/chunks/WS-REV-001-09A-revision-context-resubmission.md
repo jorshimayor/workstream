@@ -14,10 +14,14 @@ CheckerRun-rooted path and is not treated as legacy.
 - `WS-REV-001-09A2`: guide-context resolver and Task Context read only; decision
   transaction composition remains in chunk 10.
 - `WS-REV-001-09A3`: human Review finding responses/evidence only.
-- `WS-REV-001-09A4`: hidden prepared human N+1 task/checker participant and
-  compatibility proof for the separate existing checker-remediation path;
-  later AUTH-14 owns public request acknowledgement, legacy cutover, strict DB
-  guard, and activation after its contract amendment merges.
+- `WS-REV-001-09A4`: hidden prepared human N+1 task/checker participant. It adds
+  the server-selected Submission-to-preparation binding and replaces 02C's
+  checker-only N+1 guard with the exact version/source XOR: v1 has neither source;
+  human N+1 has only `revision_context_preparation_id`; checker-remediation N+1
+  retains only 02C's immutable `remediation_source_checker_run_id`. Later AUTH-14
+  owns public request acknowledgement, authorization cutover, and activation
+  after its contract amendment merges; it does not own these REV lifecycle
+  columns or constraints.
 - `WS-REV-001-09A5`: hidden replacement-assignment preparation transfer; later
   AUTH-13 owns public command/cutover/activation after its contract amendment.
 

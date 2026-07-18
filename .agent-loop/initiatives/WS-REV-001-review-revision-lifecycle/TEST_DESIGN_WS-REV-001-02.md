@@ -87,9 +87,11 @@ Missing evidence stops before REV generates a migration.
   They never yield v2.
 - Concurrent creates against one human preparation head yield exactly one N+1;
   loser exact replay/conflict. Concurrent checker-remediation creates likewise
-  yield one N+1 from the exact current CheckerRun state. Neither yields N+2;
-  that requires a later committed human Review/preparation or final
-  needs-revision CheckerRun.
+  yield one N+1 from the exact current CheckerRun state. The winner persists the
+  server-derived `remediation_source_checker_run_id`; direct SQL cannot cross the
+  source run's task/immediate predecessor or reuse it for a second N+1. Neither
+  path yields N+2; that requires a later committed human Review/preparation or
+  final needs-revision CheckerRun.
 
 ## Human Review preparation and distinct checker remediation
 
@@ -100,6 +102,10 @@ Missing evidence stops before REV generates a migration.
 - Reject accept/reject Review, crossed/duplicate source, duplicate prior
   Submission episode, mutable source, and service-as-human actor.
 - A CheckerRun cannot be used as a RevisionContextPreparation root.
+- Version 1 has neither source relation. After human prepared cutover, every N+1
+  has exactly one of `revision_context_preparation_id` or
+  `remediation_source_checker_run_id`; null/null and both-set rows fail migration,
+  service creation, and direct SQL.
 
 ### Atomic creation
 

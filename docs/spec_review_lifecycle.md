@@ -509,11 +509,12 @@ after corrected checker admission.
 A human-Review Submission N+1 links its immediate predecessor, exact preparation
 head, required responses, evidence relations, and target TaskAssignment. A
 checker-remediation Submission N+1 instead binds the exact final needs-revision
-CheckerRun and the Task's existing locked context; it has no preparation or
-ReviewFinding response. Both paths rerun the existing finalization and checker
-spine. A new current `allow_review` creates a queue entry preferred to the
-reviewer who issued the prior human revision request. Corrected checker work
-enters ordinary open routing.
+CheckerRun through its server-derived immutable
+`remediation_source_checker_run_id` and retains the Task's existing locked
+context; it has no preparation or ReviewFinding response. Both paths rerun the
+existing finalization and checker spine. A new current `allow_review` creates a
+queue entry preferred to the reviewer who issued the prior human revision
+request. Corrected checker work enters ordinary open routing.
 
 The later Review appends one immutable `FindingResolution` for each required
 prior finding with the canonical result `resolved`, `unresolved`, or

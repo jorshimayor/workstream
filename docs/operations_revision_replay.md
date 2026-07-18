@@ -103,7 +103,9 @@ Submission lineage is immediate and same-task, evidence bindings are finalized,
 and the new `allow_review` CheckerRun is current for that Submission.
 
 A checker-remediation submission cannot enter human review unless it binds the
-exact final needs-revision CheckerRun that caused remediation, preserves the
-Task's existing locked context, has immediate same-task Submission lineage, and
-has a new current `allow_review` CheckerRun. It has no preparation or
-ReviewFinding response requirement.
+exact final needs-revision CheckerRun that caused remediation through immutable
+`remediation_source_checker_run_id`, preserves the Task's existing locked
+context, has immediate same-task Submission lineage, and has a new current
+`allow_review` CheckerRun. The source relation is server-derived, unique, and
+cannot be rewritten by a later retry. It has no preparation or ReviewFinding
+response requirement.

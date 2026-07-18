@@ -64,7 +64,9 @@ not merged.
   creates no FinalAcceptance/submitter contribution.
 - Checker needs revision atomically records the final CheckerRun transition with
   the Task's existing locked context and creates no Review, preparation, or CON
-  record.
+  record. Corrected N+1 persists the unique server-derived
+  `remediation_source_checker_run_id`; later human N+1 instead persists its
+  preparation ID, never both.
 - Adjudication and reputation mutation remain deferred and unimplemented.
 
 ## Human-owned gates
@@ -77,6 +79,9 @@ not merged.
 - Exact human Review revision-round counting, deadline anchor, and boundary
   before 09A1; checker retries are excluded unless a separate product/ADR
   amendment is explicitly approved.
+- Exact merged AUTH-14 contract amendment before 09A4 must leave REV ownership
+  of Submission revision-source columns/constraints intact and limit AUTH to
+  public acknowledgement, authorization cutover, and activation.
 - Every later external owner dependency and child start as listed in the map.
 
 ## Stop condition

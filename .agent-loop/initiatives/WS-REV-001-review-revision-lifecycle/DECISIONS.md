@@ -525,7 +525,11 @@ expanding ADR 0010. Checker remediation keeps the Task's locked guide context,
 creates no Review/finding/reviewer contribution, consumes no human ReviewPolicy
 revision round/deadline, and does not use finding replay or D6 close. Controlled
 RevisionContextPreparation remains rooted in an exact
-`Review(needs_revision)`. Treating exact checker history as legacy is prohibited.
+`Review(needs_revision)`. Corrected Submission N+1 persists the server-derived,
+unique, immutable `remediation_source_checker_run_id` for the exact completed,
+needs-revision, current-at-selection CheckerRun on its immediate predecessor.
+Treating exact checker history as legacy or inferring it from a later current run
+is prohibited.
 
 ### D23 - Human Revision Exhaustion Semantics Require Explicit Approval
 

@@ -46,10 +46,11 @@ outcomes.
   forward or backward; missing, incomplete, or unsafe active context blocks.
   Return routing prefers the prior reviewer before falling back to open FIFO.
 - A supported checker-caused `needs_revision` remains a distinct CheckerRun-
-  rooted remediation that keeps task context and creates no synthetic Review,
-  finding, reviewer contribution, or human actor. Controlled preparation/rebase,
-  finding replay, human revision policy, and D6 closure apply only to an exact
-  `Review(needs_revision)`.
+  rooted remediation that keeps task context and persists a unique server-
+  derived immutable source-CheckerRun relation on corrected N+1. It creates no
+  synthetic Review, finding, reviewer contribution, or human actor. Controlled
+  preparation/rebase, finding replay, human revision policy, and D6 closure apply
+  only to an exact `Review(needs_revision)`.
 - Artifact outage or integrity failure blocks judgment without creating an
   adverse contributor outcome.
 - Every committed Review joins the `WS-CON-001` contribution and conditional

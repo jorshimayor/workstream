@@ -152,6 +152,8 @@ Controlled Project Guide rebase is rooted only in an immutable
 to its final CheckerRun. It keeps the Task's existing locked context, creates no
 Review/ReviewFinding/reviewer contribution, consumes no human ReviewPolicy
 revision round/deadline, and does not use D6 close or human finding replay.
+Corrected N+1 persists the unique server-derived
+`remediation_source_checker_run_id` for that exact predecessor CheckerRun.
 
 `RevisionContextPreparation` is task-owned and directly references the exact
 Review and prior Submission. It forms an immutable non-branching root/successor
@@ -290,7 +292,8 @@ are:
 - 08 pure decision schemas, validation, and typed participant inputs only.
 - 09A1 Review-rooted preparation schema; 09A2 preparation resolver and Task
   Context; 09A3 human response evidence; 09A4 internal prepared human N+1 plus
-  preserved distinct checker-remediation behavior;
+  the exact source XOR that retains 02C's immutable checker-remediation
+  `remediation_source_checker_run_id`;
   09A5 replacement-assignment transfer; 09B replay/resolution/return routing.
 - 10 first hidden canonical Review/FinalAcceptance/CON transaction.
 - 11A privileged queue/lease commands; 11B PM repair/D6 close; 11C

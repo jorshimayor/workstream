@@ -1188,6 +1188,7 @@ Fields:
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
+- `remediation_source_checker_run_id` (checker-remediation submissions only)
 - `revision_context_preparation_id` (human-Review revision submissions only)
 
 The contributor submission packet supplies the task id, summary, outputs,
@@ -1202,6 +1203,16 @@ post-submit checker policy ids/versions/hashes, review policy versions, or
 revision policy versions. Submitter award eligibility remains governed by the
 immutable TaskAssignment-frozen `ContributionPolicyVersion` and is not restated
 on the submission.
+
+Version 1 has neither revision-source field. Every later version has exactly one:
+a checker-remediation version stores the server-derived
+`remediation_source_checker_run_id`, while a human-Review revision stores the
+server-selected `revision_context_preparation_id`. The checker source must be the
+completed, needs-revision, current-at-selection CheckerRun for the immediate
+predecessor Submission and same Task. PostgreSQL enforces same-task/immediate-
+predecessor lineage, one successor per source CheckerRun, source-field XOR, and
+post-finalization immutability. A later CheckerRun retry cannot rewrite committed
+Submission lineage. Contributor requests supply neither authoritative source ID.
 
 Implementation note: submissions stamp explicit post-submit checker provenance
 from the task. Durable `CheckerRun` creation uses those
