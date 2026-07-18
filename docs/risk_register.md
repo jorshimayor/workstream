@@ -32,9 +32,11 @@ A task can be sent back for revision after the project guide or policies changed
 
 Mitigation:
 
-- prior submissions remain tied to their locked guide and policy versions
-- revision policy controls whether the next attempt rebases to current active guide and policy context
-- contributor and reviewer packets show prior version, next version, rebase reason, and change summary
+- prior Submissions remain tied to their stamped guide and policy context
+- exact stamped guide identity/activation-sequence match keeps context; any
+  different valid active pair rebases forward or backward; unsafe context blocks
+- Task Context returns the frozen preparation; reviewer context uses the exact
+  leased Submission stamp without a separate rebase
 - every rebase records an audit event
 
 ### R2: Weak Submissions Reach Review
@@ -60,7 +62,9 @@ Contributors cannot close feedback that does not specify the issue, evidence, an
 
 Mitigation:
 
-- structured findings required
+- structured blocking/advisory findings
+- immutable SubmissionFindingResponse and later FindingResolution
+- offline reviewer calibration without mutating product history
 - reviewer quality metrics
 - post-decision non-mutating reviewer-quality audits
 
@@ -74,9 +78,9 @@ Tasks repeatedly return for the same issue because prior feedback is not replaye
 
 Mitigation:
 
-- mandatory revision replay
-- checker verifies prior finding coverage
-- reviewer marks closure per finding
+- one immutable response per unresolved blocking finding
+- checker readmission binds the exact replacement Submission and preparation
+- later reviewer appends a resolution per required finding
 
 ### R5: Accepted Work Not Paid
 
@@ -88,7 +92,8 @@ Payable awards and external fulfillment can drift apart if tracked manually.
 
 Mitigation:
 
-- every valid Review creates its required contribution records atomically
+- every valid Review creates reviewer contribution atomically; accept also
+  creates FinalAcceptance and the submitter contribution sourced from it
 - payable contributions create immutable awards; explicit unpaid rules create
   none
 - daily award/fulfillment reconciliation
@@ -104,10 +109,10 @@ Bad review decisions can demoralize contributors and corrupt quality metrics.
 
 Mitigation:
 
-- reviewer reputation
-- non-mutating reviewer-quality sampling
-- reviewer-quality signal tracking
-- escalation process
+- evidence-backed reviewer quality projections when separately implemented
+- offline sampling and calibration
+- immutable decision/finding history for future analysis
+- no v0.1 adjudication or mutable overturn path
 
 ### R7: Fake Evidence
 
@@ -156,7 +161,8 @@ Mitigation:
 
 - enforce state transitions in code
 - require checker run id before `REVIEW_PENDING`
-- require review id before `ACCEPTED`
+- require accepting Review, FinalAcceptance, and exact reviewer/submitter
+  contribution source shapes before `ACCEPTED`
 - require an immutable payable award, exact fulfillment receipt, and external
   reference before fulfillment status can become `fulfilled`
 - replace broad historical override language with registered, scoped,
@@ -172,12 +178,14 @@ Reviewers can repeatedly approve weak work for favored contributors or skip evid
 
 Mitigation:
 
-- sample accepted work for a non-mutating post-decision quality audit
-- flag repeated contributor-reviewer pairs
+- sample accepted work through offline quality analysis that creates no product
+  Review, decision, adjudication state, or authority
+- flag repeated contributor-reviewer pairs for operator investigation
 - require evidence citation on accept
-- track unsupported-decision quality signals
-- require independent non-mutating quality audits for high-value or disputed
-  tasks; they cannot delay or replace the recorded decision
+- record quality concerns as audit/operations evidence without overturning or
+  mutating the immutable Review
+- include high-value or disputed tasks in configurable offline samples; sampling
+  cannot delay or replace the recorded decision
 
 ### R12: Bad Project Guides
 
@@ -208,7 +216,8 @@ Mitigation:
 - project guides define banned low-quality patterns
 - checkers flag repeated boilerplate, placeholders, and fabricated helper artifacts
 - reviewers judge task-specific evidence, not formatting polish
-- repeated pattern matches affect contributor reputation
+- repeated pattern matches remain future reputation inputs only after separate
+  reputation implementation
 
 ### R14: Compensation Disputes
 

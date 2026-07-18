@@ -1,5 +1,12 @@
 # First User Flows
 
+## Status
+
+The review and revision portions are the planned v0.1 contract and remain
+unavailable until their owning REV chunks, exact AUTH activation, and REV-13
+joint release complete. Earlier project/task/submission/checker behavior keeps
+its separately recorded implementation status.
+
 The first user flows prove that Workstream can run real work from intake to acceptance. These flows come before any advanced routing or settlement.
 
 ## Flow 1: Project Manager Creates A Project
@@ -103,32 +110,41 @@ Acceptance:
 1. Checker runner validates the submission-stamped locked `PostSubmitCheckerPolicy` id/version/hash/body.
 2. Runner executes enabled checks from that locked policy body.
 3. Results are saved with `passed`, `warning`, or `failed`, plus severity, message, and evidence.
-4. If contributor-fixable blocking failures exist, task enters `NEEDS_REVISION`.
-5. If setup or provenance defects exist, the task stays in the internal operations queue.
-6. If no blocking failures exist, task enters `REVIEW_PENDING`.
+4. Contributor-fixable checker failures route the Task to `NEEDS_REVISION` with
+   `CheckerResult` lineage and no Review or reviewer contribution.
+5. Setup or provenance defects keep the Task `evaluation_pending` on the
+   internal `task_setup_blocked` repair route.
+6. Only a durable, final, current `CheckerRun` outcome of `allow_review` admits
+   the exact immutable Submission with verified binding facts and moves the
+   Task to `REVIEW_PENDING`.
 
 Acceptance:
 
-- Critical- or high-severity failure blocks human review.
+- A retry, superseded run, different Submission, non-final result, or outcome
+  other than `allow_review` cannot admit human review.
 - Warnings remain visible to reviewer.
 - Every checker result is timestamped.
 
 ## Flow 5: Reviewer Reviews Submission
 
-1. Reviewer opens review queue.
-2. Reviewer selects `REVIEW_PENDING` task.
-3. Reviewer reads guide, task, submission, evidence, and checker results.
-4. Reviewer enters structured findings.
+1. Reviewer current work returns an active lease, one server-selected offer, or none.
+2. Reviewer claims the offer and receives the exact ReviewPacketManifest.
+3. Reviewer reads the leased Submission's stamped guide context, evidence, and checker results.
+4. Reviewer enters immutable blocking/advisory findings where applicable.
 5. Reviewer selects accept, needs_revision, or reject.
-6. Workstream atomically creates the reviewer `completed_review` contribution;
-   `accept` also creates internal FinalAcceptance and then the submitter
-   `accepted_submission` contribution from that fact.
+6. Workstream atomically appends Review history, consumes the lease, closes the
+   queue entry, and runs the CON reviewer operation for `completed_review`.
+7. For `accept`, REV then creates internal FinalAcceptance, applies accepted
+   Task and completed Assignment effects, and runs the CON submitter operation
+   for `accepted_submission` from that fact.
 
 Acceptance:
 
 - Review cannot be submitted without a decision.
-- needs_revision and reject require at least one finding.
-- accept requires no unresolved critical- or high-severity checker failure.
+- needs_revision requires at least one blocking finding; reject requires a
+  bounded human reason and may include findings.
+- the leased Submission must retain its exact durable, final, current
+  `allow_review` CheckerRun admission and verified binding facts.
 - Every valid human decision has exactly one reviewer contribution.
 - Accept sets Task `accepted`, Assignment `completed`, and has exactly one
   FinalAcceptance and one submitter contribution.
@@ -140,40 +156,49 @@ Acceptance:
 - FinalAcceptance has no manual API/action and no adjudication/reopen path.
 - Only accept has a submitter contribution.
 
-## Flow 6: Revision Replay
+## Flow 6: Human Review Revision Replay
 
-1. Contributor opens needs-revision task.
-2. Workstream prepares revision context from the revision policy.
-3. Contributor sees prior guide/policy version, next guide/policy version, and any change summary when the task was rebased.
-4. Contributor sees each finding as a checklist item.
-5. Contributor adds fix note and evidence per finding.
+1. Contributor opens a needs-revision task rooted in an immutable
+   `Review(needs_revision)`.
+2. Workstream prepares immutable context from the currently active Project Guide.
+3. Exact prior identity/activation-sequence match keeps; any different valid
+   active pair rebases forward or backward; unsafe context blocks.
+4. Contributor sees the frozen preparation and each unresolved blocking finding.
+5. Contributor appends one SubmissionFindingResponse and optional evidence per required finding.
 6. Contributor resubmits.
 7. Checkers rerun.
-8. Reviewer closes or reopens each finding.
+8. Reviewer appends one FindingResolution per required prior finding.
+
+Checker-caused remediation is separate: it retains `CheckerResult` lineage,
+creates no Review, ReviewFinding, SubmissionFindingResponse, FindingResolution,
+or reviewer contribution, and returns through the normal submission/checker
+spine before human review.
 
 Acceptance:
 
 - Prior review remains visible.
 - Context changes are visible before the contributor revises.
-- Each required finding has a closure state.
+- Each required finding has an immutable response and later resolution.
 - Revision count is tracked against the locked revision policy.
-- Resubmission is blocked or rejected when the revision policy limit or deadline says so.
+- A reached limit/deadline blocks resubmission but never auto-rejects or
+  auto-closes the task; manager cancellation is a separate planned command.
 
-## Flow 7: Accepted Work Creates Submitter Contribution
+## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution
 
 1. Reviewer accepts task.
-2. Task enters `ACCEPTED`.
-3. The reviewer `completed_review` contribution already created with the Review
+2. The reviewer `completed_review` contribution created after the Review
    remains immutable.
-4. A submitter `accepted_submission` contribution is created from the accepted
-   submission, accepting review, frozen policy lineage, and artifact hash.
-5. The frozen reviewer and submitter contribution policies independently create
+3. REV creates immutable FinalAcceptance from the accepting Review.
+4. The Task enters `ACCEPTED` and the TaskAssignment becomes `completed`.
+5. The CON submitter operation creates `accepted_submission` only from
+   FinalAcceptance, TaskAssignment, frozen policy lineage, and artifact hash.
+6. The frozen reviewer and submitter contribution policies independently create
    applicable awards; explicit unpaid rules create none.
-6. Reputation and project projections update from the contribution records.
+7. External fulfillment runs after commit; reputation projection is deferred.
 
 Acceptance:
 
-- Accepted task cannot lack its submitter contribution record.
+- Accepted task cannot lack FinalAcceptance or its submitter contribution record.
 - Every accepted Review cannot lack its reviewer contribution record.
 - A payable contribution cannot lack its immutable CompensationAward and
   fulfillment projection; an explicit unpaid policy creates no award.

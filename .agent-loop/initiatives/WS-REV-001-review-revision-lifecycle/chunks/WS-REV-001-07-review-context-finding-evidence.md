@@ -50,10 +50,11 @@ production `/api/v1` review-router registration
   `review.decision`; the active owned lease and exact server-derived evidence
   scope are lifecycle/resource guards. Pre-intake denial creates no ART
   candidate, binding, or receipt.
-- Merged ART-02A2 is preparation-only and does not satisfy this chunk's ART
-  gate. REV imports no ART scratch/source implementation. Chunk start requires
-  ART v2 submission/checker cutovers, a separately approved and merged ART-owner
-  amendment for the currently unassigned narrow packet-read port, and a
+- Merged ART-02A2 supplies preparation and ART-02A3 supplies the byte-only v2
+  LocalStorage clean cut; neither satisfies this chunk's review-facing ART gate.
+  REV imports no ART scratch/source or raw-store implementation. Chunk start
+  requires ART submission/checker cutovers, a separately approved and merged
+  ART-owner amendment for the currently unassigned narrow packet-read port, and a
   separately approved/merged `WS-ART-001-REV-EVIDENCE` candidate/finalize
   capability with canonical ART facts, guards, orphan retention, and tests.
 - Binding finalization requires separately registered planned action
