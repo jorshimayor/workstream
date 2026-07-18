@@ -1,5 +1,12 @@
 # Operator Workflow
 
+## Status
+
+Existing project and task operations retain their owning implementation status.
+Review, revision, FinalAcceptance, and review-sourced contribution behavior
+below is planned and unavailable until its owning REV/CON chunks, exact AUTH
+activation, and REV-13 joint release complete.
+
 ## Roles
 
 ### Project Manager
@@ -45,7 +52,7 @@ Reads authorized immutable and operational evidence without mutation.
 1. Project Manager: check the covered-project task queue.
 2. Project Manager: create or release ready tasks under project lifecycle guards.
 3. Project Manager: assign tasks under project policy.
-4. Reviewer: review assigned checker-passed submission packets.
+4. Reviewer: consume current work as active lease, one server-selected offer, or none.
 5. Reviewer and Submitter: issue and respond to `needs_revision`; Project Manager
    observes the covered-project queue without recording either party's action.
 6. Finance Authority: reconcile contribution-policy, award, delivery, and
@@ -83,25 +90,29 @@ Reads authorized immutable and operational evidence without mutation.
 
 ## Revision Workflow
 
-1. Read every reviewer finding.
-2. Create fix summary per finding.
-3. Attach evidence per fix.
-4. Resubmit packet.
-5. Checker verifies prior revision closure.
-6. Reviewer confirms findings are closed.
+1. Read the frozen RevisionContextPreparation and every unresolved blocking finding.
+2. Append one SubmissionFindingResponse per required finding.
+3. Attach finalized evidence where needed.
+4. Resubmit against the exact preparation head/digest.
+5. The normal checker spine reruns.
+6. The later reviewer appends one FindingResolution per required finding.
 
 ## Acceptance Workflow
 
 1. Reviewer accepts submission.
-2. REV records the immutable Review and one internal FinalAcceptance for the
-   exact task, Submission, submitter, reviewer, and locked ReviewPolicy.
-3. Task moves to ACCEPTED and the TaskAssignment completes.
-4. Workstream records reviewer `completed_review` directly from Review and
-   submitter `accepted_submission` only from FinalAcceptance.
-5. Frozen contribution policies create awards only for payable contributions;
+2. REV appends the immutable Review and any submitted findings or resolutions,
+   consumes the ReviewLease, and closes the ReviewQueueEntry.
+3. CON records reviewer `completed_review` directly from Review and evaluates
+   the ReviewLease-frozen contribution policy.
+4. REV records one internal FinalAcceptance for the exact task, Submission,
+   submitter, reviewer, and locked ReviewPolicy.
+5. REV moves the task to ACCEPTED and completes the TaskAssignment.
+6. CON records submitter `accepted_submission` only from FinalAcceptance and
+   evaluates the TaskAssignment-frozen contribution policy.
+7. Frozen contribution policies create awards only for payable contributions;
    explicit unpaid rules create none.
-6. Reputation events are recorded from contribution facts.
-7. Finance Authority follows delivery and fulfillment only for created awards.
+8. Finance Authority follows post-commit delivery only for created awards.
+9. Reputation projection remains deferred.
 
 The Review request owns one commit for Review, FinalAcceptance, task effects,
 contributions, awards, audit, and outbox. There is no manual FinalAcceptance
@@ -114,14 +125,23 @@ command and no adjudication/reopen step in v0.1.
 3. REV sets the Task to canonical `rejected`, blocks only the same-task
    TaskAssignment, and binds that block to the reject Review. It changes no
    actor grant or unrelated task.
-4. Reputation event is recorded.
-5. The frozen reviewer contribution award rule determines whether the resulting
+4. The frozen reviewer contribution award rule determines whether the resulting
    `completed_review` contribution creates a `CompensationAward`; rejection
    creates no submitter `accepted_submission` contribution.
 
 For `needs_revision`, REV instead sets the Task to `needs_revision`, keeps the
 same TaskAssignment `active`, and creates no FinalAcceptance or submitter
 contribution. `closed/review_rejected` is not a canonical task state.
+
+## Planned Revision Recovery
+
+- A covered Project Manager may append a revision-context repair successor.
+- A covered Project Manager may explicitly cancel a reached limit/deadline
+  obligation; the system never auto-rejects it.
+- An Operator may close only an evidence-linked legacy revision with no
+  Review/root.
+- These commands remain unavailable until AUTH activation and REV-13. Operator
+  authority never records a human Review or adjudication decision.
 
 ## Lessons Learned
 

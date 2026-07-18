@@ -416,9 +416,7 @@ def test_evidence_must_reference_changed_chunk() -> None:
             else:
                 raise AssertionError("unreadable changed contract did not fail closed")
 
-            missing_relative = (
-                ".agent-loop/initiatives/example/chunks/missing.md"
-            )
+            missing_relative = ".agent-loop/initiatives/example/chunks/missing.md"
             try:
                 gate.required_chunk_ids([missing_relative])
             except RuntimeError:
@@ -435,9 +433,7 @@ def test_evidence_must_reference_changed_chunk() -> None:
             except RuntimeError:
                 pass
             else:
-                raise AssertionError(
-                    "dangling changed contract did not fail closed"
-                )
+                raise AssertionError("dangling changed contract did not fail closed")
 
             linked_target = chunks / "linked-target.md"
             linked_target.write_text(
@@ -453,9 +449,7 @@ def test_evidence_must_reference_changed_chunk() -> None:
             except RuntimeError:
                 pass
             else:
-                raise AssertionError(
-                    "resolvable symlink contract did not fail closed"
-                )
+                raise AssertionError("resolvable symlink contract did not fail closed")
 
             replacement = chunks / "WS-EXAMPLE-001-NEW-replacement.md"
             replacement.write_text(
@@ -4137,7 +4131,10 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
     assert "Merged through PR #143 as `053242b`" in auth_map
-    assert "`WS-AUTH-001-09C` - Actor And Identity-Link Administration Reads" in auth_status
+    assert (
+        "`WS-AUTH-001-09C` - Actor And Identity-Link Administration Reads"
+        in auth_status
+    )
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09A` | Merged |" in auth_status
@@ -4182,15 +4179,22 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         )
     elif selected_phase == artifact_phases[0]:
         assert selected_phase in work_queue
-        assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
-        assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
+        assert (
+            "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
+        )
+        assert (
+            "Current gate: complete all nine exact-SHA internal reviewer tracks"
+            in loop_state
+        )
     else:
         assert selected_phase in work_queue
-        assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
-            artifact_status.replace("\n", " ")
+        assert (
+            "The current gate is GitHub Actions, CodeRabbit, and explicit human review"
+            in (artifact_status.replace("\n", " "))
         )
-        assert "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit" in (
-            loop_state.replace("\n", " ")
+        assert (
+            "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit"
+            in (loop_state.replace("\n", " "))
         )
     assert "No\nlater artifact chunk starts automatically" in artifact_status
 
@@ -4401,6 +4405,351 @@ def test_stale_authorization_history_allowlist_is_exact() -> None:
     )
     assert "docs/review_architecture_review.md" not in gate.HISTORICAL_PATHS
     assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
+
+
+def test_stale_review_contract_rule_inventory_is_complete() -> None:
+    """Every prohibited review-contract category has an executable fixture."""
+    gate = load_module(
+        "stale_review_contract_rule_inventory",
+        "scripts/check_stale_review_contracts.py",
+    )
+    samples = {
+        "NON_CANONICAL_API_PREFIX": "POST /v1/reviews/decision",
+        "ACTIVE_FLOW_NODE_PROVIDER": "Flow Node is the production provider.",
+        "FULL_REVIEWER_BACKLOG": "Reviewer browses the complete review queue.",
+        "LEGACY_REVIEW_SEVERITY": "ReviewFinding uses high-severity.",
+        "LEGACY_FINDING_CLOSURE": "reviewer_closure_status: closed_fixed",
+        "POLICY_SELECTED_LATEST_REBASE": (
+            "Revision policy decides whether to use the latest active context."
+        ),
+        "REVIEWER_REBASE": "The reviewer performs a rebase before judgment.",
+        "SYNTHETIC_REJECT": "A revision deadline sets the task to rejected.",
+        "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION": (
+            "Acceptance creates the accepted_submission contribution."
+        ),
+        "AUTO_REJECT_REVISION_LIMIT": "auto_reject_after_limit: true",
+        "REJECT_REQUIRES_FINDING": "Reject requires one finding.",
+        "REVIEW_REPUTATION_SIDE_EFFECT": ("The review creates a reputation event."),
+        "ACTIVE_REPUTATION_LEDGER": "## Day 17: Reputation Ledger",
+        "UNCONDITIONAL_REVIEW_PAYMENT": ("Accepted work must have payment status."),
+        "ADJUDICATION_ACTIVATION_PROMISE": (
+            "Adjudication remains unavailable until enabled."
+        ),
+        "BROAD_REVIEW_BYPASS": ("An admin can override the review decision."),
+        "HUMAN_PRE_REVIEW_ADMISSION": (
+            "### Pre Review Gate\n\nOptional reviewer-simulation before review."
+        ),
+        "DISPUTED_REJECT_PATH": "Reviewer lead if disputed.",
+    }
+    assert set(samples) == {rule.code for rule in gate.RULES}
+    for code, sample in samples.items():
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(f": {code}") for failure in failures), code
+
+    assert not gate.scan_text(
+        "docs/spec_review_lifecycle.md",
+        "FinalAcceptance alone sources the submitter contribution.",
+    )
+    assert not gate.scan_text(
+        "docs/spec_review_lifecycle.md",
+        "No guide rebase occurs during review.",
+    )
+    assert not gate.scan_text(
+        "docs/glossary.md",
+        "## Reputation Ledger\n\nA future offline evidence concept.",
+    )
+    assert not gate.scan_text(
+        "docs/operations_payment_reputation.md",
+        "After the reviewer operation, Review(accept) first creates "
+        "FinalAcceptance, then applies accepted task effects.",
+    )
+    assert not gate.scan_text(
+        "docs/template_project_guide.md",
+        "RevisionPolicyInput.auto_reject_after_limit: false",
+    )
+    assert not gate.scan_text(
+        "docs/template_project_guide.md",
+        '{"auto_reject_after_limit": false}',
+    )
+    for sample in (
+        '{"auto_reject_after_limit": true}',
+        "auto_reject_after_limit = 1",
+        "`auto_reject_after_limit`: `yes`",
+    ):
+        failures = gate.scan_text("docs/template_project_guide.md", sample)
+        assert any(
+            failure.endswith(": AUTO_REJECT_REVISION_LIMIT") for failure in failures
+        )
+
+    adversarial_samples = {
+        "NON_CANONICAL_API_PREFIX": (
+            "The active production API is /v1/reviews, unlike the archival example."
+        ),
+        "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION": (
+            "Accept creates accepted_submission directly; FinalAcceptance is ignored."
+        ),
+        "REVIEWER_REBASE": (
+            "The reviewer should not delay and performs a rebase before judgment."
+        ),
+        "LEGACY_REVIEW_SEVERITY": "ReviewFinding severity: high",
+        "LEGACY_FINDING_CLOSURE": "resolution: closed / still open",
+        "AUTO_REJECT_REVISION_LIMIT": (
+            "The task automatically rejects after the revision limit."
+        ),
+        "REVIEW_REPUTATION_SIDE_EFFECT": (
+            "Accepted and rejected review reputation events are recorded."
+        ),
+        "UNCONDITIONAL_REVIEW_PAYMENT": ("No accepted task missing payment/evidence."),
+    }
+    for code, sample in adversarial_samples.items():
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(f": {code}") for failure in failures), code
+
+    for sample in (
+        "Accept creates FinalAcceptance only afterward and directly creates accepted_submission first.",
+        "Acceptance creates a FinalAcceptance audit row but directly creates the submitter contribution from Review.decision.",
+    ):
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(
+            failure.endswith(": DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION")
+            for failure in failures
+        )
+
+    for sample in (
+        "Reviewer never rebases old context, then rebases production context.",
+        "The reviewer must not perform a rebase in tests but performs a rebase in production.",
+    ):
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(": REVIEWER_REBASE") for failure in failures)
+
+
+def test_active_review_workflows_preserve_canonical_transaction_order() -> None:
+    """Operational workflows retain the normative accept transaction order."""
+    operator = (ROOT / "docs/operations_operator_workflow.md").read_text(
+        encoding="utf-8"
+    )
+    operator_accept = operator.split("## Acceptance Workflow", maxsplit=1)[1].split(
+        "## Rejection Workflow", maxsplit=1
+    )[0]
+    operator_markers = (
+        "REV appends the immutable Review",
+        "CON records reviewer `completed_review`",
+        "REV records one internal FinalAcceptance",
+        "REV moves the task to ACCEPTED",
+        "CON records submitter `accepted_submission`",
+    )
+    operator_positions = [operator_accept.index(item) for item in operator_markers]
+    assert operator_positions == sorted(operator_positions)
+
+    flows = (ROOT / "docs/product_first_user_flows.md").read_text(encoding="utf-8")
+    accepted_flow = flows.split(
+        "## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution",
+        maxsplit=1,
+    )[1]
+    flow_markers = (
+        "reviewer `completed_review` contribution",
+        "REV creates immutable FinalAcceptance",
+        "Task enters `ACCEPTED`",
+        "CON submitter operation creates `accepted_submission`",
+    )
+    flow_positions = [accepted_flow.index(item) for item in flow_markers]
+    assert flow_positions == sorted(flow_positions)
+
+    payment = (ROOT / "docs/operations_payment_reputation.md").read_text(
+        encoding="utf-8"
+    )
+    payment_principle = payment.split("## Compensation Principle", maxsplit=1)[1].split(
+        "## Compensation Status Projection", maxsplit=1
+    )[0]
+    payment_markers = (
+        "mandatory CON reviewer operation",
+        "creates REV-owned FinalAcceptance",
+        "sets the Task\nto `accepted` and the TaskAssignment to `completed`",
+        "runs the CON submitter\noperation",
+    )
+    payment_positions = [payment_principle.index(item) for item in payment_markers]
+    assert payment_positions == sorted(payment_positions)
+
+
+def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating() -> (
+    None
+):
+    """Submitted-work admission and terminal sampling cannot become hidden review."""
+    queue_policy = (ROOT / "docs/operations_queue_policy.md").read_text(
+        encoding="utf-8"
+    )
+    admission = queue_policy.split("### Checker Admission Gate", maxsplit=1)[1].split(
+        "### Review Pending", maxsplit=1
+    )[0]
+    assert "Mandatory automated admission" in admission
+    assert "durable, final, current `CheckerRun` outcome of `allow_review`" in admission
+    assert "human judgment begins only after admission" in admission
+    assert "reviewer-simulation" not in admission
+    assert "reviewer lead" not in admission
+    assert "quality lead" not in admission
+
+    flows = (ROOT / "docs/product_first_user_flows.md").read_text(encoding="utf-8")
+    checker_flow = flows.split("## Flow 4: Automated Checks Run", maxsplit=1)[1].split(
+        "## Flow 5: Reviewer Reviews Submission", maxsplit=1
+    )[0]
+    assert (
+        "durable, final, current `CheckerRun` outcome of `allow_review`" in checker_flow
+    )
+    assert "exact immutable Submission with verified binding facts" in checker_flow
+    assert "`evaluation_pending`" in checker_flow
+    assert "`task_setup_blocked`" in checker_flow
+    assert "Critical- or high-severity failure blocks human review" not in checker_flow
+
+    review_flow = flows.split("## Flow 5: Reviewer Reviews Submission", maxsplit=1)[
+        1
+    ].split("## Flow 6: Human Review Revision Replay", maxsplit=1)[0]
+    assert (
+        "exact durable, final, current\n  `allow_review` CheckerRun admission"
+        in review_flow
+    )
+    assert "verified binding facts" in review_flow
+
+    revision_flow = flows.split("## Flow 6: Human Review Revision Replay", maxsplit=1)[
+        1
+    ].split(
+        "## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution",
+        maxsplit=1,
+    )[0]
+    assert "`Review(needs_revision)`" in revision_flow
+    assert "Checker-caused remediation is separate" in revision_flow
+    assert "retains `CheckerResult` lineage" in revision_flow
+    checker_prohibitions = revision_flow.split("creates no ", maxsplit=1)[1].split(
+        "and returns through", maxsplit=1
+    )[0]
+    assert "Review, ReviewFinding" in checker_prohibitions
+    for prohibited_record in (
+        "SubmissionFindingResponse",
+        "FindingResolution",
+        "reviewer contribution",
+    ):
+        assert prohibited_record in checker_prohibitions
+
+    rejected = queue_policy.split("### Rejected", maxsplit=1)[1].split(
+        "### Compensation Fulfillment Follow-Up", maxsplit=1
+    )[0]
+    assert "non-mutating quality sampling only" in rejected
+    assert "cannot reopen, adjudicate, replace, or change" in rejected
+    assert "if disputed" not in rejected
+
+
+def test_stale_review_contract_classification_is_exact() -> None:
+    """Only exact supplied archives and reviewed history bypass active scanning."""
+    gate = load_module(
+        "stale_review_contract_classification",
+        "scripts/check_stale_review_contracts.py",
+    )
+    assert (
+        gate.classification(
+            "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md"
+        )
+        == "archival"
+    )
+    assert (
+        gate.classification(
+            "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md"
+        )
+        == "historical"
+    )
+    assert gate.classification("docs/reference_specs/WS-REV-001-copy.md") == (
+        "unclassified"
+    )
+    assert gate.classification("docs/spec_review_lifecycle.md") == "active"
+    assert gate.classification("docs/roadmap_status.md") == "active"
+    assert (
+        gate.classification("docs/operations_subagent_review_protocol.md")
+        == "non_product_review"
+    )
+
+
+def test_stale_review_contract_scan_excludes_only_exact_archives() -> None:
+    """Exact archives bypass rules and unknown reference documents fail closed."""
+    gate = load_module(
+        "stale_review_contract_archive_scan",
+        "scripts/check_stale_review_contracts.py",
+    )
+    original_active = gate.ACTIVE_PATHS
+    original_archival = gate.ARCHIVAL_PATHS
+    original_git_lines = gate.git_lines
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "docs/reference_specs").mkdir(parents=True)
+        (root / "docs/spec_review_lifecycle.md").write_text(
+            "Canonical /api/v1 contract.\n", encoding="utf-8"
+        )
+        (root / "docs/reference_specs/archive.md").write_text(
+            "POST /v1/reviews\n", encoding="utf-8"
+        )
+        (root / "docs/reference_specs/copy.md").write_text(
+            "copied archive\n", encoding="utf-8"
+        )
+
+        def fake_git_lines(_root: Path, *args: str) -> list[str]:
+            if args == ("ls-files",):
+                return [
+                    "docs/spec_review_lifecycle.md",
+                    "docs/reference_specs/archive.md",
+                    "docs/reference_specs/copy.md",
+                ]
+            if args == ("ls-files", "--others", "--exclude-standard"):
+                return []
+            raise AssertionError(args)
+
+        gate.ACTIVE_PATHS = {"docs/spec_review_lifecycle.md"}
+        gate.ARCHIVAL_PATHS = {"docs/reference_specs/archive.md"}
+        gate.git_lines = fake_git_lines
+        try:
+            assert gate.scan(root) == [
+                "docs/reference_specs/copy.md:0: UNCLASSIFIED_ACTIVE_DOCUMENT"
+            ]
+        finally:
+            gate.ACTIVE_PATHS = original_active
+            gate.ARCHIVAL_PATHS = original_archival
+            gate.git_lines = original_git_lines
+
+
+def test_stale_review_contract_discovery_includes_tracked_and_untracked() -> None:
+    """Modified/staged and newly added documents are both discovered."""
+    gate = load_module(
+        "stale_review_contract_discovery",
+        "scripts/check_stale_review_contracts.py",
+    )
+    original_git_lines = gate.git_lines
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "docs").mkdir()
+        (root / "docs/spec_review_lifecycle.md").write_text(
+            "active\n", encoding="utf-8"
+        )
+        (root / "docs/review_new.md").write_text("new\n", encoding="utf-8")
+
+        def fake_git_lines(_root: Path, *args: str) -> list[str]:
+            if args == ("ls-files",):
+                return ["docs/spec_review_lifecycle.md"]
+            if args == ("ls-files", "--others", "--exclude-standard"):
+                return ["docs/review_new.md"]
+            raise AssertionError(args)
+
+        gate.git_lines = fake_git_lines
+        try:
+            assert {
+                path.relative_to(root).as_posix() for path in gate.discover_paths(root)
+            } == {"docs/spec_review_lifecycle.md", "docs/review_new.md"}
+        finally:
+            gate.git_lines = original_git_lines
+
+
+def test_stale_review_contracts_run_fail_closed_in_agent_gates() -> None:
+    """The active repository scanner is a mandatory Agent Gates test."""
+    gate = load_module(
+        "stale_review_contract_current_repository",
+        "scripts/check_stale_review_contracts.py",
+    )
+    assert gate.scan(ROOT) == []
 
 
 def test_agent_gates_runs_stale_authorization_docs_fail_closed() -> None:
@@ -5502,6 +5851,13 @@ def main() -> int:
         test_stale_authorization_initiative_ratchet_is_position_scoped,
         test_stale_authorization_full_initiative_rules_ignore_changed_line_filter,
         test_stale_authorization_history_allowlist_is_exact,
+        test_stale_review_contract_rule_inventory_is_complete,
+        test_active_review_workflows_preserve_canonical_transaction_order,
+        test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating,
+        test_stale_review_contract_classification_is_exact,
+        test_stale_review_contract_scan_excludes_only_exact_archives,
+        test_stale_review_contract_discovery_includes_tracked_and_untracked,
+        test_stale_review_contracts_run_fail_closed_in_agent_gates,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
         test_agent_gate_dependencies_and_workflow_are_pinned,

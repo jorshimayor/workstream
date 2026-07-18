@@ -122,14 +122,16 @@ and expiry.
 
 ## ReviewPacketManifest
 
-The future WS-REV-owned, system-generated packet presented to an authorized
-reviewer. It references general artifact bindings and is not implemented by the
-WS-ART storage foundation.
+The planned immutable WS-REV semantic projection for one exact queue entry,
+active ReviewLease, Submission, admitting CheckerRun, stamped context, response
+evidence, and ART binding IDs. Only the exact active lease authorizes its packet
+bytes; authorized history exposes bounded metadata only.
 
 ## ReviewEvidenceArtifact
 
-The future WS-REV-owned reviewer attachment record. It references a verified
-general artifact binding and requires reviewer assignment/lease authority.
+The planned immutable WS-REV semantic relation from a lease/finding or
+preparation/response evidence slot to one ART-finalized binding. ART owns the
+bytes and binding; REV owns the lifecycle purpose and lineage.
 
 ## AdminRoleGrant
 
@@ -148,9 +150,10 @@ through separate active grants.
 The umbrella human product term for a person participating in Workstream. A
 contributor may have exact-project `submitter`, `reviewer`, and `adjudicator`
 grants as independent records. The adjudicator grant creates no adjudication
-capability in v0.1 and creates no review-lifecycle or release dependency.
-Celery, checker, setup, and background workers are internal services, not
-human product roles.
+capability in v0.1. A future separately approved initiative must define that
+lifecycle before AUTH registers and activates any exact action. Celery, checker,
+setup, and background workers are
+internal services, not human product roles.
 
 ## Source
 
@@ -219,9 +222,11 @@ A unit of work inside a project.
 
 ## Task Work Context
 
-The contributor-safe API projection of a task's locked guide, project summary,
-review policy, revision policy, and lifecycle state. It is read
-from the task's stamped locked context and does not expose source snapshot
+The contributor-safe API projection of a task's guide, project summary, review
+policy, revision policy, and lifecycle state. Initial work reads the task's
+locked context. Human-review revision reads the validated immutable
+RevisionContextPreparation head and digest, not a moving active-guide pointer.
+It does not expose source snapshot
 hashes, private source/import refs, compiled checker bundles, checker configs,
 Celery ids, or setup errors.
 
@@ -260,13 +265,60 @@ The set of required and warning checks for a project phase. Pre-submit checker p
 
 The judgment layer where a reviewer accepts, rejects, or requests revision.
 
-## Finding
+## ReviewQueueEntry
 
-A structured reviewer issue with severity, area, required fix, and evidence.
+The planned durable admission record connecting one exact finalized Submission
+and successful current CheckerRun to server-selected human-review routing.
+
+## ReviewLease
+
+The planned permanent identity of one reviewer claim attempt. It binds the
+canonical human reviewer, queue entry, exact Submission packet, lease timing,
+and independently frozen reviewer ContributionPolicyVersion.
+
+## Review
+
+The immutable result of one valid human decision under an active ReviewLease.
+Stored decisions are exactly `accept`, `needs_revision`, or `reject`. Later
+rounds append another Review rather than modifying history.
+
+## ReviewFinding
+
+A planned immutable structured issue submitted with a Review. Its lifecycle
+meaning is `blocking` or `advisory` and it carries area, required change,
+rationale, and optional finalized evidence.
+
+## SubmissionFindingResponse
+
+The immutable submitter response to one prior ReviewFinding, with response text
+and optional finalized evidence. Every unresolved blocking finding requires one
+response before revision submission.
+
+## FindingResolution
+
+The immutable later-review judgment for one prior finding and revised
+Submission: `resolved`, `unresolved`, or `not_applicable`, with bounded rationale
+and evidence.
+
+## RevisionContextPreparation
+
+The immutable Review-rooted next-attempt context. It records the prior
+Submission, source and target TaskAssignments, active Project Guide identity,
+version and activation sequence, frozen task-execution policies, context digest,
+change summary, and `kept`, `rebased`, or `blocked` result. A rebase records
+forward or backward direction.
+
+## FinalAcceptance
+
+The internal immutable accept-only fact linking one task, versioned Submission,
+source Review, accepted submitter, recording reviewer, time, and ReviewPolicy.
+It has no manual API or separate action and is the sole source of the submitter
+`accepted_submission` ContributionRecord.
 
 ## Revision Replay
 
-A resubmission record showing how each prior review finding was addressed.
+The complete immutable response and resolution history connecting a prior
+Review's findings to the next Submission and later Review.
 
 ## Evidence
 
@@ -274,11 +326,13 @@ Proof supporting task completion or review decision. Examples: logs, hashes, tes
 
 ## Artifact Store
 
-The provider-neutral typed capability through which Workstream stores and reads
-private immutable bytes. Its v0.1 byte-only operations are `put`, read-only
-`observe_put_result`, `open`, and `head`. `LocalStorageAdapter` implements it
-for development and focused tests. `S3CompatibleArtifactStore` implements it
-for MinIO integration and AWS S3 v0.1 production deployments. Providers do
+The provider-neutral ART v2 byte boundary beneath Workstream's typed product
+capabilities. Its v0.1 byte-only operations are `put`, read-only
+`observe_put_result`, `open`, and `head`; product services consume narrow typed
+capabilities rather than importing the raw store. `LocalStorageAdapter`
+implements it for development and focused tests.
+`S3CompatibleArtifactStore` implements it for MinIO integration and AWS S3
+v0.1 production deployments. Providers do
 not own Workstream authorization, binding, lifecycle, audit, or integrity
 decisions.
 
@@ -322,7 +376,8 @@ rules create no award.
 
 ## Reputation Ledger
 
-The outcome-based record of contributor and reviewer performance.
+The deferred outcome-based projection of contributor and reviewer performance.
+It is not a v0.1 review-transaction side effect.
 
 ## Contribution Record
 
@@ -331,8 +386,8 @@ project context. `completed_review` is created for every valid recorded human
 Review and binds directly to that Review and ReviewLease.
 `accepted_submission` is created only from FinalAcceptance and the exact
 TaskAssignment; it is never inferred directly from `Review.decision`.
-Compensation and reputation records may attach to either contribution type, but
-do not replace the contribution record.
+Compensation records may attach to either contribution type but do not replace
+the contribution record; reputation projections remain deferred.
 
 ## Final Acceptance
 

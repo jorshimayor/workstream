@@ -1,5 +1,11 @@
 # Implementation Backlog
 
+## Review Lifecycle Status
+
+Review/revision entries describe planned, unavailable v0.1 work. They become
+executable only through the approved WS-REV chunk order, exact AUTH activation,
+and REV-13 joint release; this backlog does not activate an endpoint or job.
+
 ## P0: Must Exist For v0.1
 
 ### Backend Foundation
@@ -91,38 +97,39 @@
 
 ### Review
 
-- review queue
+- reviewer current work: active lease, one server-selected offer, or none
 - accept decision
 - needs-revision decision
 - reject decision
-- structured findings
+- immutable blocking/advisory findings
 - required fix per finding
 - require evidence citation for accept decisions
 - prevent self-review and conflict-of-interest review
-- reviewer simulation gate for first-of-kind or high-value tasks
+- keep offline quality sampling separate from product decisions
 
 ### Revision Replay
 
 - create replay for resubmission
-- map each prior finding to a fix
-- require evidence per fix
-- reviewer closure status
+- append one immutable response for each unresolved blocking finding
+- append later `FindingResolution` values without editing the prior finding
+- prepare the next attempt from the active Project Guide using the deterministic
+  keep/forward-rebase/backward-rebase/block rule
 
 ### Compensation And Reputation
 
 - reviewer contribution generated for every valid human Review; `accept`
-  additionally creates the submitter contribution
-- compensation awards and reputation events reference the applicable
-  contribution record
+  additionally creates FinalAcceptance, which alone sources the submitter
+  contribution
+- compensation awards reference the applicable contribution record; reputation
+  remains a separate future consumer
 - pending award fulfillment dashboard
 - fulfilled status with immutable receipt and external reference
 - future compensation issue/dispute workflow kept outside the v0.1
   `CompensationStatusProjection`
 - new published `ContributionPolicyVersion` and `ContributionAwardDefinition`
   records for future amount changes; existing awards remain immutable
-- contributor reputation events
-- reviewer reputation events
-- reviewer-pair anomaly flags
+- reputation policy, events, and reviewer-pair anomaly behavior deferred to a
+  separately approved initiative
 - fast-accept-without-evidence flags
 
 ### Dashboards
@@ -139,7 +146,7 @@
 
 ## P1: Important After Core Loop Works
 
-- second-review assignment
+- separately approved future review-quality/adjudication workflow
 - reviewer disagreement tracking
 - registered Project Manager repair and Operator recovery controls
 - project guide approval workflow

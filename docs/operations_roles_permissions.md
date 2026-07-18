@@ -36,8 +36,8 @@ not permit claiming tasks, submitting work, or recording review decisions.
 | Grant | Scope | Purpose |
 |---|---|---|
 | Submitter | exact project | Minimal project read, queue/claim/start under task guards, own submission creation/read. |
-| Reviewer | exact project | Minimal project read, review queue/claim/release/decision under review guards. |
-| Adjudicator | exact project | Minimal project read; no adjudication capability until WS-REV defines the lifecycle and AUTH activates exact adjudication actions. |
+| Reviewer | exact project | Minimal project read and the planned server-selected current-work/claim/release/decision capabilities under exact review guards. |
+| Adjudicator | exact project | Minimal project read only; v0.1 has no adjudication lifecycle or action. |
 
 Contributor is the umbrella human product term. A contributor may hold
 independent exact-project Submitter, Reviewer, and Adjudicator grants. Celery,
@@ -63,7 +63,7 @@ or the exact project; own means record-level ownership still applies.
 | Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no | no |
 | Submission create/read | no | operational projection only | management projection only | no | read covered | own assignment | read-for-review only | no |
 | Human review decision | no | no | no without reviewer grant | no | no | no | exact project under review guards | no |
-| Adjudication action | no | no | no | no | no | no | no | unavailable; requires WS-REV contract plus AUTH action activation |
+| Adjudication action | no | no | no | no | no | no | no | unavailable in v0.1; future separate initiative |
 | Compensation award read and delivery reconciliation | no | no | no | covered | read covered | no | no | no |
 | Fulfillment result recording | no | no | no | no; authenticated WS-CON adapter callback only | read covered | no | no | no |
 | Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only | no |
@@ -104,12 +104,20 @@ Recovery is a separate, reasoned, audited path.
 | Submission gate repair | `operations.submission_gate.repair` | Operator |
 | Checker retry | `operations.checker.retry` | Operator |
 | Review lease force release | `review.lease.force_release` | Operator under WS-REV-001 |
+| Revision-context repair | `project.task.manage` via planned `review.revision_context.repair` | Covered Project Manager |
+| Revision-obligation close | `project.task.manage` via planned `review.revision_obligation.close` | Covered Project Manager |
+| Legacy revision close | `operations.reconcile.run` via planned `review.revision_context.legacy_close` | Operator |
+| Lifecycle release control | `operations.reconcile.run` via planned `review.lifecycle.activation.manage` | Operator |
 
 Every recovery mutation records the exact actor, matched grant/permission,
 project/resource, reason, bounded before/after state, request/correlation IDs,
 and immutable evidence. Recovery cannot erase checker results, rewrite
 submissions, create review decisions, alter contribution history, or bypass
 contribution award rules.
+
+The review/revision rows above are contract declarations, not active runtime
+capabilities. Their exact guards and release gates are defined in
+`docs/spec_review_lifecycle.md`; no review route is exposed before REV-13.
 
 ## Provisioning And Revocation
 

@@ -79,7 +79,8 @@ After the exact owning AUTH gates merge, WS-REV consumes:
 - one exact active project `reviewer` grant for human review. Separate
   `submitter`, `adjudicator`, and administrative grants never substitute, and
   revoking reviewer authority never mutates another grant;
-- AUTH-09B provisioning and AUTH-09E fixed-service admission for protected jobs.
+- exact REV identity extensions, controlled provisioning through merged
+  AUTH-09B, and AUTH-09E fixed-service admission for protected jobs.
   Preference expiry, lease
   expiry, reviewer-authority invalidation reconciliation, general review
   reconciliation, artifact-reference reconciliation, and projection rebuild
@@ -154,9 +155,11 @@ The four additive ActionIds and their closed mappings are registered together by
 and 12A; `WS-AUTH-001-REV-LIFECYCLE` later integrates their evaluators and
 activates them together. They add no PermissionId. The AUTH-08 runtime snapshot
 contained 57 actions: 9 active and 48 planned. That is historical provenance,
-not a fixed future total. Current trusted main after AUTH-09A contains 65
-actions: 9 active and 56 planned; its eight additions are unrelated to the 24
-unavailable REV dependencies.
+not a fixed future total. Current trusted main after AUTH-09C contains 65
+actions: 12 active and 53 planned. AUTH-09B activates
+`actor.service.provision`; AUTH-09C activates only `actor.profile.read` and
+`actor.identity_link.read`. Neither adds a REV identity or action, and all 24
+REV dependencies remain unavailable.
 WS-XINT-001 separately proposes
 `artifact.review_evidence.binding.create -> artifact.binding.create` for the
 ART binding service. Every later AUTH registration or activation chunk derives
@@ -178,19 +181,19 @@ merged and proven. WS-REV consumes:
 - stable verification/availability facts and deterministic projection storage;
 - LocalStorage and MinIO conformance with AWS S3 as production provider.
 
-Merged ART-02A2 PR #129 at trusted main
-`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
-`32aab89262a3944f305e9e5dc4c65a2d31e2e144`, establishes only the inactive
-committed-source and private scratch-preparation foundation. Its active
-ArtifactStore v1 state is not a REV interface: ART v2 must be the sole provider
-boundary before any REV artifact consumer starts. `ArtifactScratchManager`, `PreparedArtifact`, and
-`CommittedArtifactSource` are ART-internal preparation mechanics, not REV
-capabilities or durable product references; review code never imports or stores
-them. Later ART-owned v2, S3, submission/checker binding cutovers, admission,
+Merged ART-02A2 PR #129 established the committed-source/private-scratch
+foundation. Merged ART-02A3 PR #141 at trusted main
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, final branch head
+`7606798e751abf40218d23886779c3659b76e974`, removes v1 and activates the
+byte-only ART v2 LocalStorage clean cut and typed product capability boundary.
+`ArtifactScratchManager`, `PreparedArtifact`, `CommittedArtifactSource`, and the
+raw byte store are ART-internal mechanics, not REV capabilities or durable
+product references; review code never imports or stores them. Later ART-owned
+S3/MinIO, submission/checker binding cutovers, admission,
 verification/publication, packet read, evidence candidate/finalize, projection,
 and live-proof chunks remain hard gates. ART owns candidate retention and
-Operator recovery; REV does not consume v1 verify/retain/release, raw
-ArtifactStore, `artifact.binding.read`, or a generic artifact-retrieval action.
+Operator recovery; REV does not consume the raw store,
+`artifact.binding.read`, or a generic artifact-retrieval action.
 
 The current merged ART plan does not yet assign two other exact XINT
 requirements to an approved owner chunk: a narrow active-lease packet-read port
@@ -218,11 +221,15 @@ PermissionId substitutes.
 
 ### Contribution gate
 
-The merged WS-XINT `REV_CON_HANDOFF.md` remains the trusted-main boundary, with
-the human-approved 2026-07-17 amendment that `FinalAcceptance` is the sole
-submitter-acceptance source and REV, rather than CON, stages shared audit/outbox
-records. Any sibling WS-CON worktree remains discovery evidence until its owning
-contracts merge to trusted main.
+Merged CON-01 at `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9` publishes
+`docs/spec_contribution_compensation.md` and ADR 0016 as the canonical CON
+boundary. They require FinalAcceptance as the sole submitter-acceptance source,
+REV-owned decision orchestration and sole commit, ordered flush-only CON
+operations, and REV staging of shared audit/outbox inputs returned by CON. The
+older WS-XINT `REV_CON_HANDOFF.md` remains historical supporting handoff
+material; it no longer outranks the merged CON contract. CON-01 implements no
+runtime, so its later persistence, freeze, lineage, and participant chunks still
+gate canonical Review composition.
 
 The cross-initiative sequence is explicit:
 

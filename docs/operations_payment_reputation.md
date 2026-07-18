@@ -1,5 +1,12 @@
 # Compensation And Reputation
 
+## Status
+
+Existing compensation records retain their owning implementation status. The
+Review-, FinalAcceptance-, and revision-sourced behavior below is planned and
+unavailable until its owning REV/CON chunks, exact AUTH activation, and REV-13
+joint release complete. Reputation behavior is deferred entirely.
+
 ## Compensation Principle
 
 External fulfillment can be manual in the first version, but Workstream records
@@ -7,12 +14,14 @@ the authorized award and immutable fulfillment result with the same discipline
 as automated settlement.
 
 Every valid recorded human Review creates a reviewer `completed_review`
-contribution. `Review(accept)` first creates REV-owned FinalAcceptance; that
-immutable fact is the sole source of a submitter `accepted_submission`
-contribution. Compensation is evaluated independently for each record from its
-frozen policy version; an explicit unpaid rule creates no award. Awards,
-fulfillment receipts, projections, and reputation events attach to contributions
-and never replace them.
+contribution through the mandatory CON reviewer operation. After that operation,
+the `Review(accept)` branch creates REV-owned FinalAcceptance, then sets the Task
+to `accepted` and the TaskAssignment to `completed`, then runs the CON submitter
+operation. FinalAcceptance is the sole source of that submitter
+`accepted_submission` contribution. Compensation is evaluated independently
+for each record from its frozen policy version; an explicit unpaid rule creates
+no award. Awards, fulfillment receipts, and projections attach to contributions
+and never replace them. Reputation events are deferred.
 
 ## Compensation Status Projection
 
@@ -63,6 +72,8 @@ Default:
   award's frozen adapter binding
 - a fulfilled award requires an immutable receipt, exact quantity, and external
   reference
+- canonical Review, FinalAcceptance, contributions, and eligible awards commit
+  once; external fulfillment begins only after commit through the outbox
 
 Review decisions, FinalAcceptance, contribution recognition, award creation,
 and fulfillment remain separate facts. FinalAcceptance has no manual API/action
@@ -78,9 +89,13 @@ The dashboard must always show:
 - failed awards
 - fulfilled awards by instrument and unit
 
-## Reputation Principle
+## Deferred Reputation Principle
 
-Reputation is not a badge. It is an outcome ledger.
+Reputation policy, events, scoring, and projections are not implemented by the
+v0.1 review lifecycle. The review decision transaction writes no reputation
+side effect. The remaining sections are future product guidance only.
+
+When separately implemented, reputation is not a badge. It is an outcome ledger.
 
 It updates from:
 
@@ -107,7 +122,7 @@ Track:
 - skill-specific quality
 - compensation fulfillment reliability
 
-Suggested v0.1 contributor events:
+Possible future contributor events:
 
 | Event | Default Delta | Notes |
 | --- | ---: | --- |
@@ -123,24 +138,23 @@ Track:
 
 - completed reviews
 - decision distribution
-- non-mutating quality-audit findings
+- non-mutating offline quality-analysis findings
 - unclear feedback reports
 - average turnaround
-- quality-audit agreement
+- offline sampled-quality signals
 
-Suggested v0.1 reviewer events:
+Possible future reviewer events:
 
 | Event | Default Delta | Notes |
 | --- | ---: | --- |
 | clear_review | +2 | Structured findings or clear acceptance evidence. |
 | unclear_feedback | -2 | Finding lacks issue, evidence, or required fix. |
-| review_quality_audit_completed | 0 | Records that the decision evidence was independently sampled. |
-| review_quality_issue_flagged | -3 | Non-mutating audit found unsupported decision reasoning. |
+| sampled_quality_concern | -3 | Offline evidence flags review quality without changing the product decision. |
 | missed_prior_finding | -2 | Resubmission accepted with unresolved prior issue. |
 
-Quality-audit events may affect reputation only. They do not reopen Review,
-replace FinalAcceptance, mutate task status or contributions, or create an
-adjudication decision.
+These are future reputation inputs only. Sampling creates no product Review,
+decision, queue, lease, or adjudication state and cannot mutate existing review
+history.
 
 ## Skill Tags
 

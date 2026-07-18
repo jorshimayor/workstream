@@ -31,7 +31,10 @@ Projects and guides
 -> checker runs
 -> review and revision
 -> reviewer contribution for every valid Review
--> submitter contribution only on accept
+-> FinalAcceptance on accept only
+-> submitter contribution sourced only from FinalAcceptance
 -> conditional compensation award and fulfillment status
--> reputation event
 ```
+
+Reputation remains a future separate consumer and is not written by the v0.1
+review lifecycle.
