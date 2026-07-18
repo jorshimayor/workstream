@@ -1894,6 +1894,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "updated_at",
             "last_seen_at",
             "suspended_at",
+            "reactivated_at",
             "deactivated_at",
         }
         link_fields = {

@@ -40,6 +40,10 @@ from app.modules.authorization.lifecycle_schemas import (
     ActorLifecycleBody,
     ActorLifecycleMutationResponse,
 )
+from app.modules.authorization.lifecycle_service import (
+    ActorLifecycleConflict,
+    ActorLifecycleService,
+)
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
     ACTION_DEFINITIONS,
@@ -1039,6 +1043,214 @@ async def test_actor_profile_lifecycle_kernel_guards_self_pairing_and_disclosure
         "resource_guard_denied",
         "actor_not_found",
     ]
+
+
+def _actor_lifecycle_decision(
+    request: ActorProfileSuspendRequest | ActorProfileReactivateRequest,
+    *,
+    existing: bool,
+) -> AuthorizationDecision:
+    action = {
+        AuthorityOperation.ACTOR_PROFILE_SUSPEND: ActionId.ACTOR_PROFILE_SUSPEND,
+        AuthorityOperation.ACTOR_PROFILE_REACTIVATE: ActionId.ACTOR_PROFILE_REACTIVATE,
+    }[request.operation]
+    permission = {
+        AuthorityOperation.ACTOR_PROFILE_SUSPEND: PermissionId.ACTOR_PROFILE_SUSPEND,
+        AuthorityOperation.ACTOR_PROFILE_REACTIVATE: PermissionId.ACTOR_PROFILE_REACTIVATE,
+    }[request.operation]
+    transition = {
+        AuthorityOperation.ACTOR_PROFILE_SUSPEND: "suspend",
+        AuthorityOperation.ACTOR_PROFILE_REACTIVATE: "reactivate",
+    }[request.operation]
+    resource = ActorProfileLifecycleResourceContext(
+        resource_type="actor_profile",
+        resource_id=request.actor_profile_id,
+        transition=transition,
+        existing_idempotency_record=existing,
+    )
+    return AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=action,
+        permission_id=permission,
+        allowed=True,
+        denial_code=None,
+        resource_type="actor_profile",
+        resource_id=request.actor_profile_id,
+        resource_context_digest=authorization_resource_digest(resource),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=uuid4(),
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+
+
+async def test_actor_lifecycle_service_rejects_crossed_reason_and_missing_target() -> None:
+    target, caller = uuid4(), uuid4()
+    reason = "Bounded suspension reason"
+    request = ActorProfileSuspendRequest(
+        operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+        actor_profile_id=target,
+        reason_digest=derive_reason_digest(reason),
+    )
+    decision = _actor_lifecycle_decision(request, existing=False)
+    service = ActorLifecycleService(object())  # type: ignore[arg-type]
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(caller),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+
+    with pytest.raises(TypeError, match="exact matched authority"):
+        await service.complete(
+            claim=claim,
+            request=request,
+            decision=decision.model_copy(update={"revalidated": False}),
+            actor_profile_id=caller,
+            reason=reason,
+        )
+    with pytest.raises(TypeError, match="reason digest changed"):
+        await service.complete(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=caller,
+            reason="Substituted reason",
+        )
+
+    class MissingTargetRepository:
+        async def lock_actor_lifecycle_target(self, _actor_profile_id):
+            return None
+
+    service._repository = MissingTargetRepository()  # type: ignore[assignment]
+    with pytest.raises(RuntimeError, match="target disappeared"):
+        await service.complete(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=caller,
+            reason=reason,
+        )
+
+
+async def test_actor_lifecycle_service_applies_success_and_guards_conflicts() -> None:
+    target, caller = uuid4(), uuid4()
+    reason = "Apply exact profile suspension"
+
+    class Session:
+        flushed = 0
+
+        async def flush(self):
+            self.flushed += 1
+
+    class Repository:
+        def __init__(self, profile):
+            self.profile = profile
+
+        async def lock_actor_lifecycle_target(self, _actor_profile_id):
+            return SimpleNamespace(status="active"), self.profile, None
+
+        async def count_effective_access_administrators(self):
+            return 1
+
+    class Mutation:
+        completed = None
+
+        async def complete(self, **kwargs):
+            self.completed = kwargs
+
+    session = Session()
+    profile = SimpleNamespace(
+        actor_kind="human",
+        status="active",
+        suspended_by=None,
+        suspended_at=None,
+        suspension_reason=None,
+        reactivated_by=None,
+        reactivated_at=None,
+        reactivation_reason=None,
+        deactivated_by=None,
+        deactivated_at=None,
+        deactivation_reason=None,
+    )
+    repository = Repository(profile)
+    mutation = Mutation()
+    service = ActorLifecycleService(session)  # type: ignore[arg-type]
+    service._repository = repository  # type: ignore[assignment]
+    service._mutation = mutation  # type: ignore[assignment]
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(caller),
+        operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+        request_digest=DIGEST,
+    )
+    request = ActorProfileSuspendRequest(
+        operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+        actor_profile_id=target,
+        reason_digest=derive_reason_digest(reason),
+    )
+    decision = _actor_lifecycle_decision(request, existing=False)
+
+    response = await service.complete(
+        claim=claim,
+        request=request,
+        decision=decision,
+        actor_profile_id=caller,
+        reason=reason,
+    )
+    assert response.resource_id == target
+    assert session.flushed == 1
+    assert profile.status == "suspended"
+    assert profile.suspended_by == str(caller)
+    assert profile.suspension_reason == reason
+    assert mutation.completed["success"].before_facts == {"status": "active"}
+    assert mutation.completed["success"].after_facts == {"status": "suspended"}
+
+    reactivate = ActorProfileReactivateRequest(
+        operation=AuthorityOperation.ACTOR_PROFILE_REACTIVATE,
+        actor_profile_id=target,
+        reason_digest=derive_reason_digest("Reactivate active target"),
+    )
+    profile.status = "active"
+    with pytest.raises(ActorLifecycleConflict) as not_suspended:
+        await service.complete(
+            claim=claim.model_copy(update={"operation": reactivate.operation}),
+            request=reactivate,
+            decision=_actor_lifecycle_decision(reactivate, existing=False),
+            actor_profile_id=caller,
+            reason="Reactivate active target",
+        )
+    assert not_suspended.value.code == "actor_not_suspended"
+
+    assert (
+        await service._conflict(
+            request,
+            SimpleNamespace(actor_kind="human", status="active"),
+            "active",
+            True,
+        )
+        == "last_access_administrator"
+    )
+    crossed = decision.model_copy(update={"revalidated": False})
+    with pytest.raises(TypeError, match="mismatch requires exact authority"):
+        await service.record_mismatch(
+            actor_profile_id=caller,
+            request=request,
+            decision=crossed,
+        )
+    with pytest.raises(TypeError, match="conflict requires exact authority"):
+        await service.record_conflict(
+            actor_profile_id=caller,
+            request=request,
+            decision=crossed,
+            code="actor_already_suspended",
+        )
 
 
 async def test_admin_kernel_conceals_targets_until_permission_and_scope_match() -> None:

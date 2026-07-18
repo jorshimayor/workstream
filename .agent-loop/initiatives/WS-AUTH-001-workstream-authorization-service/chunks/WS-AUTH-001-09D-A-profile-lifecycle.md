@@ -286,8 +286,11 @@ profile/grant state. PostgreSQL blockers, never timing sleeps, establish order.
   .venv/bin/python scripts/run_isolated_tests.py \
   --metadata-json "$metadata_dir/actor-coverage.json" --timeout-seconds 3600 -- \
   bash -lc '.venv/bin/coverage erase && .venv/bin/coverage run --branch \
-  --source=app/modules/actors -m pytest -q tests/test_actors.py tests/test_auth.py \
-  -k "actor_profile_lifecycle" && \
+  --source=app/modules/actors -m pytest -q \
+  tests/test_actor_legacy_classification.py tests/test_actor_migration_tools.py \
+  tests/test_actors.py \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_matrix \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_concurrency && \
   .venv/bin/coverage report --precision=2 --fail-under=90')
 (metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
   cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
@@ -295,7 +298,14 @@ profile/grant state. PostgreSQL blockers, never timing sleeps, establish order.
   --metadata-json "$metadata_dir/authorization-coverage.json" --timeout-seconds 3600 -- \
   bash -lc '.venv/bin/coverage erase && .venv/bin/coverage run --branch \
   --source=app/modules/authorization -m pytest -q tests/test_authorization.py \
-  tests/test_auth.py -k "actor_profile_lifecycle or admin_role" && \
+  tests/test_auth.py::test_signed_flow_token_authorizes_actor_self_read_and_update \
+  tests/test_auth.py::test_signed_tokens_bootstrap_and_admin_grant_lifecycle \
+  tests/test_auth.py::test_admin_bootstrap_replay_and_cross_revoke_are_concurrency_safe \
+  tests/test_auth.py::test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure \
+  tests/test_auth.py::test_controlled_service_actor_provisioning_is_atomic_private_and_concurrent \
+  tests/test_auth.py::test_service_actor_provisioning_failure_and_authority_races_are_atomic \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_matrix \
+  tests/test_auth.py::test_actor_profile_lifecycle_real_postgres_concurrency && \
   .venv/bin/coverage report --precision=2 --fail-under=90')
 (metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
   cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
