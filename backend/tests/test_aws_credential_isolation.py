@@ -567,6 +567,16 @@ def test_web_identity_sts_client_ignores_ambient_proxy_environment(
 
 
 async def test_resolved_workload_identity_method_must_match() -> None:
+    materialized: list[str] = []
+
+    class FakeCredentials:
+        def __init__(self, method: str) -> None:
+            self.method = method
+
+        async def get_frozen_credentials(self) -> object:
+            materialized.append(self.method)
+            return SimpleNamespace(access_key="access", secret_key="secret", token=None)
+
     class FakeSession:
         def __init__(self, method: str | None) -> None:
             self._method = method
@@ -574,7 +584,7 @@ async def test_resolved_workload_identity_method_must_match() -> None:
         async def get_credentials(self) -> object | None:
             if self._method is None:
                 return None
-            return SimpleNamespace(method=self._method)
+            return FakeCredentials(self._method)
 
     with pytest.raises(
         ArtifactConfigurationError,
@@ -599,6 +609,38 @@ async def test_resolved_workload_identity_method_must_match() -> None:
         expected_method="container-role",
     )
     assert getattr(resolved, "method") == "container-role"
+    assert materialized == ["container-role"]
+
+
+async def test_workload_identity_materialization_failure_is_sanitized() -> None:
+    secret = "deferred-credential-secret"
+
+    class DeferredCredentials:
+        method = "container-role"
+
+        async def get_frozen_credentials(self) -> object:
+            raise RuntimeError(f"credential refresh returned {secret}")
+
+    class FakeSession:
+        async def get_credentials(self) -> object:
+            return DeferredCredentials()
+
+    with pytest.raises(
+        ArtifactConfigurationError,
+        match="AWS workload identity credentials could not be resolved",
+    ) as caught:
+        await s3_compatible.resolve_isolated_aws_workload_credentials(
+            FakeSession(),  # type: ignore[arg-type]
+            expected_method="container-role",
+        )
+
+    assert caught.value.__cause__ is None
+    assert caught.value.__context__ is None
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.adapters.artifacts.s3_compatible",),
+    )
 
 
 async def test_credential_resolution_failure_is_sanitized() -> None:

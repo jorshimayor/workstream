@@ -1162,6 +1162,10 @@ def test_s3_prefix_validation_rejects_noncanonical_outer_bounds(value: object) -
 
 def test_minio_endpoint_canonicalization_handles_ipv6_and_invalid_ports() -> None:
     assert canonical_minio_endpoint("HTTP://[::1]:9000/") == "http://[::1]:9000"
+    assert (
+        canonical_minio_endpoint("http://[0:0:0:0:0:0:0:1]:9000")
+        == "http://[::1]:9000"
+    )
     with pytest.raises(ValueError, match="endpoint is invalid"):
         canonical_minio_endpoint("http://localhost:not-a-port")
 

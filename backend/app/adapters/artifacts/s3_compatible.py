@@ -789,6 +789,7 @@ class _CommittedSourceBody:
         self._consumed = False
         self._complete = False
         self._iterator: AsyncIterator[bytes] | None = None
+        self._source_cursor: memoryview | None = None
         self._pending = bytearray()
         self._digest = hashlib.sha256()
         self._byte_count = 0
@@ -824,16 +825,22 @@ class _CommittedSourceBody:
         if self._iterator is None:
             self._iterator = self._source.stream()
         while len(self._pending) < requested:
-            try:
-                source_chunk = await anext(self._iterator)
-            except StopAsyncIteration:
-                self._finish()
-                break
-            if not isinstance(source_chunk, bytes):
-                raise ArtifactInputMismatchError("artifact source must yield bytes")
-            self._pending.extend(source_chunk)
-            if len(self._pending) > self._buffer_bytes + requested:
-                break
+            if self._source_cursor is None:
+                try:
+                    source_chunk = await anext(self._iterator)
+                except StopAsyncIteration:
+                    self._finish()
+                    break
+                if not isinstance(source_chunk, bytes):
+                    raise ArtifactInputMismatchError("artifact source must yield bytes")
+                self._source_cursor = memoryview(source_chunk)
+                if not self._source_cursor:
+                    self._source_cursor = None
+                    continue
+            needed = requested - len(self._pending)
+            copied = min(needed, len(self._source_cursor))
+            self._pending.extend(self._source_cursor[:copied])
+            self._source_cursor = self._source_cursor[copied:] or None
         chunk = bytes(self._pending[:requested])
         del self._pending[:requested]
         self._byte_count += len(chunk)
@@ -862,6 +869,10 @@ class _CommittedSourceBody:
 
     async def _require_source_exhausted(self) -> None:
         """Prove EOF before returning the final committed byte to the SDK."""
+        if self._source_cursor:
+            raise ArtifactInputMismatchError(
+                "artifact source exceeds committed byte count"
+            )
         if self._iterator is None:
             self._iterator = self._source.stream()
         while True:
@@ -1124,6 +1135,16 @@ async def resolve_isolated_aws_workload_credentials(
         ) from None
     if credentials is None or getattr(credentials, "method", None) != expected_method:
         raise ArtifactConfigurationError("AWS workload identity method did not match")
+    materialization_failed = False
+    try:
+        await credentials.get_frozen_credentials()
+    except Exception:
+        materialization_failed = True
+    if materialization_failed:
+        del credentials
+        raise ArtifactConfigurationError(
+            "AWS workload identity credentials could not be resolved"
+        ) from None
     return credentials
 
 

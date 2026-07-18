@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import ipaddress
 import re
 from urllib.parse import urlsplit
 
@@ -90,6 +91,10 @@ def _try_canonical_minio_endpoint(value: object) -> str | None:
     scheme = parsed.scheme.lower()
     hostname = parsed.hostname.lower()
     if ":" in hostname:
+        try:
+            hostname = ipaddress.IPv6Address(hostname).compressed
+        except ipaddress.AddressValueError:
+            return None
         hostname = f"[{hostname}]"
     if port is not None and port != {"http": 80, "https": 443}[scheme]:
         hostname = f"{hostname}:{port}"

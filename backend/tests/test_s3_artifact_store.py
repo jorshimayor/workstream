@@ -268,6 +268,37 @@ def test_namespace_claim_mismatch_fails_before_provider_io() -> None:
         bootstrap.initialize_after_namespace_claim(wrong)
 
 
+async def test_committed_body_keeps_large_source_chunks_out_of_pending_buffer() -> None:
+    """Retain unconsumed source bytes by view while bounding copied request bytes."""
+    content = b"0123456789abcdef"
+    commitment = ArtifactCommitment(
+        sha256=f"sha256:{hashlib.sha256(content).hexdigest()}",
+        byte_count=len(content),
+        media_type="application/octet-stream",
+    )
+
+    class Source:
+        def __init__(self) -> None:
+            self.commitment = commitment
+
+        def stream(self) -> AsyncIterator[bytes]:
+            async def iterate() -> AsyncIterator[bytes]:
+                yield content
+
+            return iterate()
+
+    body = s3_module._CommittedSourceBody(Source(), 4)  # type: ignore[arg-type]  # noqa: SLF001
+
+    assert await body.read(4) == b"0123"
+    assert len(body._pending) == 0  # noqa: SLF001
+    assert body._source_cursor is not None  # noqa: SLF001
+    assert len(body._source_cursor) == 12  # noqa: SLF001
+    assert await body.read(4) == b"4567"
+    assert await body.read(4) == b"89ab"
+    assert await body.read(4) == b"cdef"
+    assert body.complete is True
+
+
 async def raw_minio_put(key: str, content: bytes) -> None:
     """Publish adversarial integration bytes outside the Workstream adapter."""
     session = AioSession()

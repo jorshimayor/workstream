@@ -22,6 +22,8 @@ def assert_secret_not_retained(
     seen.add(id(value))
     if isinstance(value, str):
         assert secret not in value
+    elif isinstance(value, (bytes, bytearray, memoryview)):
+        assert secret.encode("utf-8") not in bytes(value)
     elif isinstance(value, SecretStr):
         assert secret not in value.get_secret_value()
     elif isinstance(value, BaseException):
@@ -60,6 +62,21 @@ def assert_secret_not_retained(
             )
             assert_secret_not_retained(
                 item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+    elif isinstance(getattr(value, "__dict__", None), Mapping):
+        assert_secret_not_retained(
+            vars(value),
+            secret,
+            seen,
+            traceback_module_prefixes=traceback_module_prefixes,
+        )
+        private = getattr(value, "__pydantic_private__", None)
+        if isinstance(private, Mapping):
+            assert_secret_not_retained(
+                private,
                 secret,
                 seen,
                 traceback_module_prefixes=traceback_module_prefixes,
