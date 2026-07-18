@@ -206,11 +206,13 @@ contribution, compensation-award, or reputation effect.
 ## Shared Adapter Convention
 
 Artifact storage follows ADR 0014. `LocalStorageAdapter` and
-`S3CompatibleArtifactStore` are explicitly registered through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Only artifact-storage
-orchestration receives the writable port through composition-root dependency
-injection. Product modules and Celery jobs receive typed artifact
-ingest/read/materialization operations instead.
+`S3CompatibleArtifactStore` are reached through explicitly registered,
+non-mutating `ArtifactStoreBootstrap` implementations in
+`ExternalServiceAdapterFactory[ArtifactStoreBootstrap]`. The composition root
+claims the bootstrap's exact namespace in PostgreSQL before initialization
+yields the byte-only `ArtifactStore`. Only artifact-storage orchestration
+receives that writable port. Product modules and Celery jobs receive typed
+artifact ingest/read/materialization operations instead.
 
 There is no service locator, runtime plugin discovery, concrete-adapter import
 in product services, fallback constructor, compatibility alias, or dual factory
@@ -220,12 +222,14 @@ path.
 
 The existing ArtifactStore v1 provider `verify`, `retain`, `release`, and
 receipt methods are removed in the same chunk that migrates LocalStorage and
-all active callers. The dormant `flow_node` backend setting is removed. The new
+all active callers. The dormant Flow Node backend setting is removed. The new
 backend values are exactly `disabled`, `local`, and `s3_compatible`.
 
-Pre-production rows may be rebuilt when obsolete URI/hash or provider-retention
-contracts cannot be derived from authoritative stored bytes. No alias, fake
-verified backfill, nullable shadow field, dual write, or fallback remains.
+Migration `0025` refuses populated v1 artifact tables before DDL and preserves
+their prior schema and rows. An empty pre-production environment may be
+reprovisioned out of band and authoritative bytes reingested through v2; the
+migration performs no automated rebuild or fabricated backfill. No alias,
+nullable shadow field, dual write, or fallback remains.
 
 ## Review Boundary
 

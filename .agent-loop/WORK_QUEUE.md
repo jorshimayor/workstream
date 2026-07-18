@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Implemented; deterministic evidence and exact-head internal review passed; PR publication pending |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | PR #146 open; CodeRabbit repair passed focused proof; exact-head repair review completing |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -17,7 +17,6 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Reviewed in isolated parallel worktree; pending its own PR and merge |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
 | `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
 | `WS-ART-001-02C2` | Verification Publication And Fencing | L1 | Inactive until 02C1 merge and explicit user start |
@@ -73,10 +72,12 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-08` | Bootstrap Access Administrator Grant | L1 | Merged through PR #131 as `aa0fdcd` on 2026-07-16 |
 | `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Merged through PR #132 as `299363a` on 2026-07-17 |
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Merged through PR #143 as `053242b` on 2026-07-17 |
-| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
 | `WS-XINT-001-PLAN` | Lifecycle Boundary Reconciliation | L1 | Merged through PR #139 as `5d353b6` on 2026-07-17 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Merged through PR #127 as `f64a8e5` on 2026-07-15 |
+| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Merged through PR #141 as `a10d901` on 2026-07-18 |
+| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Merged through PR #140 as `d541521` on 2026-07-17 |
 | `WS-ENG-001-02` | Automated Post-Merge Memory | L1 | Merged through PR #122 as `fc89fb6`; schema-v1 output superseded by WS-ENG-001-03 |
 
 ## Proposed Next
@@ -87,16 +88,17 @@ AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
 merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
 and its AUTH owner reconciliation merged through PR #140 as `d541521`.
 AUTH-09A merged through PR #132 as `299363a`, and signed schema-v2 memory
-stopped. The user explicitly started AUTH-09B. Do not start AUTH-09C or
+stopped. AUTH-09B merged through PR #143 as `053242b`. Do not start AUTH-09C or
 POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
-`WS-ART-001-01`, the AWS-first planning amendment, and `02A1` are merged. R2
-and Flow Node are deferred. `02A2` merged through PR #129 as `9a04434`.
-`02A3` is reviewed in its isolated worktree and awaits its own PR publication
-and human review; later ART chunks remain inactive.
+`WS-ART-001-01`, the AWS-first planning amendment, `02A1`, and `02A2` are
+merged. R2 and Flow Node are deferred. The user explicitly started `02A3` on
+2026-07-16. Its merged-main deterministic proof and exact-SHA internal review
+are complete; external checks remain pending and `02B1` must not start
+automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

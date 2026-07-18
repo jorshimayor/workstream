@@ -46,7 +46,7 @@ ARTIFACT_COVERAGE_ORDER = (
 FOUNDATION_ARTIFACT_COVERAGE_COMMAND = (
     "coverage report "
     "--include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,"
-    "app/interfaces/artifacts.py,"
+    "app/interfaces/artifact_operations.py,app/interfaces/artifacts.py,"
     "app/modules/artifacts/*' --precision=2 --fail-under=90"
 )
 ARTIFACT_COVERAGE_COMMAND_OWNERS = {
@@ -4114,7 +4114,7 @@ def test_auth_spec_orders_service_admission_before_project_roles() -> None:
 
 
 def test_parallel_initiative_status_matches_trusted_main() -> None:
-    """Auth and artifact maps cannot regress already merged prerequisites."""
+    """Auth prerequisites and the current ART gate remain internally consistent."""
     auth_map = Path(
         ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
         "CHUNK_MAP.md"
@@ -4128,6 +4128,12 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     artifact_status = Path(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/STATUS.md"
     ).read_text(encoding="utf-8")
+    artifact_contract = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
+        "WS-ART-001-02A3-artifact-store-v2-local-clean-cut.md"
+    ).read_text(encoding="utf-8")
+    work_queue = Path(".agent-loop/WORK_QUEUE.md").read_text(encoding="utf-8")
+    loop_state = Path(".agent-loop/LOOP_STATE.md").read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
     assert "Merged through PR #143 as `053242b`" in auth_map
@@ -4138,12 +4144,34 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09B` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09C` | In review |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
-    assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
-    assert "No artifact implementation chunk is active." in artifact_status
-    assert (
-        "`WS-ART-001-02A3` implementation\nand review are complete" in artifact_status
+    artifact_phases = (
+        "Deterministic proof passed; exact-SHA internal review in progress",
+        "Internal review and deterministic evidence passed; external checks pending",
     )
-    assert "PR #129 merged `WS-ART-001-02A2` as `9a04434`" in artifact_status
+    selected_phases = [phase for phase in artifact_phases if phase in artifact_map]
+    assert len(selected_phases) == 1
+    selected_phase = selected_phases[0]
+    assert selected_phase in work_queue
+    assert f"Status: {selected_phase}" in artifact_contract
+    assert (
+        "AUTH's owner reconciliation merged through PR #140 as\n"
+        "`d541521`" in artifact_status
+    )
+    assert (
+        "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
+        "complete" in artifact_status
+    )
+    if selected_phase == artifact_phases[0]:
+        assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
+        assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
+    else:
+        assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
+            artifact_status.replace("\n", " ")
+        )
+        assert "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit" in (
+            loop_state.replace("\n", " ")
+        )
+    assert "No\nlater artifact chunk starts automatically" in artifact_status
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
@@ -4552,25 +4580,25 @@ def test_artifact_coverage_phase_is_derived_from_work_queue() -> None:
         ROOT = original_root
 
 
-def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> None:
-    """Foundation checks generic neutrality without preempting later cutovers."""
+def test_stale_artifact_contracts_cutover_rejects_reached_terms_only() -> None:
+    """The active cutover rejects reached terms without preempting later phases."""
     gate = load_module(
         "stale_artifact_contracts_foundation",
         "scripts/check_stale_artifact_contracts.py",
     )
-    assert gate.ARTIFACT_CONTRACT_PHASE == "foundation"
+    assert gate.ARTIFACT_CONTRACT_PHASE == "artifact_store_cutover"
     assert (
         gate.scan_text(
             "backend/app/modules/tasks/schemas.py",
             "package_uri content_cid artifact_manifest_hash",
-            "foundation",
+            gate.ARTIFACT_CONTRACT_PHASE,
         )
         == []
     )
     failures = gate.scan_text(
         "contracts/artifact-store/version_1/schema/example.json",
         '{"cid": "provider-specific"}',
-        "foundation",
+        gate.ARTIFACT_CONTRACT_PHASE,
     )
     assert failures == [
         "contracts/artifact-store/version_1/schema/example.json:1: "
@@ -5458,7 +5486,7 @@ def main() -> int:
         test_agent_gate_dependencies_and_workflow_are_pinned,
         test_backend_coverage_thresholds_are_regression_protected,
         test_artifact_coverage_phase_is_derived_from_work_queue,
-        test_stale_artifact_contracts_foundation_keeps_later_terms_inactive,
+        test_stale_artifact_contracts_cutover_rejects_reached_terms_only,
         test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms,
         test_stale_artifact_contracts_malformed_phase_fails_closed,
         test_stale_artifact_contracts_enforce_aws_first_v01,
