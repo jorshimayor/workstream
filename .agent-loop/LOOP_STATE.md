@@ -24,7 +24,7 @@
   editing or activating their independently owned runtime behavior.
 - AUTH-09C merged through PR #146 as `0ffdabf`; AUTH-09D remains inactive
   until an explicit human start.
-- ART integration basis: trusted `main` at `b2b9016` after PR #145.
+- ART integration basis: trusted `main` at `f18b620` after PR #147.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
