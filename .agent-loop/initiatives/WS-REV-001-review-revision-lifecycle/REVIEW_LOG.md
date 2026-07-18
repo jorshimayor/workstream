@@ -854,3 +854,20 @@ that still called the older WS-XINT handoff current and treated CON as unmerged
 sibling evidence. The repair names merged CON-01 `e118e33`, its active
 specification, and ADR 0016 as canonical authority while retaining XINT only as
 historical supporting context and preserving every downstream runtime gate.
+
+## WS-REV-001-01 Final Scope Verification Repair - 2026-07-18
+
+After ART-02A3 reconciliation and a fresh nine-track PASS, CodeRabbit correctly
+reported that the final path listing did not fail on unexpected scope. Candidate
+`7742730` added a committed path allowlist and documented why trusted current
+main `a10d901` defines PR scope while planning base `0302bcf` remains the
+archival byte-integrity anchor.
+
+Internal security/docs/CI review then found that path-only comparison could not
+distinguish an approved modification from deleting the same path. Candidate
+`7785b832` replaces it with an exact 71-entry
+`git diff --name-status --no-renames` A/M manifest. The exact comparison
+passes; simulated status change, removal, rename as D+A, and addition each fail.
+All deterministic gates and all nine exact-SHA reviewer tracks pass. The proof
+is intentionally chunk-specific rather than a permanent global CI rule pinned
+to one historical main SHA.
