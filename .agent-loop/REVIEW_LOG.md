@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-18 - AUTH Contributor Foundation Sequence Reconciled
+
+- Current REV planning correctly identified that deferring assignment and
+  Submission ownership renames to AUTH-13/14 creates a dependency cycle.
+- Durable AUTH planning now names inactive same-initiative successor
+  `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` immediately after 09D-B. Its bounded
+  contract owns only the two `contributor_id` clean cuts, database-backed
+  canonical-human lineage, and transaction-local active-human revalidation.
+- AUTH-13/14 now consume those canonical fields and retain their later
+  authorization/lifecycle responsibilities. Fixed future migration
+  reservations are retired; each unmerged chunk allocates from trusted `main`.
+- This planning repair changes no 09D-B runtime behavior and starts no successor.
+
 ## 2026-07-18 - WS-AUTH-001-09D-B Preimplementation Review Passed
 
 - Required L1 review initially rejected broad race, rollback, lock-order,

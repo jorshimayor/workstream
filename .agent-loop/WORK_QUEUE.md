@@ -14,7 +14,8 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D-B merge/memory and explicit user start |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and explicit user start |
+| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until contributor-foundation merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
@@ -94,8 +95,8 @@ stopped. The user explicitly started AUTH-09D, and required review split it
 before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
 `cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B; exact
 contract `9ec6390b` passed required L1 review and bounded implementation is
-active. 09E and POL-002-04 remain inactive pending
-their own gates and explicit starts.
+active. The contributor foundation is the next AUTH gate; 09E and POL-002-04
+remain inactive pending their own gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

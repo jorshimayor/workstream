@@ -27,9 +27,11 @@ mutations, service admission, and concurrency. Required L1 review split it into
 09B requires forward migration `0024` so provisioned service links remain
 unverified until a token is actually verified. ART owns `0025` for the
 ArtifactStore v2 clean cut. AUTH-09D-A requires `0026` for lifecycle evidence
-and profile reactivation provenance repair. AUTH-10 through AUTH-15 therefore
-shift to `0027` through `0032`, without allocating migrations to the
-availability-neutral custody or PREP chunks.
+and profile reactivation provenance repair. AUTH-10 through AUTH-15 shifted to
+`0027` through `0032` at that historical checkpoint, without allocating
+migrations to the availability-neutral custody or PREP chunks. That future
+allocation is superseded by D31: the contributor foundation and later AUTH
+chunks allocate only from the then-current trusted-main head.
 
 ## Current behavior
 

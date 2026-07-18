@@ -35,7 +35,8 @@ stopped.
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Split before runtime implementation into 09D-A and 09D-B |
 | `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Merged through PR #148 as `99ae4c9`; signed memory `cf8a3e8` passed |
 | `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Exact contract `9ec6390b` passed L1 review; bounded implementation active |
-| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D-B merge/memory and explicit start |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and explicit start |
+| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until contributor-foundation merge/memory and explicit start |
 | `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-PREP` | Prepared Mutation Authorization Protocol | L1 | Inactive until 09E merge/memory and explicit start |
@@ -97,6 +98,7 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-09C
 -> WS-AUTH-001-09D-A
 -> WS-AUTH-001-09D-B
+-> WS-AUTH-001-CONTRIBUTOR-FOUNDATION
 -> WS-AUTH-001-09E
 -> WS-AUTH-001-ART-CUSTODY and WS-AUTH-001-REV-CUSTODY
 -> WS-AUTH-001-PREP
@@ -132,8 +134,11 @@ WS-AUTH-001-PLAN
 - PR #139 merged the WS-XINT boundary contract. `WS-AUTH-001-XINT` is the
   planning-only AUTH owner response; it changes no runtime.
 - Chunks 08-10 establish local grant truth before product cutover. Parent chunk
-  09 is split into 09A through 09E with no inserted dependency; 09E separately
-  admits fixed services without entering human grant evaluation. ART/REV custody
+  09 is split into 09A through 09E. The separately reviewed contributor
+  foundation follows 09D-B so REV can consume canonical human attribution
+  without waiting for the full AUTH-13/14 cutovers. It changes no authority or
+  lifecycle behavior. 09E separately admits fixed services without entering
+  human grant evaluation. ART/REV custody
   transfer follows 09E and changes only owner metadata and availability-neutral
   parity. PREP then establishes AUTH-first
   locking and caller-owned commit before sensitive product/review mutations.
@@ -198,5 +203,6 @@ AUTH-09D. Required preimplementation review rejected the combined lifecycle
 contract before runtime edits, so it was split into 09D-A and 09D-B. PR #148
 merged 09D-A as `99ae4c9`; signed memory `cf8a3e8` stopped and named 09D-B. The
 user explicitly started 09D-B; exact contract `9ec6390b` passed required L1
-review and bounded implementation is active. 09E and POL-002-04 remain inactive
-pending their own gates and explicit starts.
+review and bounded implementation is active. The contributor foundation is the
+next same-initiative gate; 09E and POL-002-04 remain inactive pending their own
+gates and explicit starts.

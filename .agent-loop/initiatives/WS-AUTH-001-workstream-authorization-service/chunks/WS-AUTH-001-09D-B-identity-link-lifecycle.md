@@ -312,5 +312,6 @@ atomicity.
 
 ## Stop Condition
 
-Stop after merge and signed memory. Do not start `WS-AUTH-001-09E` or another
-initiative automatically.
+Stop after merge and signed memory. Do not start
+`WS-AUTH-001-CONTRIBUTOR-FOUNDATION`, `WS-AUTH-001-09E`, or another initiative
+automatically.

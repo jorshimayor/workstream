@@ -144,7 +144,8 @@ is the current gate.
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
 | `WS-AUTH-001-09D-B` | Active | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Exact contract `9ec6390b` passed required L1 preimplementation review. |
-| `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D-B. |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Proposed | - | - | Contributor-field clean cut and canonical-human lineage after 09D-B. |
+| `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after the contributor foundation. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
 | `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |
 | `WS-AUTH-001-PREP` | Proposed | - | - | AUTH-first prepared mutation protocol after 09E. |
@@ -168,7 +169,9 @@ memory `cf8a3e8` passed and stopped. The user explicitly started AUTH-09D-B;
 exact contract `9ec6390b` passed required L1 review and bounded implementation
 is active. It must not add service grants,
 dynamic assignments, token-role authority, service admission, or consumer
-feature-action activation. AUTH-09E remains inactive.
+feature-action activation. The contributor foundation is the next
+same-initiative gate but remains inactive until merge/memory and an explicit
+start. AUTH-09E remains inactive behind that foundation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also
@@ -182,8 +185,9 @@ migration `0022`, removing obsolete `ProjectRole.BOTH` and replacement evidence.
 AUTH-09B owns migration `0024` for service-link verification timestamp
 semantics, ART owns `0025` for the ArtifactStore v2 clean cut, and AUTH-09D-A
 owns `0026` for lifecycle evidence and profile reactivation provenance repair.
-AUTH-10 through AUTH-15 own shifted migrations `0027` through `0032` for their
-action/evidence parity.
+The contributor foundation allocates the then-current next migration after
+09D-B merges. AUTH-10 through AUTH-15 no longer reserve fixed migration numbers;
+each allocates from trusted `main` when its contract becomes executable.
 
 AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract
