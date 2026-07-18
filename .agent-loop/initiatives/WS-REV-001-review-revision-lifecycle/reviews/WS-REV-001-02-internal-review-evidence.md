@@ -21,6 +21,18 @@ Reviewed at: 2026-07-18T12:19:40Z
 
 Reviewer run IDs: /root/rev01_senior_arch_reuse@4b00cd3a7c0886f3fa0e6cf4b4b280aa58bc1a10, WS-REV-001-02/qa-product-test-delta/rebind-4b00cd3-20260718, WS-REV-001-02/security-docs-ci/4b00cd3a/2026-07-18T12:19:40Z
 
+## Revision lineage
+
+- `0292825a52f884f42d82e1522637f2ff2bf4bb7a` is the implementation candidate
+  that introduced the planning split, child contracts, test design, and merge
+  intent.
+- `4b00cd3a7c0886f3fa0e6cf4b4b280aa58bc1a10` adds only the review log, status,
+  internal evidence, and trust bundle for that candidate. All three reviewer
+  sessions reran against the complete trusted-base-to-`4b00cd3a` range.
+- The PASS disposition and reviewer rows below are bound exclusively to exact
+  reviewed SHA `4b00cd3a7c0886f3fa0e6cf4b4b280aa58bc1a10`. Later commits change only
+  allowed review evidence and do not alter the reviewed planning candidate.
+
 ## Circuit breaker
 
 `SPLIT REQUIRED` on the original parent contract, then `PASS` after repair.
