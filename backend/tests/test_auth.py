@@ -5117,7 +5117,8 @@ async def test_actor_profile_lifecycle_real_postgres_concurrency(
                 "actor_profile_id"
             ]
         )
-        assert (await run_admin_bootstrap(admin_id, execute=True))[0] == 0
+        bootstrap_code, bootstrap = await run_admin_bootstrap(admin_id, execute=True)
+        assert bootstrap_code == 0
         path = f"/api/v1/actors/{target_id}/suspend"
         payload = {"reason": "Concurrent exact profile suspension"}
 
@@ -5194,6 +5195,273 @@ async def test_actor_profile_lifecycle_real_postgres_concurrency(
         )
         assert reused_loser.status_code == 200, reused_loser.text
 
+        async def create_race_actor(name: str) -> tuple[UUID, dict[str, str]]:
+            token = issue_asymmetric_token(
+                private_key,
+                claims={"sub": f"auth09d-a-race-{name}", "jti": f"auth09d-a-race-{name}-token"},
+            )
+            actor_headers = {"Authorization": f"Bearer {token}"}
+            response = await client.get("/api/v1/actors/me", headers=actor_headers)
+            assert response.status_code == 200, response.text
+            return UUID(response.json()["actor_profile_id"]), actor_headers
+
+        async def grant_access_administrator(target: UUID, reason: str) -> str:
+            response = await client.post(
+                "/api/v1/admin-role-grants",
+                headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+                json={
+                    "target_actor_profile_id": str(target),
+                    "role": "access_administrator",
+                    "scope_type": "system",
+                    "scope_project_id": None,
+                    "reason": reason,
+                },
+            )
+            assert response.status_code == 201, response.text
+            return response.json()["resource_id"]
+
+        async def ordered_requests(
+            first_name: str,
+            requests: tuple[
+                tuple[str, str, dict[str, str], dict[str, str], str],
+                tuple[str, str, dict[str, str], dict[str, str], str],
+            ],
+        ) -> tuple[tuple[str, Response], tuple[str, Response]]:
+            original_lock_control = AdminAuthorizationRepository.lock_control
+            first_locked = asyncio.Event()
+            second_attempted = asyncio.Event()
+
+            async def ordered_lock_control(self):
+                if asyncio.current_task().get_name() == first_name:
+                    control = await original_lock_control(self)
+                    first_locked.set()
+                    await second_attempted.wait()
+                    return control
+                await first_locked.wait()
+                second_attempted.set()
+                return await original_lock_control(self)
+
+            monkeypatch.setattr(
+                AdminAuthorizationRepository,
+                "lock_control",
+                ordered_lock_control,
+            )
+            try:
+                tasks = [
+                    asyncio.create_task(
+                        client.post(
+                            request_path,
+                            headers={**request_headers, "Idempotency-Key": key},
+                            json=body,
+                        ),
+                        name=name,
+                    )
+                    for name, request_path, request_headers, body, key in requests
+                ]
+                responses = await asyncio.wait_for(asyncio.gather(*tasks), timeout=60)
+                return (
+                    (requests[0][4], responses[0]),
+                    (requests[1][4], responses[1]),
+                )
+            finally:
+                monkeypatch.setattr(
+                    AdminAuthorizationRepository,
+                    "lock_control",
+                    original_lock_control,
+                )
+
+        def lifecycle_request(
+            *,
+            name: str,
+            target: UUID,
+            transition: str,
+            request_headers: dict[str, str] = admin_headers,
+        ) -> tuple[str, str, dict[str, str], dict[str, str], str]:
+            return (
+                name,
+                f"/api/v1/actors/{target}/{transition}",
+                request_headers,
+                {"reason": f"Ordered {transition} proof for {name}"},
+                str(uuid4()),
+            )
+
+        reusable_keys: list[str] = []
+
+        suspend_first_id, _ = await create_race_actor("suspend-first")
+        suspend_first = await ordered_requests(
+            "suspend-first",
+            (
+                lifecycle_request(
+                    name="suspend-first",
+                    target=suspend_first_id,
+                    transition="suspend",
+                ),
+                lifecycle_request(
+                    name="deactivate-second",
+                    target=suspend_first_id,
+                    transition="deactivate",
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in suspend_first] == [200, 200]
+
+        deactivate_first_id, _ = await create_race_actor("deactivate-first")
+        deactivate_first = await ordered_requests(
+            "deactivate-first",
+            (
+                lifecycle_request(
+                    name="deactivate-first",
+                    target=deactivate_first_id,
+                    transition="deactivate",
+                ),
+                lifecycle_request(
+                    name="suspend-second",
+                    target=deactivate_first_id,
+                    transition="suspend",
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in deactivate_first] == [200, 409]
+        assert deactivate_first[1][1].json()["error"]["code"] == "actor_deactivated_terminal"
+        reusable_keys.append(deactivate_first[1][0])
+
+        reactivate_first_id, _ = await create_race_actor("reactivate-first")
+        prepared_reactivate_first = await client.post(
+            f"/api/v1/actors/{reactivate_first_id}/suspend",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json={"reason": "Prepare reactivation-first race"},
+        )
+        assert prepared_reactivate_first.status_code == 200, prepared_reactivate_first.text
+        reactivate_first = await ordered_requests(
+            "reactivate-first",
+            (
+                lifecycle_request(
+                    name="reactivate-first",
+                    target=reactivate_first_id,
+                    transition="reactivate",
+                ),
+                lifecycle_request(
+                    name="deactivate-after-reactivation",
+                    target=reactivate_first_id,
+                    transition="deactivate",
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in reactivate_first] == [200, 200]
+
+        suspended_deactivate_first_id, _ = await create_race_actor(
+            "suspended-deactivate-first"
+        )
+        prepared_deactivate_first = await client.post(
+            f"/api/v1/actors/{suspended_deactivate_first_id}/suspend",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json={"reason": "Prepare deactivation-first suspended race"},
+        )
+        assert prepared_deactivate_first.status_code == 200, prepared_deactivate_first.text
+        suspended_deactivate_first = await ordered_requests(
+            "deactivate-suspended-first",
+            (
+                lifecycle_request(
+                    name="deactivate-suspended-first",
+                    target=suspended_deactivate_first_id,
+                    transition="deactivate",
+                ),
+                lifecycle_request(
+                    name="reactivate-after-deactivation",
+                    target=suspended_deactivate_first_id,
+                    transition="reactivate",
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in suspended_deactivate_first] == [200, 409]
+        assert (
+            suspended_deactivate_first[1][1].json()["error"]["code"]
+            == "actor_deactivated_terminal"
+        )
+        reusable_keys.append(suspended_deactivate_first[1][0])
+
+        admin_two_id, _ = await create_race_actor("three-admin-two")
+        admin_three_id, _ = await create_race_actor("three-admin-three")
+        await grant_access_administrator(admin_two_id, "Three-admin race participant two")
+        await grant_access_administrator(admin_three_id, "Three-admin race participant three")
+        three_admin = await ordered_requests(
+            "three-admin-first-loss",
+            (
+                lifecycle_request(
+                    name="three-admin-first-loss",
+                    target=admin_two_id,
+                    transition="suspend",
+                ),
+                lifecycle_request(
+                    name="three-admin-second-loss",
+                    target=admin_three_id,
+                    transition="suspend",
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in three_admin] == [200, 200]
+
+        grant_race_id, grant_race_headers = await create_race_actor("grant-race")
+        await grant_access_administrator(grant_race_id, "Profile and grant race participant")
+        grant_race_key = str(uuid4())
+        profile_grant_race = await ordered_requests(
+            "profile-loss-first",
+            (
+                lifecycle_request(
+                    name="profile-loss-first",
+                    target=grant_race_id,
+                    transition="suspend",
+                ),
+                (
+                    "grant-revoke-second",
+                    f"/api/v1/admin-role-grants/{bootstrap['grant_id']}/revoke",
+                    grant_race_headers,
+                    {"reason": "Reciprocal profile and grant loss"},
+                    grant_race_key,
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in profile_grant_race] == [200, 403]
+        assert profile_grant_race[1][1].json()["error"]["code"] == "actor_suspended"
+        reusable_keys.append(grant_race_key)
+
+        reciprocal_one_id, reciprocal_one_headers = await create_race_actor(
+            "reciprocal-one"
+        )
+        reciprocal_two_id, reciprocal_two_headers = await create_race_actor(
+            "reciprocal-two"
+        )
+        await grant_access_administrator(reciprocal_one_id, "Reciprocal administrator one")
+        await grant_access_administrator(reciprocal_two_id, "Reciprocal administrator two")
+        disable_bootstrap = await client.post(
+            f"/api/v1/actors/{admin_id}/suspend",
+            headers={**reciprocal_one_headers, "Idempotency-Key": str(uuid4())},
+            json={"reason": "Leave exactly two effective administrators"},
+        )
+        assert disable_bootstrap.status_code == 200, disable_bootstrap.text
+        reciprocal_second_key = str(uuid4())
+        reciprocal = await ordered_requests(
+            "reciprocal-one-first",
+            (
+                lifecycle_request(
+                    name="reciprocal-one-first",
+                    target=reciprocal_two_id,
+                    transition="suspend",
+                    request_headers=reciprocal_one_headers,
+                ),
+                (
+                    "reciprocal-two-second",
+                    f"/api/v1/actors/{reciprocal_one_id}/suspend",
+                    reciprocal_two_headers,
+                    {"reason": "Reciprocal final-authority loss"},
+                    reciprocal_second_key,
+                ),
+            ),
+        )
+        assert [result.status_code for _, result in reciprocal] == [200, 403]
+        assert reciprocal[1][1].json()["error"]["code"] == "actor_suspended"
+        reusable_keys.append(reciprocal_second_key)
+
     async with db_session.get_session_factory()() as session:
         state = (
             await session.execute(
@@ -5224,6 +5492,83 @@ async def test_actor_profile_lifecycle_real_postgres_concurrency(
             "ActorProfileSuspended": 3,
             "ActorProfileReactivated": 2,
             "SensitiveAuthorizationDenied": 1,
+        }
+        ordered_states = dict(
+            (
+                await session.execute(
+                    select(ActorProfile.id, ActorProfile.status).where(
+                        ActorProfile.id.in_(
+                            [
+                                str(suspend_first_id),
+                                str(deactivate_first_id),
+                                str(reactivate_first_id),
+                                str(suspended_deactivate_first_id),
+                                str(admin_two_id),
+                                str(admin_three_id),
+                                str(grant_race_id),
+                                str(admin_id),
+                                str(reciprocal_one_id),
+                                str(reciprocal_two_id),
+                            ]
+                        )
+                    )
+                )
+            ).all()
+        )
+        assert ordered_states == {
+            str(suspend_first_id): "deactivated",
+            str(deactivate_first_id): "deactivated",
+            str(reactivate_first_id): "deactivated",
+            str(suspended_deactivate_first_id): "deactivated",
+            str(admin_two_id): "suspended",
+            str(admin_three_id): "suspended",
+            str(grant_race_id): "suspended",
+            str(admin_id): "suspended",
+            str(reciprocal_one_id): "active",
+            str(reciprocal_two_id): "suspended",
+        }
+        assert await AdminAuthorizationRepository(
+            session
+        ).count_effective_access_administrators() == 1
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(AuthorityIdempotencyRecord)
+                .where(AuthorityIdempotencyRecord.status == "pending")
+            )
+            or 0
+        ) == 0
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(AuthorityIdempotencyRecord)
+                .where(AuthorityIdempotencyRecord.idempotency_key.in_(reusable_keys))
+            )
+            or 0
+        ) == 0
+        lifecycle_event_counts = dict(
+            (
+                await session.execute(
+                    select(AuditEvent.event_type, func.count())
+                    .where(
+                        AuditEvent.event_type.in_(
+                            [
+                                "ActorProfileSuspended",
+                                "ActorProfileReactivated",
+                                "ActorProfileDeactivated",
+                                "SensitiveAuthorizationDenied",
+                            ]
+                        )
+                    )
+                    .group_by(AuditEvent.event_type)
+                )
+            ).all()
+        )
+        assert lifecycle_event_counts == {
+            "ActorProfileSuspended": 11,
+            "ActorProfileReactivated": 3,
+            "ActorProfileDeactivated": 4,
+            "SensitiveAuthorizationDenied": 5,
         }
 
 
