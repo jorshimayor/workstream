@@ -81,6 +81,8 @@ guide/task/submission cutover, product review decision, or authorization action.
 - [x] Immutable local publication, exact replay, range reads, bounded I/O, and sanitized errors.
 - [x] V1 retention/provider-receipt/configuration paths removed without fallback.
 - [x] Namespace singleton checked before provider I/O and finalization.
+- [x] Conflicting concurrent first writers prove one provider winner and one
+  zero-provider-call loser after the namespace transaction commits.
 - [x] Concurrent exact replay produces one replica and independent receipts.
 - [x] Migration refuses existing and concurrently inserted v1 facts before DDL.
 - [x] Populated v2 namespace state prevents destructive downgrade.
@@ -95,7 +97,7 @@ guide/task/submission cutover, product review decision, or authorization action.
 73 final filesystem/architecture/wiring tests PASS
 59 final LocalStorage/conformance tests PASS
 9 final critical real PostgreSQL orchestration cases PASS
-4 ArtifactStore v2 migration safety tests PASS
+5 migration-chain tests PASS, including 4 ArtifactStore v2 safety tests
 ART changed scope coverage 93.31%
 Configuration coverage 96.92%
 app/main.py coverage 90.35%
@@ -123,13 +125,14 @@ configuration tests. No tests were skipped or weakened.
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `18fa2030ed736576eb5c2ab27048b3137a9b8222`
+Reviewed code SHA: `c8eccaafb6b4f0615b1b37049edfcb0368dd6fb2`
 
 All nine required tracks passed the exact repaired SHA with no remaining
-finding. The reuse track first found incomplete test-helper consolidation; all
-review sessions were closed, the duplicate paths were removed, and a fresh
-exact-SHA fanout passed. Reviewer IDs and final results are recorded in the
-internal review evidence.
+finding. Earlier valid findings covered incomplete test-helper consolidation,
+cross-initiative migration custody, and provider-operation ordering proof. All
+were repaired, every review session was closed, and the final exact-SHA fanout
+passed. Reviewer IDs and final results are recorded in the internal review
+evidence.
 
 ## External Review
 

@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `18fa2030ed736576eb5c2ab27048b3137a9b8222`
+Reviewed code SHA: `c8eccaafb6b4f0615b1b37049edfcb0368dd6fb2`
 
-Reviewed at: 2026-07-17T23:11:21Z
+Reviewed at: 2026-07-18T01:31:17Z
 
-Reviewer run IDs: senior-engineering=019f721d-d3bc-74d3-9363-8c1ce653279f; architecture=019f7222-2088-7520-afd3-42fb5861c46e; QA/test=019f7222-2775-7963-b476-88259b5f0dfb; security/auth=019f7218-561f-7df2-a226-8a57960bd44e; product/ops=019f7229-9a15-7252-be04-fdc5f29ff6e1; reuse/dedup=019f7229-a0e2-7392-bf78-829e09b7a6a7; CI-integrity=019f7230-cab6-7331-b17e-1829b9ad2f6f; test-delta=019f7230-d04c-7d13-824a-fc0aa0f50018; docs=019f7252-f636-76f1-807d-a0adc0e01dc5
+Reviewer run IDs: senior-engineering=019f72b5-2d70-7471-a006-3580f3844107; architecture=019f72b5-3692-70a2-9713-2cdd4b9d403e; QA/test=019f72b5-438d-71e3-bc2a-43a078865dbd; security/auth=019f72b5-52c6-7980-a3c7-451a66ce3f9d; product/ops=019f72ce-c029-76b1-9291-104b691f6014; reuse/dedup=019f72ce-cdb9-7fe2-8dea-d5820d675a38; CI-integrity=019f72ce-d8f1-7b00-a5bb-d8a7f835f2e4; test-delta=019f72d5-7d3c-7cd2-90c4-9b5facd31041; docs=019f72ce-e898-7d80-97da-9ec76ac6296a
 
 Only review artifacts may change after this reviewed SHA while follow-up review
 and evidence closure complete. No implementation, migration, test, workflow,
@@ -85,6 +85,12 @@ policy, or chunk-contract change is permitted without invalidating this record.
   assertions. External dispositions are recorded separately.
 - Restored AUTH status to trusted `main` and kept ART gate assertions within
   the ART boundary.
+- Reconciled the merged AUTH `0024` migration with ART `0025` and shifted only
+  inactive AUTH-10 through AUTH-15 reservations to `0026` through `0031`, with
+  an explicit superseding decision and no AUTH runtime activation.
+- Strengthened the concurrent first-namespace proof through the real provider
+  operation: the winner observes the committed namespace before `put`, while
+  the conflicting loser performs zero provider I/O.
 - Consolidated sealed-source test preparation into one shared helper after the
   reuse reviewer found two residual duplicate paths; the repair received a
   clean exact-SHA reuse review before the final nine-track fanout.
@@ -97,7 +103,7 @@ cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:works
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py::test_put_acknowledgement_stops_at_pending_verification tests/test_artifacts.py::test_concurrent_same_object_finalization_reuses_one_replica tests/test_artifacts.py::test_independent_items_in_one_session_finalize_without_shared_cas_replay tests/test_artifacts.py::test_database_rejects_partial_upload_result_metadata tests/test_artifacts.py::test_reservation_accounting_rejects_drift_without_clamping tests/test_artifacts.py::test_same_item_replay_finalizes_once_without_double_accounting tests/test_artifacts.py::test_terminal_put_failure_releases_reservation_and_fails_item tests/test_artifacts.py::test_namespace_mismatch_fails_before_provider_io tests/test_artifacts.py::test_concurrent_different_first_namespace_writers_have_one_winner
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test COVERAGE_FILE=.coverage.art02a3 .venv/bin/coverage run -m pytest -q tests/test_artifacts.py tests/test_artifact_preparation.py tests/test_config.py tests/test_app.py tests/test_api_controls.py tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py
 cd backend && .venv/bin/pytest -q tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/pytest -q tests/test_alembic.py::test_artifact_store_v2_empty_clean_cut_and_reversible_shape tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v1_before_ddl tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl tests/test_alembic.py::test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses
+cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/pytest -q tests/test_alembic.py::test_alembic_upgrade_and_downgrade tests/test_alembic.py::test_artifact_store_v2_empty_clean_cut_and_reversible_shape tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v1_before_ddl tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl tests/test_alembic.py::test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_projects.py::test_project_setup_worker_persists_sanitized_domain_failure
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 python3 scripts/check_stale_artifact_contracts.py
@@ -111,7 +117,8 @@ git diff --check
 Results: the prior complete focused run passed 268 ART tests; the final repaired
 candidate passed 73 filesystem/architecture/wiring tests, 59 final
 LocalStorage/conformance tests, nine critical real-PostgreSQL orchestration
-cases, and all four clean-cut migration cases. The corrected exact ART scope
+cases, and five migration-chain cases, including all four ART clean-cut safety
+cases. The corrected exact ART scope
 coverage was 93.31 percent. Ruff, 92.0 percent docstring coverage, stale
 contract/authorization/wording,
 Markdown links, 80 agent-gate tests, and diff checks passed.

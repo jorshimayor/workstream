@@ -3,11 +3,10 @@
 ## Current State
 
 - Pull request: #141, open and not draft
-- Reviewed implementation SHA: `18fa2030ed736576eb5c2ab27048b3137a9b8222`
-- Latest published SHA before this response: `03ed93c6df91f9eccc69b5842b754e36309a0a31`
-- GitHub Agent Gates on the published SHA: passed
-- GitHub Backend on the published SHA: passed
-- CodeRabbit on the published SHA: passed
+- Reviewed implementation SHA: `c8eccaafb6b4f0615b1b37049edfcb0368dd6fb2`
+- Latest published SHA before this response: `cdeef292b8137cf8c48cc040d82f1a93dffa4d2c`
+- Prior GitHub and CodeRabbit results predate required AUTH/CON main
+  reconciliation and are not completion evidence for the current candidate
 - Latest repaired SHA external checks: pending publication
 - Human merge approval: pending
 
@@ -47,7 +46,7 @@ widget warning.
 73 filesystem/architecture/wiring tests: PASS
 59 final LocalStorage/conformance tests: PASS
 9 critical real PostgreSQL orchestration tests: PASS
-4 clean-cut migration safety tests: PASS
+5 migration-chain tests, including 4 clean-cut safety tests: PASS
 ART exact scoped coverage: 93.31%
 Ruff: PASS
 Repository docstring gate: 92.0%, PASS
