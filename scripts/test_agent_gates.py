@@ -4406,6 +4406,20 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
         "docs/template_project_guide.md",
         "RevisionPolicyInput.auto_reject_after_limit: false",
     )
+    assert not gate.scan_text(
+        "docs/template_project_guide.md",
+        '{"auto_reject_after_limit": false}',
+    )
+    for sample in (
+        '{"auto_reject_after_limit": true}',
+        "auto_reject_after_limit = 1",
+        "`auto_reject_after_limit`: `yes`",
+    ):
+        failures = gate.scan_text("docs/template_project_guide.md", sample)
+        assert any(
+            failure.endswith(": AUTO_REJECT_REVISION_LIMIT")
+            for failure in failures
+        )
 
     adversarial_samples = {
         "NON_CANONICAL_API_PREFIX": (
