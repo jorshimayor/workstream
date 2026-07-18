@@ -9,6 +9,10 @@ through AUTH-09D-A PR #148 before publication. AUTH now owns
 `0026_actor_profile_lifecycle`. AUTH-09D-A activates only three actor-profile
 lifecycle actions; it adds no CON/outbox identifier, evaluator, service
 identity, static row, fixed-service admission, or product behavior.
+The exact full-suite safety ceiling is 25,200 seconds because the prior
+pre-AUTH-09D-A suite consumed 17,741.96 of 18,000 seconds and PR #148 added
+substantial backend/migration tests. This changes no selection, assertion,
+isolation control, or 78/90 coverage threshold.
 
 ## Exact baseline and scope
 

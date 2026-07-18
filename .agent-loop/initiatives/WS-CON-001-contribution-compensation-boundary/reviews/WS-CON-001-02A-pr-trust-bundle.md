@@ -87,6 +87,11 @@ safety ceiling. The prior 12,600-second ceiling stopped the same clean command
 at approximately 90 percent; extending only the ceiling preserved every test,
 assertion, isolation control, and coverage requirement.
 
+For the reconciled AUTH-09D-A baseline, the ceiling is 25,200 seconds because
+that prior run consumed 17,741.96 of 18,000 seconds and main added substantial
+backend/migration coverage. Tests, assertions, isolation, and the 78/90
+coverage thresholds remain unchanged.
+
 ## Human Review Focus
 
 1. Is the immutable/operational schema complete for migration-free 02B without

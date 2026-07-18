@@ -57,6 +57,7 @@ Markdown links: passed for 15 changed Markdown files
 Workstream/AUTH/ART/REV stale-contract scans: passed
 merge intent and git diff --check: passed
 Alembic heads: one head, 0027_shared_transactional_outbox
+full-suite fail-closed ceiling: 25,200s; tests/isolation/coverage unchanged
 repository-wide isolated PostgreSQL suite: pending on frozen reconciled SHA
 ```
 
