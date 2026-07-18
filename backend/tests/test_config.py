@@ -262,9 +262,15 @@ def test_alternate_validation_secret_is_absent_from_unrelated_errors(
     assert_secret_not_retained(caught.value, encoded)
 
 
-def test_model_validate_json_rejects_malformed_document_without_echo() -> None:
+@pytest.mark.parametrize(
+    "field_name",
+    ["api_rate_limit_key_secret", "artifact_s3_secret_access_key"],
+)
+def test_model_validate_json_rejects_malformed_document_without_echo(
+    field_name: str,
+) -> None:
     invalid = "not-a-canonical-secret"
-    payload = f'{{"api_rate_limit_key_secret":"{invalid}"'
+    payload = f'{{"{field_name}":"{invalid}"'
 
     with pytest.raises(ValueError, match="^invalid settings JSON$") as caught:
         Settings.model_validate_json(payload)
@@ -273,7 +279,11 @@ def test_model_validate_json_rejects_malformed_document_without_echo() -> None:
     assert invalid not in f"{caught.value!s} {caught.value!r}"
     assert caught.value.__cause__ is None
     assert caught.value.__context__ is None
-    assert_secret_not_retained(caught.value, invalid)
+    assert_secret_not_retained(
+        caught.value,
+        invalid,
+        traceback_module_prefixes=("app.",),
+    )
 
 
 @pytest.mark.parametrize(

@@ -272,6 +272,7 @@ class Settings(BaseSettings):
             malformed = True
             parsed = None
         if malformed:
+            json_data = b""
             raise ValueError("invalid settings JSON")
         if isinstance(parsed, Mapping) and (
             "api_rate_limit_key_secret" in parsed
