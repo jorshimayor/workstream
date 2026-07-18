@@ -5,9 +5,10 @@
 Original planning merged through PR #97, artifact/LocalStorage foundation
 merged through PR #101, the AWS-first object-storage amendment merged through
 PR #120 as `4408256`, the external-service adapter foundation merged through
-PR #127 as `f64a8e5`, and committed-source preparation merged through PR #129
-as `9a04434` on 2026-07-16. The user explicitly started
-`WS-ART-001-02A3` on 2026-07-16.
+PR #127 as `f64a8e5`, committed-source preparation merged through PR #129 as
+`9a04434`, and the ArtifactStore v2 Local clean cut merged through PR #141 as
+`a10d901` on 2026-07-18. The user explicitly started `WS-ART-001-02B1` on
+2026-07-18.
 
 The planning-only cross-initiative boundary reconciliation merged through
 PR #139 as `5d353b6`, and AUTH's owner reconciliation merged through PR #140 as
@@ -31,29 +32,26 @@ approval or reusable evidence. Its source remains on branch
 
 ## Current Work
 
-`WS-ART-001-02A3` implementation and merged-main deterministic repair are
-complete. PR #141 is open. Exact-SHA review found and repaired a residual
-LocalStorage startup race, typed-factory startup mismatch, and vague Operator
-resource vocabulary. Fresh deterministic coverage and all required internal
-reviewer tracks passed; external checks are now pending. Its approved
-boundary atomically replaces ArtifactStore v1 with byte-only v2, migrates
-LocalStorage and the empty pre-production artifact schema, installs the
-immutable storage-namespace fence,
-removes dormant `flow_node` configuration, and activates startup plus periodic
-scratch cleanup. It does not activate product ingest, durable admission,
-put-attempt resolution, verification jobs, or recovery.
+`WS-ART-001-02B1` is active. It adds one `S3CompatibleArtifactStore`, runs the
+shared ArtifactStore v2 vectors against real digest-pinned MinIO, and validates
+an isolated native-AWS workload-identity profile. MinIO is runtime-eligible
+only in local/development/test after the PostgreSQL namespace claim. Native AWS
+remains runtime-ineligible and fails with
+`artifact_provider_live_proof_required` before factory construction,
+credential resolution, namespace claim, or provider I/O. No product ingest,
+durable admission, put-attempt resolution, verification job, recovery route,
+or optional-provider runtime is activated. R2 and Flow Node remain deferred.
 
 ## Next Proposed Chunk
 
-`02B1` owns the S3-compatible adapter, MinIO proof, and AWS S3 profile after
-`02A3` merges and receives a separate explicit start. There is no active R2 or
-Flow Node chunk.
+`02C1` owns generic durable-byte admission and put-attempt state only after
+`02B1` merges and receives a separate explicit start. Neither R2 nor Flow Node
+has a v0.1 chunk.
 
 ## Gate
 
-All reviews before the latest repairs are retained as history, not reused as
-final provenance. Deterministic proof and exact-SHA internal review have passed.
-The current gate is GitHub Actions, CodeRabbit, and explicit human review.
-Durable admission, put attempts, verification publication, and recovery remain
-in their later owning chunks. No
-later artifact chunk starts automatically, and only the user may approve merge.
+The current gate is deterministic 02B1 proof followed by all nine exact-SHA
+internal reviewer tracks. GitHub Actions, CodeRabbit, and explicit human review
+follow only after that evidence passes. Durable admission, put attempts,
+verification publication, and recovery remain in later owning chunks. No later
+artifact chunk starts automatically, and only the user may approve merge.

@@ -434,8 +434,8 @@ Configuration includes:
 - dedicated private Workstream artifact bucket and private prefix; the bucket
   contains no other application's objects;
 - addressing style;
-- credential mode, optional access-key ID/secret/session token, and no resolved
-  credential persistence;
+- credential mode, local/CI MinIO static credentials held only as redacted
+  private settings, and no resolved credential persistence;
 - connect/read/write/pool timeouts;
 - total verification deadline and maximum buffered bytes.
 
@@ -458,6 +458,24 @@ to use the ambient SDK default chain.
 Chunk 02B1 pins the async S3 SDK pair to `aiobotocore==3.7.0` and
 `botocore==1.43.0`. An SDK upgrade is a reviewed contract change because
 credential-provider precedence and refresh windows are operational behavior.
+
+### Runtime Eligibility After Chunk 02B1
+
+`minio` is the only active `s3_compatible` profile in this chunk. It requires
+an explicit HTTP(S) endpoint, region, dedicated bucket, private prefix,
+`local_static` credentials, and a local/development/test environment. Startup
+still claims the exact `minio-v1` namespace in PostgreSQL before any object
+operation. Local and CI run the real digest-pinned MinIO server and provision
+only the dedicated test bucket; tests do not emulate S3 calls.
+
+`aws_s3` accepts only a native endpoint-less AWS configuration, explicit
+region, and exactly one allowlisted workload-identity method. The composition
+root validates that environment but then raises
+`artifact_provider_live_proof_required` before constructing the adapter
+factory, building or loading the credential resolver, claiming a namespace, or
+performing provider I/O. Chunk 07 alone may make native AWS runtime-eligible by
+adding the immutable live activation proof defined below. MinIO conformance is
+not AWS activation evidence.
 
 Cloudflare R2 has no v0.1 runtime mode, credential issuer, sidecar, secret
 contract, configuration profile, or deployment proof. Any future provider

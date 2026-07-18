@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02B1 - S3-Compatible MinIO And AWS
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A3
+Initiative: `WS-ART-001` | Risk: L1 | Status: Active after explicit human start
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -14,9 +14,14 @@ credential-delivery contract.
 ## Allowed Files
 
 - `backend/app/adapters/artifacts/s3_compatible.py` and adapter registration;
+- `backend/app/interfaces/artifacts.py` only to register the closed
+  `minio-v1` and `aws-s3-v1` namespace profiles, their exact descriptor keys,
+  and the stable AWS live-proof-required error;
 - AWS/MinIO settings in `backend/app/core/config.py`;
-- backend dependency manifest/lock with exact `aiobotocore==3.7.0` and
-  `botocore==1.43.0` pins, `docker-compose.yml`, and
+- `backend/pyproject.toml` with exact `aiobotocore==3.7.0` and
+  `botocore==1.43.0` pins; this repository has no backend dependency lockfile,
+  so dependency tests must inspect the exact manifest pins and installed
+  versions; `docker-compose.yml`, and
   `.github/workflows/backend.yml` for MinIO and exact coverage proof;
 - `scripts/test_agent_gates.py` only to assert the exact workflow command,
   source set, threshold, and cumulative retention;
@@ -59,8 +64,12 @@ credential-delivery contract.
 - real digest-pinned MinIO and LocalStorage pass the same v2 conformance suite;
 - the application factory can instantiate only LocalStorage and MinIO in this
   chunk. Valid AWS configuration remains runtime-ineligible with the stable
-  `artifact_provider_live_proof_required` startup failure; only Chunk 07 may
-  add the immutable activation record and production composition guard;
+  `artifact_provider_live_proof_required` startup failure. The composition root
+  raises that typed error after settings validation but before factory
+  construction, namespace claim, credential resolver construction, credential
+  loading, or provider I/O. Tests prove no namespace row is persisted and no
+  credential source is touched. Only Chunk 07 may add the immutable activation
+  record and production composition guard;
 - startup and operation tests reject configured adapter/profile/namespace
   mismatch against persisted deployment or replica identity; no request is
   routed to a second namespace;
@@ -73,6 +82,30 @@ credential-delivery contract.
   repository command below; `scripts/test_agent_gates.py` fails on workflow
   command, source-set, threshold, or cumulative-retention drift.
 
+## Canonical Namespace Profiles
+
+The shared namespace value object accepts only these additional profiles:
+
+```text
+minio-v1:
+  addressing_style
+  bucket
+  endpoint_identity
+  private_prefix
+  region
+
+aws-s3-v1:
+  addressing_style
+  bucket
+  private_prefix
+  region
+```
+
+`endpoint_identity` is a canonical non-secret hash of the normalized MinIO
+endpoint, not credential material. Native AWS has no configured endpoint and
+therefore no endpoint descriptor key. Descriptor key ordering remains
+canonical and exact; unknown, missing, or extra keys fail closed.
+
 ## Exact CI Coverage Gate
 
 ```bash
@@ -81,6 +114,7 @@ coverage report --include='app/interfaces/external_services.py' --precision=2 --
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/adapters/artifacts/s3_compatible.py' --precision=2 --fail-under=90
 ```
 
 ## Verification
@@ -88,7 +122,7 @@ coverage report --include='app/main.py' --precision=2 --fail-under=90
 ```bash
 docker compose up -d --wait postgres redis minio
 (cd backend && .venv/bin/ruff check app tests)
-(cd backend && .venv/bin/pytest tests/test_artifact_store_conformance.py tests/test_s3_artifact_store.py tests/test_aws_credential_isolation.py tests/test_config.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifact_operations --cov=app.interfaces.artifacts --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && .venv/bin/pytest tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_preparation.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py tests/test_s3_artifact_store.py tests/test_aws_credential_isolation.py tests/test_config.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifact_operations --cov=app.interfaces.artifacts --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

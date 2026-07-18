@@ -21,6 +21,23 @@ _RESERVED_NAMESPACE_DESCRIPTOR_KEYS = frozenset(
 )
 _NAMESPACE_DESCRIPTOR_KEYS_BY_PROFILE = {
     "local-v2": frozenset({"private_prefix", "private_root_identity"}),
+    "minio-v1": frozenset(
+        {
+            "addressing_style",
+            "bucket",
+            "endpoint_identity",
+            "private_prefix",
+            "region",
+        }
+    ),
+    "aws-s3-v1": frozenset(
+        {
+            "addressing_style",
+            "bucket",
+            "private_prefix",
+            "region",
+        }
+    ),
 }
 
 
@@ -251,6 +268,12 @@ class ArtifactConfigurationError(ArtifactStoreError):
 
     code = "artifact_storage_configuration_invalid"
     category = "configuration"
+
+
+class ArtifactProviderLiveProofRequiredError(ArtifactConfigurationError):
+    """Raised while an AWS profile lacks the later live activation proof."""
+
+    code = "artifact_provider_live_proof_required"
 
 
 class ArtifactStore(ExternalServiceAdapter, Protocol):

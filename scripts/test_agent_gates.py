@@ -4144,55 +4144,30 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09B` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09C` | In review |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
-    artifact_phases = (
-        "Deterministic proof passed; exact-SHA internal review in progress",
-        "Internal review and deterministic evidence passed; external checks pending",
-    )
-    selected_phases = [phase for phase in artifact_phases if phase in artifact_map]
-    assert len(selected_phases) == 1
-    selected_phase = selected_phases[0]
-    assert f"Status: {selected_phase}" in artifact_contract
+    assert "Merged through PR #141 as `a10d901`" in artifact_map
+    assert "Active after 02A3 merged through PR #141" in artifact_map
+    assert "Status: Active after explicit human start" in artifact_contract
     assert (
         "AUTH's owner reconciliation merged through PR #140 as\n"
         "`d541521`" in artifact_status
     )
-    assert (
-        "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
-        "complete" in artifact_status
+    assert "`WS-ART-001-02B1` is active" in artifact_status
+    assert "The current gate is deterministic 02B1 proof followed by all nine" in (
+        artifact_status.replace("\n", " ")
     )
-    artifact_02a3_merged = (
-        "`WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | "
-        "Merged through PR #141 as `a10d901`" in work_queue
+    assert "No later artifact chunk starts automatically" in artifact_status.replace(
+        "\n", " "
     )
-    if artifact_02a3_merged:
-        normalized_work_queue = " ".join(work_queue.split())
-        assert "PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901`" in loop_state
-        assert (
-            "`WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | "
-            "Inactive until 02A3 merge and explicit user start" in work_queue
-        )
-        assert "ART-02B1 remains inactive" in loop_state
-        assert "Do not start AUTH-09C or POL-002-04 automatically." not in (
-            normalized_work_queue
-        )
-        assert (
-            "Its merged-main deterministic proof and exact-SHA internal review are "
-            "complete; external checks remain pending and `02B1` must not start "
-            "automatically." not in normalized_work_queue
-        )
-    elif selected_phase == artifact_phases[0]:
-        assert selected_phase in work_queue
-        assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
-        assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
-    else:
-        assert selected_phase in work_queue
-        assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
-            artifact_status.replace("\n", " ")
-        )
-        assert "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit" in (
-            loop_state.replace("\n", " ")
-        )
-    assert "No\nlater artifact chunk starts automatically" in artifact_status
+    assert "| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 |" in (
+        work_queue
+    )
+    assert "| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Active" in (
+        work_queue
+    )
+    assert "Current ART gate: integrate trusted `main`, complete deterministic 02B1" in (
+        loop_state
+    )
+    assert "No later ART chunk starts automatically" in loop_state.replace("\n", " ")
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:

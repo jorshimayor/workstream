@@ -1,0 +1,763 @@
+"""Private S3-protocol implementation of the immutable ArtifactStore v2 port."""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
+import hashlib
+import os
+from pathlib import Path
+import re
+from typing import Any
+
+from aiobotocore.config import AioConfig
+from aiobotocore.credentials import (
+    AioAssumeRoleWithWebIdentityProvider,
+    AioContainerProvider,
+    AioCredentialResolver,
+    AioInstanceMetadataProvider,
+)
+from aiobotocore.session import AioSession
+from aiobotocore.utils import AioInstanceMetadataFetcher
+from botocore.exceptions import BotoCoreError, ClientError
+
+from app.core.config import Settings
+from app.core.hashing import canonical_json_hash
+from app.interfaces.artifacts import (
+    ARTIFACT_STORE_CAPABILITY_KEY,
+    ArtifactByteRange,
+    ArtifactConfigurationError,
+    ArtifactInputMismatchError,
+    ArtifactIntegrityError,
+    ArtifactLimitExceededError,
+    ArtifactObjectHead,
+    ArtifactObjectMissingError,
+    ArtifactOperationConflictError,
+    ArtifactPutObservation,
+    ArtifactPutResult,
+    ArtifactRangeInvalidError,
+    ArtifactStoreError,
+    ArtifactStoreNamespaceClaim,
+    ArtifactStoreNamespaceIdentity,
+    ArtifactStoreUnavailableError,
+    artifact_store_namespace_material,
+)
+from app.interfaces.external_services import ExternalServiceAdapterIdentity
+from app.modules.artifacts.preparation import HARD_MAXIMUM_ARTIFACT_BYTES
+from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
+
+
+_IDENTITY = ExternalServiceAdapterIdentity(ARTIFACT_STORE_CAPABILITY_KEY, "s3_compatible")
+_PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
+_PRECONDITION_ERROR_CODES = frozenset(
+    {"409", "412", "ConditionalRequestConflict", "PreconditionFailed"}
+)
+_MISSING_ERROR_CODES = frozenset({"404", "NoSuchKey", "NotFound"})
+_FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT = frozenset(
+    {
+        "AWS_ACCESS_KEY",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_CONFIG_FILE",
+        "AWS_CREDENTIAL_FILE",
+        "AWS_DEFAULT_PROFILE",
+        "AWS_LOGIN_CACHE_DIRECTORY",
+        "AWS_PROFILE",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SECRET_KEY",
+        "AWS_SECURITY_TOKEN",
+        "AWS_SESSION_TOKEN",
+        "AWS_SHARED_CREDENTIALS_FILE",
+        "BOTO_CONFIG",
+    }
+)
+_WEB_IDENTITY_ENVIRONMENT = frozenset(
+    {"AWS_ROLE_ARN", "AWS_ROLE_SESSION_NAME", "AWS_WEB_IDENTITY_TOKEN_FILE"}
+)
+_CONTAINER_ENVIRONMENT = frozenset(
+    {
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+    }
+)
+_IAM_ROLE_ENVIRONMENT = frozenset(
+    {
+        "AWS_EC2_METADATA_DISABLED",
+        "AWS_EC2_METADATA_SERVICE_ENDPOINT",
+        "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE",
+        "AWS_EC2_METADATA_V1_DISABLED",
+    }
+)
+
+
+class S3CompatibleArtifactStoreBootstrap:
+    """Composition-only namespace lifecycle for one pinned S3 namespace."""
+
+    def __init__(self, adapter: S3CompatibleArtifactStore) -> None:
+        """Own one configured adapter before PostgreSQL namespace admission."""
+        if type(adapter) is not S3CompatibleArtifactStore:
+            raise ValueError("S3-compatible artifact bootstrap adapter is invalid")
+        self._adapter = adapter
+
+    @property
+    def identity(self) -> ExternalServiceAdapterIdentity:
+        """Return the canonical artifact-store/S3 adapter identity."""
+        return self._adapter.identity
+
+    @property
+    def namespace_identity(self) -> ArtifactStoreNamespaceIdentity:
+        """Return the configured provider namespace identity."""
+        return self._adapter._namespace_identity
+
+    def initialize_after_namespace_claim(
+        self,
+        claim: ArtifactStoreNamespaceClaim,
+    ) -> S3CompatibleArtifactStore:
+        """Return the byte store only after exact namespace admission."""
+        return self._adapter._initialize_after_namespace_claim(claim)
+
+    def close(self) -> None:
+        """Release this bootstrap and invalidate its adapter."""
+        self._adapter.close()
+
+
+class S3CompatibleArtifactStore:
+    """Immutable S3-protocol byte provider for MinIO and later AWS activation."""
+
+    def __init__(
+        self,
+        *,
+        provider_profile: str,
+        region: str,
+        endpoint_url: str | None,
+        bucket: str,
+        private_prefix: str,
+        addressing_style: str,
+        session: AioSession,
+        buffer_bytes: int,
+        connect_timeout_seconds: float,
+        read_timeout_seconds: float,
+        write_timeout_seconds: float,
+        pool_timeout_seconds: float,
+        operation_total_timeout_seconds: float,
+        max_pool_connections: int,
+    ) -> None:
+        """Pin one validated namespace and one isolated SDK session."""
+        if provider_profile not in {"minio", "aws_s3"}:
+            raise ArtifactConfigurationError("S3 provider profile is invalid")
+        if not isinstance(session, AioSession):
+            raise ArtifactConfigurationError("S3 credential session is invalid")
+        if type(buffer_bytes) is not int or not 1 <= buffer_bytes <= 1024 * 1024:
+            raise ArtifactConfigurationError("S3 artifact buffer is invalid")
+        if type(max_pool_connections) is not int or not 1 <= max_pool_connections <= 256:
+            raise ArtifactConfigurationError("S3 connection pool is invalid")
+        for value in (
+            connect_timeout_seconds,
+            read_timeout_seconds,
+            write_timeout_seconds,
+            pool_timeout_seconds,
+            operation_total_timeout_seconds,
+        ):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+                raise ArtifactConfigurationError("S3 operation timeout is invalid")
+
+        self._provider_profile = provider_profile
+        self._region = region
+        self._endpoint_url = endpoint_url
+        self._bucket = bucket
+        self._private_prefix = private_prefix
+        self._addressing_style = addressing_style
+        self._session = session
+        self._buffer_bytes = buffer_bytes
+        self._write_timeout_seconds = float(write_timeout_seconds)
+        self._pool_timeout_seconds = float(pool_timeout_seconds)
+        self._operation_total_timeout_seconds = float(operation_total_timeout_seconds)
+        self._client_config = AioConfig(
+            connect_timeout=float(connect_timeout_seconds),
+            read_timeout=float(read_timeout_seconds),
+            max_pool_connections=max_pool_connections,
+            retries={"max_attempts": 1, "mode": "standard"},
+            request_checksum_calculation="when_required",
+            response_checksum_validation="when_required",
+            s3={
+                "addressing_style": addressing_style,
+                "payload_signing_enabled": False,
+            },
+        )
+        self._initialized = False
+
+    @property
+    def identity(self) -> ExternalServiceAdapterIdentity:
+        """Return the canonical artifact-store/S3 adapter identity."""
+        return _IDENTITY
+
+    @property
+    def _namespace_identity(self) -> ArtifactStoreNamespaceIdentity:
+        """Return the canonical non-secret identity of this S3 namespace."""
+        profile = "minio-v1" if self._provider_profile == "minio" else "aws-s3-v1"
+        items = {
+            "addressing_style": self._addressing_style,
+            "bucket": self._bucket,
+            "private_prefix": self._private_prefix,
+            "region": self._region,
+        }
+        if self._provider_profile == "minio":
+            items["endpoint_identity"] = canonical_json_hash(
+                {"endpoint_url": self._endpoint_url}
+            )
+        return ArtifactStoreNamespaceIdentity(
+            provider_profile=profile,
+            descriptor_items=tuple(sorted(items.items())),
+        )
+
+    def _initialize_after_namespace_claim(
+        self,
+        claim: ArtifactStoreNamespaceClaim,
+    ) -> S3CompatibleArtifactStore:
+        """Enable provider operations only for the exact PostgreSQL claim."""
+        if (
+            type(claim) is not ArtifactStoreNamespaceClaim
+            or claim.adapter_identity != self.identity
+            or claim.namespace_identity != self._namespace_identity
+            or claim.namespace_fingerprint != self._expected_namespace_fingerprint()
+        ):
+            self.close()
+            raise ArtifactConfigurationError("artifact namespace claim does not match provider")
+        if self._initialized:
+            self.close()
+            raise ArtifactConfigurationError("S3-compatible artifact storage is already initialized")
+        self._initialized = True
+        return self
+
+    def _expected_namespace_fingerprint(self) -> str:
+        """Return the shared fingerprint for this configured S3 namespace."""
+        _, fingerprint = artifact_store_namespace_material(
+            backend="s3_compatible",
+            adapter_identity=self.identity,
+            namespace_identity=self._namespace_identity,
+        )
+        return fingerprint
+
+    def close(self) -> None:
+        """Invalidate this configured adapter; clients are operation-scoped."""
+        self._initialized = False
+
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        """Conditionally publish one sealed source or verify an exact replay."""
+        self._require_initialized()
+        if type(source) is not CommittedArtifactSource:
+            raise ArtifactInputMismatchError("artifact source is not sealed")
+        commitment = source.commitment
+        if commitment.byte_count > HARD_MAXIMUM_ARTIFACT_BYTES:
+            raise ArtifactLimitExceededError("artifact source exceeds provider limit")
+        provider_object_ref = self._provider_object_ref(commitment)
+        body = _CommittedSourceBody(source, self._buffer_bytes)
+        try:
+            if commitment.byte_count == 0:
+                await body.validate_empty()
+            request_body: object = b"" if commitment.byte_count == 0 else body
+            async with asyncio.timeout(self._operation_total_timeout_seconds):
+                async with asyncio.timeout(self._write_timeout_seconds):
+                    async with self._client() as client:
+                        await client.put_object(
+                            Bucket=self._bucket,
+                            Key=self._object_key(provider_object_ref),
+                            Body=request_body,
+                            ContentLength=commitment.byte_count,
+                            ContentType=commitment.media_type,
+                            IfNoneMatch="*",
+                        )
+            if not body.complete:
+                if await self._matches_commitment(provider_object_ref, commitment):
+                    return ArtifactPutResult(provider_object_ref, replayed=True)
+                raise ArtifactStoreUnavailableError("S3 artifact operation failed")
+            return ArtifactPutResult(provider_object_ref, replayed=False)
+        except ClientError as error:
+            if _provider_error_code(error) in _PRECONDITION_ERROR_CODES:
+                await self._verify_exact(provider_object_ref, commitment)
+                return ArtifactPutResult(provider_object_ref, replayed=True)
+            raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
+        except ArtifactStoreError:
+            raise
+        except (TimeoutError, BotoCoreError, OSError):
+            if await self._matches_commitment(provider_object_ref, commitment):
+                return ArtifactPutResult(provider_object_ref, replayed=True)
+            raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
+
+    async def observe_put_result(
+        self,
+        commitment: ArtifactCommitment,
+    ) -> ArtifactPutObservation:
+        """Read and validate the deterministic committed object when present."""
+        self._require_initialized()
+        if type(commitment) is not ArtifactCommitment:
+            raise ArtifactOperationConflictError("artifact commitment is invalid")
+        provider_object_ref = self._provider_object_ref(commitment)
+        observed = await self.head(provider_object_ref)
+        if not observed.exists:
+            return ArtifactPutObservation(provider_object_ref, committed=False)
+        await self._verify_exact(provider_object_ref, commitment)
+        return ArtifactPutObservation(provider_object_ref, committed=True)
+
+    def open(
+        self,
+        provider_object_ref: str,
+        byte_range: ArtifactByteRange | None = None,
+    ) -> AsyncIterator[bytes]:
+        """Stream a full object or one bounded byte range."""
+        self._require_initialized()
+        self._parse_provider_object_ref(provider_object_ref)
+        if byte_range is not None and type(byte_range) is not ArtifactByteRange:
+            raise ArtifactOperationConflictError("artifact byte range is invalid")
+        selected_range = byte_range or ArtifactByteRange()
+
+        async def iterate() -> AsyncIterator[bytes]:
+            """Hold the S3 response open while yielding exact bounded chunks."""
+            head = await self.head(provider_object_ref)
+            if not head.exists or head.byte_count is None:
+                raise ArtifactObjectMissingError("artifact object is missing")
+            if selected_range.offset > head.byte_count:
+                raise ArtifactRangeInvalidError("artifact range starts past object end")
+            expected = head.byte_count - selected_range.offset
+            if selected_range.length is not None:
+                expected = min(expected, selected_range.length)
+            if expected == 0:
+                return
+
+            end = selected_range.offset + expected - 1
+            request: dict[str, object] = {
+                "Bucket": self._bucket,
+                "Key": self._object_key(provider_object_ref),
+            }
+            if selected_range.offset or expected != head.byte_count:
+                request["Range"] = f"bytes={selected_range.offset}-{end}"
+            try:
+                async with asyncio.timeout(self._operation_total_timeout_seconds):
+                    async with self._client() as client:
+                        response = await client.get_object(**request)
+                        body = response["Body"]
+                        observed = 0
+                        async with body:
+                            while True:
+                                chunk = await body.read(
+                                    min(self._buffer_bytes, expected - observed + 1)
+                                )
+                                if not chunk:
+                                    break
+                                if not isinstance(chunk, bytes):
+                                    raise ArtifactIntegrityError(
+                                        "S3 artifact read returned invalid bytes"
+                                    )
+                                observed += len(chunk)
+                                if observed > expected:
+                                    raise ArtifactIntegrityError(
+                                        "S3 artifact read exceeded its bound"
+                                    )
+                                yield chunk
+                        if observed != expected:
+                            raise ArtifactIntegrityError("S3 artifact object was truncated")
+            except ClientError as error:
+                code = _provider_error_code(error)
+                if code in _MISSING_ERROR_CODES:
+                    raise ArtifactObjectMissingError("artifact object is missing") from None
+                raise ArtifactStoreUnavailableError("S3 artifact read failed") from None
+            except ArtifactStoreError:
+                raise
+            except (TimeoutError, BotoCoreError, OSError):
+                raise ArtifactStoreUnavailableError("S3 artifact read failed") from None
+
+        return iterate()
+
+    async def head(self, provider_object_ref: str) -> ArtifactObjectHead:
+        """Return exact size or authoritative absence without provider details."""
+        self._require_initialized()
+        self._parse_provider_object_ref(provider_object_ref)
+        try:
+            async with asyncio.timeout(self._operation_total_timeout_seconds):
+                async with self._client() as client:
+                    response = await client.head_object(
+                        Bucket=self._bucket,
+                        Key=self._object_key(provider_object_ref),
+                    )
+            byte_count = response.get("ContentLength")
+            if type(byte_count) is not int or byte_count < 0:
+                raise ArtifactIntegrityError("S3 artifact head lacks exact size")
+            return ArtifactObjectHead(
+                provider_object_ref,
+                exists=True,
+                byte_count=byte_count,
+            )
+        except ClientError as error:
+            code = _provider_error_code(error)
+            if code in _MISSING_ERROR_CODES:
+                return ArtifactObjectHead(provider_object_ref, exists=False)
+            raise ArtifactStoreUnavailableError("S3 artifact head failed") from None
+        except ArtifactStoreError:
+            raise
+        except (TimeoutError, BotoCoreError, OSError):
+            raise ArtifactStoreUnavailableError("S3 artifact head failed") from None
+
+    async def _verify_exact(
+        self,
+        provider_object_ref: str,
+        commitment: ArtifactCommitment,
+    ) -> None:
+        """Independently hash and count one complete provider object."""
+        digest = hashlib.sha256()
+        byte_count = 0
+        async for chunk in self.open(provider_object_ref):
+            digest.update(chunk)
+            byte_count += len(chunk)
+        if (
+            byte_count != commitment.byte_count
+            or f"sha256:{digest.hexdigest()}" != commitment.sha256
+        ):
+            raise ArtifactIntegrityError("S3 artifact object violates commitment")
+
+    async def _matches_commitment(
+        self,
+        provider_object_ref: str,
+        commitment: ArtifactCommitment,
+    ) -> bool:
+        """Resolve an uncertain write only from an independently verified object."""
+        try:
+            observed = await self.head(provider_object_ref)
+            if not observed.exists:
+                return False
+            await self._verify_exact(provider_object_ref, commitment)
+        except ArtifactObjectMissingError:
+            return False
+        return True
+
+    @asynccontextmanager
+    async def _client(self) -> AsyncIterator[Any]:
+        """Create one bounded S3 client from the already-isolated session."""
+        async with asyncio.timeout(self._pool_timeout_seconds):
+            context = self._session.create_client(
+                "s3",
+                region_name=self._region,
+                endpoint_url=self._endpoint_url,
+                config=self._client_config,
+            )
+            client = await context.__aenter__()
+        try:
+            yield client
+        finally:
+            await context.__aexit__(None, None, None)
+
+    def _require_initialized(self) -> None:
+        """Reject all operations before exact namespace admission."""
+        if not self._initialized:
+            raise ArtifactConfigurationError("artifact store namespace is not initialized")
+
+    def _object_key(self, provider_object_ref: str) -> str:
+        """Apply only the configured private prefix to a digest-derived reference."""
+        self._parse_provider_object_ref(provider_object_ref)
+        return f"{self._private_prefix}/{provider_object_ref}"
+
+    @staticmethod
+    def _provider_object_ref(commitment: ArtifactCommitment) -> str:
+        """Derive one identity-free reference solely from the server commitment."""
+        digest_hex = commitment.sha256[7:]
+        return f"sha256/{digest_hex[:2]}/{digest_hex[2:]}"
+
+    @staticmethod
+    def _parse_provider_object_ref(provider_object_ref: str) -> None:
+        """Reject caller-selected keys outside the canonical digest grammar."""
+        if (
+            not isinstance(provider_object_ref, str)
+            or _PROVIDER_OBJECT_REF.fullmatch(provider_object_ref) is None
+        ):
+            raise ArtifactOperationConflictError("artifact provider reference is invalid")
+
+
+class _CommittedSourceBody:
+    """Single-use async request body that revalidates the sealed commitment."""
+
+    def __init__(self, source: CommittedArtifactSource, buffer_bytes: int) -> None:
+        """Bind one sealed source to one bounded second-pass request body."""
+        self._source = source
+        self._commitment = source.commitment
+        self._buffer_bytes = buffer_bytes
+        self._consumed = False
+        self._complete = False
+        self._iterator: AsyncIterator[bytes] | None = None
+        self._pending = bytearray()
+        self._digest = hashlib.sha256()
+        self._byte_count = 0
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        """Yield bounded bytes while checking the exact digest and count."""
+        if self._consumed:
+            raise ArtifactInputMismatchError("artifact source stream was already consumed")
+        self._consumed = True
+
+        async def iterate() -> AsyncIterator[bytes]:
+            """Yield the source until its commitment and EOF are proven."""
+            while chunk := await self.read(self._buffer_bytes):
+                yield chunk
+
+        return iterate()
+
+    @property
+    def complete(self) -> bool:
+        """Return whether the sealed second-pass stream was fully validated."""
+        return self._complete
+
+    async def read(self, amount: int | None = -1) -> bytes:
+        """Return one bounded async file-like chunk for the pinned SDK."""
+        if not self._consumed:
+            self._consumed = True
+        if self._complete:
+            return b""
+        requested = self._buffer_bytes if amount is None or amount < 0 else amount
+        if requested == 0:
+            return b""
+        requested = min(requested, self._buffer_bytes)
+        if self._iterator is None:
+            self._iterator = self._source.stream()
+        while len(self._pending) < requested:
+            try:
+                source_chunk = await anext(self._iterator)
+            except StopAsyncIteration:
+                self._finish()
+                break
+            if not isinstance(source_chunk, bytes):
+                raise ArtifactInputMismatchError("artifact source must yield bytes")
+            self._pending.extend(source_chunk)
+            if len(self._pending) > self._buffer_bytes + requested:
+                break
+        chunk = bytes(self._pending[:requested])
+        del self._pending[:requested]
+        self._byte_count += len(chunk)
+        if self._byte_count > self._commitment.byte_count:
+            raise ArtifactInputMismatchError("artifact source exceeds committed byte count")
+        self._digest.update(chunk)
+        if self._byte_count == self._commitment.byte_count and not self._pending:
+            await self._require_source_exhausted()
+        if not chunk and not self._complete:
+            self._finish()
+        return chunk
+
+    async def validate_empty(self) -> None:
+        """Validate a zero-byte source that the SDK need not consume."""
+        if self._commitment.byte_count != 0:
+            raise ArtifactInputMismatchError("artifact source is not empty")
+        if await self.read(1) != b"" or not self._complete:
+            raise ArtifactInputMismatchError("artifact source violates commitment")
+
+    async def _require_source_exhausted(self) -> None:
+        """Prove EOF before returning the final committed byte to the SDK."""
+        if self._iterator is None:
+            self._iterator = self._source.stream()
+        while True:
+            try:
+                extra = await anext(self._iterator)
+            except StopAsyncIteration:
+                self._finish()
+                return
+            if not isinstance(extra, bytes):
+                raise ArtifactInputMismatchError("artifact source must yield bytes")
+            if extra:
+                raise ArtifactInputMismatchError(
+                    "artifact source exceeds committed byte count"
+                )
+
+    def _finish(self) -> None:
+        """Validate commitment only after every pending byte is consumed."""
+        if self._pending:
+            return
+        if (
+            self._byte_count != self._commitment.byte_count
+            or f"sha256:{self._digest.hexdigest()}" != self._commitment.sha256
+        ):
+            raise ArtifactInputMismatchError("artifact source violates commitment")
+        self._complete = True
+
+def create_minio_artifact_store_bootstrap(
+    settings: Settings,
+) -> S3CompatibleArtifactStoreBootstrap:
+    """Construct the only S3 runtime profile enabled by this chunk."""
+    if settings.artifact_s3_provider_profile != "minio":
+        raise ArtifactConfigurationError("MinIO artifact profile is not configured")
+    access_key = settings.artifact_s3_access_key_id
+    secret_key = settings.artifact_s3_secret_access_key
+    if access_key is None or secret_key is None:
+        raise ArtifactConfigurationError("MinIO artifact credentials are unavailable")
+    session = AioSession()
+    session.set_credentials(
+        access_key.get_secret_value(),
+        secret_key.get_secret_value(),
+        settings.artifact_s3_session_token.get_secret_value()
+        if settings.artifact_s3_session_token is not None
+        else None,
+    )
+    return S3CompatibleArtifactStoreBootstrap(
+        S3CompatibleArtifactStore(
+            provider_profile="minio",
+            region=_required(settings.artifact_s3_region),
+            endpoint_url=_required(settings.artifact_s3_endpoint_url),
+            bucket=_required(settings.artifact_s3_bucket),
+            private_prefix=settings.artifact_s3_private_prefix,
+            addressing_style=settings.artifact_s3_addressing_style,
+            session=session,
+            buffer_bytes=settings.artifact_stream_buffer_bytes,
+            connect_timeout_seconds=settings.artifact_s3_connect_timeout_seconds,
+            read_timeout_seconds=settings.artifact_s3_read_timeout_seconds,
+            write_timeout_seconds=settings.artifact_s3_write_timeout_seconds,
+            pool_timeout_seconds=settings.artifact_s3_pool_timeout_seconds,
+            operation_total_timeout_seconds=(
+                settings.artifact_s3_operation_total_timeout_seconds
+            ),
+            max_pool_connections=settings.artifact_s3_max_pool_connections,
+        )
+    )
+
+
+def validate_aws_workload_identity_environment(
+    settings: Settings,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> None:
+    """Reject every ambient or unselected AWS credential source without loading it."""
+    if settings.artifact_s3_provider_profile != "aws_s3":
+        raise ArtifactConfigurationError("native AWS S3 profile is not configured")
+    selected = settings.artifact_s3_aws_workload_identity_method
+    if selected is None:
+        raise ArtifactConfigurationError("AWS workload identity method is unavailable")
+    environment = os.environ if environ is None else environ
+    if _FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT.intersection(environment):
+        raise ArtifactConfigurationError("ambient AWS credential source is forbidden")
+    _reject_default_credential_files(environment)
+
+    allowed_by_method = {
+        "assume-role-with-web-identity": _WEB_IDENTITY_ENVIRONMENT,
+        "container-role": _CONTAINER_ENVIRONMENT,
+        "iam-role": _IAM_ROLE_ENVIRONMENT,
+    }
+    unselected = set().union(
+        *(values for method, values in allowed_by_method.items() if method != selected)
+    )
+    if unselected.intersection(environment):
+        raise ArtifactConfigurationError("unselected AWS workload source is configured")
+    if selected == "assume-role-with-web-identity":
+        if not {"AWS_ROLE_ARN", "AWS_WEB_IDENTITY_TOKEN_FILE"}.issubset(environment):
+            raise ArtifactConfigurationError("AWS web identity configuration is incomplete")
+        token_path = Path(environment["AWS_WEB_IDENTITY_TOKEN_FILE"])
+        if not token_path.is_absolute() or not token_path.is_file():
+            raise ArtifactConfigurationError("AWS web identity token path is invalid")
+    elif selected == "container-role":
+        locations = _CONTAINER_ENVIRONMENT.intersection(environment) & {
+            "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+        }
+        if len(locations) != 1:
+            raise ArtifactConfigurationError("AWS container identity location is invalid")
+        auth = _CONTAINER_ENVIRONMENT.intersection(environment) & {
+            "AWS_CONTAINER_AUTHORIZATION_TOKEN",
+            "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+        }
+        if len(auth) > 1:
+            raise ArtifactConfigurationError("AWS container identity token is ambiguous")
+    elif environment.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true":
+        raise ArtifactConfigurationError("AWS instance identity metadata is disabled")
+
+
+def create_isolated_aws_workload_identity_session(
+    settings: Settings,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> AioSession:
+    """Build an inactive SDK session whose resolver contains one selected provider."""
+    validate_aws_workload_identity_environment(settings, environ=environ)
+    environment = os.environ if environ is None else environ
+    selected = settings.artifact_s3_aws_workload_identity_method
+    session = AioSession()
+    if selected == "assume-role-with-web-identity":
+        profile = {
+            "role_arn": environment["AWS_ROLE_ARN"],
+            "web_identity_token_file": environment["AWS_WEB_IDENTITY_TOKEN_FILE"],
+        }
+        role_session_name = environment.get("AWS_ROLE_SESSION_NAME")
+        if role_session_name is not None:
+            profile["role_session_name"] = role_session_name
+        provider = AioAssumeRoleWithWebIdentityProvider(
+            load_config=lambda: {"profiles": {"workstream-isolated": profile}},
+            client_creator=session.create_client,
+            profile_name="workstream-isolated",
+            cache={},
+            disable_env_vars=True,
+        )
+    elif selected == "container-role":
+        provider = AioContainerProvider(environ=environment)
+    elif selected == "iam-role":
+        provider = AioInstanceMetadataProvider(
+            iam_role_fetcher=AioInstanceMetadataFetcher(
+                timeout=settings.artifact_s3_connect_timeout_seconds,
+                num_attempts=1,
+                env=dict(environment),
+                user_agent=session.user_agent(),
+                config={
+                    "ec2_metadata_service_endpoint": environment.get(
+                        "AWS_EC2_METADATA_SERVICE_ENDPOINT"
+                    ),
+                    "ec2_metadata_service_endpoint_mode": environment.get(
+                        "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE"
+                    ),
+                    "ec2_metadata_v1_disabled": environment.get(
+                        "AWS_EC2_METADATA_V1_DISABLED", "false"
+                    ).lower()
+                    == "true",
+                },
+            )
+        )
+    else:
+        raise ArtifactConfigurationError("AWS workload identity method is unsupported")
+    session.register_component("credential_provider", AioCredentialResolver([provider]))
+    return session
+
+
+async def resolve_isolated_aws_workload_credentials(
+    session: AioSession,
+    *,
+    expected_method: str,
+) -> object:
+    """Resolve credentials and require the exact selected SDK method."""
+    credentials = await session.get_credentials()
+    if credentials is None or getattr(credentials, "method", None) != expected_method:
+        raise ArtifactConfigurationError("AWS workload identity method did not match")
+    return credentials
+
+
+def _reject_default_credential_files(environ: Mapping[str, str]) -> None:
+    """Fail on default shared/config/Boto files without reading their contents."""
+    home = Path(environ.get("HOME", str(Path.home())))
+    for path in (
+        home / ".aws" / "credentials",
+        home / ".aws" / "config",
+        home / ".boto",
+        Path("/etc/boto.cfg"),
+    ):
+        if path.exists():
+            raise ArtifactConfigurationError("ambient AWS credential file is forbidden")
+
+
+def _provider_error_code(error: ClientError) -> str:
+    """Return one bounded provider status/code without retaining response details."""
+    response = error.response if isinstance(error.response, dict) else {}
+    provider_error = response.get("Error") if isinstance(response, dict) else None
+    code = provider_error.get("Code") if isinstance(provider_error, dict) else None
+    if isinstance(code, str) and code:
+        return code
+    metadata = response.get("ResponseMetadata") if isinstance(response, dict) else None
+    status = metadata.get("HTTPStatusCode") if isinstance(metadata, dict) else None
+    return str(status) if type(status) is int else "unknown"
+
+
+def _required(value: str | None) -> str:
+    """Return one settings value already guaranteed by validation."""
+    if not isinstance(value, str) or not value:
+        raise ArtifactConfigurationError("S3-compatible artifact setting is unavailable")
+    return value

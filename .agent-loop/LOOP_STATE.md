@@ -17,7 +17,11 @@
   actor provisioning and leaves service runtime admission plus feature actions
   inactive.
 - PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on
-  2026-07-18; ART-02B1 remains inactive pending a separate explicit start.
+  2026-07-18; the user then explicitly started ART-02B1.
+- Active ART implementation chunk: `WS-ART-001-02B1` on
+  `codex/ws-art-001-02b1-s3-compatible-minio-aws`.
+- The ART worktree consumes merged AUTH, REV, and CON contracts without
+  editing or activating their independently owned runtime behavior.
 - Active implementation chunk: `WS-AUTH-001-09C` on
   `codex/ws-auth-001-09c-actor-identity-admin-reads`.
 - AUTH-09C is bounded to two exact administrative read routes and activates
@@ -35,6 +39,9 @@
   PostgreSQL, and Agent Gates proof passes. All required exact integrated-head
   internal repair tracks pass at `c47d627`; push and replacement external
   checks remain. No service caller becomes executable before AUTH-09E.
+- Current ART gate: integrate trusted `main`, complete deterministic 02B1
+  proof, and pass all nine exact-SHA internal reviewer tracks before opening
+  the ART PR. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -49,7 +56,8 @@
   admission, prepared mutation authority, and exact AUTH-only activation chunks;
   neither reconciliation PR activates feature behavior.
 - Parallel artifact checkpoint: ART-02A1, ART-02A2, and ART-02A3 merged through
-  PRs #127, #129, and #141. ART-02B1 remains inactive.
+  PRs #127, #129, and #141. ART-02B1 is active and adds real MinIO protocol
+  proof plus a fail-closed, runtime-ineligible native AWS profile.
 - Authorization checkpoint: AUTH-07B through AUTH-09B merged through PRs #130,
   #131, #132, and #143. Signed memory stopped after 09B, and the user explicitly
   started AUTH-09C.

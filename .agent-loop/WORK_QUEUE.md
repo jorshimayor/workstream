@@ -5,6 +5,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | PR #146 open; all valid CodeRabbit findings repaired; integrated exact-head review passed; replacement external checks pending |
+| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Active after explicit user start; implementation repair and exact-head internal review in progress |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -17,7 +18,6 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
 | `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
 | `WS-ART-001-02C2` | Verification Publication And Fencing | L1 | Inactive until 02C1 merge and explicit user start |
 | `WS-ART-001-02C3` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C2 merge and explicit user start |
@@ -97,7 +97,8 @@ coverage implementation chunk from this worktree.
 
 `WS-ART-001-01`, the AWS-first planning amendment, `02A1`, `02A2`, and `02A3`
 are merged; PR #141 merged `02A3` as `a10d901`. R2 and Flow Node are deferred.
-`02B1` remains inactive until a separate explicit user start.
+The user explicitly started `02B1` on 2026-07-18. `02C1` remains inactive
+until `02B1` merges and receives a separate explicit start.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

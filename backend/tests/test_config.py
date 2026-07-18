@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import base64
+import importlib.metadata
 import json
+import tomllib
 from collections.abc import Mapping
 from pathlib import Path
 from typing import get_args
@@ -15,6 +17,7 @@ from app.adapters.auth.flow import FlowAuthVerifier
 from app.api.deps.auth import get_application_auth_verifier
 from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
 from app.core.config import Settings, get_settings
+from app.interfaces.artifacts import ArtifactProviderLiveProofRequiredError
 from app.interfaces.external_services import (
     ExternalServiceConfigurationError,
     UnknownExternalServiceProviderError,
@@ -355,6 +358,42 @@ def _flow_settings(**overrides) -> Settings:
     return Settings(**values)
 
 
+def _minio_settings(tmp_path: Path, **overrides: object) -> Settings:
+    values: dict[str, object] = {
+        "environment": "test",
+        "artifact_store_backend": "s3_compatible",
+        "artifact_scratch_root": tmp_path / "scratch",
+        "artifact_s3_provider_profile": "minio",
+        "artifact_s3_region": "us-east-1",
+        "artifact_s3_endpoint_url": "http://127.0.0.1:9000",
+        "artifact_s3_bucket": "workstream-artifacts-test",
+        "artifact_s3_private_prefix": "workstream/artifacts",
+        "artifact_s3_addressing_style": "path",
+        "artifact_s3_credential_mode": "local_static",
+        "artifact_s3_access_key_id": "minio-access-key",
+        "artifact_s3_secret_access_key": "minio-secret-key",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def _aws_settings(tmp_path: Path, **overrides: object) -> Settings:
+    values: dict[str, object] = {
+        "environment": "production",
+        "artifact_store_backend": "s3_compatible",
+        "artifact_scratch_root": tmp_path / "scratch",
+        "artifact_s3_provider_profile": "aws_s3",
+        "artifact_s3_region": "us-east-1",
+        "artifact_s3_bucket": "workstream-artifacts-prod",
+        "artifact_s3_private_prefix": "workstream/artifacts",
+        "artifact_s3_addressing_style": "virtual",
+        "artifact_s3_credential_mode": "aws_workload_identity",
+        "artifact_s3_aws_workload_identity_method": "container-role",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
@@ -551,15 +590,246 @@ def test_artifact_scratch_settings_are_bounded_and_separate(tmp_path) -> None:
         )
 
 
-def test_s3_compatible_factory_fails_typed_until_adapter_chunk(tmp_path: Path) -> None:
-    """Keep valid future S3 configuration unavailable until its owned chunk."""
-    settings = Settings(
-        environment="test",
-        artifact_store_backend="s3_compatible",
-        artifact_scratch_root=tmp_path / "scratch",
+def test_minio_settings_and_factory_construct_closed_namespace(tmp_path: Path) -> None:
+    """MinIO is the active S3-compatible runtime profile for local and CI proof."""
+    settings = _minio_settings(tmp_path)
+
+    bootstrap = create_artifact_store_bootstrap(settings)
+
+    try:
+        assert bootstrap.identity.capability_key == "artifact_store"
+        assert bootstrap.identity.provider_key == "s3_compatible"
+        assert bootstrap.namespace_identity.provider_profile == "minio-v1"
+        assert bootstrap.namespace_identity.descriptor_items == (
+            ("addressing_style", "path"),
+            ("bucket", "workstream-artifacts-test"),
+            ("endpoint_identity", bootstrap.namespace_identity.as_dict()["endpoint_identity"]),
+            ("private_prefix", "workstream/artifacts"),
+            ("region", "us-east-1"),
+        )
+        endpoint_identity = bootstrap.namespace_identity.as_dict()["endpoint_identity"]
+        assert endpoint_identity.startswith("sha256:")
+        assert "127.0.0.1" not in endpoint_identity
+        assert "minio-secret-key" not in repr(bootstrap.namespace_identity)
+    finally:
+        bootstrap.close()
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"artifact_s3_provider_profile": None}, "requires a provider profile"),
+        ({"artifact_s3_region": "US-east-1"}, "requires a canonical region"),
+        ({"artifact_s3_bucket": "192.168.0.1"}, "requires a canonical bucket"),
+        ({"artifact_s3_bucket": "bucket..name"}, "requires a canonical bucket"),
+        ({"artifact_s3_private_prefix": "/bad"}, "private prefix is invalid"),
+        ({"artifact_maximum_bytes": 512 * 1024 * 1024 + 1}, "maximum exceeds"),
+        ({"environment": "production"}, "MinIO artifact storage is restricted"),
+        ({"artifact_s3_credential_mode": "aws_workload_identity"}, "local static"),
+        (
+            {"artifact_s3_aws_workload_identity_method": "iam-role"},
+            "cannot select AWS workload identity",
+        ),
+        ({"artifact_s3_endpoint_url": None}, "requires an endpoint"),
+        ({"artifact_s3_endpoint_url": "https://user:pass@minio.test"}, "endpoint is invalid"),
+        ({"artifact_s3_endpoint_url": "http://minio.test/path"}, "endpoint is invalid"),
+        ({"artifact_s3_endpoint_url": "http://minio.test/"}, "endpoint is invalid"),
+    ],
+)
+def test_minio_settings_fail_closed(
+    tmp_path: Path,
+    overrides: dict[str, object],
+    message: str,
+) -> None:
+    with pytest.raises((ValidationError, ValueError), match=message):
+        _minio_settings(tmp_path, **overrides)
+
+
+@pytest.mark.parametrize(
+    ("removed", "message"),
+    [
+        ("artifact_s3_access_key_id", "complete static credentials"),
+        ("artifact_s3_secret_access_key", "complete static credentials"),
+    ],
+)
+def test_minio_static_credentials_are_required(
+    tmp_path: Path,
+    removed: str,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        _minio_settings(tmp_path, **{removed: None})
+
+
+def test_minio_secret_values_are_absent_from_repr_and_validation_errors(
+    tmp_path: Path,
+) -> None:
+    secret = "minio-secret-value-that-must-not-leak"
+    settings = _minio_settings(tmp_path, artifact_s3_secret_access_key=secret)
+
+    assert settings.artifact_s3_secret_access_key is not None
+    assert settings.artifact_s3_secret_access_key.get_secret_value() == secret
+    assert secret not in repr(settings)
+    assert secret not in repr(settings.model_dump())
+
+    with pytest.raises(ValidationError) as caught:
+        _minio_settings(
+            tmp_path,
+            artifact_s3_secret_access_key=secret,
+            artifact_s3_region="US-east-1",
+        )
+
+    assert secret not in repr(caught.value.errors())
+    assert secret not in caught.value.json()
+    _assert_secret_not_retained(caught.value, secret)
+
+
+def test_minio_secret_values_from_env_and_dotenv_are_absent_from_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    env_secret = "env-minio-secret-value"
+    dotenv_secret = "dotenv-minio-secret-value"
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "WORKSTREAM_ARTIFACT_S3_ACCESS_KEY_ID=dotenv-access",
+                f"WORKSTREAM_ARTIFACT_S3_SECRET_ACCESS_KEY={dotenv_secret}",
+            ]
+        ),
+        encoding="utf-8",
     )
-    with pytest.raises(UnknownExternalServiceProviderError) as caught:
+    monkeypatch.setenv("WORKSTREAM_ARTIFACT_S3_ACCESS_KEY_ID", "env-access")
+    monkeypatch.setenv("WORKSTREAM_ARTIFACT_S3_SECRET_ACCESS_KEY", env_secret)
+
+    with pytest.raises(ValidationError) as env_error:
+        Settings(
+            environment="test",
+            artifact_store_backend="s3_compatible",
+            artifact_scratch_root=tmp_path / "scratch",
+            artifact_s3_provider_profile="minio",
+            artifact_s3_region="US-east-1",
+            artifact_s3_endpoint_url="http://127.0.0.1:9000",
+            artifact_s3_bucket="workstream-artifacts-test",
+            artifact_s3_credential_mode="local_static",
+            _env_file=env_file,
+        )
+    assert env_secret not in repr(env_error.value.errors())
+    _assert_secret_not_retained(env_error.value, env_secret)
+
+    monkeypatch.delenv("WORKSTREAM_ARTIFACT_S3_ACCESS_KEY_ID")
+    monkeypatch.delenv("WORKSTREAM_ARTIFACT_S3_SECRET_ACCESS_KEY")
+    with pytest.raises(ValidationError) as dotenv_error:
+        Settings(
+            environment="test",
+            artifact_store_backend="s3_compatible",
+            artifact_scratch_root=tmp_path / "scratch",
+            artifact_s3_provider_profile="minio",
+            artifact_s3_region="US-east-1",
+            artifact_s3_endpoint_url="http://127.0.0.1:9000",
+            artifact_s3_bucket="workstream-artifacts-test",
+            artifact_s3_credential_mode="local_static",
+            _env_file=env_file,
+        )
+    assert dotenv_secret not in repr(dotenv_error.value.errors())
+    _assert_secret_not_retained(dotenv_error.value, dotenv_secret)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"artifact_s3_endpoint_url": "https://s3.us-east-1.amazonaws.com"}, "endpoint"),
+        ({"artifact_s3_credential_mode": "local_static"}, "workload identity"),
+        ({"artifact_s3_aws_workload_identity_method": None}, "one workload identity"),
+        (
+            {
+                "artifact_s3_access_key_id": "static-access",
+                "artifact_s3_secret_access_key": "static-secret",
+            },
+            "rejects static credentials",
+        ),
+    ],
+)
+def test_aws_s3_settings_fail_closed(
+    tmp_path: Path,
+    overrides: dict[str, object],
+    message: str,
+) -> None:
+    with pytest.raises((ValidationError, ValueError), match=message):
+        _aws_settings(tmp_path, **overrides)
+
+
+def test_aws_factory_fails_with_live_proof_before_constructing_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from app.adapters import artifacts as artifacts_module
+    from app.adapters.artifacts import s3_compatible
+
+    settings = _aws_settings(tmp_path)
+    events: list[str] = []
+
+    class FactoryMustNotConstruct:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            events.append("factory")
+            raise AssertionError("factory constructed before AWS live proof failure")
+
+    def session_must_not_construct(*_args: object, **_kwargs: object) -> object:
+        events.append("resolver")
+        raise AssertionError("credential resolver constructed before live proof failure")
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/v2/credentials/runtime")
+    monkeypatch.setattr(artifacts_module, "ExternalServiceAdapterFactory", FactoryMustNotConstruct)
+    monkeypatch.setattr(s3_compatible, "AioSession", session_must_not_construct)
+
+    with pytest.raises(ArtifactProviderLiveProofRequiredError) as caught:
         create_artifact_store_bootstrap(settings)
 
-    assert caught.value.identity is not None
-    assert caught.value.identity.provider_key == "s3_compatible"
+    assert caught.value.code == "artifact_provider_live_proof_required"
+    assert events == []
+
+
+async def test_aws_lifespan_fails_before_namespace_claim_and_provider_io(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import app.main as main_module
+
+    settings = _aws_settings(tmp_path, environment="test")
+    events: list[str] = []
+
+    async def namespace_must_not_run(*_args: object, **_kwargs: object) -> object:
+        events.append("namespace")
+        raise AssertionError("namespace claim ran before AWS live proof failure")
+
+    async def cleanup_must_not_run(*_args: object, **_kwargs: object) -> object:
+        events.append("cleanup")
+        raise AssertionError("provider cleanup ran before AWS live proof failure")
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/v2/credentials/runtime")
+    monkeypatch.setattr(
+        main_module,
+        "_validate_artifact_storage_namespace_at_startup",
+        namespace_must_not_run,
+    )
+    monkeypatch.setattr(main_module, "cleanup_stale_artifact_scratch", cleanup_must_not_run)
+    app = create_app(settings)
+
+    with pytest.raises(ArtifactProviderLiveProofRequiredError) as caught:
+        async with app.router.lifespan_context(app):
+            pass
+
+    assert caught.value.code == "artifact_provider_live_proof_required"
+    assert events == []
+
+
+def test_s3_dependency_manifest_and_installed_versions_are_exact() -> None:
+    manifest = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())
+
+    assert "aiobotocore==3.7.0" in manifest["project"]["dependencies"]
+    assert "botocore==1.43.0" in manifest["project"]["dependencies"]
+    assert importlib.metadata.version("aiobotocore") == "3.7.0"
+    assert importlib.metadata.version("botocore") == "1.43.0"
