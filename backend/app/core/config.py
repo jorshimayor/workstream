@@ -586,7 +586,7 @@ def _extract_artifact_s3_static_secrets(
                     environment_name=f"WORKSTREAM_{field_name.upper()}",
                 )
             )
-    except ValueError:
+    except Exception:
         secrets.clear()
         for field_name in field_names:
             values.pop(field_name, None)

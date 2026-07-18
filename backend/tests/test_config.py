@@ -921,6 +921,32 @@ def test_invalid_json_shapes_do_not_retain_minio_secrets(
     )
 
 
+def test_partial_s3_secret_extraction_cleans_unexpected_dotenv_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A later source error must not retain an already-extracted credential."""
+    monkeypatch.delenv("WORKSTREAM_ARTIFACT_S3_SECRET_ACCESS_KEY", raising=False)
+    rate_secret = base64.b64encode(bytes(range(32))).decode("ascii")
+    access_key = "partially-extracted-minio-access-key"
+    payload = _minio_setting_values(
+        tmp_path,
+        api_rate_limit_key_secret=rate_secret,
+        artifact_s3_access_key_id=access_key,
+        _env_file=object(),
+    )
+    payload.pop("artifact_s3_secret_access_key")
+
+    with pytest.raises(TypeError) as caught:
+        Settings(**payload)
+
+    assert_secret_not_retained(
+        caught.value,
+        access_key,
+        traceback_module_prefixes=("app.core.config",),
+    )
+
+
 @pytest.mark.parametrize(
     "method_name",
     ["model_validate", "model_validate_json", "model_validate_strings"],
