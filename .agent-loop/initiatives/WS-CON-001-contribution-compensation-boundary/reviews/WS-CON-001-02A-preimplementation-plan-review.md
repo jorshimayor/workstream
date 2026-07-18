@@ -1,5 +1,23 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
+## REV PLAN2 Current-Main Reconciliation
+
+Trusted main advanced to `983b9e534b84f1590fafecc0ce1355cf131257ce`
+through planning-only REV PLAN2 PR #150. The merge changes no backend runtime,
+migration, test runner, AUTH catalogue, outbox contract, or 02A allowed-file
+scope. It preserves the two ordered CON operations, accept-only
+FinalAcceptance, REV-owned shared audit/outbox staging, and one caller commit.
+It replaces future non-executable REV parent gates with explicit children:
+CON-03B precedes REV-03A, CON-02A/02C precede REV-04B, CON-03C/07 precede
+REV-10, the shared dispatcher/handler registry precedes REV-12P1, CON fence
+hooks precede REV-12A3, and CON-11 precedes REV-13C. No 02A implementation
+change is required.
+
+An exact isolated suite started on the prior `99ae4c96` baseline was stopped
+after two hours solely because PR #150 advanced trusted main. It produced no
+accepted evidence artifact and is not counted below. Exact verification must
+restart on the frozen `983b9e53` baseline.
+
 ## AUTH-09D-A Current-Main Reconciliation
 
 Trusted main advanced to `99ae4c963e53f317175dcb308b9e47c93ccf19ed`

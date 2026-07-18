@@ -42,6 +42,12 @@ three actor-profile lifecycle actions, and added AUTH-owned
 `0026_actor_profile_lifecycle`. CON-02A therefore rebases its linear migration
 to `0027_shared_transactional_outbox`; the merge adds no CON/outbox action,
 permission, evaluator, service identity, or runtime admission.
+REV PLAN2 PR #150 then advanced trusted main to `983b9e53` with a
+planning/specification-only runtime-readiness refresh. It preserves the
+FinalAcceptance-sourced submitter contribution, reviewer contribution on all
+three decisions, REV-owned single commit, and shared outbox staging. Its split
+future REV child gates are reconciled in CON planning; it changes no backend,
+migration, AUTH catalogue, or CON-02A implementation.
 
 ## Inspected and already aligned
 

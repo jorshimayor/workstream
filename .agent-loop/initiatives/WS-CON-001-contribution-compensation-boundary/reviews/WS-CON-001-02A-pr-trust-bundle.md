@@ -55,8 +55,9 @@ feature chunks own execution behavior.
 ## Proof
 
 - Reconciled exact contract selector: 8 passed, 56 deselected.
-- Reconciled complete outbox plus migration suite: 34 passed with 95.43%
-  focused coverage.
+- Current-main outbox plus migration/lifecycle-guard suite: 36 passed in
+  156.17 seconds; the reconciled outbox implementation retains 95.43% focused
+  coverage.
 - Affected AUTH lifecycle downgrade tests: 2 passed, including atomic rollback
   to the full `0027` head when AUTH refuses `0026 -> 0025`.
 - Alembic reports exactly one head: `0027_shared_transactional_outbox`.
@@ -75,6 +76,11 @@ feature chunks own execution behavior.
 - AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
   above is current, while full-suite evidence and exact-SHA internal reviewer
   results must rerun before publication.
+- REV PLAN2 PR #150 then advanced trusted main to `983b9e53`. It changes only
+  planning/specification files, preserves the 02A runtime boundary, and updates
+  future CON/REV child gates. A two-hour suite on the prior head was stopped,
+  discarded, and is not counted; exact-head full-suite evidence remains
+  pending.
 
 ## Test And CI Integrity
 

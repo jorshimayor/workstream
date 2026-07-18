@@ -9,10 +9,11 @@ CompensationAward, fulfillment behavior, and CON projections. AUTH owns all
 authorization and activation.
 
 The canonical cross-boundary source is merged
-`WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128, originally landed at
-`0302bcf` and canonically published through REV-01 PR #145 at `f18b620` after
-REV-02 planning decomposition, remains the reviewed owner contract in current
-main `99ae4c96`;
+`WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128 originally landed at
+`0302bcf`; REV-01 PR #145 canonically published it, REV-02 PR #147 decomposed
+the first runtime parent, and planning-only REV PLAN2 PR #150 refreshed the
+remaining runtime child gates. They remain the reviewed owner contract in
+current main `983b9e53`;
 runtime REV behavior remains
 unimplemented.
 
@@ -96,9 +97,9 @@ Review.decision.
 
 - ContributionPolicy publish/freeze and adapter-binding behavior are merged.
 - TaskAssignment and ReviewLease carry exact frozen policy-version IDs.
-- REV FinalAcceptance persistence and its locked decision-lineage contract are
-  merged, including exact task/Review/Submission uniqueness and ReviewPolicy
-  lineage.
+- REV-04B FinalAcceptance persistence and its locked decision-lineage contract
+  are merged, including exact task/Review/Submission uniqueness and
+  ReviewPolicy lineage.
 - Shared outbox/audit participants and CON-07 are mandatory and merged.
 - REV hidden claim/decision composition then consumes CON-06/07 and has no
   fallback.
@@ -110,7 +111,7 @@ Review.decision.
 - Protected outbox handlers have their own exact service authority; dispatcher
   authority is not inherited.
 - Every CON fulfillment-obligation creation, requeue, successor, and repair
-  writer exposes a mandatory hook that acquires REV-12A's shared
+  writer exposes a mandatory hook that acquires REV-12A3's shared
   `JointLifecycleMutationFence` before allocating an immutable monotonically
   increasing root ordinal or locking obligation rows.
 - CON dispatch and callback hooks consume that shared fence. In
@@ -151,6 +152,6 @@ no adjudication action/state/queue/readiness dependency.
 
 ## Ownership and stop
 
-CON-11 publishes the hidden dependency manifest but registers no route. The
-reviewed REV release chunk consumes that manifest and owns public activation and
-the joint live drill. This handoff starts neither chunk automatically.
+CON-11 publishes the hidden dependency manifest but registers no route.
+REV-13A consumes it in preflight and REV-13C owns the sole public product
+release and final HTTP proof. This handoff starts no chunk automatically.

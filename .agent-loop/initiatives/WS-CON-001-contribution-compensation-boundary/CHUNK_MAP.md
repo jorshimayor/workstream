@@ -15,12 +15,12 @@ availability writer. Optional evidence chunks are not part of the core order.
 | `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
 | `WS-CON-001-PLAN3` | AUTH/REV Current-Main Reconciliation | L0/L1 | Merged AUTH PR #140 plus AUTH-09A and REV PR #128 at `0302bcf` | Complete; unpublished |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Complete; merged in PR #144 |
-| `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01 merged at `e118e33`; trusted head refreshed through ART PR #141, AUTH-09C PR #146, REV-01 PR #145, REV-02 PR #147, and AUTH-09D-A PR #148 at `99ae4c96`; explicitly started by human | Reconciled implementation; evidence rerun pending |
+| `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01 merged at `e118e33`; trusted head refreshed through ART PR #141, AUTH-09C PR #146, REV-01 PR #145, REV-02 PR #147, AUTH-09D-A PR #148, and planning-only REV PLAN2 PR #150 at `983b9e53`; explicitly started by human | Reconciled implementation; full-suite rerun pending |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
 | `WS-CON-001-02C` | Shared Lifecycle Audit Participant | L1 | 02B; current AuditEvent contract refreshed | Proposed |
 | `WS-CON-001-03A` | Project Compensation Adapter-Binding Persistence | L1 | 02C; migration head refreshed | Proposed |
 | `WS-CON-001-03B` | Contribution Policy Persistence | L1 | 03A; legacy-data rule; must precede REV-03 ReviewLease FK | Proposed |
-| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; merged REV-04 runtime FinalAcceptance/Review/ReviewLease FK targets | Proposed |
+| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; merged REV-04B runtime FinalAcceptance/Review/ReviewLease FK targets | Proposed |
 | `WS-CON-001-03D` | Delivery, Receipt, And Status Persistence | L1 | 03C; immutable fulfillment root ordinal/generation contract | Proposed |
 | `WS-CON-001-04A` | Hidden Adapter-Binding Service | L1 | 03A; planned AUTH binding actions/contexts/prepared protocol; callback ServiceIdentity/action/static row approved but inactive | Proposed |
 | `WS-CON-001-04B` | Hidden Contribution-Policy Service | L1 | 03B, 04A; binding activation merged; planned `contribution.policy.*` actions/contexts/prepared protocol | Proposed |
@@ -89,17 +89,19 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
   REV-owned FinalAcceptance. REV stages shared audit/outbox rows, owns the
   single commit, and supplies stabilized artifact-hash lineage; no ART call is
   made.
-- Merged REV PR #128 is planning authority, not runtime readiness. CON-03B must
-  precede REV-03; CON-02A/02C precede REV-04; REV-04 precedes CON-03C; CON-06
-  precedes REV-06; REV-09B plus CON-03C/07 precede REV-10; and CON-11's exact
-  obligation hooks/ordinal/drain manifest precedes REV-12A.
+- Merged REV PR #128 plus PLAN2 PR #150 are planning authority, not runtime
+  readiness. CON-03B precedes REV-03A; CON-02A/02C precede REV-04B; REV-04B
+  precedes CON-03C; CON-06 precedes REV-06A; REV-09B plus CON-03C/07 precede
+  REV-10; the CON-02B dispatcher/handler registry precedes REV-12P1; CON's
+  03D/08A/08B/10B/11 hooks precede REV-12A3; and CON-11 precedes REV-13C.
 - CON-08A/B and 10C cannot reuse outbox dispatcher authority for delivery,
   callback, reconciliation, or rebuild execution.
 - CON-10A owns core PostgreSQL contribution/award reads directly; it does not
   wait for optional evidence reads.
 - CON-11 has no ART or evidence-projection prerequisite. It hands mandatory
   obligation-writer, dispatch, callback, maximum-ordinal, and drain-observation
-  seams to REV-12A's single shared lifecycle controller and registers no route.
+  seams to REV-12A1/12A3's single shared lifecycle controller and registers no
+  route.
 - AUTH PR #140's complete ART and REV activation-custody transfer contracts are
   consumed by reference to AUTH/WS-XINT handoffs. The runtime transfers remain
   upstream gates; WS-CON does not define partial subsets.

@@ -10,11 +10,14 @@
 
 ## Trusted baseline
 
-- `origin/main` at `99ae4c963e53f317175dcb308b9e47c93ccf19ed`, merging
-  AUTH-09D-A PR #148 after REV-02 PR #147, REV-01 PR #145, AUTH-09C PR #146,
-  ART PR #141, AUTH-09B PR #143, reviewed REV planning PR #128, AUTH-09A, AUTH
-  PR #140, and WS-XINT PR #139.
+- `origin/main` at `983b9e534b84f1590fafecc0ce1355cf131257ce`, merging
+  planning-only REV PLAN2 PR #150 after AUTH-09D-A PR #148, REV-02 PR #147,
+  REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, reviewed
+  REV planning PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
 - PR #128 remains planning authority, not Review runtime implementation.
+- REV PLAN2 PR #150 is the current runtime-readiness planning authority. It
+  splits future REV parent records into executable children but changes no
+  backend runtime, migration, AUTH catalogue, or 02A outbox contract.
 - Runtime AUTH is 74 PermissionIds, 65 ActionIds, 15 active, 50 planned.
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
   `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates
@@ -34,14 +37,14 @@
 - On 2026-07-17 the human fixed the v0.1 shipping path as
   `Review(accept) -> FinalAcceptance -> accepted_submission` and explicitly
   excluded adjudication lifecycle/actions/readiness.
-- Merged REV PR #128 now plans FinalAcceptance, exact
+- Merged REV PR #128 and its PLAN2 PR #150 refresh plan FinalAcceptance, exact
   `accepted`/`needs_revision`/`rejected` effects, two ordered CON participant
   operations, and REV-12A lifecycle-control hooks. WS-CON implementation still
   waits for each exact runtime chunk and consumes no sibling-worktree behavior.
 - The amendment's `submission_version_id` is normalized to canonical
   `Submission.id` / `submission_id`; current runtime already stores each
   immutable version as a Submission row.
-- Merged REV-04 retains `policy_context_ref` as the foreign key to exact locked
+- Planned REV-04B retains `policy_context_ref` as the foreign key to exact locked
   `ReviewPolicy.id` and `recorded_by` as the reviewer ActorProfile field; CON
   consumes those names and REV owns/proves the lineage.
 - `docs/review_closure.md`, `docs/review_final_adversarial_review.md`, and
@@ -79,6 +82,7 @@
 - `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-08-immutable-decision-kernel.md`
 - `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-10-contribution-integration-hidden-composition.md`
 - `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-12A-joint-lifecycle-release-control.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-PLAN2-runtime-readiness-plan-refresh.md`
 - `.agent-loop/policies/*`
 
 ## Normative WS-XINT handoffs

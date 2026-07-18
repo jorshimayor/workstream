@@ -31,6 +31,12 @@ merge activates only three actor-profile lifecycle actions and adds AUTH-owned
 `0026_actor_profile_lifecycle`; it adds no CON/outbox identifier, evaluator,
 service identity, static row, or fixed-service admission. CON-02A is therefore
 rebased as linear `0027_shared_transactional_outbox` after AUTH's revision.
+Trusted `main` then advanced to `983b9e53` through planning-only REV PLAN2 PR
+#150. It splits future REV runtime parents into executable children and updates
+their exact CON gates, while preserving the ordered reviewer/submitter
+operations, accept-only FinalAcceptance, REV-owned audit/outbox staging, and
+single commit. It adds no backend runtime, migration, AUTH catalogue entry, or
+02A behavior. CON-02A therefore remains the same `0027` implementation.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -104,13 +110,16 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation is reconciled with AUTH-09D-A after the
-explicit human start. It adds one linear migration, the shared outbox
+`WS-CON-001-02A` implementation is reconciled with trusted main `983b9e53`
+after the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
-but AUTH-09D-A changed backend runtime, tests, and the migration head, so focused
-and repository-wide evidence must rerun on the `0027` chain before exact-SHA
-internal review. It stops before dispatcher mechanics and CON-02B.
+but AUTH-09D-A changed backend runtime, tests, and the migration head, so
+repository-wide evidence must rerun on the `0027` chain before exact-SHA
+internal review. Current focused evidence already passes. The first reconciled
+full-suite attempt was stopped after two hours solely because PR #150 advanced
+trusted main; it is not counted as evidence. It stops before dispatcher
+mechanics and CON-02B.
 
 | Chunk | Status | Notes |
 |---|---|---|
@@ -118,7 +127,7 @@ internal review. It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Reconciled implementation; evidence rerun pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
+| `WS-CON-001-02A` | Reconciled implementation; full-suite rerun pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -126,7 +135,7 @@ internal review. It stops before dispatcher mechanics and CON-02B.
 
 | Gate | Owner | Required action |
 |---|---|---|
-| FinalAcceptance and decision integration | REV + CON | REV-04 runtime persistence -> CON-03C; REV-09B lineage + CON-07 two-operation participant -> REV-10 hidden single-commit composition -> AUTH activation |
+| FinalAcceptance and decision integration | REV + CON | REV-04B runtime persistence -> CON-03C; REV-09B lineage + CON-07 two-operation participant -> REV-10 hidden single-commit composition -> AUTH activation |
 | Active specification/archive handling | Complete | CON-01 merged in PR #144; archival inputs remain untouched |
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
@@ -138,7 +147,7 @@ internal review. It stops before dispatcher mechanics and CON-02B.
 | review.claim/review.decision | AUTH + REV + CON | Complete REV custody transfer and AUTH-PREP; merge hidden CON participants and REV composition; AUTH-REV-06/08 activate afterward |
 | Shared outbox | CON-02A/B | Land generic persistence/dispatcher after approval |
 | Joint release | REV + CON + AUTH | Consume exact hidden manifest; optional evidence and ART are not prerequisites |
-| Fulfillment cutoff/drain | CON + REV-12A | CON-03D ordinal; all writer/dispatch/callback hooks; CON-10B observation; CON-11 manifest -> REV-12A shared fence/controller |
+| Fulfillment cutoff/drain | CON + REV-12A | CON-03D ordinal; all writer/dispatch/callback hooks; CON-10B observation; CON-11 manifest -> REV-12A1/12A3 shared controller and CON fence composition |
 
 ## Stop condition
 

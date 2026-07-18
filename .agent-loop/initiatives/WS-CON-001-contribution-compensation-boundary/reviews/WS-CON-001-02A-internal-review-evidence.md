@@ -8,7 +8,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
+Trusted main SHA: `983b9e534b84f1590fafecc0ce1355cf131257ce`
 
 The implementation is limited to one linear PostgreSQL migration after
 AUTH-owned revision 0026, the generic outbox persistence/append module, shared
@@ -20,6 +20,11 @@ behavior.
 
 The user-owned unstaged deletion of the older contribution reference PDF is
 outside the chunk and is excluded from every commit and review.
+
+REV PLAN2 PR #150 is planning/specification-only. It preserves the exact 02A
+runtime and migration while refreshing future CON/REV gate names. The first
+post-AUTH full-suite attempt was stopped after two hours when that PR advanced
+trusted main; its metadata was removed and it is not evidence.
 
 ## Implemented Contract
 
@@ -44,7 +49,7 @@ outside the chunk and is excluded from every commit and review.
 ## Current Reconciliation Verification Results
 
 ```text
-34 passed in 77.21s on the ART 0025 -> AUTH 0026 -> CON 0027 chain
+36 passed in 156.17s on current main's ART 0025 -> AUTH 0026 -> CON 0027 chain
 outbox coverage: 95.43% (required: at least 90%)
 8 passed, 56 deselected in 50.92s (exact contract selector)
 2 passed in 88.51s (affected AUTH lifecycle downgrade tests)
@@ -54,19 +59,19 @@ real API contract end-to-end on 0027: passed
 Ruff: passed
 Docstring coverage: passed at 90.9%
 Markdown links: passed for 15 changed Markdown files
-Workstream/AUTH/ART/REV stale-contract scans: passed
+Workstream/AUTH/ART/REV stale-contract scans: passed after PR #150 reconciliation
 merge intent and git diff --check: passed
 Alembic heads: one head, 0027_shared_transactional_outbox
 full-suite fail-closed ceiling: 25,200s; tests/isolation/coverage unchanged
-repository-wide isolated PostgreSQL suite: pending on frozen reconciled SHA
+repository-wide isolated PostgreSQL suite: pending on frozen `983b9e53` SHA
 ```
 
 ## Pre-Reconciliation Verification Results
 
 These results were produced on the former `f18b620` / outbox-0026 chain. They
 prove the implementation before AUTH-09D-A but are not publication evidence for
-the reconciled `99ae4c96` / outbox-0027 chain. Exact focused and full-suite
-evidence must rerun before reviewer fanout.
+the reconciled `983b9e53` / outbox-0027 chain. Current focused evidence is
+recorded above; the exact full suite must rerun before reviewer fanout.
 
 ```text
 33 passed in 151.73s on the former ART 0025 -> CON 0026 chain
