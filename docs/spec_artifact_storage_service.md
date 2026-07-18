@@ -475,6 +475,13 @@ still claims the exact `minio-v1` namespace in PostgreSQL before any object
 operation. Local and CI run the real digest-pinned MinIO server and provision
 only the dedicated test bucket; tests do not emulate S3 calls.
 
+`local/CI MinIO` names a non-production provider-eligibility class, not a
+literal endpoint-host rule. Repository-managed Compose and CI publish MinIO on
+host loopback only. A separately containerized Workstream process may use an
+operator-controlled private MinIO endpoint in a local, development, or test
+environment. Publicly exposed MinIO and every production-environment MinIO
+configuration are outside v0.1; neither can satisfy native AWS live proof.
+
 `aws_s3` accepts only a native endpoint-less AWS configuration, explicit
 region, and exactly one allowlisted workload-identity method. The composition
 root validates settings and then raises `artifact_provider_live_proof_required`
