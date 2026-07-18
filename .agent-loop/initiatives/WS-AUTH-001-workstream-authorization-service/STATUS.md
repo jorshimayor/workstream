@@ -99,8 +99,9 @@ split into 09D-A and 09D-B. After bounded external repair and exact-head review,
 PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
 recorded the stopped gate and named 09D-B. The user explicitly started 09D-B
 from that trusted head. Exact contract `9ec6390b` passed required L1
-preimplementation review, and bounded implementation is active. No service
-caller or consumer feature action is active.
+preimplementation review. Implementation, deterministic proof, and required
+internal review pass; ready PR publication is current. No service caller or
+consumer feature action is active.
 
 ## Active planning chunk
 

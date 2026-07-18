@@ -4149,6 +4149,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "Only 09D-A implementation is active",
         "Only 09D-A may proceed",
         "AUTH-09D-A's repaired contract passed required L1",
+        "bounded implementation is active",
     )
     for stale_text in stale_auth_09d_state:
         assert stale_text not in auth_status
