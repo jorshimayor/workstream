@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until explicit user start |
+| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Inactive until 09D-A merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
@@ -26,6 +26,7 @@ output. This authored queue records the separately approved parallel chunks.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Merged through PR #148 as `99ae4c9` on 2026-07-18 |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Merged through PR #146 as `0ffdabf` on 2026-07-18 |
 | `WS-ENG-001-01` | Codex-native zero-trust loop bootstrap | L1 | Merged through PR #23 on 2026-06-20 |
 | `EXAMPLE-TERMINAL-BENCHMARK` | Terminal Benchmark example drill | L3 | Merged through PR #25 on 2026-06-21 |
@@ -88,8 +89,11 @@ AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
 merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
 and its AUTH owner reconciliation merged through PR #140 as `d541521`.
 AUTH-09A merged through PR #132 as `299363a`, and signed schema-v2 memory
-stopped. AUTH-09B merged through PR #143 as `053242b`, and AUTH-09C merged
-through PR #146 as `0ffdabf`. Do not start AUTH-09D or POL-002-04 automatically.
+stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
+started AUTH-09C. PR #146 merged it as `0ffdabf`; signed memory at `eeb3dc2`
+stopped. Required review split AUTH-09D before runtime edits, and AUTH-09D-A
+merged through PR #148 as `99ae4c9`. Do not start 09D-B, 09E, or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
