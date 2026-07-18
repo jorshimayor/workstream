@@ -512,17 +512,35 @@ async def test_definition_reads_authorize_touch_and_commit_before_disclosure(
         ),
     ],
 )
+@pytest.mark.parametrize("self_target", [False, True])
 async def test_actor_admin_routes_authorize_before_lookup_touch_and_commit(
     monkeypatch: pytest.MonkeyPatch,
     route,
     action_id: ActionId,
     resource_type,
     read_method: str,
+    self_target: bool,
 ) -> None:
     target_id = uuid4()
-    resolved = SimpleNamespace(profile=SimpleNamespace(id=str(uuid4())))
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(target_id if self_target else uuid4()),
+            updated_at=datetime.now(UTC),
+            last_seen_at=datetime.now(UTC),
+        ),
+        identity_link=SimpleNamespace(last_verified_at=datetime.now(UTC)),
+    )
     events: list[tuple[str, object]] = []
-    response = SimpleNamespace(target_id=target_id)
+
+    class Response:
+        def __init__(self) -> None:
+            self.updates: list[dict] = []
+
+        def model_copy(self, *, update):
+            self.updates.append(update)
+            return self
+
+    response = Response()
 
     class Session:
         async def commit(self) -> None:
@@ -564,6 +582,7 @@ async def test_actor_admin_routes_authorize_before_lookup_touch_and_commit(
     assert resource.resource_id == target_id
     assert result is response
     assert [event for event, _ in events] == ["authorize", "lookup", "touch", "commit"]
+    assert len(response.updates) == int(self_target)
 
 
 async def test_actor_admin_missing_resource_rolls_back_without_touch_or_commit(

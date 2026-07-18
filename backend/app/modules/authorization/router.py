@@ -332,6 +332,13 @@ async def read_actor_profile(
         await session.rollback()
         raise _actor_resource_not_found()
     await _database_call(session, ActorService(session).touch_after_authorization(resolved))
+    if actor_profile_id == UUID(resolved.profile.id):
+        response = response.model_copy(
+            update={
+                "updated_at": resolved.profile.updated_at,
+                "last_seen_at": resolved.profile.last_seen_at,
+            }
+        )
     await _commit_or_unavailable(session)
     return response
 
@@ -367,6 +374,10 @@ async def read_actor_identity_link(
         await session.rollback()
         raise _actor_resource_not_found()
     await _database_call(session, ActorService(session).touch_after_authorization(resolved))
+    if actor_profile_id == UUID(resolved.profile.id):
+        response = response.model_copy(
+            update={"last_verified_at": resolved.identity_link.last_verified_at}
+        )
     await _commit_or_unavailable(session)
     return response
 

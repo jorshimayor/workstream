@@ -9,7 +9,7 @@ implementation activates only `actor.profile.read` and
 `actor.identity_link.read` for exact targets under effective system authority.
 Real PostgreSQL lifecycle, two-session disabling races, rollback/privacy tests,
 and the live HTTP contract drill pass. Focused branch coverage is 91.06 percent
-for actors and 91.80 percent for authorization. Exact-head implementation
+for actors and 92.04 percent for authorization. Exact-head implementation
 review, PR publication, external checks, and explicit human merge approval
 remain; AUTH-09D is inactive.
 

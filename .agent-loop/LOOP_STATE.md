@@ -23,7 +23,7 @@
   schema-v2 initiative-local clean cut.
 - Current gate: AUTH-09C deterministic implementation proof passes, including
   real PostgreSQL lifecycle and race tests, the live HTTP contract drill, 91.06
-  percent actor branch coverage, and 91.80 percent authorization branch
+  percent actor branch coverage, and 92.04 percent authorization branch
   coverage. Exact-head implementation review and PR publication remain; no
   service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is

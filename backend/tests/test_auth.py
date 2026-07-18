@@ -1620,6 +1620,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
     auth_database_env: str,
     rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Prove the supported bootstrap, grant, replay, scope, and revoke flow."""
     private_key, jwk = rsa_signing_material
@@ -1646,6 +1647,41 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
     audit_headers = {"Authorization": f"Bearer {audit_token}"}
     original_commit = AsyncSession.commit
     fail_feature_commit = False
+    fail_evidence_action: ActionId | None = None
+    fail_target_lookup: str | None = None
+    fail_touch = False
+    original_add_authority_event = AuditService.add_authority_event
+    original_profile_read = ActorService.read_admin_profile
+    original_link_read = ActorService.read_admin_identity_link
+    original_touch = ActorService.touch_after_authorization
+
+    async def add_authority_event_with_failure(service, value):
+        nonlocal fail_evidence_action
+        if fail_evidence_action is not None and value.action_id is fail_evidence_action:
+            fail_evidence_action = None
+            raise SQLAlchemyError("forced authorization evidence failure")
+        return await original_add_authority_event(service, value)
+
+    async def profile_read_with_failure(service, actor_profile_id):
+        nonlocal fail_target_lookup
+        if fail_target_lookup == "profile":
+            fail_target_lookup = None
+            raise SQLAlchemyError("forced profile lookup failure")
+        return await original_profile_read(service, actor_profile_id)
+
+    async def link_read_with_failure(service, actor_profile_id):
+        nonlocal fail_target_lookup
+        if fail_target_lookup == "identity_link":
+            fail_target_lookup = None
+            raise SQLAlchemyError("forced identity-link lookup failure")
+        return await original_link_read(service, actor_profile_id)
+
+    async def touch_with_failure(service, resolved):
+        nonlocal fail_touch
+        if fail_touch:
+            fail_touch = False
+            raise SQLAlchemyError("forced caller timestamp touch failure")
+        return await original_touch(service, resolved)
 
     async def commit_with_one_feature_failure(session: AsyncSession) -> None:
         nonlocal fail_feature_commit
@@ -1664,6 +1700,10 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
         await original_commit(session)
 
     monkeypatch.setattr(AsyncSession, "commit", commit_with_one_feature_failure)
+    monkeypatch.setattr(AuditService, "add_authority_event", add_authority_event_with_failure)
+    monkeypatch.setattr(ActorService, "read_admin_profile", profile_read_with_failure)
+    monkeypatch.setattr(ActorService, "read_admin_identity_link", link_read_with_failure)
+    monkeypatch.setattr(ActorService, "touch_after_authorization", touch_with_failure)
 
     async def actor_state(actor_id: UUID) -> tuple:
         async with db_session.get_session_factory()() as session:
@@ -1755,6 +1795,9 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
         project_one, project_two = uuid4(), uuid4()
         now = datetime.now(UTC)
         async with db_session.get_session_factory()() as session:
+            target_row = await session.get(ActorProfile, str(target_id))
+            assert target_row is not None
+            target_row.contact_email = "auth09c-private-contact@example.test"
             session.add_all(
                 [
                     Project(
@@ -1858,6 +1901,8 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "revoked_at",
             "reactivated_at",
         }
+        caplog.clear()
+        caplog.set_level(logging.DEBUG, logger="app")
         before_admin_actor_read = await actor_state(admin_id)
         before_target_actor_read = await actor_state(target_id)
         target_admin_profile = await client.get(
@@ -1925,13 +1970,91 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             "auth08-revoked-link-target",
             "https://identity.test",
             "Concealment fixture",
+            "auth09c-private-contact@example.test",
             target_token,
         ):
             assert private_value not in serialized_admin_reads
+            assert private_value not in caplog.text
         assert await actor_state(target_id) == before_target_actor_read
         after_admin_actor_read = await actor_state(admin_id)
         assert after_admin_actor_read[1] > before_admin_actor_read[1]
         assert after_admin_actor_read[2] > before_admin_actor_read[2]
+
+        async with db_session.get_session_factory()() as session:
+            target_allow_events = (
+                await session.scalars(
+                    select(AuditEvent).where(
+                        AuditEvent.event_type == "SensitiveAuthorizationAllowed",
+                        AuditEvent.action_id.in_(
+                            ("actor.profile.read", "actor.identity_link.read")
+                        ),
+                        AuditEvent.resource_id == str(target_id),
+                    )
+                )
+            ).all()
+        assert len(target_allow_events) == 2
+        expected_permissions = {
+            "actor.profile.read": "actor.profile.read_any",
+            "actor.identity_link.read": "actor.identity_link.read",
+        }
+        for event in target_allow_events:
+            assert event.permission_id == expected_permissions[event.action_id]
+            assert event.actor_id == str(admin_id)
+            assert event.target_actor_ref == str(target_id)
+            assert event.target_ref_id == str(target_id)
+            assert event.matched_grant_id == bootstrap["grant_id"]
+            assert event.project_id is None
+            assert event.after_facts == {"allowed": True}
+            UUID(str(event.request_id))
+            UUID(str(event.correlation_id))
+
+        async def actor_admin_state() -> tuple[datetime, datetime, datetime]:
+            async with db_session.get_session_factory()() as session:
+                return tuple(
+                    (
+                        await session.execute(
+                            text(
+                                "select p.updated_at,p.last_seen_at,l.last_verified_at "
+                                "from actor_profiles p join actor_identity_links l "
+                                "on l.actor_profile_id=p.id where p.id=:actor"
+                            ),
+                            {"actor": str(admin_id)},
+                        )
+                    ).one()
+                )
+
+        before_self_profile = await actor_admin_state()
+        before_self_profile_counts = await authority_counts()
+        self_profile = await client.get(
+            f"/api/v1/actors/{admin_id}",
+            headers=admin_headers,
+        )
+        assert self_profile.status_code == 200, self_profile.text
+        after_self_profile = await actor_admin_state()
+        assert after_self_profile[0] > before_self_profile[0]
+        assert after_self_profile[1] > before_self_profile[1]
+        assert after_self_profile[2] > before_self_profile[2]
+        assert datetime.fromisoformat(self_profile.json()["updated_at"]) == after_self_profile[0]
+        assert datetime.fromisoformat(self_profile.json()["last_seen_at"]) == after_self_profile[1]
+        after_self_profile_counts = await authority_counts()
+        assert after_self_profile_counts[:2] == before_self_profile_counts[:2]
+        assert after_self_profile_counts[2] == before_self_profile_counts[2] + 1
+
+        before_self_link = await actor_admin_state()
+        before_self_link_counts = await authority_counts()
+        self_link = await client.get(
+            f"/api/v1/actors/{admin_id}/identity-links",
+            headers=admin_headers,
+        )
+        assert self_link.status_code == 200, self_link.text
+        after_self_link = await actor_admin_state()
+        assert after_self_link[0] > before_self_link[0]
+        assert after_self_link[1] > before_self_link[1]
+        assert after_self_link[2] > before_self_link[2]
+        assert datetime.fromisoformat(self_link.json()["last_verified_at"]) == after_self_link[2]
+        after_self_link_counts = await authority_counts()
+        assert after_self_link_counts[:2] == before_self_link_counts[:2]
+        assert after_self_link_counts[2] == before_self_link_counts[2] + 1
 
         before_missing_reads = await actor_state(admin_id)
         before_missing_authority_counts = await authority_counts()
@@ -1955,14 +2078,37 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
         assert await actor_state(admin_id) == before_missing_reads
         assert await authority_counts() == before_missing_authority_counts
 
-        before_failed_actor_read = await actor_state(admin_id)
-        fail_feature_commit = True
-        failed_actor_read = await client.get(
-            f"/api/v1/actors/{target_id}",
-            headers=admin_headers,
-        )
-        assert_retryable_service_unavailable(failed_actor_read)
-        assert await actor_state(admin_id) == before_failed_actor_read
+        async def assert_failed_admin_read(path: str) -> None:
+            before_failure_state = await actor_state(admin_id)
+            before_failure_counts = await authority_counts()
+            failed_response = await client.get(path, headers=admin_headers)
+            assert_retryable_service_unavailable(failed_response)
+            assert await actor_state(admin_id) == before_failure_state
+            assert await authority_counts() == before_failure_counts
+
+        profile_path = f"/api/v1/actors/{target_id}"
+        link_path = f"/api/v1/actors/{target_id}/identity-links"
+        for action_id, path in (
+            (ActionId.ACTOR_PROFILE_READ, profile_path),
+            (ActionId.ACTOR_IDENTITY_LINK_READ, link_path),
+        ):
+            fail_evidence_action = action_id
+            await assert_failed_admin_read(path)
+
+        for lookup_kind, path in (
+            ("profile", profile_path),
+            ("identity_link", link_path),
+        ):
+            fail_target_lookup = lookup_kind
+            await assert_failed_admin_read(path)
+
+        for path in (profile_path, link_path):
+            fail_touch = True
+            await assert_failed_admin_read(path)
+
+        for path in (profile_path, link_path):
+            fail_feature_commit = True
+            await assert_failed_admin_read(path)
 
         before_read = await actor_state(admin_id)
         fail_feature_commit = True
@@ -3212,6 +3358,23 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
             )
             await session.commit()
 
+    async def wait_for_transition_lock(transition_task: asyncio.Task) -> None:
+        for _ in range(250):
+            if transition_task.done():
+                raise AssertionError("disabling transition bypassed the read lock")
+            async with db_session.get_session_factory()() as session:
+                waiting = await session.scalar(
+                    text(
+                        "select exists(select 1 from pg_stat_activity "
+                        "where datname=current_database() and pid<>pg_backend_pid() "
+                        "and wait_event_type='Lock')"
+                    )
+                )
+            if waiting:
+                return
+            await asyncio.sleep(0.02)
+        raise AssertionError("disabling transition never reached a PostgreSQL lock wait")
+
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
@@ -3280,8 +3443,7 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
                             json={"reason": "AUTH-09C matched grant race"},
                         )
                     )
-                await asyncio.sleep(0.1)
-                assert transition_task.done() is False
+                await wait_for_transition_lock(transition_task)
                 release.set()
                 read_response = await read_task
                 transition_result = await transition_task
