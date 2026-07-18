@@ -50,9 +50,10 @@ outside this chunk or unsafe.
 
 ## Scope Control
 
-Current main at `e118e33` is integrated and PR #144's WS-CON artifacts are
-unchanged. No migration, dependency, workflow, grant/assignment behavior,
-service admission, ART/REV/CON activation, or lifecycle mutation changed.
+Trusted main through PR #141 at `a10d901` is integrated, including ART migration
+`0025`, without changing its behavior. No AUTH migration, dependency, workflow,
+grant/assignment behavior, service admission, ART/REV/CON activation, or
+lifecycle mutation changed.
 
 ## Product Behavior
 
@@ -98,8 +99,14 @@ integrity, docs, reuse/dedup, and test delta all pass exact reviewed code SHA
 
 ## External Review
 
-GitHub Backend, Agent Gates, CodeRabbit, and human review are pending on the
-published head. External findings will be triaged without weakening the chunk.
+PR #146's original Backend, Agent Gates, and CodeRabbit checks passed.
+CodeRabbit's five valid proof findings are repaired with exact transition
+backend lock correlation, exact self-target and kernel assertions, both
+missing-resource rollback routes, and both project-scoped Audit Authority
+denials. Ten focused unit tests and two fresh real PostgreSQL lifecycle/race
+tests pass after integrating trusted main. Exact integrated-head internal review
+and replacement external checks remain; the repair does not change production
+behavior or weaken any test or threshold.
 
 ## Remaining Risks
 

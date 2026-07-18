@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | PR #146 open; CodeRabbit repair passed focused proof; exact-head repair review completing |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | PR #146 open; all valid CodeRabbit findings repaired; integrated exact-head review pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

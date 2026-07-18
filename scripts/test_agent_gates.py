@@ -4151,7 +4151,6 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     selected_phases = [phase for phase in artifact_phases if phase in artifact_map]
     assert len(selected_phases) == 1
     selected_phase = selected_phases[0]
-    assert selected_phase in work_queue
     assert f"Status: {selected_phase}" in artifact_contract
     assert (
         "AUTH's owner reconciliation merged through PR #140 as\n"
@@ -4161,10 +4160,23 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
         "complete" in artifact_status
     )
-    if selected_phase == artifact_phases[0]:
+    artifact_02a3_merged = (
+        "`WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | "
+        "Merged through PR #141 as `a10d901`" in work_queue
+    )
+    if artifact_02a3_merged:
+        assert "PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901`" in loop_state
+        assert (
+            "`WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | "
+            "Inactive until 02A3 merge and explicit user start" in work_queue
+        )
+        assert "ART-02B1 remains inactive" in loop_state
+    elif selected_phase == artifact_phases[0]:
+        assert selected_phase in work_queue
         assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
         assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
     else:
+        assert selected_phase in work_queue
         assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
             artifact_status.replace("\n", " ")
         )
