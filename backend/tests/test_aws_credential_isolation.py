@@ -145,6 +145,20 @@ def test_web_identity_rejects_ambient_network_configuration_before_session(
     )
 
 
+@pytest.mark.parametrize("name", ["AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL_DYNAMODB"])
+def test_service_specific_endpoint_override_fails_before_session_construction(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    name: str,
+) -> None:
+    _assert_rejects_before_session_construction(
+        monkeypatch,
+        _aws_settings(tmp_path, "container-role"),
+        _container_environment(tmp_path, **{name: "http://127.0.0.1:9000"}),
+        "ambient AWS network configuration is forbidden",
+    )
+
+
 @pytest.mark.parametrize(
     ("relative_path", "contents"),
     [

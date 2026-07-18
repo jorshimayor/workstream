@@ -390,10 +390,8 @@ class S3CompatibleArtifactStore:
                         if observed != expected:
                             raise ArtifactIntegrityError("S3 artifact object was truncated")
             except ClientError as error:
-                if _provider_http_status(error) == 403:
-                    raise ArtifactStoreUnavailableError("S3 artifact read failed") from None
-                code = _provider_error_code(error)
-                if code in _MISSING_ERROR_CODES:
+                status = _provider_http_status(error)
+                if status == 404 and _provider_error_code(error) in _MISSING_ERROR_CODES:
                     raise ArtifactObjectMissingError("artifact object is missing") from None
                 raise ArtifactStoreUnavailableError("S3 artifact read failed") from None
             except ArtifactStoreError:
@@ -423,10 +421,8 @@ class S3CompatibleArtifactStore:
                 byte_count=byte_count,
             )
         except ClientError as error:
-            if _provider_http_status(error) == 403:
-                raise ArtifactStoreUnavailableError("S3 artifact head failed") from None
-            code = _provider_error_code(error)
-            if code in _MISSING_ERROR_CODES:
+            status = _provider_http_status(error)
+            if status == 404 and _provider_error_code(error) in _MISSING_ERROR_CODES:
                 return ArtifactObjectHead(provider_object_ref, exists=False)
             raise ArtifactStoreUnavailableError("S3 artifact head failed") from None
         except ArtifactStoreError:
@@ -651,6 +647,8 @@ def validate_aws_workload_identity_environment(
     if _FORBIDDEN_AWS_CREDENTIAL_ENVIRONMENT.intersection(environment):
         raise ArtifactConfigurationError("ambient AWS credential source is forbidden")
     if _FORBIDDEN_AWS_NETWORK_ENVIRONMENT.intersection(environment):
+        raise ArtifactConfigurationError("ambient AWS network configuration is forbidden")
+    if any(name.startswith("AWS_ENDPOINT_URL_") for name in environment):
         raise ArtifactConfigurationError("ambient AWS network configuration is forbidden")
     _reject_default_credential_files(environment)
 

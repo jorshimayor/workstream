@@ -199,7 +199,9 @@ MinIO uses the compose-only static credentials and the private
 automatically. For local runtime use, create the private bucket with an S3
 client against `http://localhost:9000` after MinIO is healthy, using access key
 `workstream-minio` and secret key `workstream-minio-secret-key`, before starting
-Workstream. Native AWS S3 accepts workload-identity configuration but remains
+Workstream. Configure the runtime with the exact
+[artifact storage settings](docs/spec_artifact_storage_service.md#s3-compatible-adapter).
+Native AWS S3 accepts workload-identity configuration but remains
 runtime-ineligible until live deployment proof is approved; startup fails with
 `artifact_provider_live_proof_required` before credential probing or provider
 I/O.

@@ -481,6 +481,42 @@ async def test_open_403_precedes_missing_like_provider_code(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("operation", ["head", "open"])
+@pytest.mark.parametrize("status", [500, None])
+async def test_missing_like_code_requires_authoritative_404_status(
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    status: int | None,
+) -> None:
+    """Treat missing-like codes without HTTP 404 as provider failures."""
+    store = initialize_minio_store(private_prefix=f"negative/ambiguous-{operation}")
+    provider_ref = "sha256/00/" + "0" * 62
+
+    class Client:
+        async def head_object(self, **_kwargs: object) -> dict[str, int]:
+            if operation == "head":
+                raise _client_error("NoSuchKey", status)
+            return {"ContentLength": 1}
+
+        async def get_object(self, **_kwargs: object) -> object:
+            raise _client_error("NoSuchKey", status)
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    try:
+        with pytest.raises(ArtifactStoreUnavailableError):
+            if operation == "head":
+                await store.head(provider_ref)
+            else:
+                _ = [chunk async for chunk in store.open(provider_ref)]
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
 async def test_precondition_failure_requires_exact_replay_verification(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -696,12 +732,14 @@ async def test_put_observation_requires_canonical_commitment() -> None:
         store.close()
 
 
-def _client_error(code: str, status: int) -> ClientError:
+def _client_error(code: str, status: int | None) -> ClientError:
     """Build one sanitized provider error for adapter mapping tests."""
+    response: dict[str, object] = {
+        "Error": {"Code": code, "Message": "provider detail"},
+    }
+    if status is not None:
+        response["ResponseMetadata"] = {"HTTPStatusCode": status}
     return ClientError(
-        {
-            "Error": {"Code": code, "Message": "provider detail"},
-            "ResponseMetadata": {"HTTPStatusCode": status},
-        },
+        response,
         "HeadObject",
     )
