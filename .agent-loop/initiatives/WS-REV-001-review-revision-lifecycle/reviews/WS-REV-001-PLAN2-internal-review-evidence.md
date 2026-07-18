@@ -8,7 +8,7 @@
   product documents including `docs/spec_review_lifecycle.md`, and one schema-v2
   merge intent
 - Runtime status: blocked; no backend runtime, migration, model, service, route,
-  test, workflow, frozen `docs/reference/` source specification, or cross-owner
+  test, workflow, frozen `docs/reference_specs/` source specification, or cross-owner
   plan changed
 
 Open sub-agent sessions: none
@@ -39,7 +39,7 @@ records, only PLAN2 is active, and every successor requires a separate start.
 | QA/test | PASS AFTER FIXES | None | Backfill refusal, direct SQL, races, rollback, immutable history, checker/human separation, and release proof are covered. |
 | Security/auth | PASS AFTER FIXES | None | AUTH owns contributor clean cut; REV owns lifecycle lineage; all 24 REV action dependencies remain unavailable. |
 | Product/ops | PASS AFTER FIXES | None | Accept, needs-revision, reject, FinalAcceptance, contribution, checker remediation, and human revision flows are unambiguous. |
-| Architecture | PASS AFTER FIXES | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns public acknowledgement, authorization cutover, and activation. |
+| Architecture | PASS AFTER FIXES | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns public request acknowledgement, authorization cutover, and activation. |
 | CI integrity | PASS AFTER FIXES | None | Merge intent is unique; global 78 percent and focused 90 percent future coverage gates are preserved; no CI file changed. |
 | Docs | PASS AFTER FIXES | None | Active authority is current through AUTH-09D-A PR #148 and historical catalogue snapshots remain historical. |
 | Reuse/dedup | PASS | None | Canonical Submission, CheckerRun, ActorProfile, RevisionContextPreparation, ART capabilities, and CON participants are reused. |
@@ -75,7 +75,7 @@ evidence to bind this exact-SHA result and repair the AUTH-14 summary wording.
 
 - `git diff --check`: PASS.
 - Workstream, authorization, artifact, and review stale-contract scanners: PASS.
-- Markdown links: PASS for 32 changed Markdown files.
+- Markdown links: PASS for 36 changed Markdown files.
 - Agent gates: 87 passed.
 - `alembic heads`: one head, `0026_actor_profile_lifecycle`.
 - Schema-v2 merge intent: PASS for `WS-REV-001-PLAN2 -> WS-REV-001-02A`,

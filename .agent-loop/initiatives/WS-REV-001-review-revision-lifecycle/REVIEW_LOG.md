@@ -944,7 +944,7 @@ QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test delta
 and CI-integrity review. Diff integrity, all four stale scanners, Markdown links,
 87 agent gates, Alembic single-head proof, catalogue arithmetic, changed scope,
 and the schema-v2 PLAN2 merge intent pass. No runtime, migration, test, workflow,
-frozen `docs/reference/` source, or cross-owner file changed. PLAN2 may publish;
+frozen `docs/reference_specs/` source, or cross-owner file changed. PLAN2 may publish;
 02A remains stopped until its exact contributor foundation merges and the user
 explicitly starts it.
 
@@ -959,7 +959,7 @@ makes 09A2 deliver the task-owned flush-only preparation participant consumed by
 
 The repair also excludes every exact CheckerRun-rooted remediation from legacy
 closure, classifies `docs/spec_review_lifecycle.md` accurately as one of PLAN2's
-four active product documents while preserving the frozen `docs/reference/`
+four active product documents while preserving the frozen `docs/reference_specs/`
 boundary, and assigns release-controller implementation only to 12A1 through
 12A4. AUTH-14 wording now consistently names public request acknowledgement,
 authorization cutover, and activation. No runtime, migration, test, workflow,

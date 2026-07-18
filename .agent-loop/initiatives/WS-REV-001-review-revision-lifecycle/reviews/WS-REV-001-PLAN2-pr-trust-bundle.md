@@ -58,7 +58,7 @@ separate contributor clean cut.
 
 Only the REV initiative, four allowed active product documents including
 `docs/spec_review_lifecycle.md`, and one PLAN2 merge intent changed. No backend,
-migration, test, workflow, dependency, frozen `docs/reference/` source
+migration, test, workflow, dependency, frozen `docs/reference_specs/` source
 specification, AUTH/ART/CON owner plan, or handoff file changed.
 
 ## Product behavior

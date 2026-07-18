@@ -24,7 +24,7 @@
    remediation is never legacy.
 5. Classified `docs/spec_review_lifecycle.md` as one of PLAN2's four active
    product documents and reserved the unchanged claim for frozen
-   `docs/reference/` sources.
+   `docs/reference_specs/` sources.
 6. Preserved 12A as a non-executable split record and assigned controller
    implementation to 12A1 through 12A4.
 

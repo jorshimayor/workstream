@@ -85,7 +85,7 @@ not all merged.
   amendment is explicitly approved.
 - Exact merged AUTH-14 contract amendment before 09A4 must leave REV ownership
   of Submission revision-source columns/constraints intact and limit AUTH to
-  public acknowledgement, authorization cutover, and activation.
+  public request acknowledgement, authorization cutover, and activation.
 - Every later external owner dependency and child start as listed in the map.
 
 ## Stop condition
