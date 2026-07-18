@@ -1,13 +1,13 @@
 # WS-AUTH-001-09D-A Internal Review Evidence
 
-Reviewed code SHA: `ef80338a799b8e735987e712b85e9ed48fc4b362`
+Reviewed code SHA: `7c33e6453a2c91256c8fd416c63e30b95fd9d825`
 
-Reviewed implementation SHA: `ef80338a799b8e735987e712b85e9ed48fc4b362`
+Reviewed implementation SHA: `7c33e6453a2c91256c8fd416c63e30b95fd9d825`
 
 Reviewed against trusted main:
 `f18b620932bb257dc1dc355bc0504271813dc6b1`
 
-Reviewed at: `2026-07-18T17:45:52Z`
+Reviewed at: `2026-07-18T18:08:51Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_rev_con`,
 `auth_xint_art_service`
@@ -37,6 +37,11 @@ test delta
 - The exact catalogue test passes with 65 ActionIds: 15 active and 50 planned.
   Three historical migration nodes affected by the owner split pass in 199.52
   seconds, and all 30 Alembic tests collect without a stale enum error.
+- The Backend failure was one historical fixture reset violating the new
+  identity-link reactivation guard, followed by 18 Alembic failures and 354
+  downstream setup errors. The repaired rollback node and immediately following
+  migration node pass together in 110.04 seconds without weakening the original
+  revoked, suspended, or deactivated refusal assertions.
 - The real HTTP API contract, repository-wide Ruff, stale Workstream and
   authorization scans, Markdown links, all 87 Agent Gates, merge-intent
   validation, and diff integrity pass. No workflow, dependency, threshold,
@@ -77,8 +82,12 @@ migration `0026`; direct constraint and dirty-upgrade tests prove the boundary.
 The canonical reviewer table no longer contains an unrecognized migration row.
 Migration/data-integrity review passes outside the canonical table: `0026`
 remains the sole head, pre-DDL refusal preserves revision/schema/data, and all
-five migration nodes pass. All required tracks pass final exact reviewed head
-`ef80338a799b8e735987e712b85e9ed48fc4b362`.
+five migration nodes pass. The replacement Backend failure then exposed a
+test-only cleanup path that performed an unattributed reactivation. Both history
+guards are now disabled only around neutral fixture restoration and re-enabled
+in `finally`; all lifecycle provenance is cleared and production guards remain
+unchanged. All required tracks pass final exact reviewed head
+`7c33e6453a2c91256c8fd416c63e30b95fd9d825`.
 
 Valid findings addressed: yes
 

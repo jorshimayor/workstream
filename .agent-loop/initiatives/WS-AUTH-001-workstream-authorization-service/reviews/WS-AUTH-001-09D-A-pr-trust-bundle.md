@@ -57,6 +57,8 @@ changed.
 - Repaired constraint and dirty-row nodes: passed in 111.55 seconds, covering
   all 29 supported-runtime `str.strip()` whitespace code points and NBSP
   previous-head refusal.
+- Historical rollback-guard cleanup and the immediately following migration
+  node: passed together in 110.04 seconds.
 - Expanded real lifecycle/service/failure matrix: passed in 100.36 seconds.
 - PostgreSQL-observed concurrency node: passed in 140.69 seconds.
 - Three historical owner-split migration nodes: passed in 199.52 seconds.
@@ -86,7 +88,7 @@ modified. GitHub Backend remains authoritative for the full suite.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture,
 migration/data integrity, CI integrity, docs, reuse/dedup, and test delta all
-pass exact integrated head `ef80338a799b8e735987e712b85e9ed48fc4b362`
+pass exact integrated head `7c33e6453a2c91256c8fd416c63e30b95fd9d825`
 after every valid finding was repaired.
 
 ## Remaining Risks

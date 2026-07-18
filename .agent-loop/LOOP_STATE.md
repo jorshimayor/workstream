@@ -35,9 +35,10 @@
   schema-v2 initiative-local clean cut.
 - Current gate: PR #148 external repair aligns database lifecycle-reason
   whitespace with the API and repairs stale reviewer evidence. PostgreSQL proof
-  and required exact-head internal review pass at `ef80338`; canonical evidence
-  is refreshed against that SHA. Replacement external checks and explicit
-  human approval remain. No service caller becomes executable before AUTH-09E.
+  plus required exact-head internal review pass at `7c33e64`; canonical evidence
+  is refreshed against that SHA after repairing the Backend fixture cascade.
+  Replacement external checks and explicit human approval remain. No service
+  caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
