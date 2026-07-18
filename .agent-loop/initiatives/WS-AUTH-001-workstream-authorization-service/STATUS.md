@@ -95,7 +95,7 @@ Its bounded implementation activates only the exact actor-profile and
 identity-link administrative reads. Deterministic proof passes, including the
 live HTTP drill and focused actor and authorization branch coverage above 90
 percent. Every required implementation review track passes at exact SHA
-`4331a6aec2f70d2efb001cb1d61bf1541bea36b9`. PR publication and external
+`6791381ceb9cb0c7f6ba163d4525c6c770c02ca6`. PR publication and external
 checks remain. No service caller or feature action is active.
 
 ## Active planning chunk

@@ -25,7 +25,7 @@
   real PostgreSQL lifecycle and race tests, the live HTTP contract drill, 91.06
   percent actor branch coverage, and 92.04 percent authorization branch
   coverage. Every required internal review track passes at exact SHA
-  `4331a6a`; PR publication and external checks remain. No service caller
+  `6791381`; PR publication and external checks remain. No service caller
   becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
