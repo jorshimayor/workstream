@@ -259,10 +259,14 @@ The final PR-scope check intentionally uses trusted current main
 `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, rather than the original planning
 base `0302bcf854a565d429e232ad6b076a1931ea74e4`. Current main includes reviewed
 sibling AUTH, CON, and ART changes that are dependencies of this chunk but are
-not part of its PR scope. The committed reviewed-path allowlist makes additions,
-removals, and renames fail closed. Archival byte-integrity checks continue to
-use the original planning base because those supplied inputs must remain
-unchanged across the entire initiative.
+not part of its PR scope. The committed reviewed-scope manifest records each
+path's exact added or modified status. Rename detection is disabled so a rename
+appears as a deletion plus an addition; any addition, deletion, rename, or
+status change fails closed. This pinned comparison is a required local and
+reviewer proof for this chunk, not a permanent repository-wide CI rule tied to
+one historical base. Archival byte-integrity checks continue to use the
+original planning base because those supplied inputs must remain unchanged
+across the entire initiative.
 
 ```text
 python3 scripts/check_stale_artifact_contracts.py
@@ -290,7 +294,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
-git diff --name-only a10d9018007d2e847b4870e9b26cbd24e24c7bb4...HEAD | LC_ALL=C sort | diff -u .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-01-reviewed-paths.txt -
+git diff --name-status --no-renames a10d9018007d2e847b4870e9b26cbd24e24c7bb4...HEAD | LC_ALL=C sort -k2,2 -k1,1 | diff -u .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-01-reviewed-scope.txt -
 git diff --check
 ```
 
