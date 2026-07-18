@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Explicitly started; exact contract and L1 preimplementation review in progress |
+| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Exact contract `9ec6390b` passed L1 preimplementation review; bounded implementation active |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -92,8 +92,9 @@ stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
 started AUTH-09C. PR #146 merged it as `0ffdabf`; signed memory at `eeb3dc2`
 stopped. The user explicitly started AUTH-09D, and required review split it
 before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
-`cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B, whose
-exact contract review is active. 09E and POL-002-04 remain inactive pending
+`cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B; exact
+contract `9ec6390b` passed required L1 review and bounded implementation is
+active. 09E and POL-002-04 remain inactive pending
 their own gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another

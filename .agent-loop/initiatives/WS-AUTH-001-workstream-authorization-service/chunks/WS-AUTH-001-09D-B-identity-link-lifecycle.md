@@ -1,6 +1,6 @@
 # Chunk Contract: WS-AUTH-001-09D-B - Identity-Link Lifecycle And Race Closure
 
-Initiative: `WS-AUTH-001` | Risk: L1 / P1 | Status: preimplementation review
+Initiative: `WS-AUTH-001` | Risk: L1 / P1 | Status: implementation approved
 
 ## Goal
 

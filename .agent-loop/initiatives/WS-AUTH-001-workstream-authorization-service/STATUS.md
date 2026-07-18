@@ -98,9 +98,9 @@ rejected the combined lifecycle contract before runtime edits, so the parent was
 split into 09D-A and 09D-B. After bounded external repair and exact-head review,
 PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
 recorded the stopped gate and named 09D-B. The user explicitly started 09D-B
-from that trusted head. Exact contract repair and required L1 preimplementation
-review are active; runtime has not started. No service caller or feature action
-is active.
+from that trusted head. Exact contract `9ec6390b` passed required L1
+preimplementation review, and bounded implementation is active. No service
+caller or consumer feature action is active.
 
 ## Active planning chunk
 
@@ -109,8 +109,8 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 ## Active implementation chunk
 
 `WS-AUTH-001-09D-B` - Identity-Link Lifecycle And Race Closure. Exact contract
-repair and required L1 preimplementation review are the current gate. Runtime
-has not started.
+`9ec6390b` passed required L1 preimplementation review. Bounded implementation
+is the current gate.
 
 ## Current review branch
 
@@ -143,7 +143,7 @@ has not started.
 | `WS-AUTH-001-09C` | Merged | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Merged as `0ffdabf`; signed memory `eeb3dc2` passed and stopped. |
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
-| `WS-AUTH-001-09D-B` | Contract review | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Explicitly started from merged 09D-A; runtime has not started. |
+| `WS-AUTH-001-09D-B` | Active | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | - | Exact contract `9ec6390b` passed required L1 preimplementation review. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D-B. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
 | `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |
@@ -164,8 +164,9 @@ merged feature manifests and separate human starts exist.
 
 AUTH-09C has no remaining blocker. PR #146 merged as `0ffdabf` and signed
 memory passed at `eeb3dc2`. PR #148 merged AUTH-09D-A as `99ae4c9`; signed
-memory `cf8a3e8` passed and stopped. The user explicitly started AUTH-09D-B,
-whose exact contract review is the current gate. It must not add service grants,
+memory `cf8a3e8` passed and stopped. The user explicitly started AUTH-09D-B;
+exact contract `9ec6390b` passed required L1 review and bounded implementation
+is active. It must not add service grants,
 dynamic assignments, token-role authority, service admission, or consumer
 feature-action activation. AUTH-09E remains inactive.
 

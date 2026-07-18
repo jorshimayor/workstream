@@ -4141,7 +4141,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09D` | Split |" in auth_status
     assert "Merged through PR #148 as `99ae4c9`" in auth_map
     assert "| `WS-AUTH-001-09D-A` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09D-B` | Contract review |" in auth_status
+    assert "| `WS-AUTH-001-09D-B` | Active |" in auth_status
     assert "Active implementation chunk\n\n`WS-AUTH-001-09D-B`" in auth_status
     assert "`codex/ws-auth-001-09d-b-identity-link-lifecycle`" in auth_status
     assert "PR #148 is open" not in auth_status
@@ -4156,7 +4156,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in work_queue
     assert (
         "| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | "
-        "Explicitly started; exact contract and L1 preimplementation review in progress"
+        "Exact contract `9ec6390b` passed L1 preimplementation review; "
+        "bounded implementation active"
         in work_queue
     )
     assert "Active implementation chunk: `WS-AUTH-001-09D-B`" in loop_state

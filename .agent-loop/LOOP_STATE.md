@@ -25,14 +25,14 @@
 - Active implementation chunk: `WS-AUTH-001-09D-B` on
   `codex/ws-auth-001-09d-b-identity-link-lifecycle`, started from trusted
   `main` at `99ae4c9` after the user's explicit start signal. Contract repair
-  and required L1 preimplementation review are the current gate; runtime has
-  not started.
+  passed required L1 preimplementation review at exact contract `9ec6390b`.
+  Bounded implementation is the current gate.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: exact 09D-B contract review. No service caller becomes
+- Current gate: bounded 09D-B implementation. No service caller becomes
   executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and

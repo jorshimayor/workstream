@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-B Preimplementation Review Passed
+
+- Required L1 review initially rejected broad race, rollback, lock-order,
+  allowed-file, evidence, and process-state contracts before runtime edits.
+- Exact candidate `9ec6390b` repairs every valid finding: canonical
+  profile/link/grant target locking, exact link evidence, closed missing-target
+  denial flow, four actor-self lock/timestamp cases, nine-stage rollback on both
+  operations, blocker-observed PostgreSQL races, 90 percent authorization
+  coverage, and explicit 09E inactivity.
+- Senior engineering, QA/test, security/auth, product/ops, architecture, CI
+  integrity, docs, reuse/dedup, and test delta pass. Bounded runtime
+  implementation may begin for 09D-B only.
+
 ## 2026-07-18 - WS-AUTH-001-09D-B Explicitly Started
 
 - PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
