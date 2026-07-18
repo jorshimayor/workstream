@@ -11,7 +11,7 @@ explicit start signal.
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
 | `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L1 | None | Merged through PR #128 at trusted main `0302bcf854a565d429e232ad6b076a1931ea74e4` |
-| `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current-main refresh; merged WS-XINT-001 handoffs, AUTH PR #140 planning contracts, AUTH-09A fixed-service foundation, and AUTH-09B controlled provisioning | Active on `codex/ws-rev-001-01` |
+| `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current-main refresh; merged WS-XINT-001 handoffs, AUTH PR #140 planning contracts, AUTH-09A/09B foundations, and CON-01 canonical contract adoption | Active on `codex/ws-rev-001-01` |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH canonical actor foundation; separately reviewed and merged AUTH-owned schema-only contributor-field foundation that breaks the current AUTH-13/14 <-> REV-09A cycle; ART submission commitment contract stable; canonical rejected/cancelled lifecycle amendment; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON ContributionPolicyVersion persistence merged | Proposed |
 | `WS-REV-001-04` | Immutable Review, Final Acceptance, Findings, And Replay Persistence | L1 | 03 merged; shared transactional-outbox persistence and caller-transaction lifecycle-audit participant merged at exact refreshed SHAs | Proposed |

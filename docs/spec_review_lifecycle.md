@@ -411,6 +411,11 @@ immutability. v0.1 has no reopen or replacement path.
 
 ## Contribution And Compensation Boundary
 
+`docs/spec_contribution_compensation.md` and ADR 0016 are the canonical CON
+contract authority. This section defines REV's orchestration obligations at that
+boundary. Merged CON-01 publishes contracts only; it implements no policy
+persistence, contribution record, award, participant, or fulfillment runtime.
+
 Every committed Review creates exactly one reviewer `completed_review`
 ContributionRecord sourced directly from the Review and ReviewLease. Only
 FinalAcceptance creates a submitter `accepted_submission` ContributionRecord.

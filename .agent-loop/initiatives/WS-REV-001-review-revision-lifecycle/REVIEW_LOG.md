@@ -833,3 +833,18 @@ heading omitted the successor title declared by the exact REV-01 merge intent.
 The repair adds that exact title to the heading without changing successor
 scope or starting Chunk 02. CodeRabbit reported a review-limit cooldown and
 produced no findings.
+
+## WS-REV-001-01 CON-01 Main Reconciliation - 2026-07-18
+
+While PR #145 replacement Backend was running, CON-01 PR #144 advanced main to
+`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`. The branch pulled it and resolved
+one `architecture_data_model.md` conflict by retaining the exact shared
+FinalAcceptance fields plus explicit canonical reviewer ActorProfile and
+immutable ReviewPolicy foreign-key semantics.
+
+CON-01 now publishes `docs/spec_contribution_compensation.md` and ADR 0016 as
+canonical CON authority. It confirms REV's one-commit transaction, ordered
+reviewer/accept-only submitter operations, FinalAcceptance-only submitter
+trigger, frozen policies, and no ART call. It adds no runtime. The prior PR
+candidate and replacement checks are historical; fresh exact-SHA internal and
+external gates are required against `e118e33`.

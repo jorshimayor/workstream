@@ -31,6 +31,8 @@ not v0.1 behavior.
 - Reconciled merged AUTH-09B's controlled provisioning capability and exact
   `65 / 10 active / 55 planned` catalogue without activating any REV identity
   or action.
+- Reconciled merged CON-01's active specification and ADR 0016 while retaining
+  its no-runtime status and downstream persistence/participant gates.
 
 ## Why It Changed
 

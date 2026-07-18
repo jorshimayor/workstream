@@ -986,11 +986,15 @@ Fields:
 - `contribution_type`
 - `instrument_type`: `money | project_points`
 - `unit_code`
-- `quantity` as an exact decimal greater than zero
+- `quantity` as a `NUMERIC(38, 18)` fixed-point decimal greater than zero
 - `adapter_binding_id`
 
-Published definitions are immutable and project/instrument consistent with the
-referenced adapter binding.
+API quantities are bounded decimal strings; binary floating point, exponent
+notation, non-finite values, zero, negatives, overflow, and excess precision
+are rejected rather than rounded. Money units are uppercase configured ISO 4217
+codes. Project-points units have project-scoped identity
+`(project_id, unit_code)`. Published definitions are immutable and project,
+instrument, and unit consistent with the referenced adapter binding.
 
 ## ProjectCompensationAdapterBinding
 
@@ -1115,7 +1119,7 @@ Durable post-submit checker execution uses
 `locked_post_submit_checker_policy_hash`.
 Contributor-facing task responses omit post-submit checker policy internals.
 
-## Assignment
+## TaskAssignment
 
 Fields:
 
@@ -1580,14 +1584,14 @@ Fields:
 - `adapter_binding_id`
 - `instrument_type`: `money | project_points`
 - `unit_code`
-- `quantity` as an exact decimal
+- `quantity` as the definition's exact `NUMERIC(38, 18)` decimal
 - `created_at`
 - `correlation_id`
 
 The award is immutable and copies its instrument, unit, quantity, and binding
-from the published definition. Explicit unpaid rules create no award. At most
-one award exists per contribution and instrument type; fulfillment state is not
-stored on the award.
+from the published definition without conversion or rounding. Explicit unpaid
+rules create no award. At most one award exists per contribution and instrument
+type; fulfillment state is not stored on the award.
 
 ## CompensationFulfillmentReceipt
 
@@ -1603,14 +1607,18 @@ Fields:
 - `fulfilled_quantity`
 - `fulfilled_at`
 - `failure_code`
-- `failure_message`
 - `reported_at`
 - `received_at`
 - `correlation_id`
 
-Receipts are immutable. Fulfilled receipts require an exact award quantity,
-external reference, and timestamp. Failed receipts require a failure code. One
-award has at most one fulfilled receipt.
+Receipts are immutable. `external_event_id` is a binding-scoped unique 1-128
+character opaque ASCII token from `[A-Za-z0-9._:-]`. Fulfilled receipts require
+the exact award `NUMERIC(38, 18)` quantity, a non-secret external reference with
+the same bounds, and a timestamp. Failed receipts require a closed Workstream
+failure code and null quantity, time, and external reference. Free-form provider
+messages/codes, payloads, headers, signatures, credentials, URLs, and metadata
+are never persisted, logged, emitted, exported, or returned. One award has at
+most one fulfilled receipt.
 
 ## CompensationStatusProjection
 

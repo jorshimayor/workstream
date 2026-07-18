@@ -2,8 +2,9 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` at `0302bcf`, merged REV PR #128, including AUTH-09A,
-  AUTH PR #140, and the earlier WS-XINT PR #139 boundary;
+- trusted `origin/main` refreshed to `053242b`, merged AUTH-09B PR #143 and REV
+  PR #128, including AUTH-09A, AUTH PR #140, and the earlier WS-XINT PR #139
+  boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -29,13 +30,15 @@
 - No FinalAcceptance runtime exists yet. Merged REV PR #128 is reviewed planning
   authority and defines the exact schema/transaction, but CON-03C still waits
   for the REV-04 runtime target.
-- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Nine actions
-  are active and 56 are planned. AUTH-09A added eight planned identity-
-  administration actions; no WS-CON or task-claim ActionId is registered.
-- Current AUTH supports actor-self and AdminRoleGrant evaluation. Independent
-  ProjectRoleGrant runtime, fixed-service runtime admission, CON evaluators,
-  ART/REV custody transfer, and the cross-domain prepared mutation protocol
-  remain future AUTH work. PR #140 adds their reviewed plans, not runtime.
+- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Ten actions
+  are active and 55 are planned. AUTH-09B activates only
+  `actor.service.provision`; no WS-CON or task-claim ActionId is registered.
+- Current AUTH supports actor-self, AdminRoleGrant evaluation, and controlled
+  human-administrator provisioning of an approved fixed service
+  ActorProfile/ActorIdentityLink. Independent ProjectRoleGrant runtime,
+  fixed-service runtime admission, CON evaluators, ART/REV custody transfer, and
+  the cross-domain prepared mutation protocol remain future AUTH work. PR #140
+  adds their reviewed plans, not runtime.
 - AUTH's static service-action matrix is typed code; it is not a database grant
   table. AUTH-09E is the required runtime admission path.
 - PR #129 added inactive ART preparation/source values only. It added no
@@ -112,7 +115,7 @@
 | `backend/app/modules/projects/{models,schemas,repository,service}.py` | Current guide-bound economic fields and consumers to cut over/remove |
 | `backend/app/modules/tasks/**` | TaskAssignment creation and future submitter policy freeze seam |
 | `backend/app/modules/tasks/models.py::Submission` | Existing immutable version identity: `id`, integer `version`, and `supersedes_submission_id`; no SubmissionVersion table |
-| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/65/9/56 runtime and stable PermissionIds; no CON/task-claim ActionId |
+| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/65/10/55 runtime and stable PermissionIds; only `actor.service.provision` was newly activated; no CON/task-claim ActionId |
 | `backend/app/modules/audit/**` | Shared append-only audit extension point |
 | `backend/app/modules/artifacts/{preparation,sources}.py` | Inactive ART-only preparation; no core CON import |
 

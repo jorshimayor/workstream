@@ -279,7 +279,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
-git diff --name-only 053242b90d927ace3fab92eeca72da27a61cecec
+git diff --name-only e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9
 git diff --check
 ```
 

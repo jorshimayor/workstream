@@ -17,6 +17,12 @@ AUTH-09B PR #143 then merged to main at
 only the shared agent-gate test file overlapped. AUTH-09B activates controlled
 `actor.service.provision`, not service admission or any REV action.
 
+CON-01 PR #144 then merged to main at
+`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`. The branch reconciled its
+`architecture_data_model.md` overlap by retaining the exact shared
+FinalAcceptance fields and ActorProfile/ReviewPolicy lineage. CON-01 publishes
+the active CON contract and ADR 0016 but changes no runtime.
+
 Chunk 01 adopts `docs/spec_review_lifecycle.md` as the active normative
 contract, preserves the supplied WS-REV and WS-IMP archival Markdown/PDF bytes,
 reconciles active documentation, and adds a fail-closed stale review-contract
@@ -41,13 +47,13 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 - ART-02A2 remains preparation-only. Review consumes only later approved ART v2
   typed packet-read and evidence candidate/finalize ports. It never consumes
   ART scratch, v1 store, provider, or repository APIs.
-- CON must provide frozen contribution policy persistence and the ordered
-  two-operation flush-only participant before a canonical Review can commit.
-  Every valid Review creates reviewer contribution; only an accept-created
+- Merged CON-01 publishes the canonical frozen-policy, ContributionRecord,
+  FinalAcceptance trigger, award, and ordered two-operation participant
+  contracts. It implements none of them.
+- Later CON chunks must provide frozen contribution-policy persistence and the
+  ordered flush-only participant before a canonical Review can commit. Every
+  valid Review creates reviewer contribution; only an accept-created
   FinalAcceptance creates submitter contribution.
-- Merged CON PLAN3 now publishes that exact two-operation boundary and the
-  shared release order. Its implementation chunks remain proposed/inactive and
-  still gate REV runtime composition.
 - AUTH-owned contributor-field foundations, ART submission commitment and
   packet-read contracts, CON persistence/participant contracts, and the
   remaining per-chunk gates stay external prerequisites exactly as listed in
@@ -82,11 +88,12 @@ security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. All 80 current-main agent tests and seven REV additions are retained;
 87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is published as PR #145. Its initial Agent Gates run found a
-successor-heading/merge-intent title mismatch; the exact metadata repair is
-internally reviewed at `b20b766f5aa1f87373ac0f4e575d2e0671ad42a5` and awaits
-replacement CI after push. CodeRabbit was rate-limited and produced no findings.
-This chunk activates no review action or endpoint and does not authorize merge.
+Chunk 01 is published as PR #145. Its initial merge-intent repair passed
+internal review and replacement Agent Gates, but CON-01 PR #144 then advanced
+main and invalidated that exact-SHA evidence. The reconciled candidate requires
+fresh internal and replacement-CI review. CodeRabbit was rate-limited and
+produced no findings. This chunk activates no review action or endpoint and
+does not authorize merge.
 
 ## Stop condition
 

@@ -120,6 +120,18 @@ the repository-owned CON planning authority. It confirms:
 PR #142 changes planning and shared active documentation only. Its CON runtime
 chunks remain proposed/inactive and continue to gate REV implementation.
 
+## Merged CON canonical contract
+
+CON-01 PR #144 later merged to current trusted main
+`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`. It publishes
+`docs/spec_contribution_compensation.md` and ADR 0016 as repository-owned CON
+authority. It preserves the ordered reviewer and accept-only submitter
+operations, FinalAcceptance-only submitter trigger, frozen-policy rules,
+REV-owned sole commit, and no-ART core transaction. CON-01 changes no runtime,
+migration, AUTH/ART/REV-owned contract, or archival reference input. Its later
+implementation chunks still own policy persistence, ContributionRecord,
+CompensationAward, the flush-only participant, and fulfillment behavior.
+
 AUTH-07A/07B discovery was refreshed against merged AUTH-08 PR #131 at
 trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, whose final branch head is
 `0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains the minimal
@@ -194,5 +206,6 @@ gates complete, every review-lifecycle action and endpoint remains unavailable.
 After the initial exact-SHA review, the branch pulled merged CON PR #142 at
 `a947b8693a97bdb94c9dc63202a51e197834d613`. The original `0302bcf` start and
 archive-integrity proofs remain fixed. The branch then pulled merged AUTH-09B
-PR #143 at `053242b90d927ace3fab92eeca72da27a61cecec`; final PR scope and
-exact-SHA review use that newest merged-main boundary.
+PR #143 at `053242b90d927ace3fab92eeca72da27a61cecec` and merged CON-01 PR
+#144 at `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`; final PR scope and
+exact-SHA review use the newest merged-main boundary.
