@@ -3,7 +3,7 @@
 ## Candidate
 
 - Trusted base: `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
-- Reviewed planning candidate: `f6c41d5a42ec598b513b25b4677f6ac725645920`
+- Reviewed planning candidate: `6985909ea83e74de22f1067777be0af2138b28de`
 - Scope: complete REV initiative/runtime-readiness reconciliation, four active
   product documents, and one schema-v2 merge intent
 - Runtime status: blocked; no backend runtime, migration, model, service, route,
@@ -15,11 +15,11 @@ Valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: f6c41d5a42ec598b513b25b4677f6ac725645920
+Reviewed code SHA: 6985909ea83e74de22f1067777be0af2138b28de
 
-Reviewed at: 2026-07-18T19:18:02Z
+Reviewed at: 2026-07-18T20:31:24+01:00
 
-Reviewer run IDs: /root/rev01_senior_arch_reuse@f6c41d5a42ec598b513b25b4677f6ac725645920; /root/rev01_qa_product_test@f6c41d5a42ec598b513b25b4677f6ac725645920; /root/rev01_security_docs_ci@f6c41d5a42ec598b513b25b4677f6ac725645920
+Reviewer run IDs: /root/rev01_senior_arch_reuse@6985909ea83e74de22f1067777be0af2138b28de; /root/rev01_qa_product_test@6985909ea83e74de22f1067777be0af2138b28de; /root/rev01_security_docs_ci@6985909ea83e74de22f1067777be0af2138b28de
 
 ## Circuit breaker
 
@@ -37,13 +37,17 @@ records, only PLAN2 is active, and every successor requires a separate start.
 | QA/test | PASS AFTER FIXES | None | Backfill refusal, direct SQL, races, rollback, immutable history, checker/human separation, and release proof are covered. |
 | Security/auth | PASS AFTER FIXES | None | AUTH owns contributor clean cut; REV owns lifecycle lineage; all 24 REV action dependencies remain unavailable. |
 | Product/ops | PASS AFTER FIXES | None | Accept, needs-revision, reject, FinalAcceptance, contribution, checker remediation, and human revision flows are unambiguous. |
-| Architecture | PASS AFTER FIXES | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns only public authorization cutover. |
+| Architecture | PASS AFTER FIXES | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns public acknowledgement, authorization cutover, and activation. |
 | CI integrity | PASS AFTER FIXES | None | Merge intent is unique; global 78 percent and focused 90 percent future coverage gates are preserved; no CI file changed. |
 | Docs | PASS AFTER FIXES | None | Active authority is current through AUTH-09D-A PR #148 and historical catalogue snapshots remain historical. |
 | Reuse/dedup | PASS | None | Canonical Submission, CheckerRun, ActorProfile, RevisionContextPreparation, ART capabilities, and CON participants are reused. |
 | Test delta | PASS | None | No executable test changed, was removed, skipped, weakened, or rewritten. |
 
 No Critical, High, or Medium finding remains.
+
+The reviewed commit includes the initiative review-log entry and the initial
+evidence/trust artifacts. The follow-up commit changes only recognized review
+evidence to bind this exact-SHA result and repair the AUTH-14 summary wording.
 
 ## Findings repaired
 

@@ -95,7 +95,7 @@ own implementation chunks. PLAN2's schema-v2 merge intent validates uniquely.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
 reuse/dedup, test delta, and CI integrity all pass after repairs on reviewed SHA
-`f6c41d5a42ec598b513b25b4677f6ac725645920`.
+`6985909ea83e74de22f1067777be0af2138b28de`.
 
 ## External review
 
