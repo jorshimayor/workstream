@@ -30,6 +30,13 @@ typed product capability composition. It does not implement S3/MinIO,
 submission/checker artifact cutovers, lease-scoped review packet reads, or
 review-evidence candidate/finalize behavior.
 
+AUTH-09C PR #146 then merged to main at
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43`. The sole REV conflict was in the
+shared agent-gate lifecycle assertions. The resolution retains REV's
+branch-sensitive ART proof while adopting main's merged ART-02A3 and AUTH-09C
+state. AUTH-09C activates only two bounded actor-registry reads and no REV
+action.
+
 Chunk 01 adopts `docs/spec_review_lifecycle.md` as the active normative
 contract, preserves the supplied WS-REV and WS-IMP archival Markdown/PDF bytes,
 reconciles active documentation, and adds a fail-closed stale review-contract
@@ -38,8 +45,8 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 ## Dependency state
 
 - AUTH-08 remains the historical 74-PermissionId, 57-ActionId snapshot: 9
-  active and 48 planned. Current trusted main after AUTH-09B has 74
-  PermissionIds and 65 ActionIds: 10 active and 55 planned.
+  active and 48 planned. Current trusted main after AUTH-09C has 74
+  PermissionIds and 65 ActionIds: 12 active and 53 planned.
 - All 24 REV lifecycle action dependencies remain unavailable: planned
   `submission.create`, 19 planned review actions, and four approved but
   unregistered REV additions. The separately proposed ART evidence-binding
@@ -51,6 +58,9 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
   in AUTH's closed registry. None of REV's six identities exists yet; their
   exact extensions, provisioning, AUTH-09E admission, and feature activation
   remain downstream gates.
+- Merged AUTH-09C supplies only bounded system-authorized actor-profile and
+  identity-link reads. It adds no REV identity or action and changes none of
+  REV's lifecycle, lease, artifact, or contribution boundaries.
 - Merged ART-02A3 supplies the active byte-only ART v2 store beneath typed
   product capabilities. Review still consumes only later approved packet-read
   and evidence candidate/finalize ports; it never imports the raw byte store,

@@ -127,8 +127,9 @@ frontend work
 - The active contract records merged AUTH-08 as 74 PermissionIds and 57
   ActionIds split into 9 active actions and 48 planned actions. It
   identifies that count as historical. It records current trusted main after
-  AUTH-09B as 74 PermissionIds and 65 ActionIds split into 10 active and 55
-  planned; only `actor.service.provision` changed availability. It does not
+  AUTH-09C as 74 PermissionIds and 65 ActionIds split into 12 active and 53
+  planned; AUTH-09B activated `actor.service.provision`, and AUTH-09C activates
+  only `actor.profile.read` and `actor.identity_link.read`. It does not
   describe the authorization kernel as absent, claim a REV service identity was
   added, or treat any of the 24 REV dependencies as active.
 - The active contract records AUTH-08's rollback-only dependency teardown,
@@ -256,7 +257,7 @@ frontend work
 ## Verification
 
 The final PR-scope check intentionally uses trusted current main
-`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, rather than the original planning
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43`, rather than the original planning
 base `0302bcf854a565d429e232ad6b076a1931ea74e4`. Current main includes reviewed
 sibling AUTH, CON, and ART changes that are dependencies of this chunk but are
 not part of its PR scope. The committed reviewed-scope manifest records each
@@ -294,7 +295,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
-git diff --name-status --no-renames a10d9018007d2e847b4870e9b26cbd24e24c7bb4...HEAD | LC_ALL=C sort -k2,2 -k1,1 | diff -u .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-01-reviewed-scope.txt -
+git diff --name-status --no-renames 0ffdabf3dbb77e4e066683fde1a095d744ff1f43...HEAD | LC_ALL=C sort -k2,2 -k1,1 | diff -u .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-01-reviewed-scope.txt -
 git diff --check
 ```
 

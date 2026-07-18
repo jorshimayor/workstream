@@ -871,3 +871,17 @@ passes; simulated status change, removal, rename as D+A, and addition each fail.
 All deterministic gates and all nine exact-SHA reviewer tracks pass. The proof
 is intentionally chunk-specific rather than a permanent global CI rule pinned
 to one historical main SHA.
+
+## WS-REV-001-01 AUTH-09C Main Reconciliation - 2026-07-18
+
+AUTH-09C PR #146 advanced main to `0ffdabf3`. The branch merged it and resolved
+the sole conflict in `scripts/test_agent_gates.py` by adopting main's current
+AUTH-09C and merged ART-02A3 assertions while retaining REV's pre-merge ART
+phase checks in their fallback branches. No test or assertion was removed.
+
+AUTH-09C keeps 74 PermissionIds and 65 ActionIds, activating only
+`actor.profile.read` and `actor.identity_link.read` and moving the split to
+12 active / 53 planned. It adds no REV identity or action; all 24 REV
+dependencies remain unavailable. The trusted PR-scope base is now
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43`. Fresh deterministic evidence and
+all nine exact-SHA reviewer tracks are required.

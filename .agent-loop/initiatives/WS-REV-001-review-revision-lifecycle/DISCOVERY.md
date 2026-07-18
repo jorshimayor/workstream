@@ -106,9 +106,10 @@ contracts assign the final `TaskAssignment.contributor_id` and
   counts from current trusted main and account for its delta independently.
   REV feature chunks build hidden behavior and typed facts; exact AUTH activation
   custodians alone integrate evaluators and change availability. Current trusted
-  main after AUTH-09B contains 65 ActionIds: 10 active and 55 planned.
-  `actor.service.provision` is the only AUTH-09B activation; no REV identity or
-  action was added, and all 24 REV dependencies remain unavailable.
+  main after AUTH-09C contains 65 ActionIds: 12 active and 53 planned.
+  AUTH-09B activated `actor.service.provision`; AUTH-09C activates only the two
+  bounded actor-registry reads. No REV identity or action was added, and all 24
+  REV dependencies remain unavailable.
 
 The merged AUTH plan contains an execution cycle: full AUTH-13/14 require
 prepared revision/replacement behavior owned by REV-09A, while REV-02 needs

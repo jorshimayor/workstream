@@ -94,6 +94,13 @@ controlled route may provision only identities already present in AUTH's closed
 registry. It adds none of REV's six identities, admits no service token, and
 activates no review action; all 24 REV dependencies remain unavailable.
 
+AUTH-09C PR #146 later merged to current trusted main
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43` from final branch head
+`a3d6babc`. It keeps 74 PermissionIds and 65 ActionIds while activating only
+`actor.profile.read` and `actor.identity_link.read`, moving the split to 12
+active and 53 planned. It adds no REV identity or action, and all 24 REV
+dependencies remain unavailable.
+
 ## Dependency specifications and plans
 
 - `docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md`
