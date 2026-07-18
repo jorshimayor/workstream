@@ -31,7 +31,7 @@ services:
       MINIO_ROOT_USER: workstream-minio
       MINIO_ROOT_PASSWORD: workstream-minio-secret-key
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
