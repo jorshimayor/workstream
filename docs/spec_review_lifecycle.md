@@ -742,8 +742,9 @@ authority.
 
 ## Joint Release Control
 
-REV-12A adds one hidden PostgreSQL-canonical
-`JointLifecycleReleaseControl`. It uses compare-and-set phase history,
+REV-12A is a non-executable split record. REV-12A1 through REV-12A4 collectively
+add one hidden PostgreSQL-canonical `JointLifecycleReleaseControl`. It uses
+compare-and-set phase history,
 PostgreSQL advisory-lock fences, mandatory typed fence ports, and bounded drain
 observations across review mutations, task submissions, queue admission,
 authority-loss replacement, CON fulfillment-obligation writers, dispatch, and
@@ -756,9 +757,10 @@ same-generation pre-cutoff completion work, then disables. Timeout leaves the
 phase unchanged for forward retry. No background job replays human Operator
 authority or advances a phase. Reactivation requires a newly reviewed manifest.
 
-This controller is product release state, not AUTH action availability. REV-12A
-exposes no public route; AUTH activates the exact management action only after
-the hidden manifests merge, and REV-13C exposes and drills it.
+This controller is product release state, not AUTH action availability. The
+12A1 through 12A4 implementation exposes no public route; AUTH activates the
+exact management action only after all four hidden manifests merge, and REV-13C
+exposes and drills it.
 
 ## Error, Concurrency, And Idempotency Rules
 
@@ -787,7 +789,7 @@ The lifecycle is delivered one explicitly approved PR-sized chunk at a time:
 05-07 admission, routing, leases, context, and artifact evidence
 08-10 decision/revision kernels and atomic FinalAcceptance/CON composition
 11-12 recovery, reconciliation, projection, and observability
-12A hidden joint release control and cross-domain fences
+12A1-12A4 hidden joint release control and cross-domain fences
 13 AUTH-active coherent API exposure and live proof
 ```
 

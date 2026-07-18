@@ -138,9 +138,11 @@ reputation scoring
   revocation, binding-state drift, and duplicate/changed replay in both orders.
   Fault injection after every REV, task, CON, audit, and outbox stage proves
   zero partial state and bounded database retry behavior.
-- The needs-revision branch invokes the task-owned preparation participant
-  implemented and consumed in this chunk after the reviewer CON operation. It
-  appends the exact Review-rooted initial preparation before Task becomes
+- The needs-revision branch consumes the mandatory task-owned preparation
+  participant delivered by 09A2 and invokes it after the reviewer CON
+  operation. Chunk 10 adds no task-owned implementation file or second
+  participant path. The participant appends the exact Review-rooted initial
+  preparation through the caller's session before Task becomes
   contributor-readable. Failure rolls
   back Review, Task/Assignment, lease/queue, initial preparation, reviewer
   contribution/award, audit, and outbox together.

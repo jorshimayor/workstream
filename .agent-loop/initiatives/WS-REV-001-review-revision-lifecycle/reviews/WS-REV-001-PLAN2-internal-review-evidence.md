@@ -5,9 +5,11 @@
 - Trusted base: `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
 - Reviewed planning candidate: `6985909ea83e74de22f1067777be0af2138b28de`
 - Scope: complete REV initiative/runtime-readiness reconciliation, four active
-  product documents, and one schema-v2 merge intent
+  product documents including `docs/spec_review_lifecycle.md`, and one schema-v2
+  merge intent
 - Runtime status: blocked; no backend runtime, migration, model, service, route,
-  test, workflow, reference specification, or cross-owner plan changed
+  test, workflow, frozen `docs/reference/` source specification, or cross-owner
+  plan changed
 
 Open sub-agent sessions: none
 

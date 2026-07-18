@@ -56,9 +56,10 @@ separate contributor clean cut.
 
 ## Scope control
 
-Only the REV initiative, four allowed active product documents, and one PLAN2
-merge intent changed. No backend, migration, test, workflow, dependency,
-reference specification, AUTH/ART/CON owner plan, or handoff file changed.
+Only the REV initiative, four allowed active product documents including
+`docs/spec_review_lifecycle.md`, and one PLAN2 merge intent changed. No backend,
+migration, test, workflow, dependency, frozen `docs/reference/` source
+specification, AUTH/ART/CON owner plan, or handoff file changed.
 
 ## Product behavior
 
@@ -99,7 +100,11 @@ reuse/dedup, test delta, and CI integrity all pass after repairs on reviewed SHA
 
 ## External review
 
-Pending GitHub CI, CodeRabbit, and human PR review.
+CodeRabbit reported six planning/scope findings on PR #150. All six are
+addressed in the external-review repair: packet-manifest ownership, chunk 08
+verification commands, task-participant ownership, legacy-checker exclusion,
+active-spec scope classification, and 12A child ownership. Final GitHub CI and
+CodeRabbit re-review are pending; human review remains required.
 
 ## Remaining risks
 

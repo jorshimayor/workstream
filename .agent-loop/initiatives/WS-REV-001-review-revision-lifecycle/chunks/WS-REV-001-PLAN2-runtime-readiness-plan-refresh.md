@@ -38,7 +38,7 @@ docs/operations_revision_replay.md
 
 ```text
 backend runtime, migrations, schemas, models, repositories, services, routes, or tests
-reference specifications, archival inputs, or cross-initiative owner artifacts
+frozen `docs/reference/` source specifications, archival inputs, or cross-initiative owner artifacts
 AUTH, ART, or CON action availability, ownership, runtime, or planning contracts
 implementation or activation of any review, revision, adjudication, or release behavior
 completion of WS-REV-001-02A or automatic start of WS-REV-001-02B
@@ -83,8 +83,9 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 backend/.venv/bin/python scripts/test_agent_gat
 ```
 
 Run the initiative-specific AUTH/ART/CON dependency scans. Verify that the only
-active product documents changed are the four enumerated allowed files and that
-the diff contains no backend, migration, reference/archival specification,
+active product documents changed are the four enumerated allowed files,
+including `docs/spec_review_lifecycle.md`, and that the diff contains no
+backend, migration, frozen `docs/reference/` or archival specification,
 cross-initiative handoff, or owner-plan files.
 
 ## Required reviewers

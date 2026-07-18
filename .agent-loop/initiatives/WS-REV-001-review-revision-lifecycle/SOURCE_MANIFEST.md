@@ -235,8 +235,9 @@ needs-revision CheckerRun that admits a corrected checker-remediation N+1. 02C
 owns the planned server-derived `remediation_source_checker_run_id`, exact
 backfill, PostgreSQL lineage/uniqueness/immutability, and currentness locking;
 09A4 later adds the human preparation binding and final source XOR. AUTH-14 must
-own only public authorization/request cutover for that path after an exact
-contract amendment, not these REV lifecycle columns or constraints.
+own only public request acknowledgement, authorization cutover, and activation
+for that path after an exact contract amendment, not these REV lifecycle
+columns or constraints.
 Every runtime gate must replace worktree prose with exact owner chunk ID,
 merged PR/SHA, migration head, typed symbol/manifest, and tests.
 

@@ -61,9 +61,25 @@ optional/no-op CON participant, ART call, contribution/award/reputation policy
 
 ## Verification
 
-The start contract supplies exact focused tests, Ruff, isolated 78 percent full
-suite, 90 percent changed-module coverage, stale scans, links, agent gates,
-merge-intent proof, and `git diff --check` from then-current main.
+```text
+cd backend && pytest -q tests/test_reviews.py tests/test_tasks.py tests/test_contributions.py
+cd backend && ruff check app/modules/reviews app/modules/tasks tests/test_reviews.py tests/test_tasks.py tests/test_contributions.py
+cd backend && docstr-coverage --config .docstr.yaml
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+cd backend && coverage report --include='app/modules/reviews/*,app/modules/tasks/*' --precision=2 --fail-under=90
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_review_contracts.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_internal_review_evidence.py
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 backend/.venv/bin/python scripts/test_agent_gates.py
+python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main
+git diff --check
+```
+
+The current-main start contract must preserve these gates and may only narrow
+focused paths to the exact allowed-file manifest it approves.
 
 ## Required reviewers
 

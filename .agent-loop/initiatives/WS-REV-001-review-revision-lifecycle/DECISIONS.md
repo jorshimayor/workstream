@@ -154,8 +154,10 @@ Normal blocked/revoked/invalid preparation is recoverable only by a reason-bound
 idempotent covered Project Manager repair command that acknowledges the current
 head and appends one validated successor after project setup correction. It
 cannot create a root or rewrite a prior preparation. A legacy `needs_revision`
-task with no unambiguous originating Review or final needs-revision CheckerRun
-cannot be repaired this way; an Operator
+task is eligible only when neither an unambiguous human Review root nor an exact
+final `needs_revision` CheckerRun exists. Valid CheckerRun-rooted remediation is
+never legacy even when no human Review exists. The legacy state cannot be
+repaired this way; an Operator
 may close it through the separately authorized, evidence-linked legacy closure
 with terminal reason `legacy_revision_context_unrecoverable`. That closure
 releases the assignment and creates no Review or WS-CON record.

@@ -11,8 +11,10 @@ CheckerRun-rooted path and is not treated as legacy.
 - `WS-REV-001-09A1`: immutable Review-rooted, task-owned non-branching
   RevisionContextPreparation persistence after human approval of exact round/
   deadline semantics.
-- `WS-REV-001-09A2`: guide-context resolver and Task Context read only; decision
-  transaction composition remains in chunk 10.
+- `WS-REV-001-09A2`: task-owned preparation participant and guide-context
+  resolver plus Task Context read. The participant uses 09A1 persistence and
+  flushes through the caller's session; decision transaction composition and
+  the single commit remain in chunk 10.
 - `WS-REV-001-09A3`: human Review finding responses/evidence only.
 - `WS-REV-001-09A4`: hidden prepared human N+1 task/checker participant. It adds
   the server-selected Submission-to-preparation binding and replaces 02C's

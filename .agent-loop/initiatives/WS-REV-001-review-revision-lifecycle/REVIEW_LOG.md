@@ -944,5 +944,27 @@ QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test delta
 and CI-integrity review. Diff integrity, all four stale scanners, Markdown links,
 87 agent gates, Alembic single-head proof, catalogue arithmetic, changed scope,
 and the schema-v2 PLAN2 merge intent pass. No runtime, migration, test, workflow,
-reference, or cross-owner file changed. PLAN2 may publish; 02A remains stopped
-until its exact contributor foundation merges and the user explicitly starts it.
+frozen `docs/reference/` source, or cross-owner file changed. PLAN2 may publish;
+02A remains stopped until its exact contributor foundation merges and the user
+explicitly starts it.
+
+## WS-REV-001-PLAN2 External Review Repair - 2026-07-18
+
+CodeRabbit reviewed PR #150 and posted six actionable planning findings. The
+repair makes 03B the sole ReviewPacketManifest/item schema, migration,
+repository, and persistence-test owner while 06A consumes that contract at
+claim time; restores explicit executable verification commands for 08; and
+makes 09A2 deliver the task-owned flush-only preparation participant consumed by
+10 without widening 10 into task-owned files.
+
+The repair also excludes every exact CheckerRun-rooted remediation from legacy
+closure, classifies `docs/spec_review_lifecycle.md` accurately as one of PLAN2's
+four active product documents while preserving the frozen `docs/reference/`
+boundary, and assigns release-controller implementation only to 12A1 through
+12A4. AUTH-14 wording now consistently names public request acknowledgement,
+authorization cutover, and activation. No runtime, migration, test, workflow,
+AUTH/ART/CON owner plan, or frozen reference source changed.
+
+The repaired candidate requires fresh exact-SHA internal review, deterministic
+gates, evidence rebinding, push, CodeRabbit re-review, and GitHub CI before PR
+#150 is ready for the user's merge decision.

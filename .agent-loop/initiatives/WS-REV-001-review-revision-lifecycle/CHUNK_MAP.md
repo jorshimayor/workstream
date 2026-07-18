@@ -29,7 +29,7 @@ typed symbol/manifest, and tests.
 | `WS-REV-001-05A` | Atomic Checker Admission Participant | L1 | 04B; merged ART 05/06A/06B exact admission facts | Proposed; no contract yet |
 | `WS-REV-001-05B` | Server-Selected Reviewer And Admin Queue Reads | L1 | 05A; exact AUTH read contracts | Proposed; no contract yet |
 | `WS-REV-001-06` | Claims, Preference, And Timers | L1 | 05B | Non-executable split record |
-| `WS-REV-001-06A` | Atomic Claim, Lease, Packet, And Reviewer Policy Freeze | L1 | 05B; merged `WS-CON-001-06`; AUTH PREP/custody/service contracts | Proposed; no contract yet |
+| `WS-REV-001-06A` | Atomic Claim, Lease, Packet, And Reviewer Policy Freeze | L1 | 05B; merged 03B persistence contract; merged `WS-CON-001-06`; AUTH PREP/custody/service contracts | Proposed; consumes 03B and owns no packet schema/migration |
 | `WS-REV-001-06B` | Owned Release, Decline, And Preference Transitions | L1 | 06A; exact AUTH mutation contracts | Proposed; no contract yet |
 | `WS-REV-001-06C` | Preference And Lease Expiry With Lazy Recovery | L1 | 06B; provisioned/admitted exact service identities | Proposed; no contract yet |
 | `WS-REV-001-07` | Review Context And Finding Evidence | L1 | 06C | Non-executable split record |
@@ -39,9 +39,9 @@ typed symbol/manifest, and tests.
 | `WS-REV-001-02A2` | Prepared Superseded Guide Reactivation | L1 | 08; merged AUTH-PREP/custody; AUTH-12 contract amendment; `project.guide.activate` remains unavailable | Proposed hidden behavior; manifest gates AUTH-12 evaluator/cutover/activation |
 | `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08 | Non-executable split record |
 | `WS-REV-001-09A1` | Review-Rooted Revision Preparation Persistence | L1 | 02A2; approved human round/deadline semantics; migration/head refresh | Proposed; no contract yet |
-| `WS-REV-001-09A2` | Revision Context Resolver And Task Context | L1 | 09A1 | Proposed; no transaction composition |
+| `WS-REV-001-09A2` | Revision Preparation Participant, Resolver, And Task Context | L1 | 09A1 | Proposed; task-owned flush-only participant, no transaction composition |
 | `WS-REV-001-09A3` | Human Revision Response Evidence Finalize | L1 | 09A2; ART evidence port and exact AUTH action | Proposed; owner chunk unscheduled |
-| `WS-REV-001-09A4` | Hidden Human Prepared N+1 And Checker Source Compatibility | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; adds preparation binding/source XOR while retaining 02C checker source; AUTH-14 owns public acknowledgement/auth cutover/activation |
+| `WS-REV-001-09A4` | Hidden Human Prepared N+1 And Checker Source Compatibility | L1 | 09A3; merged AUTH-14 contract amendment only; ART digest contract | Proposed; adds preparation binding/source XOR while retaining 02C checker source; AUTH-14 owns public request acknowledgement, authorization cutover, and activation |
 | `WS-REV-001-09A5` | Hidden Replacement Assignment Preparation Transfer | L1 | 09A4; merged AUTH-13 contract amendment only | Proposed; AUTH-13 later owns public command/cutover/activation |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Preferred Return Routing | L1 | 09A5 | Proposed |
 | `WS-REV-001-10` | Canonical Review, Final Acceptance, And CON Atomic Integration | L1 | 09B; merged `WS-CON-001-03C` and `07`; stabilized digest owner chunk | Proposed; first canonical decision commit |
