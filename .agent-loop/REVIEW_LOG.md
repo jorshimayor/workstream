@@ -16,6 +16,10 @@
 - Candidate `3d68933` assigns profile actions to exact owner 09D-A and inactive
   link actions to 09D-B, then proves partial attribution, padded and multibyte
   reason refusal, profile/link success evidence, and both link-denial tokens.
+- The next exact-head review found four historical Alembic catalogue assertions
+  still using the removed parent owner. Candidate `e64b03f` clean-cuts all four
+  to the two child owners; the three affected migration tests pass in 199.52
+  seconds and still assert exactly eight AUTH-09 definitions.
 - All five exact migration proofs pass in 181.50 seconds. The expanded real
   PostgreSQL matrix passes in 100.36 seconds and the blocker-controlled race
   proof passes in 140.69 seconds. No timing sleeps establish race order.
