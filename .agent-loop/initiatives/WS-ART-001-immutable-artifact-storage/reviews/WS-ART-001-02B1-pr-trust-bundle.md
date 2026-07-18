@@ -27,6 +27,9 @@ chunk.
 - Integrated AUTH PR #148 while leaving all AUTH runtime activation with AUTH.
 - Integrated the latest merged REV planning without changing ART or REV runtime
   ownership.
+- Bounded source-chunk copying, materialized deferred AWS credentials,
+  canonicalized IPv6 endpoint identity, and deepened secret-retention proof in
+  response to the valid external review findings.
 
 ## Scope Control
 
@@ -52,10 +55,10 @@ user explicitly starts it.
 ## Tests And Checks
 
 ```text
-437 real-service focused tests PASS
-S3CompatibleArtifactStore coverage 92%
-S3 validation coverage 100%
-Combined changed-subsystem coverage 92.69%
+443 real-service focused tests PASS
+S3CompatibleArtifactStore coverage 91%
+S3 validation coverage 97%
+Combined changed-subsystem coverage 92.52%
 Ruff PASS
 pip check PASS
 88 agent-gate tests PASS
@@ -69,7 +72,7 @@ percent repository floor, and all cumulative focused 90 percent gates.
 
 ## Internal Review
 
-Reviewed code SHA: `fafd6338623ab82152ba9dbe88b5622c73f1ff91`
+Reviewed code SHA: `9cd5620ef5f72e7ba9abc75e9ac7b398996f0c8a`
 
 All nine required reviewer tracks passed the exact integrated SHA with no
 remaining finding. Every reviewer session is closed. Reviewer IDs and the

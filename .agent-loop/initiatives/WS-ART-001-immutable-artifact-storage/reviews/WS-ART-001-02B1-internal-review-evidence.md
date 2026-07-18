@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `fafd6338623ab82152ba9dbe88b5622c73f1ff91`
+Reviewed code SHA: `9cd5620ef5f72e7ba9abc75e9ac7b398996f0c8a`
 
-Reviewed at: 2026-07-18T22:51:42Z
+Reviewed at: 2026-07-18T23:40:43Z
 
-Reviewer run IDs: senior-engineering=019f7757-5a85-78d2-a205-5e4daa95e0f6; architecture=019f7757-4ec9-7640-b511-a6206d78ae18; QA/test=019f775f-20e2-7b51-92b9-00c8c628b1b5; security/auth=019f775f-64e8-7472-8efa-f689fd04eb9e; product/ops=019f775f-755f-7860-be64-0d24f7b3636d; reuse/dedup=019f775f-82ba-7dd2-9338-e4fa4d1678ea; CI-integrity=019f7766-5851-7b32-8dc2-427deba32f83; test-delta=019f7766-74ef-7961-93f9-573eda2455bf; docs=019f7766-9599-7503-a835-8eddfe95e343
+Reviewer run IDs: senior-engineering=019f778b-6b07-7561-a718-e1da40a532a0; architecture=019f778b-6372-7c83-85ca-a61f63885c17; QA/test=019f778b-74eb-7250-b07c-573c979b2849; security/auth=019f778b-81f0-7b31-85d5-8955f9047b3e; product/ops=019f7791-3326-71e3-b838-54143b94a129; reuse/dedup=019f7791-3943-7de3-bdbf-c3643f45c43c; CI-integrity=019f7791-43a6-78e0-8f17-67861bf27455; test-delta=019f7791-4c52-7091-9076-f534bccdfad6; docs=019f7797-215a-7e02-b6e4-c33b584ec2b5
 
 The reviewed base is `origin/main` at
 `983b9e534b84f1590fafecc0ce1355cf131257ce`, including AUTH PR #148 and the
@@ -51,20 +51,27 @@ this evidence and requires a new exact-head review cycle.
   operator-controlled container-network development/test endpoints only.
 - Documented and enforced the exact `minio-v1` and `aws-s3-v1` namespace
   descriptor schemas.
+- Bounded copied request-body bytes independently of source chunk size by
+  retaining unconsumed source bytes through a memoryview cursor.
+- Required selected AWS workload credentials to materialize successfully before
+  explicit resolution can report success.
+- Canonicalized equivalent IPv6 MinIO literals before deriving endpoint and
+  namespace identity.
+- Extended secret-retention proof to byte buffers and public object state.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | The shared adapter remains maintainable and AWS remains unavailable before live proof. A non-blocking repository-wide Ruff version-range reproducibility note remains outside this ART behavior. |
-| qa/test | PASS | None | Real MinIO, credential isolation, namespace fencing, configuration, and CI evidence cover the chunk contract without weakened tests. |
+| senior engineering | PASS WITH LOW RISKS | None | The shared adapter and four external-review repairs are maintainable. Exact SDK pins bound the reviewed reliance on SDK credential internals. |
+| qa/test | PASS WITH LOW RISKS | None | Real MinIO, credential isolation, bounded streaming, IPv6 identity, secret scanning, and CI evidence cover the chunk contract without weakened tests. |
 | security/auth | PASS | None | Secret-bearing endpoint and metadata failures are sanitized, credential sources are closed, and ART/AUTH ownership remains intact. |
-| product/ops | PASS WITH LOW RISKS | None | No operator recovery, contributor, reviewer, contribution, compensation, fulfillment, or reputation behavior is activated. Existing pre-cutover R2 wording remains owned by later product cutover work and adds no runtime eligibility here. |
-| architecture | PASS | None | One typed adapter path remains, concrete S3 construction stays in ART composition, and product services receive no concrete store. |
+| product/ops | PASS | None | No operator recovery, contributor, reviewer, contribution, compensation, fulfillment, or reputation behavior is activated. |
+| architecture | PASS WITH LOW RISKS | None | One typed adapter path remains, concrete S3 construction stays in ART composition, and exact SDK pins bound the inactive AWS helper dependency. |
 | ci integrity | PASS | None | The 78 percent repository gate and all cumulative 90 percent gates remain fail closed with no bypass. |
 | docs | PASS | None | README, artifact specification, settings, provider eligibility, and loop state match the implementation. |
-| reuse/dedup | PASS | None | Provider references, S3 validation, runtime guards, and deep secret assertions reuse canonical helpers without parallel implementations. |
-| test delta | PASS | None | Removed placeholder assertions were replaced by stronger active-MinIO and inactive-AWS behavior proof; no test was skipped or weakened. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Provider references, S3 validation, runtime guards, and deep secret assertions reuse canonical helpers without parallel implementations. The reviewer relied on the recorded real-MinIO proof rather than rerunning it. |
+| test delta | PASS WITH LOW RISKS | None | Active-MinIO and inactive-AWS proof is stronger, including all four repairs; no test was skipped or weakened. AWS remains intentionally inactive pending live proof. |
 
 ## Valid Findings Addressed
 
@@ -95,6 +102,15 @@ this evidence and requires a new exact-head review cycle.
   definitions regression-protected by the 88-test agent-gate runner.
 - Clarified private non-production MinIO eligibility and added the exact closed
   S3 namespace profile table to the canonical artifact specification.
+- Replaced whole-source-chunk pending copies with a bounded memoryview cursor and
+  added direct proof that unconsumed bytes remain available without expanding
+  the copied request buffer.
+- Materialized deferred AWS workload credentials before returning explicit
+  resolution success and sanitized refresh failures.
+- Compressed equivalent IPv6 endpoint literals before namespace identity
+  derivation.
+- Extended deep secret assertions across bytes, bytearray, memoryview, and
+  nested public object state.
 
 ## Commands Run
 
@@ -112,9 +128,9 @@ python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
-Results: 437 real-service focused tests passed after AUTH PR #148 integration.
-`S3CompatibleArtifactStore` coverage is 92 percent, S3 validation coverage is
-100 percent, and combined changed-subsystem coverage is 92.69 percent. Ruff,
+Results: 443 real-service focused tests passed after the external-review repairs.
+`S3CompatibleArtifactStore` coverage is 91 percent, S3 validation coverage is
+97 percent, and combined changed-subsystem coverage is 92.52 percent. Ruff,
 dependency integrity, stale contract/authorization/review/wording scans,
 Markdown links, 88 agent-gate tests, Compose validation, and diff checks passed.
 
