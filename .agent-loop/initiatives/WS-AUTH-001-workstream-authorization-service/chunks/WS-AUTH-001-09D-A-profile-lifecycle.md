@@ -20,12 +20,20 @@ reactivation provenance and incorrectly forces reactivation invalidation from
 
 ```text
 backend/alembic/versions/0026_actor_profile_lifecycle.py
-backend/app/db/models.py
-backend/app/modules/actors/**
-backend/app/modules/authorization/**
-backend/app/modules/audit/**
-backend/app/api/router.py
-backend/app/api/deps/authorization.py
+backend/app/modules/actors/models.py
+backend/app/modules/actors/repository.py
+backend/app/modules/actors/schemas.py
+backend/app/modules/actors/service.py
+backend/app/modules/authorization/catalogue.py
+backend/app/modules/authorization/runtime.py
+backend/app/modules/authorization/kernel.py
+backend/app/modules/authorization/admin_repository.py
+backend/app/modules/authorization/schemas.py
+backend/app/modules/authorization/service.py
+backend/app/modules/authorization/router.py
+backend/app/modules/authorization/lifecycle_schemas.py
+backend/app/modules/authorization/lifecycle_service.py
+backend/app/modules/audit/schemas.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_authorization.py
@@ -37,12 +45,20 @@ backend/scripts/api_contract_e2e.py
 scripts/test_agent_gates.py
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
+docs/architecture_data_model.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/merge-intents/WS-AUTH-001-09D-A.json
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
 ```
+
+`scripts/test_agent_gates.py` may change only to require the exact 09D-A/09D-B
+order, merged 09C state, and active 09D-A gate. The lifecycle service owns only
+orchestration and reuses the existing authority mutation, idempotency, audit,
+actor repository, admin repository, limiter, error, and route-owned transaction
+primitives. No parallel ledger, authorization kernel, unit of work, or database
+engine is allowed.
 
 ## Not Allowed
 
@@ -111,6 +127,11 @@ matching effective permission. Deactivated profiles never reactivate.
 Each domain conflict rolls back the pending reservation and staged allow
 decision, then commits one privacy-safe denial in a clean transaction. It does
 not consume the idempotency key. The exact committed success is the only replay.
+State, final-admin, and authorized-missing-target conflicts use exactly
+`SensitiveAuthorizationDenied` with the lifecycle ActionId/PermissionId,
+target ActorProfile, categorical `authorization_evaluation` reason, exact
+denial code, and no idempotency reference. No lifecycle variant of
+`LastAccessAdministratorOperationDenied` is introduced.
 
 ## Migration 0026
 
@@ -132,8 +153,21 @@ Migration `0026_actor_profile_lifecycle`:
 - updates typed validators and PostgreSQL functions together without editing
   historical migrations.
 
+For lifecycle evidence, `effective` describes only the mutated profile or link
+component. It does not assert whole-actor authenticatability, current grant
+authority, or fixed-service admission. Profile reactivation is allowed while
+the target link remains revoked; the profile becomes active but the actor
+remains unable to authenticate. Service profile reactivation never admits the
+service or activates a service action.
+
+Upgrade refuses before DDL when existing lifecycle rows contain partial
+reactivation attribution or stored lifecycle reasons outside the new normalized
+1-to-500-byte bounds. It never normalizes or deletes existing evidence.
+
 Downgrade fails closed if profile reactivation provenance or committed profile/
-link reactivation evidence exists. Otherwise it restores the prior functions,
+link reactivation evidence exists, or if any audit row uses either new
+identity-link conflict denial code. The refusal happens before DDL and leaves
+schema and evidence unchanged. Otherwise it restores the prior functions,
 closed denial vocabulary, constraints, guards, and columns. AUTH-10 through
 AUTH-15 shift to migrations `0027` through `0032`.
 
@@ -171,8 +205,11 @@ so crossed profile/grant loss cannot commit both transitions.
 - Exact replay reauthorizes, returns the stored resource reference even if the
   target later changed state, and advances only the successful human caller's
   verification timestamps.
-- Changed reason, target, or operation returns `idempotency_mismatch` only after
-  reauthorization. Replay after authority loss denies without disclosure.
+- Changed reason or target under the same operation returns
+  `idempotency_mismatch` only after reauthorization. Operation is part of the
+  persisted idempotency namespace, so the same UUID used for another operation
+  is an independent claim. Replay after authority loss denies without
+  disclosure.
 - Validation, rate limit, denial, missing target, conflict, mismatch, and every
   SQL/evidence/completion/commit failure advance no timestamp.
 - Authorization evidence, target lookup, reservation, state flush, caller
@@ -191,6 +228,20 @@ so crossed profile/grant loss cannot commit both transitions.
 - Real PostgreSQL proof covers same-key replay, different-key same transition,
   suspend/deactivate, reactivate/deactivate, profile/grant revoke, and
   different-target final-admin loss without sleeps or deadlocks.
+- Race outcomes are normative:
+
+| Race | Required committed outcome |
+|---|---|
+| same key, same operation/request | one success and one exact replay; one success/invalidation pair; no denial; completed key |
+| different keys, same transition | one success and one state-conflict denial; one success/invalidation pair; one denial; losing key reusable |
+| active suspend versus deactivate | suspend-first permits later deactivation; deactivate-first makes suspend terminal-conflict; final state deactivated |
+| suspended reactivate versus deactivate | reactivate-first permits later deactivation; deactivate-first makes reactivate terminal-conflict; final state deactivated |
+| two effective admins, different-target loss | one loss commits, one `last_access_administrator` denial; exactly one effective human admin remains |
+| profile loss versus grant revoke | singleton order permits at most one final-authority loss; exactly one effective human admin remains |
+
+Every race asserts no deadlock, no pending claim, exact success/invalidation/
+denial counts, each key's completed or reusable disposition, and the final
+profile/grant state. PostgreSQL blockers, never timing sleeps, establish order.
 - Behavior matrices cover human/service targets, every state, self operations,
   target concealment, replay/mismatch, caller authority changes, rollback,
   timestamps, rate limits, OpenAPI, manifest parity, and privacy canaries.
@@ -199,6 +250,11 @@ so crossed profile/grant loss cannot commit both transitions.
   stored digests.
 - Focused actor and authorization branch coverage is at least 90 percent.
   GitHub Backend preserves the repository-wide 78 percent floor.
+- The authorization spec, operations runbook, and live architecture data model
+  document migration `0026`, profile reactivation provenance, link provenance
+  parity, component-scoped effectiveness, and the shift of AUTH-10 through
+  AUTH-15 to `0027` through `0032`. Archived reference specifications do not
+  change.
 
 ## Verification Commands
 
@@ -209,7 +265,12 @@ so crossed profile/grant loss cannot commit both transitions.
   .venv/bin/python scripts/run_isolated_tests.py \
   --metadata-json "$metadata_dir/migration.json" --timeout-seconds 1800 -- \
   bash -lc '.venv/bin/alembic downgrade -1 && .venv/bin/alembic upgrade head && \
-  .venv/bin/python -m pytest -q tests/test_alembic.py')
+  .venv/bin/python -m pytest -q \
+  tests/test_alembic.py::test_actor_profile_lifecycle_fresh_and_prior_head_upgrade \
+  tests/test_alembic.py::test_actor_profile_lifecycle_constraint_and_trigger_parity \
+  tests/test_alembic.py::test_actor_profile_lifecycle_upgrade_refuses_dirty_rows \
+  tests/test_alembic.py::test_actor_profile_lifecycle_safe_downgrade_and_reupgrade \
+  tests/test_alembic.py::test_actor_profile_lifecycle_downgrade_refuses_forward_evidence')
 (metadata_dir="$(mktemp -d)"; trap 'rm -rf "$metadata_dir"' EXIT; \
   cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
   .venv/bin/python scripts/run_isolated_tests.py \

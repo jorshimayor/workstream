@@ -643,7 +643,7 @@ exact-project grants and canonical project composition.
 AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
 `adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
 idempotency records, and PostgreSQL validators for `both`, replacement fields,
-replacement events, and replacement reasons. Migration `0026` must stop on any
+replacement events, and replacement reasons. Migration `0027` must stop on any
 incompatible evidence; operators must remediate through a separately approved
 data decision, never an automatic conversion. A safe downgrade also refuses
 rather than deleting adjudicator or new exact-role evidence.

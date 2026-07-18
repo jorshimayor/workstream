@@ -574,8 +574,8 @@ PermissionId mapping, canonical target, principal class, candidates, guards,
 surface, and revalidation rule before runtime edits. Each owning migration
 updates current typed and PostgreSQL audit validation; no chunk may promise an
 active surface whose ActionId is absent. AUTH-11 therefore owns migration
-`0027`, and later migration reservations shift through AUTH-15 as recorded in
-D29. AUTH-16 aggregates proof; it does not discover or backfill missing
+`0028`, and later migration reservations shift through AUTH-15 as superseded
+by D30. AUTH-16 aggregates proof; it does not discover or backfill missing
 registrations.
 
 ## D28: Service provisioning records an unverified issuer binding
