@@ -302,10 +302,10 @@ def _dirty_lifecycle_rows(bind) -> bool:
             sa.text(
                 "select exists(select 1 from actor_identity_links where "
                 "(reactivated_by is null)::int + (reactivated_at is null)::int + "
-                "(reactivation_reason is null)::int not in (0,3)) or exists(" 
+                "(reactivation_reason is null)::int not in (0,3)) or exists("
                 "select 1 from actor_profiles where "
                 "(suspension_reason is not null and (suspension_reason<>btrim(suspension_reason) or octet_length(suspension_reason) not between 1 and 500)) or "
-                "(deactivation_reason is not null and (deactivation_reason<>btrim(deactivation_reason) or octet_length(deactivation_reason) not between 1 and 500))) or exists(" 
+                "(deactivation_reason is not null and (deactivation_reason<>btrim(deactivation_reason) or octet_length(deactivation_reason) not between 1 and 500))) or exists("
                 "select 1 from actor_identity_links where "
                 "(revoked_reason is not null and (revoked_reason<>btrim(revoked_reason) or octet_length(revoked_reason) not between 1 and 500)) or "
                 "(reactivation_reason is not null and (reactivation_reason<>btrim(reactivation_reason) or octet_length(reactivation_reason) not between 1 and 500)))"
