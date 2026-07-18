@@ -1,4 +1,4 @@
-# Chunk Contract: WS-ART-001-02C1 Admission And Put-Attempt Foundation
+# Chunk Contract: WS-ART-001-02C1 - Admission And Put-Attempt Foundation
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02B1
 
