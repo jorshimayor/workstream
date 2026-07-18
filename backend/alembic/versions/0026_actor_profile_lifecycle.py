@@ -19,7 +19,7 @@ _NEW_DENIAL_CODES = (
     "identity_link_already_revoked",
     "identity_link_not_revoked",
 )
-# Historical PostgreSQL equivalent of the migration's Python 3.13 str.strip().
+# Historical capture of str.strip() across the supported Python runtimes.
 _PYTHON_STRIP_CHARACTERS_SQL = (
     "(E' \\t\\n\\r\\f\\013'"
     "||chr(28)||chr(29)||chr(30)||chr(31)||chr(133)||chr(160)||chr(5760)"

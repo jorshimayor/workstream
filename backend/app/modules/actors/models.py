@@ -28,7 +28,7 @@ LEGACY_PROFILE_TYPES = ("worker", "reviewer", "admin", "project_manager", "proje
 LEGACY_PROFILE_STATUSES = ("observed", "active", "disabled")
 GLOBAL_PROFILE_SCOPE_TYPE = "global"
 GLOBAL_PROFILE_SCOPE_ID = "global"
-# PostgreSQL equivalent of Python 3.13 str.strip() for database/API parity.
+# PostgreSQL equivalent of str.strip() across the supported Python runtimes.
 _PYTHON_STRIP_CHARACTERS_SQL = (
     "(E' \\t\\n\\r\\f\\013'"
     "||chr(28)||chr(29)||chr(30)||chr(31)||chr(133)||chr(160)||chr(5760)"

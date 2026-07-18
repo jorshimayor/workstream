@@ -14,9 +14,10 @@ removes ordinary spaces but not tab or newline padding. A direct database write
 could therefore persist a reason the public API would normalize.
 
 The repair gives both ActorProfile and ActorIdentityLink lifecycle constraints
-the exact 29 code points treated as whitespace by the locked Python 3.13
-runtime, including ASCII whitespace, non-breaking space, Unicode separators,
-and ideographic space. Migration `0026` uses the same expression for its
+the exact 29 code points treated as whitespace by `str.strip()` across the
+currently supported Python runtimes, including ASCII whitespace, non-breaking
+space, Unicode separators, and ideographic space. Migration `0026` uses the
+same expression for its
 pre-DDL dirty-row refusal and installed constraints. Direct-write tests cover
 all five lifecycle reason fields plus non-breaking space, and previous-head
 dirty-row cases prove ASCII and Unicode padding stop the upgrade without
