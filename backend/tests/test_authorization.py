@@ -2705,16 +2705,20 @@ async def test_authorization_locks_refresh_cached_actor_lifecycle_state(
             await lifecycle.execute(
                 text(
                     "update actor_profiles set status='active', suspended_by=null, "
-                    "suspended_at=null, suspension_reason=null where id=:actor"
+                    "suspended_at=null, suspension_reason=null, reactivated_by=:actor, "
+                    "reactivated_at=:changed_at, reactivation_reason='security restored' "
+                    "where id=:actor"
                 ),
-                {"actor": str(profile_id)},
+                {"actor": str(profile_id), "changed_at": now},
             )
             await lifecycle.execute(
                 text(
                     "update actor_identity_links set status='active', revoked_by=null, "
-                    "revoked_at=null, revoked_reason=null where id=:link"
+                    "revoked_at=null, revoked_reason=null, reactivated_by=:actor, "
+                    "reactivated_at=:changed_at, reactivation_reason='credential restored' "
+                    "where id=:link"
                 ),
-                {"link": str(link_id)},
+                {"actor": str(profile_id), "changed_at": now, "link": str(link_id)},
             )
             await lifecycle.commit()
 
@@ -2728,6 +2732,27 @@ async def test_authorization_locks_refresh_cached_actor_lifecycle_state(
         assert eligible_profile.status == "active"
         assert eligible_link.status == "active"
         await stale.rollback()
+
+    async with authorization_factory() as cleanup:
+        await cleanup.execute(text("alter table actor_profiles disable trigger user"))
+        await cleanup.execute(text("alter table actor_identity_links disable trigger user"))
+        await cleanup.execute(
+            text(
+                "update actor_profiles set reactivated_by=null,reactivated_at=null,"
+                "reactivation_reason=null where id=:actor"
+            ),
+            {"actor": str(profile_id)},
+        )
+        await cleanup.execute(
+            text(
+                "update actor_identity_links set reactivated_by=null,reactivated_at=null,"
+                "reactivation_reason=null where id=:link"
+            ),
+            {"link": str(link_id)},
+        )
+        await cleanup.execute(text("alter table actor_identity_links enable trigger user"))
+        await cleanup.execute(text("alter table actor_profiles enable trigger user"))
+        await cleanup.commit()
 
 
 def _request(target: UUID | None = None) -> ActorProfileSuspendRequest:
