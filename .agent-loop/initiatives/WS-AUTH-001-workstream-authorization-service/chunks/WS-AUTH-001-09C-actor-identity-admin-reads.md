@@ -29,7 +29,8 @@ backend/tests/test_audit.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_contract_e2e.py
 backend/scripts/api_contract_e2e.py
-scripts/test_agent_gates.py
+scripts/test_agent_gates.py (only the authored lifecycle assertions that record
+AUTH-09B merged and AUTH-09C active)
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -51,6 +52,8 @@ service-token admission
 schema migration or new persistence table
 artifact, task, review, project, or grant behavior
 compatibility alias, fallback route, dual response shape, or legacy authority
+removal, relaxation, runtime derivation, skipping, or reordering of any agent
+gate, threshold, dependency pin, evidence, scanner, CI, or unrelated assertion
 ```
 
 ## Exact surfaces and authority
@@ -175,6 +178,9 @@ no mutation, service, ART, REV, CON, task, project, or grant action.
 - Route-manifest, action-count, exact resource-context, no-mutation-limiter, and
   dependency-teardown behavior tests pass. The audit parity test uses one closed
   expected set of exactly 12 active ActionIds and is not derived from runtime.
+- The complete Agent Gates regression inventory passes unchanged except for the
+  exact authored AUTH-09B-merged and AUTH-09C-active lifecycle expectations; no
+  gate or unrelated assertion is removed, relaxed, skipped, or reordered.
 - Focused actor and authorization subsystem branch coverage is each at least 90
   percent; GitHub Backend preserves the repository-wide 78 percent floor.
 
