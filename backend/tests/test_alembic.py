@@ -1532,22 +1532,133 @@ def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Refuse partial prior-head provenance before adding any 0026 DDL."""
+    """Refuse partial provenance and non-normalized reasons before 0026 DDL."""
     config = _alembic_config()
-    actor_id = str(uuid4())
+    cases = (
+        (
+            str(uuid4()),
+            "partial-link-reactivation",
+            "update actor_identity_links set reactivated_by=:actor "
+            "where actor_profile_id=:actor",
+            "update actor_identity_links set reactivated_by=null "
+            "where actor_profile_id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "padded-profile-suspension",
+            "update actor_profiles set status='suspended',suspended_by=:actor,"
+            "suspended_at=clock_timestamp(),suspension_reason=' padded ' where id=:actor",
+            "update actor_profiles set suspension_reason='valid suspension' where id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "multibyte-profile-deactivation",
+            "update actor_profiles set status='deactivated',deactivated_by=:actor,"
+            "deactivated_at=clock_timestamp(),deactivation_reason=repeat(chr(233),251) "
+            "where id=:actor",
+            "update actor_profiles set deactivation_reason='valid deactivation' where id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "padded-link-revocation",
+            "update actor_identity_links set status='revoked',revoked_by=:actor,"
+            "revoked_at=clock_timestamp(),revoked_reason=' padded ' "
+            "where actor_profile_id=:actor",
+            "update actor_identity_links set revoked_reason='valid revocation' "
+            "where actor_profile_id=:actor",
+        ),
+        (
+            str(uuid4()),
+            "multibyte-link-reactivation",
+            "update actor_identity_links set reactivated_by=:actor,"
+            "reactivated_at=clock_timestamp(),reactivation_reason=repeat(chr(233),251) "
+            "where actor_profile_id=:actor",
+            "update actor_identity_links set reactivation_reason='valid reactivation' "
+            "where actor_profile_id=:actor",
+        ),
+    )
 
-    async def seed_partial(value: str | None) -> None:
+    async def seed_actors() -> None:
         engine = create_async_engine(isolated_database_env)
         try:
             async with engine.begin() as connection:
-                if value is not None:
-                    await _insert_canonical_actor(connection, actor_id, "dirty-lifecycle", "human")
+                for actor_id, subject, _, _ in cases:
+                    await _insert_canonical_actor(connection, actor_id, subject, "human")
+        finally:
+            await engine.dispose()
+
+    async def execute(statement: str, actor_id: str) -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(text(statement), {"actor": actor_id})
+        finally:
+            await engine.dispose()
+
+    async def prior_head_state(actor_id: str) -> tuple[object, ...]:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.connect() as connection:
+                columns = await connection.execute(
+                    text(
+                        "select exists(select 1 from information_schema.columns "
+                        "where table_schema='public' and table_name='actor_profiles' "
+                        "and column_name='reactivated_by')"
+                    )
+                )
+                profile = await connection.execute(
+                    text(
+                        "select status,suspension_reason,deactivation_reason "
+                        "from actor_profiles where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                link = await connection.execute(
+                    text(
+                        "select status,revoked_reason,reactivated_by,reactivation_reason "
+                        "from actor_identity_links where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                audit_count = await connection.scalar(text("select count(*) from audit_events"))
+                return (
+                    columns.scalar_one(),
+                    tuple(profile.one()),
+                    tuple(link.one()),
+                    audit_count,
+                )
+        finally:
+            await engine.dispose()
+
+    async def restore_active_fixtures() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(text("alter table actor_profiles disable trigger user"))
                 await connection.execute(
                     text(
-                        "update actor_identity_links set reactivated_by=:value "
-                        "where actor_profile_id=:actor"
+                        "update actor_profiles set status='active',suspended_by=null,"
+                        "suspended_at=null,suspension_reason=null,deactivated_by=null,"
+                        "deactivated_at=null,deactivation_reason=null,reactivated_by=null,"
+                        "reactivated_at=null,reactivation_reason=null where id=any(:actors)"
                     ),
-                    {"value": value, "actor": actor_id},
+                    {"actors": [case[0] for case in cases]},
+                )
+                await connection.execute(text("alter table actor_profiles enable trigger user"))
+                await connection.execute(
+                    text("alter table actor_identity_links disable trigger user")
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='active',revoked_by=null,"
+                        "revoked_at=null,revoked_reason=null,reactivated_by=null,"
+                        "reactivated_at=null,reactivation_reason=null "
+                        "where actor_profile_id=any(:actors)"
+                    ),
+                    {"actors": [case[0] for case in cases]},
+                )
+                await connection.execute(
+                    text("alter table actor_identity_links enable trigger user")
                 )
         finally:
             await engine.dispose()
@@ -1556,12 +1667,19 @@ def test_actor_profile_lifecycle_upgrade_refuses_dirty_rows(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0025_artifact_store_v2")
-            asyncio.run(seed_partial(actor_id))
-            with pytest.raises(RuntimeError, match="dirty actor lifecycle rows"):
-                command.upgrade(config, "head")
-            assert asyncio.run(_current_revision(isolated_database_env)) == "0025_artifact_store_v2"
-            asyncio.run(seed_partial(None))
+            asyncio.run(seed_actors())
+            for actor_id, _, dirty_statement, clean_statement in cases:
+                asyncio.run(execute(dirty_statement, actor_id))
+                before = asyncio.run(prior_head_state(actor_id))
+                with pytest.raises(RuntimeError, match="dirty actor lifecycle rows"):
+                    command.upgrade(config, "head")
+                assert asyncio.run(_current_revision(isolated_database_env)) == (
+                    "0025_artifact_store_v2"
+                )
+                assert asyncio.run(prior_head_state(actor_id)) == before
+                asyncio.run(execute(clean_statement, actor_id))
             command.upgrade(config, "head")
+            asyncio.run(restore_active_fixtures())
         finally:
             command.downgrade(config, "base")
 
@@ -1588,11 +1706,19 @@ def test_actor_profile_lifecycle_downgrade_refuses_forward_evidence(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Keep 0026 intact once profile reactivation provenance exists."""
+    """Keep 0026 intact for every profile, link, or denial evidence branch."""
     config = _alembic_config()
     actor_id = str(uuid4())
 
-    async def write_reactivation(*, clear: bool = False) -> None:
+    async def seed_actor() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await _insert_canonical_actor(connection, actor_id, "forward-lifecycle", "human")
+        finally:
+            await engine.dispose()
+
+    async def write_profile_reactivation(*, clear: bool = False) -> None:
         engine = create_async_engine(isolated_database_env)
         try:
             async with engine.begin() as connection:
@@ -1607,7 +1733,6 @@ def test_actor_profile_lifecycle_downgrade_refuses_forward_evidence(
                     )
                     await connection.execute(text("alter table actor_profiles enable trigger user"))
                     return
-                await _insert_canonical_actor(connection, actor_id, "forward-lifecycle", "human")
                 await connection.execute(
                     text(
                         "update actor_profiles set status='suspended',suspended_by=:actor,"
@@ -1626,15 +1751,177 @@ def test_actor_profile_lifecycle_downgrade_refuses_forward_evidence(
         finally:
             await engine.dispose()
 
+    async def insert_audit_blocker(blocker: str) -> str:
+        engine = create_async_engine(isolated_database_env)
+        event_id = str(uuid4())
+        try:
+            async with engine.begin() as connection:
+                link_id = await connection.scalar(
+                    text(
+                        "select id from actor_identity_links where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                if blocker in {"ActorProfileReactivated", "ActorIdentityLinkReactivated"}:
+                    is_profile = blocker == "ActorProfileReactivated"
+                    resource_type = "actor_profile" if is_profile else "actor_identity_link"
+                    resource_id = actor_id if is_profile else link_id
+                    permission_id = (
+                        "actor.profile.reactivate"
+                        if is_profile
+                        else "actor.identity_link.reactivate"
+                    )
+                    reason = "administrative_correction" if is_profile else "identity_lifecycle_change"
+                    before_facts = '{"status":"suspended"}' if is_profile else '{"status":"revoked"}'
+                    await connection.execute(
+                        text(
+                            "alter table audit_events disable trigger "
+                            "audit_events_validate_idempotency"
+                        )
+                    )
+                    await connection.execute(
+                        text(
+                            "insert into audit_events "
+                            "(id,entity_type,entity_id,event_type,actor_id,actor_roles,"
+                            "claim_snapshot,auth_source,is_dev_auth,event_payload,event_domain,"
+                            "event_version,actor_ref_kind,request_id,correlation_id,"
+                            "target_actor_ref_kind,target_actor_ref,permission_id,"
+                            "resource_type,resource_id,target_ref_kind,target_ref_id,reason,"
+                            "before_facts,after_facts) values "
+                            "(:id,:resource_type,:resource_id,:event_type,:actor,'[]'::json,"
+                            "'{}'::json,'local_authority',false,'{}'::json,'authority',1,"
+                            "'actor_profile',:request_id,:correlation_id,'actor_profile',:actor,"
+                            ":permission_id,:resource_type,:resource_id,"
+                            ":resource_type,:resource_id,:reason,cast(:before_facts as json),"
+                            "'{\"status\":\"active\"}'::json)"
+                        ),
+                        {
+                            "id": event_id,
+                            "resource_type": resource_type,
+                            "resource_id": resource_id,
+                            "event_type": blocker,
+                            "actor": actor_id,
+                            "request_id": str(uuid4()),
+                            "correlation_id": str(uuid4()),
+                            "permission_id": permission_id,
+                            "reason": reason,
+                            "before_facts": before_facts,
+                        },
+                    )
+                    await connection.execute(
+                        text(
+                            "alter table audit_events enable trigger "
+                            "audit_events_validate_idempotency"
+                        )
+                    )
+                else:
+                    await connection.execute(
+                        text(
+                            "insert into audit_events "
+                            "(id,entity_type,entity_id,event_type,actor_id,actor_roles,"
+                            "claim_snapshot,auth_source,is_dev_auth,event_payload,event_domain,"
+                            "event_version,actor_ref_kind,request_id,correlation_id,"
+                            "target_actor_ref_kind,target_actor_ref,permission_id,action_id,"
+                            "resource_type,resource_id,target_ref_kind,target_ref_id,reason,"
+                            "denial_code,after_facts) values "
+                            "(:id,'authorization_decision',:id,'SensitiveAuthorizationDenied',"
+                            ":actor,'[]'::json,'{}'::json,'local_authority',false,'{}'::json,"
+                            "'authority',1,'actor_profile',:request_id,:correlation_id,"
+                            "'actor_profile',:actor,'actor.identity_link.revoke',"
+                            "'actor.identity_link.revoke','actor_identity_link',:link_id,"
+                            "'actor_identity_link',:link_id,'authorization_evaluation',"
+                            ":denial_code,cast(:after_facts as json))"
+                        ),
+                        {
+                            "id": event_id,
+                            "actor": actor_id,
+                            "request_id": str(uuid4()),
+                            "correlation_id": str(uuid4()),
+                            "link_id": link_id,
+                            "denial_code": blocker,
+                            "after_facts": '{"allowed": false}',
+                        },
+                    )
+            return event_id
+        finally:
+            await engine.dispose()
+
+    async def remove_audit_blocker(event_id: str) -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "alter table audit_events disable trigger "
+                        "audit_events_reject_update_delete"
+                    )
+                )
+                await connection.execute(
+                    text("delete from audit_events where id=:id"), {"id": event_id}
+                )
+                await connection.execute(
+                    text(
+                        "alter table audit_events enable trigger "
+                        "audit_events_reject_update_delete"
+                    )
+                )
+        finally:
+            await engine.dispose()
+
+    async def forward_state() -> tuple[object, ...]:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.connect() as connection:
+                profile = await connection.execute(
+                    text(
+                        "select reactivated_by,reactivated_at,reactivation_reason "
+                        "from actor_profiles where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                events = await connection.execute(
+                    text(
+                        "select id,event_type,denial_code from audit_events "
+                        "where event_domain='authority' order by id"
+                    )
+                )
+                column_exists = await connection.scalar(
+                    text(
+                        "select exists(select 1 from information_schema.columns "
+                        "where table_schema='public' and table_name='actor_profiles' "
+                        "and column_name='reactivated_by')"
+                    )
+                )
+                return column_exists, tuple(profile.one()), tuple(events.all())
+        finally:
+            await engine.dispose()
+
+    def refuse_downgrade_without_change() -> None:
+        before = asyncio.run(forward_state())
+        with pytest.raises(RuntimeError, match="cannot downgrade actor lifecycle evidence"):
+            command.downgrade(config, "0025_artifact_store_v2")
+        assert asyncio.run(_current_revision(isolated_database_env)) == (
+            "0026_actor_profile_lifecycle"
+        )
+        assert asyncio.run(forward_state()) == before
+
     with migration_lock():
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "head")
-            asyncio.run(write_reactivation())
-            with pytest.raises(RuntimeError, match="cannot downgrade actor lifecycle evidence"):
-                command.downgrade(config, "0025_artifact_store_v2")
-            assert asyncio.run(_current_revision(isolated_database_env)) == "0026_actor_profile_lifecycle"
-            asyncio.run(write_reactivation(clear=True))
+            asyncio.run(seed_actor())
+            asyncio.run(write_profile_reactivation())
+            refuse_downgrade_without_change()
+            asyncio.run(write_profile_reactivation(clear=True))
+            for blocker in (
+                "ActorProfileReactivated",
+                "ActorIdentityLinkReactivated",
+                "identity_link_already_revoked",
+                "identity_link_not_revoked",
+            ):
+                event_id = asyncio.run(insert_audit_blocker(blocker))
+                refuse_downgrade_without_change()
+                asyncio.run(remove_audit_blocker(event_id))
             command.downgrade(config, "0025_artifact_store_v2")
         finally:
             command.downgrade(config, "base")
