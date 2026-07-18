@@ -29,6 +29,7 @@ backend/app/modules/authorization/catalogue.py
 backend/app/modules/authorization/kernel.py
 backend/app/modules/authorization/runtime.py
 backend/app/modules/authorization/repository.py
+backend/app/modules/authorization/service.py
 backend/app/modules/authorization/lifecycle_schemas.py
 backend/app/modules/authorization/lifecycle_service.py
 backend/app/modules/authorization/router.py
@@ -36,6 +37,7 @@ backend/tests/test_authorization.py
 backend/tests/test_auth.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_rate_controls.py
+backend/tests/test_audit.py
 backend/scripts/api_contract_e2e.py
 scripts/test_agent_gates.py
 docs/spec_authorization_service.md
@@ -51,9 +53,10 @@ docs/architecture_data_model.md
 The lifecycle service owns orchestration only. It reuses the existing
 reservation, authority decision, idempotency completion, append-only audit,
 invalidation, actor touch, limiter, error, route-owned commit, and
-`AdminAuthorizationRepository` primitives. Exact implementation discovery may
-remove an allowed path; adding a path requires contract repair and renewed
-preimplementation review before editing it.
+`AdminAuthorizationRepository` primitives. `authorization/service.py` may only
+bind the two existing link operation-evidence entries to their exact ActionIds.
+Exact implementation discovery may remove an allowed path; adding a path
+requires contract repair and renewed preimplementation review before editing it.
 
 ## Not Allowed
 
@@ -118,7 +121,8 @@ fixed service, restore any grant, or advance target verification timestamps.
 
 Self-link revoke returns 403 `resource_guard_denied` before target disclosure.
 A caller whose own link is revoked fails authentication and cannot reactivate
-itself. An authorized missing link returns 404 `actor_identity_link_not_found`.
+itself. An authorized missing link returns the existing privacy-safe 404
+`resource_not_found` code after exact permission match.
 
 Each domain conflict rolls back the pending reservation and staged allow, then
 commits one `SensitiveAuthorizationDenied` row in a clean transaction with the
@@ -147,8 +151,9 @@ Every new request follows the reviewed 09D-A order:
 3. authorize the exact action;
 4. inside authorization, lock `AuthorityControl(id=1)`, caller profile, caller
    link, and the exact matched caller grant;
-5. only after permission match, lock the target link, owning target profile,
-   and any active system Access Administrator target grant;
+5. only after permission match, resolve the immutable owner ID from the target
+   link, then lock the owning target profile, exact target link, and any active
+   system Access Administrator target grant;
 6. disclose replay or mismatch only after current authority succeeds;
 7. enforce self, owner, link-state, and final-administrator guards;
 8. mutate, touch only the verified caller, append one success and one
@@ -160,10 +165,13 @@ revocation of a currently effective human Access Administrator fails with 409
 count requires active human profile, active exact link, and active system Access
 Administrator grant. Link reactivation is not a final-admin loss.
 
-Target locking must use one canonical repository method. It may accept the link
-ID but must return the exact link, owning profile, and exact active Access
-Administrator grant in the established link/profile/grant order without
-introducing another lookup or lock path.
+Target locking must use one canonical repository method. It accepts the link ID,
+resolves the immutable owning profile ID after permission match, then takes
+database locks in the established profile/link/grant order and validates the
+association. Its return tuple may remain link/profile/grant. It does not
+introduce another lifecycle lookup or lock path. The same order is required
+because actor-self GET/PATCH/timestamp touch locks profile before link and does
+not take the authority singleton.
 
 ## Replay, Failure, And Timestamp Contract
 
@@ -191,25 +199,45 @@ introducing another lookup or lock path.
 - Behavior matrices cover human/service targets, active/revoked links,
   active/suspended/deactivated owners, self guard, target concealment,
   replay/mismatch, authority loss, rollback, timestamps, rate limits, OpenAPI,
-  manifest parity, and privacy canaries.
+  manifest parity, exact allow/deny ActionId/PermissionId audit parity, and
+  privacy canaries. Link mismatch evidence carries the exact link ActionId.
+- Parameterized PostgreSQL failure injection covers reservation, authorization
+  evidence, target lookup, state flush, caller touch, success evidence,
+  invalidation, idempotency completion, and commit for one valid revoke and one
+  valid reactivate. Every case returns the stable retryable 503 and asserts exact
+  pre/post equality for profile, link, grant, evidence, and verification
+  timestamps, no pending claim, and a reusable key where reservation began.
 - Real PostgreSQL tests cover the following normative races without sleeps:
 
-| Race | Required committed outcome |
+| Initial state and blocker order | Exact committed outcome |
 |---|---|
-| same key, same revoke/reactivate request | one success and one exact replay; one success/invalidation pair; completed key |
-| different keys, same transition | one success and one state-conflict denial; losing key reusable |
-| revoke versus reactivate | first valid transition commits; the serialized second transition observes the new state and may commit only when valid |
-| profile loss versus link revoke | singleton order permits at most one final-authority loss; one effective human admin remains |
-| link revoke versus grant revoke | singleton order permits at most one final-authority loss; one effective human admin remains |
-| different-target profile/link/grant loss | serialized commits never reduce authenticatable effective human Access Administrators below one |
+| active link; same key, same revoke | one 200 success and one 200 exact replay; one link success and one invalidation; no denial; key completed; final revoked |
+| revoked link; same key, same reactivate | one 200 success and one 200 exact replay; one link success and one invalidation; no denial; key completed; final active |
+| active link; different revoke keys | one 200 success and one 409 `identity_link_already_revoked`; one success/invalidation pair and one denial; winner completed, loser reusable; final revoked |
+| revoked link; different reactivate keys | one 200 success and one 409 `identity_link_not_revoked`; one success/invalidation pair and one denial; winner completed, loser reusable; final active |
+| active link; revoke holds singleton first | revoke 200 then reactivate 200; two success/invalidation pairs, no denial, both keys completed; final active |
+| active link; reactivate holds singleton first | reactivate 409 `identity_link_not_revoked`, then revoke 200; one success/invalidation pair and one denial; revoke key completed, reactivate key reusable; final revoked |
+| revoked link; reactivate holds singleton first | reactivate 200 then revoke 200; two success/invalidation pairs, no denial, both keys completed; final revoked |
+| revoked link; revoke holds singleton first | revoke 409 `identity_link_already_revoked`, then reactivate 200; one success/invalidation pair and one denial; reactivate key completed, revoke key reusable; final active |
+| two effective admins A/B; A profile-disables B before B link-revokes A | profile loss 200; B then denies with the exact suspended/deactivated current-authority code; one lifecycle success/invalidation pair and one authorization denial; A remains the sole effective admin; success key completed and denied key reusable |
+| two effective admins A/B; B link-revokes A before A profile-disables B | link revoke 200; A then denies `identity_link_revoked`; one link success/invalidation pair and one authorization denial; B remains the sole effective admin; success key completed and denied key reusable |
+| two effective admins A/B; A link-revokes B before B grant-revokes A | link revoke 200; B then denies `identity_link_revoked`; one link success/invalidation pair and one authorization denial; A remains sole effective admin; success key completed and denied key reusable |
+| two effective admins A/B; B grant-revokes A before A link-revokes B | grant revoke 200; A then denies `permission_not_granted`; one grant success/invalidation pair and one authorization denial; B remains sole effective admin; success key completed and denied key reusable |
+| three effective admins A/B/C; A profile-disables B, B link-revokes C, C grant-revokes A, with A then C holding the singleton first | A and C return 200, B denies the exact current-authority code; exactly two success/invalidation pairs and one authorization denial; B profile and A grant carry the two losses, C link remains active, and C is the sole effective admin; success keys completed and denied key reusable |
+| active target link; target self GET or PATCH holds profile lock first | self request commits, lifecycle waits, then revoke returns 200; final link revoked; one link success/invalidation pair; lifecycle key completed; no deadlock |
+| active target link; revoke holds target profile lock first | revoke returns 200, target self GET/PATCH waits then denies `identity_link_revoked`; final link revoked; one link success/invalidation pair plus one authorization denial; lifecycle key completed; no deadlock |
 
 Every race asserts no deadlock, no pending claim, exact success/invalidation/
 denial counts, completed or reusable key disposition, and final profile/link/
-grant state. PostgreSQL blockers, never timing sleeps, establish order.
+grant state. Blocker-controlled PostgreSQL sessions establish order, and the
+test must observe the waiter in `pg_stat_activity` with
+`wait_event_type = 'Lock'`; timing sleeps are not lock evidence.
 
 - Responses, errors, logs, OpenAPI, and evidence exclude issuer, subject, email,
   token data, raw reason, attribution IDs, matched-grant internals, and digests.
-- Focused actor/authorization branch coverage is at least 90.00 percent.
+- Focused authorization branch coverage is at least 90.00 percent. Actor
+  runtime is unchanged and its 09D-A coverage proof is not re-run as a false
+  delta metric.
   GitHub Backend preserves the repository-wide 78 percent floor.
 - Authorization spec, operations runbook, and live data model document link
   lifecycle administration, component-scoped effectiveness, final-admin guard,
@@ -225,7 +253,7 @@ grant state. PostgreSQL blockers, never timing sleeps, establish order.
   .venv/bin/python scripts/run_isolated_tests.py \
   --metadata-json "$metadata_dir/focused.json" --timeout-seconds 3600 -- \
   .venv/bin/python -m pytest -q \
-  tests/test_authorization.py tests/test_api_controls.py \
+  tests/test_authorization.py tests/test_audit.py tests/test_api_controls.py \
   tests/test_api_rate_controls.py \
   tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_matrix \
   tests/test_auth.py::test_actor_identity_link_lifecycle_real_postgres_concurrency)

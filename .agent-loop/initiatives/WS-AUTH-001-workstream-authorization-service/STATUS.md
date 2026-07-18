@@ -94,15 +94,13 @@ repair, coverage repair, and required checks passed before PR #143 merged as
 Its bounded implementation and external repair passed before PR #146 merged as
 `0ffdabf`; signed schema-v2 memory at `eeb3dc2` recorded completion and stopped.
 The user explicitly started AUTH-09D. Required L1 preimplementation review
-rejected the combined lifecycle contract before runtime edits, so the parent is
-split into 09D-A and 09D-B. AUTH-09D-A exact-head internal review passed at
-`cc7e6cc` after all valid findings were repaired; ready PR #148 is open for
-external checks and explicit human approval. CodeRabbit then found a valid
-API/database lifecycle-reason whitespace mismatch and stale exact-head review
-evidence. The bounded repair passes direct PostgreSQL and request-schema proof;
-required exact-head internal review and canonical evidence pass at `7c33e64`;
-replacement external checks remain. No service caller or feature action is
-active.
+rejected the combined lifecycle contract before runtime edits, so the parent was
+split into 09D-A and 09D-B. After bounded external repair and exact-head review,
+PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
+recorded the stopped gate and named 09D-B. The user explicitly started 09D-B
+from that trusted head. Exact contract repair and required L1 preimplementation
+review are active; runtime has not started. No service caller or feature action
+is active.
 
 ## Active planning chunk
 
@@ -110,17 +108,13 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09D-A` - Profile Lifecycle And Evidence Repair. Exact-SHA
-preimplementation review passed at `7f941a5`; the three profile lifecycle
-routes, migration `0026`, and repaired deterministic proof pass. PR #148's
-bounded external repair aligns database whitespace rejection with the API and
-passes focused proof plus exact-head internal review and canonical evidence at
-`7c33e64`. Replacement external checks and explicit human approval are the
-current gate.
+`WS-AUTH-001-09D-B` - Identity-Link Lifecycle And Race Closure. Exact contract
+repair and required L1 preimplementation review are the current gate. Runtime
+has not started.
 
 ## Current review branch
 
-`codex/ws-auth-001-09d-actor-identity-lifecycle`
+`codex/ws-auth-001-09d-b-identity-link-lifecycle`
 
 ## Chunk status
 
