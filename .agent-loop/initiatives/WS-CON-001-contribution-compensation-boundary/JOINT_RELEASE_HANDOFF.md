@@ -10,8 +10,9 @@ authorization and activation.
 
 The canonical cross-boundary source is merged
 `WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128, originally landed at
-`0302bcf` and retained in current main `0ffdabf`, is the reviewed owner contract;
-runtime REV behavior remains unimplemented.
+`0302bcf` and canonically published through REV-01 PR #145 in current main
+`b2b9016`, is the reviewed owner contract; runtime REV behavior remains
+unimplemented.
 
 ## Required decision composition
 

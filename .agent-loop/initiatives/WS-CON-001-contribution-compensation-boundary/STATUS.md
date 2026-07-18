@@ -17,6 +17,11 @@ delivery-executor changes do not add an outbox seam or change this boundary.
 AUTH-09C activates only the canonical administrative
 `actor.profile.read`/`actor.identity_link.read` actions; it adds no CON or
 outbox identifier and does not change 02A's authorization-neutral boundary.
+Trusted `main` then advanced to `b2b9016` through REV-01 PR #145. Its canonical
+review specification preserves the two ordered CON flush-only operations,
+accept-only FinalAcceptance source, REV-owned single commit, and same-transaction
+shared outbox staging. It adds no backend runtime or migration and therefore
+does not change the 02A implementation boundary.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation

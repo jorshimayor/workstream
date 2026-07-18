@@ -14,6 +14,10 @@
   `0ffdabf` through AUTH-09C PR #146. Its administrative actor/profile reads
   activate only existing AUTH-owned identifiers, add no migration or CON
   action, and leave this reviewed implementation contract unchanged.
+- Trusted `main` later advanced to `b2b9016` through REV-01 PR #145. Its
+  canonical review specification preserves the exact FinalAcceptance,
+  two-operation CON participant, shared-outbox, and single-commit boundaries;
+  it adds no backend runtime or migration and does not alter this plan.
 
 ## Proposed implementation
 

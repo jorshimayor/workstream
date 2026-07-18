@@ -32,6 +32,9 @@ PR #146 to `0ffdabf`. The live catalogue is now
 74-permission/65-action/12-active/53-planned because AUTH-09C activates only
 `actor.profile.read` and `actor.identity_link.read`; it adds no CON/outbox
 identifier or migration. Historical CON-01 evidence above remains exact.
+Trusted main then advanced to `b2b9016` through REV-01 PR #145, which publishes
+the canonical review specification without changing the backend migration head
+or the CON-02A outbox boundary.
 
 ## Inspected and already aligned
 

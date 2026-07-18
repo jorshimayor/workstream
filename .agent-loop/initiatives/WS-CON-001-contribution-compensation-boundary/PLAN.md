@@ -2,9 +2,10 @@
 
 ## Proposed approach
 
-Adopt merged REV PR #128 plus trusted main `0ffdabf`, including AUTH-09C PR
-#146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and the underlying
-WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
+Adopt merged REV-01 PR #145 and its underlying REV planning PR #128 plus trusted
+main `b2b9016`, including AUTH-09C PR #146, ART PR #141, AUTH-09A, AUTH-09B PR
+#143, AUTH PR #140, and the underlying WS-XINT PR #139 boundary before runtime
+work, then deliver WS-CON through
 hidden, reviewable chunks. The
 core path is PostgreSQL-local and has no ART dependency:
 
@@ -162,8 +163,9 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `0ffdabf`, merging AUTH-09C PR #146 after ART PR #141,
-AUTH-09B PR #143, REV PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
+Trusted `main` is `b2b9016`, merging REV-01 PR #145 after AUTH-09C PR #146,
+ART PR #141, AUTH-09B PR #143, REV planning PR #128, AUTH-09A, AUTH PR #140,
+and WS-XINT PR #139.
 Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 12 active actions,
 and 53 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
 activates only the controlled human `actor.service.provision` operation;

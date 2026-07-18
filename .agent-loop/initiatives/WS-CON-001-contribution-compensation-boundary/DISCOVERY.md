@@ -2,9 +2,9 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `0ffdabf`, including merged AUTH-09C PR
-  #146, ART PR #141, CON-01 PR #144, AUTH-09B PR #143, REV PR #128, AUTH-09A,
-  AUTH PR #140, and the earlier WS-XINT PR #139 boundary;
+- trusted `origin/main` refreshed to `b2b9016`, including merged REV-01 PR #145,
+  AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR #143, REV planning
+  PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -50,7 +50,7 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `0ffdabf` still ends its migration chain at ART-owned
+- Trusted `main` at `b2b9016` still ends its migration chain at ART-owned
   `0025_artifact_store_v2`; CON-02A owns linear revision
   `0026_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
@@ -84,6 +84,10 @@
 - AUTH-09C PR #146 adds serialized administrative actor/profile reads and
   activates their already-canonical action/permission pairs. It adds no
   migration, CON/outbox identifier, service admission, or dispatcher seam.
+- REV-01 PR #145 canonically publishes the Review/revision lifecycle and keeps
+  REV transaction ownership, ordered CON flush-only participation,
+  FinalAcceptance source integrity, and shared audit/outbox staging intact. It
+  changes documentation/gates only and adds no runtime outbox consumer.
 
 ## Canonical merged changes affecting CON
 
