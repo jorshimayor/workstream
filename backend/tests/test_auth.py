@@ -2362,6 +2362,10 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             f"/api/v1/actors/{target_id}",
             headers=audit_headers,
         )
+        project_audit_link_read = await client.get(
+            f"/api/v1/actors/{target_id}/identity-links",
+            headers=audit_headers,
+        )
         audit_wrong_scope = await client.get(
             "/api/v1/admin-role-grants",
             headers=audit_headers,
@@ -2389,8 +2393,9 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
             str(project_one)
         }
         assert audit_wrong_scope.status_code == audit_mutation.status_code == 403
-        assert project_audit_actor_read.status_code == 403
-        assert project_audit_actor_read.json()["error"]["code"] == "permission_not_granted"
+        for project_audit_read in (project_audit_actor_read, project_audit_link_read):
+            assert project_audit_read.status_code == 403
+            assert project_audit_read.json()["error"]["code"] == "permission_not_granted"
         assert audit_wrong_scope.json()["error"]["code"] == "scope_not_authorized"
         assert audit_mutation.json()["error"]["code"] == "permission_not_granted"
         assert audit_history_visible.status_code == 200
@@ -3285,8 +3290,11 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
     pause_kind: str | None = None
     entered = asyncio.Event()
     release = asyncio.Event()
+    transition_backend_pids: asyncio.Queue[int] = asyncio.Queue()
+    captured_grant_transition_tasks: set[asyncio.Task] = set()
     original_profile_read = ActorService.read_admin_profile
     original_link_read = ActorService.read_admin_identity_link
+    original_get_grant = AdminAuthorizationRepository.get_grant
 
     async def pause_profile_read(service: ActorService, actor_profile_id: UUID):
         if pause_kind == "profile":
@@ -3300,8 +3308,29 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
             await release.wait()
         return await original_link_read(service, actor_profile_id)
 
+    async def capture_grant_transition_backend(repository, *args, **kwargs):
+        task = asyncio.current_task()
+        if (
+            task is not None
+            and task.get_name() == "auth09c-grant-revocation-transition"
+            and task not in captured_grant_transition_tasks
+        ):
+            captured_grant_transition_tasks.add(task)
+            backend_pid = await repository._session.scalar(text("select pg_backend_pid()"))
+            transition_backend_pids.put_nowait(int(backend_pid))
+        return await original_get_grant(repository, *args, **kwargs)
+
     monkeypatch.setattr(ActorService, "read_admin_profile", pause_profile_read)
     monkeypatch.setattr(ActorService, "read_admin_identity_link", pause_link_read)
+    monkeypatch.setattr(
+        AdminAuthorizationRepository,
+        "get_grant",
+        capture_grant_transition_backend,
+    )
+
+    async def capture_transition_backend(session: AsyncSession) -> None:
+        backend_pid = await session.scalar(text("select pg_backend_pid()"))
+        transition_backend_pids.put_nowait(int(backend_pid))
 
     async def actor_timestamps(actor_id: UUID) -> tuple[datetime | None, datetime | None]:
         async with db_session.get_session_factory()() as session:
@@ -3320,6 +3349,7 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
 
     async def set_profile_state(actor_id: UUID, custodian_id: UUID, state: str) -> None:
         async with db_session.get_session_factory()() as session:
+            await capture_transition_backend(session)
             if state == "suspended":
                 statement = (
                     "update actor_profiles set status='suspended',suspended_by=:by,"
@@ -3349,6 +3379,7 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
 
     async def revoke_link(actor_id: UUID, custodian_id: UUID) -> None:
         async with db_session.get_session_factory()() as session:
+            await capture_transition_backend(session)
             await session.execute(
                 text(
                     "update actor_identity_links set status='revoked',revoked_by=:by,"
@@ -3370,17 +3401,19 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
             )
             await session.commit()
 
-    async def wait_for_transition_lock(transition_task: asyncio.Task) -> None:
+    async def wait_for_transition_lock(
+        transition_task: asyncio.Task,
+        transition_backend_pid: int,
+    ) -> None:
         for _ in range(250):
             if transition_task.done():
                 raise AssertionError("disabling transition bypassed the read lock")
             async with db_session.get_session_factory()() as session:
                 waiting = await session.scalar(
                     text(
-                        "select exists(select 1 from pg_stat_activity "
-                        "where datname=current_database() and pid<>pg_backend_pid() "
-                        "and wait_event_type='Lock')"
-                    )
+                        "select coalesce(cardinality(pg_blocking_pids(:pid)),0)>0"
+                    ),
+                    {"pid": transition_backend_pid},
                 )
             if waiting:
                 return
@@ -3453,9 +3486,14 @@ async def test_actor_admin_reads_hold_caller_and_grant_locks_through_disclosure(
                                 "Idempotency-Key": str(uuid4()),
                             },
                             json={"reason": "AUTH-09C matched grant race"},
-                        )
+                        ),
+                        name="auth09c-grant-revocation-transition",
                     )
-                await wait_for_transition_lock(transition_task)
+                transition_backend_pid = await asyncio.wait_for(
+                    transition_backend_pids.get(),
+                    timeout=5,
+                )
+                await wait_for_transition_lock(transition_task, transition_backend_pid)
                 release.set()
                 read_response = await read_task
                 transition_result = await transition_task

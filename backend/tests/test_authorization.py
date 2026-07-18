@@ -582,11 +582,31 @@ async def test_actor_admin_routes_authorize_before_lookup_touch_and_commit(
     assert resource.resource_id == target_id
     assert result is response
     assert [event for event, _ in events] == ["authorize", "lookup", "touch", "commit"]
-    assert len(response.updates) == int(self_target)
+    if not self_target:
+        assert response.updates == []
+    elif action_id is ActionId.ACTOR_PROFILE_READ:
+        assert response.updates == [
+            {
+                "updated_at": resolved.profile.updated_at,
+                "last_seen_at": resolved.profile.last_seen_at,
+            }
+        ]
+    else:
+        assert response.updates == [
+            {"last_verified_at": resolved.identity_link.last_verified_at}
+        ]
 
 
+@pytest.mark.parametrize(
+    "route",
+    [
+        authorization_router.read_actor_profile,
+        authorization_router.read_actor_identity_link,
+    ],
+)
 async def test_actor_admin_missing_resource_rolls_back_without_touch_or_commit(
     monkeypatch: pytest.MonkeyPatch,
+    route,
 ) -> None:
     events: list[str] = []
 
@@ -609,13 +629,17 @@ async def test_actor_admin_missing_resource_rolls_back_without_touch_or_commit(
             events.append("lookup")
             return None
 
+        async def read_admin_identity_link(self, _actor_profile_id):
+            events.append("lookup")
+            return None
+
         async def touch_after_authorization(self, _resolved) -> None:
             events.append("touch")
 
     monkeypatch.setattr(authorization_router, "ActorService", ActorService)
 
     with pytest.raises(StructuredHTTPException) as missing:
-        await authorization_router.read_actor_profile(
+        await route(
             uuid4(),
             SimpleNamespace(),
             Authorization(),
@@ -798,7 +822,7 @@ class _AdminPolicyFacts:
         )
         self.request_actor_is_present = True
         self.control_locked = False
-        self.find_calls: list[dict] = []
+        self.find_calls: list[tuple[tuple, dict]] = []
 
     async def lock_control(self):
         self.control_locked = True
@@ -812,8 +836,8 @@ class _AdminPolicyFacts:
             SimpleNamespace(id=str(actor_profile_id), actor_kind="human", status="active"),
         )
 
-    async def find_effective_grant(self, *_args, **_kwargs):
-        self.find_calls.append(_kwargs)
+    async def find_effective_grant(self, *args, **kwargs):
+        self.find_calls.append((args, kwargs))
         return self.matched
 
     async def has_effective_permission_any_scope(self, *_args, **_kwargs):
@@ -890,11 +914,16 @@ async def test_actor_admin_reads_serialize_system_authority_without_control_lock
     assert decision.matched_grant_id == facts.matched.id
     assert decision.matched_scope_project_id is None
     assert facts.control_locked is False
-    assert facts.find_calls == [{
-        "scope_project_id": None,
-        "system_scope_only": True,
-        "for_update": True,
-    }]
+    assert facts.find_calls == [
+        (
+            (context.actor_profile_id, ACTION_BY_ID[action_id].permission_id),
+            {
+                "scope_project_id": None,
+                "system_scope_only": True,
+                "for_update": True,
+            },
+        )
+    ]
     assert decision.resource_context_digest == authorization_resource_digest(resource)
     assert evidence.events[0].resource_id == str(resource.resource_id)
 
