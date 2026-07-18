@@ -33,6 +33,8 @@ not v0.1 behavior.
   or action.
 - Reconciled merged CON-01's active specification and ADR 0016 while retaining
   its no-runtime status and downstream persistence/participant gates.
+- Reconciled merged ART-02A3's active byte-only v2 LocalStorage clean cut while
+  preserving later S3, submission/checker, packet-read, and evidence gates.
 - Addressed external lifecycle, checker-admission, ART terminology, rendering,
   template, and revision-policy findings without expanding runtime scope.
 
@@ -97,8 +99,8 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 The plan gate and all nine required reviewer tracks passed exact SHA
-`f2493df551315f86f4506ff92a42ad1dcd735e9f` against trusted main
-`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`: senior engineering, QA/test,
+`ca6b46b02026af5aef800b3de62c04f7e42b86cf` against trusted main
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
 
@@ -111,9 +113,10 @@ were addressed: accept ordering, exact checker guards, TaskAssignment and ART
 wording, renderer source generation, template table structure, PlantUML
 preconditions, and explicit false revision-limit configuration. The resulting
 scanner also rejects quoted and unquoted truthy variants. The prior published
-backend and Agent Gates runs passed; replacement checks on the repaired head
-remain external gates. External checks supplement internal review and do not
-replace it.
+backend and Agent Gates runs passed. ART-02A3 then advanced main and was
+reconciled through a fresh exact-SHA internal loop; replacement checks on the
+new head remain external gates. External checks supplement internal review and
+do not replace it.
 
 ## Remaining Risks
 

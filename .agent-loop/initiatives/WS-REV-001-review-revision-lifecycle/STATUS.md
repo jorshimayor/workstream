@@ -96,15 +96,16 @@ security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. All 80 current-main agent tests and seven REV additions are retained;
 87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is published as PR #145. After the CON-01 main reconciliation,
-CodeRabbit reported nine actionable findings and one Markdown lint nit. Every
-finding was repaired without runtime or successor-scope expansion. Candidate
-`f2493df551315f86f4506ff92a42ad1dcd735e9f` passed the plan gate and all nine
+Chunk 01 is published as PR #145. CodeRabbit's nine actionable findings and one
+Markdown lint nit were repaired without runtime or successor-scope expansion.
+After ART-02A3 PR #141 advanced main, the branch merged and reconciled its
+active byte-only v2 LocalStorage clean cut while retaining every later
+review-facing ART gate. Candidate
+`ca6b46b02026af5aef800b3de62c04f7e42b86cf` passed the plan gate and all nine
 internal reviewer tracks against
-`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`; 87 agent gates, Ruff, scanners,
-links, checksums, renderer checks, and merge-intent validation pass. The prior
-published Backend, Agent Gates, and CodeRabbit checks passed; replacement checks
-are required on the repaired head. This chunk activates no review action or
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`; 87 agent gates, Ruff, scanners,
+links, checksums, renderer checks, and merge-intent validation pass. Replacement
+GitHub checks are required after push. This chunk activates no review action or
 endpoint and does not authorize merge.
 
 ## Stop condition

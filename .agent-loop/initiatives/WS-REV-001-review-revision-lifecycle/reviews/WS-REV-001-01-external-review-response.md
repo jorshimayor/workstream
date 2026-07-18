@@ -4,8 +4,8 @@
 
 - PR: `#145`
 - Initial published head: `9ad0420e4c8f3ce0933a85fc75f133a340f91fcd`
-- Reviewed repair candidate: `f2493df551315f86f4506ff92a42ad1dcd735e9f`
-- Trusted base: `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
+- Reviewed repair candidate: `ca6b46b02026af5aef800b3de62c04f7e42b86cf`
+- Trusted base: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
 ## Comments Addressed
 
@@ -27,6 +27,10 @@
 - The revision scanner now permits the required false configuration while
   rejecting unquoted, quoted, JSON, and backticked truthy forms. The first
   repair candidate's Ruff formatting failure was also corrected.
+- ART-02A3 PR #141 later advanced main. The branch merged it, resolved the sole
+  glossary overlap by preserving both exact byte-store operations and narrow
+  typed product capabilities, and corrected Ruff formatting in four merged ART
+  gate assertions. Fresh exact-SHA internal review passed.
 
 ## Comments Deferred
 

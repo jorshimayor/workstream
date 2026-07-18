@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `f2493df551315f86f4506ff92a42ad1dcd735e9f`
+Reviewed code SHA: `ca6b46b02026af5aef800b3de62c04f7e42b86cf`
 
-Trusted main SHA: `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`
+Trusted main SHA: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
 
-Reviewed at: `2026-07-18T00:59:38Z`
+Reviewed at: `2026-07-18T05:00:22Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -49,14 +49,21 @@ to Chunk 02, and narrowed the scanner to reject truthy forms without rejecting
 the required false form. A first repair candidate failed CI integrity only on
 Ruff formatting; that mechanical defect was corrected. Candidate `f2493df`
 then passed the plan gate and all nine reviewer tracks from fresh exact-SHA
-review.
+review. ART-02A3 PR #141 later advanced main to `a10d901`, replacing v1 with
+the active byte-only v2 LocalStorage clean cut. The branch merged that main,
+combined ART's exact byte operations with REV's narrow typed-capability rule,
+and retained S3/MinIO, submission/checker cutover, packet-read, and evidence
+candidate/finalize as later gates. Candidate `3572835` failed only because four
+merged ART assertions were not Ruff-formatted. Candidate `ca6b46b` contains the
+mechanical repair and passed the plan gate and all nine reviewer tracks against
+the new trusted main.
 
 ## Deterministic Evidence
 
 - `python3 scripts/test_agent_gates.py`: 87 passed.
 - All stale artifact, authorization, review-contract, and Workstream wording
   scanners passed.
-- Markdown link validation passed for 55 changed Markdown files.
+- Markdown link validation passed for 56 changed Markdown files.
 - Ruff format and lint passed for both changed Python gate files.
 - All reference-spec checksums passed; the WS-REV and WS-IMP archival pairs are
   byte-identical to trusted base.
