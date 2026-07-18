@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Active contract repair and required preimplementation review; no runtime edits yet |
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Active implementation; exact-SHA preimplementation review passed at `7f941a5` |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

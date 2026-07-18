@@ -20,10 +20,10 @@
   `eeb3dc2` recorded its two administrative reads and stopped.
 - PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on
   2026-07-18; ART-02B1 remains inactive pending a separate explicit start.
-- Active implementation chunk: none. The explicitly started parent
+- Active implementation chunk: `WS-AUTH-001-09D-A`. The explicitly started parent
   `WS-AUTH-001-09D` failed required preimplementation review and was split
   before runtime edits into `WS-AUTH-001-09D-A` and `WS-AUTH-001-09D-B`.
-- Active contract review: `WS-AUTH-001-09D-A` on
+- Active branch: `WS-AUTH-001-09D-A` on
   `codex/ws-auth-001-09d-actor-identity-lifecycle`. It owns lifecycle evidence
   repair plus three exact profile lifecycle mutations. `WS-AUTH-001-09D-B`
   remains inactive until 09D-A merge, signed memory, and explicit user start.
@@ -33,8 +33,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: repair and approve the exact AUTH-09D-A contract before any
-  runtime edit. No service caller becomes executable before AUTH-09E.
+- Current gate: implement the exact reviewed AUTH-09D-A contract, then run its
+  deterministic proof and exact-head internal review. No service caller becomes
+  executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

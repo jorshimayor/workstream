@@ -1,5 +1,14 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-A Preimplementation Review Passed
+
+- Exact reviewed contract SHA: `7f941a53b4a30e6116d9a13fce6246f7aa943ac3`.
+- Senior, security/auth, product/ops, QA/test, test-delta, architecture,
+  migration, CI integrity, docs, and reuse/dedup tracks passed after three
+  bounded repair rounds.
+- Runtime implementation may begin for 09D-A only. 09D-B and 09E remain
+  inactive behind separate merge, signed-memory, and explicit-start gates.
+
 ## 2026-07-18 - WS-AUTH-001-09D Preimplementation Review Failed And Split
 
 - Basis: trusted `main` at `0ffdabf` after PR #146 and signed memory

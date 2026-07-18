@@ -103,8 +103,9 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-None. `WS-AUTH-001-09D-A` is in contract repair and required
-preimplementation review. Runtime implementation has not started.
+`WS-AUTH-001-09D-A` - Profile Lifecycle And Evidence Repair. Exact-SHA
+preimplementation review passed at `7f941a5`; implementation may now begin for
+the three profile lifecycle routes and migration `0026` only.
 
 ## Current review branch
 
@@ -136,7 +137,7 @@ preimplementation review. Runtime implementation has not started.
 | `WS-AUTH-001-09B` | Merged | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Merged as `053242b`; signed memory passed. |
 | `WS-AUTH-001-09C` | Merged | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Merged as `0ffdabf`; signed memory `eeb3dc2` passed and stopped. |
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09D-A` | Contract review | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Profile lifecycle and evidence repair; no runtime edits yet. |
+| `WS-AUTH-001-09D-A` | Active | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Exact-SHA preimplementation review passed at `7f941a5`; implementation may begin. |
 | `WS-AUTH-001-09D-B` | Inactive | - | - | Identity-link lifecycle and race closure after 09D-A merge/memory and explicit start. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D-B. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
@@ -157,9 +158,9 @@ merged feature manifests and separate human starts exist.
 ## Blockers
 
 AUTH-09C has no remaining blocker. PR #146 merged as `0ffdabf` and signed
-memory passed at `eeb3dc2`. AUTH-09D-A cannot enter runtime implementation until
-its repaired exact contract passes required L1 preimplementation review. It
-must not add identity-link mutation, service grants, dynamic assignments,
+memory passed at `eeb3dc2`. AUTH-09D-A's repaired contract passed required L1
+preimplementation review at `7f941a5`; no planning blocker remains. It must not
+add identity-link mutation, service grants, dynamic assignments,
 token-role authority, service admission, or feature-action activation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
