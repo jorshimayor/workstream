@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Implemented; deterministic evidence passed; exact-head internal review pending |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Implemented; deterministic evidence and exact-head internal review passed; PR publication pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

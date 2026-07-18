@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09C Internal Review Passed
+
+Current `main` at `e118e33` is integrated without reverting WS-CON. Every
+required implementation review track passes at exact SHA `4331a6a` after
+repairing self-target response freshness, stage-specific rollback evidence,
+deterministic PostgreSQL lock-wait proof, exact persisted request evidence, and
+log-privacy canaries. Focused actor and authorization branch coverage remain
+91.06 and 92.04 percent. PR publication, external checks, and explicit human
+merge approval remain; AUTH-09D is inactive.
+
 ## 2026-07-18 - WS-AUTH-001-09C Deterministic Evidence Passed
 
 PR #143 merged AUTH-09B as `053242b`, signed memory stopped, and the user
