@@ -95,9 +95,9 @@ Its bounded implementation and external repair passed before PR #146 merged as
 `0ffdabf`; signed schema-v2 memory at `eeb3dc2` recorded completion and stopped.
 The user explicitly started AUTH-09D. Required L1 preimplementation review
 rejected the combined lifecycle contract before runtime edits, so the parent is
-split into 09D-A and 09D-B. AUTH-09D-A repaired implementation and
-deterministic proof pass at `e64b03f`; exact-head internal review remains. No service caller or
-feature action is active.
+split into 09D-A and 09D-B. AUTH-09D-A exact-head internal review passed at
+`cc7e6cc` after all valid findings were repaired; ready PR publication remains.
+No service caller or feature action is active.
 
 ## Active planning chunk
 
@@ -107,8 +107,8 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 `WS-AUTH-001-09D-A` - Profile Lifecycle And Evidence Repair. Exact-SHA
 preimplementation review passed at `7f941a5`; the three profile lifecycle
-routes, migration `0026`, and repaired deterministic proof pass at `e64b03f`. Exact-head
-internal review is the current gate.
+routes, migration `0026`, and repaired deterministic proof pass. Exact-head
+internal review passed at `cc7e6cc`; ready PR publication is the current gate.
 
 ## Current review branch
 
@@ -140,7 +140,7 @@ internal review is the current gate.
 | `WS-AUTH-001-09B` | Merged | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | Merged as `053242b`; signed memory passed. |
 | `WS-AUTH-001-09C` | Merged | `codex/ws-auth-001-09c-actor-identity-admin-reads` | #146 | Merged as `0ffdabf`; signed memory `eeb3dc2` passed and stopped. |
 | `WS-AUTH-001-09D` | Split | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09D-A` | Active | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Repaired implementation and deterministic proof passed at `e64b03f`; exact-head internal review pending. |
+| `WS-AUTH-001-09D-A` | Active | `codex/ws-auth-001-09d-actor-identity-lifecycle` | - | Exact-head internal review passed at `cc7e6cc`; ready PR publication pending. |
 | `WS-AUTH-001-09D-B` | Inactive | - | - | Identity-link lifecycle and race closure after 09D-A merge/memory and explicit start. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D-B. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
