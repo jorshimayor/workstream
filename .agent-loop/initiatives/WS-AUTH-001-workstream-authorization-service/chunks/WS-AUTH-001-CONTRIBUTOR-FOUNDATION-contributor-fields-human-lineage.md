@@ -51,7 +51,12 @@ backend/app/modules/tasks/{models,schemas,repository,service}.py
 backend/app/modules/checkers/** only for exact renamed contributor-ID reads
 backend/app/db/models.py
 backend/alembic/versions/<then-current-next>_contributor_foundation.py
-backend/tests/test_{actors,authorization,tasks,checkers,alembic}.py
+backend/tests/test_actors.py
+backend/tests/test_authorization.py
+backend/tests/test_auth.py
+backend/tests/test_tasks.py
+backend/tests/test_checkers.py
+backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 .github/workflows/backend.yml only if a persistent focused coverage command is missing
 docs/architecture_data_model.md
@@ -70,7 +75,8 @@ docs/spec_authorization_service.md
 permission, ActionId, owner, evaluator, or availability changes
 project/admin role grant changes
 AUTH-09E service admission or fixed-service authority
-task, assignment, submission, checker, review, or revision lifecycle changes
+task, assignment, submission, checker, review, or revision lifecycle state or
+transition changes beyond the exact active-human write guard below
 Submission task-assignment lineage, predecessor chains, or guide stamps owned by REV
 renaming the separately enumerated AUTH-14 attestation and contributor-facing fields
 token-role removal, legacy workflow eligibility removal, or AUTH-13/14 route cutover
@@ -87,7 +93,8 @@ compatibility aliases, dual fields, fallback reads/writes, or data duplication
 - The retired `Submission` human-owner field receives the same clean cut.
   Existing task,
   submission, checker, and revision behavior and attribution remain unchanged
-  apart from the intentional response-field rename.
+  apart from the intentional response-field rename and fail-closed
+  transaction-local active-human write revalidation.
 - Both `contributor_id` columns are non-null foreign keys to the canonical
   `actor_profiles.id` root. A single reviewed, reusable PostgreSQL lineage
   primitive rejects a service ActorProfile for either field and is suitable for

@@ -306,8 +306,8 @@ need an independently reviewable contract and production-code budget.
   `replaced_grant_id`, replacement events, and replacement reasons.
 - Migration `0022_bootstrap_admin_grants.py` recreates current PostgreSQL audit
   and linked-idempotency validators with the same combined/replacement values.
-  Historical migrations remain immutable; AUTH-10 `0027` must replace current
-  validators and fail closed on incompatible evidence.
+  Historical migrations remain immutable; AUTH-10's then-current migration must
+  replace current validators and fail closed on incompatible evidence.
 - The current kernel has request-scoped `require()` but no AUTH-first prepared
   mutation handle. Cross-module mutations therefore lack the merged lock,
   recompose, evaluate-once, flush, and caller-commit protocol.

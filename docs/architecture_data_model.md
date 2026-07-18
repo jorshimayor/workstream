@@ -98,6 +98,9 @@ Raw tokens, provider credentials, and full claim payloads are not stored.
 The database enforces a unique `(issuer, subject)` pair across all links and, in
 v0.1, at most one active identity link per ActorProfile. Revocation preserves
 the immutable link and provenance; it does not free the pair for rebinding.
+Link reactivation is component-scoped: it restores only that exact credential
+binding, does not reactivate its ActorProfile or restore grants, and cannot
+bypass final-effective-Access-Administrator preservation.
 
 ### AdminRoleGrant
 

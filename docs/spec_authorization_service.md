@@ -693,7 +693,7 @@ GET /api/v1/authorization/admin-role-definitions
 GET /api/v1/actors/{actor_profile_id}
 POST /api/v1/actors/{actor_profile_id}/suspend|reactivate|deactivate
 GET /api/v1/actors/{actor_profile_id}/identity-links
-POST /api/v1/actor-identity-links/{link_id}/revoke|reactivate
+POST /api/v1/actor-identity-links/{identity_link_id}/revoke|reactivate
 POST /api/v1/service-actors
 
 POST|GET /api/v1/admin-role-grants
