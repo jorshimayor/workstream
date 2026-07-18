@@ -251,8 +251,8 @@ LocalStorage is development-only. MinIO proves the S3-compatible protocol in
 local/CI. AWS S3 is the v0.1 hosted provider behind the provider-neutral
 `S3CompatibleArtifactStore`. Cloudflare R2 and Flow Node remain deferred.
 
-REV consumes future ART v2 typed capabilities only. It never imports raw
-`ArtifactStore` v1, a concrete provider, ART repositories,
+REV consumes only narrow ART v2 typed product capabilities. It never imports
+the raw byte-only `ArtifactStore`, a concrete provider, ART repositories,
 `ArtifactScratchManager`, `PreparedArtifact`, `CommittedArtifactSource`, object
 keys, provider URIs, scratch paths, receipts, or credentials.
 

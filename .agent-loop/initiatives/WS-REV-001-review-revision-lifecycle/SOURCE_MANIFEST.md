@@ -149,11 +149,15 @@ independent runtime gates before their corresponding REV behavior is released.
 
 ART discovery was refreshed against merged ART-02A2 PR #129 at trusted-main
 `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
-`32aab89262a3944f305e9e5dc4c65a2d31e2e144`. The chunk adds only inactive
-committed-source/private-scratch preparation. Its current ArtifactStore v1 state
-is not a REV interface. REV consumes none of its scratch/source types or raw
-store methods. Later ART v2, S3, submission/checker binding cutovers, packet
-read, review-evidence candidate/finalize, projection, and live-proof contracts,
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`. That chunk adds only
+committed-source/private-scratch preparation. ART discovery was then refreshed
+against merged ART-02A3 PR #141 at trusted main
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, final branch head
+`7606798e751abf40218d23886779c3659b76e974`. ART-02A3 removes v1 and activates
+the byte-only v2 LocalStorage store, namespace fence, and typed product
+capability composition. REV consumes none of the scratch/source types or raw
+store methods. S3/MinIO, submission/checker binding cutovers, packet read,
+review-evidence candidate/finalize, projection, and live-proof contracts,
 including a separately approved `WS-ART-001-REV-EVIDENCE` owner chunk, remain
 dependency gates.
 

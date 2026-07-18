@@ -135,11 +135,12 @@ frontend work
   typed authorization-evidence `503` mapping, and route-owned canonical
   verification timestamps as required regression invariants. Chunk 01 changes
   no AUTH implementation.
-- The active contract records merged ART-02A2 as inactive committed-source and
-  private scratch preparation only. Review code never consumes
-  `ArtifactScratchManager`, `PreparedArtifact`, or `CommittedArtifactSource`,
-  persists scratch state, or treats ART-02A2 as reviewer read/intake readiness.
-  Chunk 01 changes no ART implementation.
+- The active contract records merged ART-02A2 as the committed-source/private-
+  scratch foundation and merged ART-02A3 as the active byte-only v2 LocalStorage
+  clean cut. Review code never consumes `ArtifactScratchManager`,
+  `PreparedArtifact`, `CommittedArtifactSource`, or the raw byte store, persists
+  scratch state, or treats the store cutover as reviewer packet-read/evidence-
+  intake readiness. Chunk 01 changes no ART implementation.
 - The active contract's dependency inventory contains 24 non-executable review-lifecycle
   dependencies: registered planned `submission.create`, 19 registered planned
   review actions, and four approved but unregistered additions. The four
@@ -228,7 +229,7 @@ frontend work
   evidence commit with no feature/shared audit/outbox effects.
 - The active contract defines REV-owned `ReviewPacketManifest` and
   `ReviewEvidenceArtifact`, ART v2 packet-read/candidate-finalize boundaries,
-  exact binding service action, and no raw ArtifactStore version-1/provider access.
+  exact binding service action, and no raw byte-store/provider access.
 - The active contract maps XINT's conceptual `SubmissionVersion.artifact_hash`
   to a server-derived verified `artifact_hash` on the existing versioned
   `Submission`, copied to `ContributionRecord.artifact_hash`; caller
@@ -280,7 +281,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
-git diff --name-only e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9
+git diff --name-only a10d9018007d2e847b4870e9b26cbd24e24c7bb4
 git diff --check
 ```
 

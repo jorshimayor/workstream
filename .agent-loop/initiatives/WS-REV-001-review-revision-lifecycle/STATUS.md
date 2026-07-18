@@ -23,6 +23,13 @@ CON-01 PR #144 then merged to main at
 FinalAcceptance fields and ActorProfile/ReviewPolicy lineage. CON-01 publishes
 the active CON contract and ADR 0016 but changes no runtime.
 
+ART-02A3 PR #141 then merged to main at
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`. It atomically removes
+ArtifactStore v1 and activates the byte-only ART v2 LocalStorage clean cut plus
+typed product capability composition. It does not implement S3/MinIO,
+submission/checker artifact cutovers, lease-scoped review packet reads, or
+review-evidence candidate/finalize behavior.
+
 Chunk 01 adopts `docs/spec_review_lifecycle.md` as the active normative
 contract, preserves the supplied WS-REV and WS-IMP archival Markdown/PDF bytes,
 reconciles active documentation, and adds a fail-closed stale review-contract
@@ -44,9 +51,10 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
   in AUTH's closed registry. None of REV's six identities exists yet; their
   exact extensions, provisioning, AUTH-09E admission, and feature activation
   remain downstream gates.
-- ART-02A2 remains preparation-only. Review consumes only later approved ART v2
-  typed packet-read and evidence candidate/finalize ports. It never consumes
-  ART scratch, v1 store, provider, or repository APIs.
+- Merged ART-02A3 supplies the active byte-only ART v2 store beneath typed
+  product capabilities. Review still consumes only later approved packet-read
+  and evidence candidate/finalize ports; it never imports the raw byte store,
+  ART scratch/source types, a concrete provider, or repository APIs.
 - Merged CON-01 publishes the canonical frozen-policy, ContributionRecord,
   FinalAcceptance trigger, award, and ordered two-operation participant
   contracts. It implements none of them.

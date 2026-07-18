@@ -246,8 +246,8 @@ read packet bytes.
 
 Review decision and canonical contribution creation perform no ART call or
 provider I/O. They consume stabilized binding facts and copy the server-derived
-Submission `artifact_hash`. REV never imports ArtifactStore v1, concrete
-providers, ART repositories, scratch state, `ArtifactScratchManager`,
+Submission `artifact_hash`. REV never imports the raw byte-only ArtifactStore,
+concrete providers, ART repositories, scratch state, `ArtifactScratchManager`,
 `PreparedArtifact`, or `CommittedArtifactSource`.
 
 ## Precedence

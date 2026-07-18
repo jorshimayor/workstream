@@ -209,7 +209,7 @@ Owns:
 - ART v2 immutable content, binding, verification, candidate/finalize, and recovery
 - narrow active-lease packet read
 - REV-owned packet membership and finding/response evidence semantics
-- no provider or ArtifactStore v1 import in review services
+- no provider or raw byte-only ArtifactStore import in review services
 
 ### Contribution And Compensation Service
 

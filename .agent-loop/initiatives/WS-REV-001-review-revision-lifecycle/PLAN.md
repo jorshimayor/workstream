@@ -180,19 +180,19 @@ merged and proven. WS-REV consumes:
 - stable verification/availability facts and deterministic projection storage;
 - LocalStorage and MinIO conformance with AWS S3 as production provider.
 
-Merged ART-02A2 PR #129 at trusted main
-`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
-`32aab89262a3944f305e9e5dc4c65a2d31e2e144`, establishes only the inactive
-committed-source and private scratch-preparation foundation. Its active
-ArtifactStore v1 state is not a REV interface: ART v2 must be the sole provider
-boundary before any REV artifact consumer starts. `ArtifactScratchManager`, `PreparedArtifact`, and
-`CommittedArtifactSource` are ART-internal preparation mechanics, not REV
-capabilities or durable product references; review code never imports or stores
-them. Later ART-owned v2, S3, submission/checker binding cutovers, admission,
+Merged ART-02A2 PR #129 established the committed-source/private-scratch
+foundation. Merged ART-02A3 PR #141 at trusted main
+`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`, final branch head
+`7606798e751abf40218d23886779c3659b76e974`, removes v1 and activates the
+byte-only ART v2 LocalStorage clean cut and typed product capability boundary.
+`ArtifactScratchManager`, `PreparedArtifact`, `CommittedArtifactSource`, and the
+raw byte store are ART-internal mechanics, not REV capabilities or durable
+product references; review code never imports or stores them. Later ART-owned
+S3/MinIO, submission/checker binding cutovers, admission,
 verification/publication, packet read, evidence candidate/finalize, projection,
 and live-proof chunks remain hard gates. ART owns candidate retention and
-Operator recovery; REV does not consume v1 verify/retain/release, raw
-ArtifactStore, `artifact.binding.read`, or a generic artifact-retrieval action.
+Operator recovery; REV does not consume the raw store,
+`artifact.binding.read`, or a generic artifact-retrieval action.
 
 The current merged ART plan does not yet assign two other exact XINT
 requirements to an approved owner chunk: a narrow active-lease packet-read port
