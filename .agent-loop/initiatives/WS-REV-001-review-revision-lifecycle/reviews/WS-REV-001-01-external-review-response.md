@@ -4,7 +4,7 @@
 
 - PR: `#145`
 - Initial published head: `9ad0420e4c8f3ce0933a85fc75f133a340f91fcd`
-- Reviewed repair candidate: `a184e4110cd1b14718165b3f8ebf73e53e03db0a`
+- Reviewed repair candidate: `e239282e7d2a2b4d46137707f673f76fda55e4b8`
 - Trusted base: `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`
 
 ## Comments Addressed
@@ -49,6 +49,13 @@
 - Internal plan review found three remaining records that called AUTH-09B's
   65/10/55 snapshot current. They now label AUTH-09B historical, AUTH-09C
   65/12/53 current, and future release counts dynamic.
+- CodeRabbit's AUTH-09C follow-up correctly found that a committed-range scope
+  comparison alone ignores staged, unstaged, and untracked content. The final
+  verification now requires an entirely clean porcelain-v1 worktree before the
+  exact 71-entry comparison; isolated probes cover all three dirty states.
+- Its Markdown-heading finding was repaired by keeping `PR #146` inline, and
+  its nit was addressed by naming the exact trusted-main and reviewed-code
+  operands in the evidence.
 
 ## Comments Deferred
 

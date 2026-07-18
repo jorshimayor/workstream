@@ -107,7 +107,7 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 The plan gate and all nine required reviewer tracks passed exact SHA
-`a184e4110cd1b14718165b3f8ebf73e53e03db0a` against trusted main
+`e239282e7d2a2b4d46137707f673f76fda55e4b8` against trusted main
 `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
@@ -134,6 +134,11 @@ lifecycle test. The resolution preserves all 80 main tests plus seven REV tests,
 adopts the merged AUTH/ART state, and retains the earlier ART fallback branches.
 Three stale catalogue-provenance statements found internally were corrected
 before the final exact-SHA review.
+
+CodeRabbit then identified the dirty-worktree gap in the committed-range scope
+proof. The final command requires a clean staged, unstaged, and untracked state
+before comparing exact path statuses; isolated negative probes and a fresh
+nine-track exact-SHA review pass.
 
 ## Remaining Risks
 

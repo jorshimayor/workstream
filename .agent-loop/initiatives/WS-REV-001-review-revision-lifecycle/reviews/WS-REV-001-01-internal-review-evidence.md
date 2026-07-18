@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `a184e4110cd1b14718165b3f8ebf73e53e03db0a`
+Reviewed code SHA: `e239282e7d2a2b4d46137707f673f76fda55e4b8`
 
 Trusted main SHA: `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`
 
-Reviewed at: `2026-07-18T09:19:23Z`
+Reviewed at: `2026-07-18T09:40:12Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -65,14 +65,18 @@ that same file. Candidate `7785b832` replaces it with an exact
 `--name-status --no-renames` A/M manifest. All 71 statuses match, while
 adversarial status-change, removal, rename-as-D+A, and addition probes fail.
 Candidate `5af0adc` adds only the required accurate review-log entry, and a
-final exact-SHA review passed the plan gate and all nine tracks. AUTH-09C PR
-#146 later advanced main to `0ffdabf3`. The branch resolved the single shared
+final exact-SHA review passed the plan gate and all nine tracks. AUTH-09C
+PR #146 later advanced main to `0ffdabf3`. The branch resolved the single shared
 agent-gate conflict without removing or semantically changing any of main's 80
 tests and retained all seven REV additions. Candidate `f1004158` passed eight
 tracks, but plan/senior review found three records that still called AUTH-09B's
 65/10/55 snapshot current. Candidate `a184e411` labels AUTH-09B historical,
 AUTH-09C 65/12/53 current, and later release totals dynamic. Fresh exact-SHA
-review passed the plan gate and all nine tracks.
+review passed the plan gate and all nine tracks. CodeRabbit then found that the
+committed-range manifest could not detect a dirty worktree. Candidate
+`e239282e` adds the required clean porcelain-v1 precondition. Isolated staged,
+unstaged, and untracked probes fail as required, and all nine exact-SHA tracks
+pass.
 
 ## Deterministic Evidence
 
@@ -94,8 +98,9 @@ review passed the plan gate and all nine tracks.
 - Exactly one merge-intent file exists for this chunk and `git diff --check`
   passed.
 - The committed 71-entry reviewed-scope manifest exactly matches
-  `git diff --name-status --no-renames` against trusted current main. Simulated
-  status change, removal, rename, and addition each fail the comparison.
+  `git diff --name-status --no-renames 0ffdabf3dbb77e4e066683fde1a095d744ff1f43...e239282e7d2a2b4d46137707f673f76fda55e4b8`.
+  The clean-worktree prerequisite passes; simulated staged, unstaged, untracked,
+  status-change, removal, rename, and addition states fail the proof.
 
 ## Residual Risks
 

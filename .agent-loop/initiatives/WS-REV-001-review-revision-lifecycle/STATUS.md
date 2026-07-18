@@ -111,7 +111,7 @@ Markdown lint nit were repaired without runtime or successor-scope expansion.
 After ART-02A3 PR #141 advanced main, the branch merged and reconciled its
 active byte-only v2 LocalStorage clean cut while retaining every later
 review-facing ART gate. Candidate
-`a184e4110cd1b14718165b3f8ebf73e53e03db0a` passed the plan gate and all nine
+`e239282e7d2a2b4d46137707f673f76fda55e4b8` passed the plan gate and all nine
 internal reviewer tracks against
 `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`; 87 agent gates, Ruff, scanners,
 links, checksums, renderer checks, merge-intent validation, and the exact
