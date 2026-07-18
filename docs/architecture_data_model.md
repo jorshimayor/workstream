@@ -50,7 +50,8 @@ Task
       ReviewEvidenceArtifact
       FindingResolution
       FinalAcceptance (accept only)
-    RevisionContextPreparation
+    RevisionObligation
+      RevisionContextPreparation
     SubmissionFindingResponse
   ContributionRecord
     CompensationAward
@@ -202,6 +203,7 @@ Fields:
 - `project_id`
 - `version`
 - `status`
+- `activation_sequence` (nullable only while draft; immutable after allocation)
 - `content_markdown`
 - `change_summary`
 - `approved_by`
@@ -217,6 +219,13 @@ snapshot may include URL-backed docs, repository docs, examples, rubrics, task
 instructions, reviewer guidance, or other project-specific source material.
 `approved_by` and `effective_at` are server-written activation provenance, not
 request-body fields and not contributor-facing guide content.
+
+Guide status is exactly `draft | active | superseded`. Draft rows have null
+activation sequence/approval/effective/superseded provenance. Active and
+superseded rows retain one positive per-project activation sequence plus original
+approval/effective provenance; superseded rows additionally retain
+`superseded_at`. The planned 02A migration enforces this shape and immutable
+chronology before Task stamping consumes it.
 
 Runtime enforcement uses machine-readable policies attached to the guide version. Workstream does not parse guide prose at submission time to decide which artifact checks to run.
 
@@ -1060,7 +1069,9 @@ Fields:
 
 - `id`
 - `project_id`
+- `locked_guide_id`
 - `locked_guide_version`
+- `locked_guide_activation_sequence`
 - `locked_guide_source_snapshot_id`
 - `locked_guide_source_snapshot_hash`
 - `locked_effective_project_submission_artifact_policy_id`
@@ -1116,8 +1127,9 @@ Source type:
 
 External origin adapters are later work. When added, they normalize into this task shape instead of creating a separate task lifecycle.
 
-The task id points to the locked task contract. That contract includes the guide
-version, guide source snapshot id/hash, effective project submission artifact
+The task id points to the locked task contract. That contract includes the exact
+same-project guide ID/version/activation-sequence triplet, guide source snapshot
+id/hash, effective project submission artifact
 policy id/hash, generated project pre-submit checker policy id/bundle hash,
 post-submit checker policy id/version/hash, review policy version, revision
 policy version, acceptance criteria, derived display summaries, and skill tags.
@@ -1457,13 +1469,41 @@ unless locked policy requires them.
 finding. Its result is `resolved`, `unresolved`, or `not_applicable`; it carries
 bounded rationale/evidence and never edits the finding or response.
 
+## RevisionObligation
+
+Fields:
+
+- `id`
+- `project_id`
+- `task_id`
+- `prior_submission_id`
+- `source_task_assignment_id`
+- `origin_kind`: `human_review | checker_run`
+- `source_review_id` (nullable)
+- `source_checker_run_id` (nullable)
+- `revision_round_number`
+- `required_at`
+- `revision_deadline_at`
+- frozen RevisionPolicy identity and limit inputs
+- source-appropriate authorization/audit lineage
+
+Purpose:
+
+This immutable task-owned record is the origin-neutral revision episode. An XOR
+requires exactly one source. Human origin references the exact immutable
+`Review(needs_revision)`; checker origin references the exact final CheckerRun
+whose routing for the prior Submission is `needs_revision`. Same-chain and
+partial-unique constraints bind one obligation to its exact project, task,
+Submission, assignment, and source. Checker origin creates no synthetic Review,
+finding, reviewer contribution, or human actor.
+
 ## RevisionContextPreparation
 
 Fields:
 
 - `id`
 - `task_id`
-- `originating_review_id`
+- `revision_obligation_id`
 - `source_task_assignment_id`
 - `target_task_assignment_id`
 - `prior_submission_id`
@@ -1496,8 +1536,9 @@ Fields:
 
 Purpose:
 
-This immutable Review-rooted record is created before a contributor resumes a
-human-review revision. Exact prior Submission guide identity/activation-sequence
+This immutable obligation-rooted record is created atomically before a
+contributor can observe either checker- or human-review-caused revision. Exact
+prior Submission guide identity/activation-sequence
 match with the currently active guide keeps context. Any different valid active
 pair rebases forward or backward. Missing, inconsistent, revoked, or unsafe
 context blocks for manager repair. Task Context returns the validated chain

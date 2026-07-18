@@ -45,6 +45,11 @@ outcomes.
   Exact match keeps context; any different active identity or sequence rebases
   forward or backward; missing, incomplete, or unsafe active context blocks.
   Return routing prefers the prior reviewer before falling back to open FIFO.
+- A supported checker-caused `needs_revision` and a human
+  `Review(needs_revision)` each create one immutable task-owned
+  RevisionObligation and initial preparation atomically. The origin is exact and
+  exclusive; checker remediation creates no synthetic Review, finding, reviewer
+  contribution, or human actor.
 - Artifact outage or integrity failure blocks judgment without creating an
   adverse contributor outcome.
 - Every committed Review joins the `WS-CON-001` contribution and conditional
@@ -133,6 +138,11 @@ outcomes.
     Exact AUTH custody, PREP, registration, service-identity, and activation gates
     apply per consumer so hidden REV work can proceed while every action remains
     unavailable; REV-13 alone releases product surfaces.
+11. Guide chronology/task locking lands before hidden superseded-guide
+    reactivation. Reactivation uses AUTH PREP plus a current-active If-Match
+    precondition and must merge before AUTH-12 evaluator/cutover/activation.
+12. Persisted release phase denies execution but does not dynamically unregister
+    routers, deactivate AUTH mappings, or replace operational scheduler control.
 
 Items 3-5 and the proposed chunk sequence were approved by the human on
 2026-07-15 for planning publication. This approval does not activate a successor

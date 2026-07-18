@@ -161,13 +161,15 @@ Required before entering:
 - from `REVIEW_PENDING`: the same TaskAssignment remains `active`, with no
   FinalAcceptance or submitter contribution
 
-Before the contributor resumes from a human Review, Workstream appends an
-immutable RevisionContextPreparation. Exact prior Submission guide
+Before the contributor resumes from either supported source, Workstream appends
+one immutable RevisionObligation and RevisionContextPreparation in the same
+transaction that enters `needs_revision`. The obligation source is exactly the
+human Review or final needs-revision CheckerRun. Exact prior Submission guide
 identity/activation-sequence match with the currently active guide keeps
 context. Any different valid active pair rebases forward or backward. Missing,
 inconsistent, revoked, or unsafe context blocks for Project Manager repair.
-Checker-caused remediation remains CheckerResult-rooted and creates no Review
-episode.
+Checker-caused remediation remains CheckerRun-rooted and creates no Review,
+ReviewFinding, reviewer contribution, or synthetic human actor.
 
 A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The contributor and reviewer must see the prior version, the next version, and the guide or policy change summary.
 

@@ -168,6 +168,7 @@ REV adds these lifecycle records in later hidden chunks:
 - `Review`
 - `ReviewFinding`
 - `ReviewEvidenceArtifact`
+- `RevisionObligation`
 - `RevisionContextPreparation`
 - `SubmissionFindingResponse`
 - `FindingResolution`
@@ -208,12 +209,12 @@ may admit the exact immutable Submission to human review. Admission records the
 exact CheckerRun ID and verified binding facts. A retry, supersession, or
 different Submission cannot silently replace that anchor.
 
-Checker routing is not human judgment. A checker may route contributor-fixable
-problems to the user-facing task state `needs_revision`, but it creates no
-Review, ReviewFinding, reviewer contribution, or Review-rooted revision episode.
-Checker remediation follows its checker-result lineage and must pass the normal
-submission/checker spine before human review. Human revision preparation below
-is rooted only in an immutable `Review(decision=needs_revision)`.
+Checker routing is not human judgment. A final needs-revision CheckerRun
+atomically appends one checker-origin RevisionObligation and initial preparation,
+then moves the Task to contributor-readable `needs_revision` in the same checker
+transaction. It creates no Review, ReviewFinding, reviewer contribution, or
+synthetic human actor. Checker remediation follows that exact CheckerRun lineage
+and must pass the normal submission/checker spine before human review.
 
 Queue schema migration performs no blanket historical backfill. A later audited
 reconciliation may admit only an unambiguous latest finalized Submission with a
@@ -315,7 +316,8 @@ freshly verify the Flow token
 -> AUTH PREP review.decision with exact request bindings
 -> lock review idempotency
 -> lock the review lifecycle fence
--> lock ReviewQueueEntry, ReviewLease, task, TaskAssignment, Submission,
+-> lock ReviewLease, ReviewQueueEntry, task, the exact
+   Submission.task_assignment_id row, Submission,
    predecessor Review, finding/resolution lineage, and stabilized binding facts
 -> recompose canonical final facts
 -> AUTH validates all prepared-handle bindings, consumes the handle once,
@@ -352,6 +354,7 @@ Review(accept)
 ```text
 Review(needs_revision)
 -> reviewer completed_review already created
+-> append human-review-origin RevisionObligation and initial preparation
 -> Task.status = needs_revision
 -> TaskAssignment remains active
 -> no FinalAcceptance
@@ -452,9 +455,16 @@ lock. Each Submission stamps the exact guide ID, version, immutable per-project
 activation sequence, source snapshot, and task-execution policy IDs, versions,
 and hashes used for that attempt.
 
-After a human `needs_revision` Review, revision preparation compares only the
-prior Submission's stamped guide identity and activation sequence with the
-project's currently active Project Guide pair:
+Every supported `needs_revision` transition first appends one immutable
+task-owned `RevisionObligation`. Its v0.1 origin is exactly one immutable human
+`Review(needs_revision)` or one final CheckerRun whose exact routing result for
+the prior Submission is `needs_revision`. An XOR and same-chain constraints bind
+the source to the exact project, task, prior Submission, and source
+TaskAssignment. Checker origin creates no Review, ReviewFinding, reviewer
+contribution, or synthetic human actor.
+
+Revision preparation compares the prior Submission's stamped guide identity and
+activation sequence with the project's currently active Project Guide pair:
 
 - exact identity and activation-sequence match: `kept`;
 - any different internally consistent active pair: `rebased`, recording
@@ -466,14 +476,14 @@ Version strings are never ordered. Activation sequence records chronology but
 does not overrule which guide is currently active.
 
 `RevisionContextPreparation` is immutable and rooted in the exact
-`needs_revision` Review and prior Submission. It freezes the complete selected
+RevisionObligation and prior Submission. It freezes the complete selected
 next-attempt guide/source/task-execution policy context, context digest, outcome,
 direction, change summary, source TaskAssignment, currently authorized target
 TaskAssignment, preparation sequence, preparing actor/process, and audit link.
 It does not contain or rebase a ContributionPolicyVersion.
 
-Each episode forms one non-branching preparation chain: one root per Review,
-one child per preparation, same task/review/source lineage across an edge, and
+Each episode forms one non-branching preparation chain: one root per obligation,
+one child per preparation, same task/obligation/source lineage across an edge, and
 sequence increasing by exactly one. The head is the row with no successor.
 Task Context selects that head and then validates it; it never falls back to an
 older preparation when the head is blocked, corrupt, revoked, or stale.
@@ -491,15 +501,20 @@ and change summary.
 
 ## Finding Replay And Resubmission
 
-For every unresolved blocking ReviewFinding, the assigned submitter creates one
-immutable `SubmissionFindingResponse` with response text and optional finalized
+For a human-review origin, every unresolved blocking ReviewFinding requires one
+immutable `SubmissionFindingResponse` from the assigned submitter, with response
+text and optional finalized
 evidence binding. Responses to advisory findings are optional unless the locked
-policy explicitly requires them.
+policy explicitly requires them. A checker origin instead exposes only bounded
+contributor-safe CheckerResult messages/suggested fixes, requires no fabricated
+ReviewFinding/response/resolution, and returns to open routing after corrected
+checker admission.
 
 Submission N+1 links its immediate predecessor, exact preparation head,
 responses, evidence relations, and target TaskAssignment. The existing
 finalization and checker spine reruns. A new current `allow_review` creates a
-queue entry preferred to the reviewer who issued the prior revision request.
+queue entry preferred to the reviewer who issued the prior revision request for
+a human origin. A checker origin enters ordinary open routing.
 
 The later Review appends one immutable `FindingResolution` for each required
 prior finding with the canonical result `resolved`, `unresolved`, or
@@ -514,6 +529,12 @@ the replacement. The old contributor cannot submit.
 
 ## Revision Limits, Repair, And Legacy Recovery
 
+The next revision round is the count of prior immutable obligations for the task
+plus one; checker and human origins both count. A resubmission is allowed only
+when that round is at or below the frozen maximum and database time is strictly
+before `revision_deadline_at = required_at + revision_deadline_hours`; equality
+is expired.
+
 Reaching a revision limit or deadline blocks new revision preparation and
 `submission.create` with a stable policy error. It does not automatically reject
 or close the task. The task remains `needs_revision` and its assignment remains
@@ -527,13 +548,15 @@ queue entry as administratively cancelled. It creates no Review,
 FinalAcceptance, ContributionRecord, award, fulfillment instruction, or
 reputation effect.
 
-Blocked/revoked/invalid Review-rooted preparation is repaired only through the
+Blocked/revoked/invalid context preparation is repaired only through the
 planned `review.revision_context.repair` command. A covered Project Manager
 acknowledges the exact current head ID/digest and reason; the command appends one
 validated successor after project setup correction. It cannot edit history,
-branch the chain, or create an episode root.
+branch the chain, create an episode root, or bypass a frozen limit/deadline.
 
-A legacy task in `needs_revision` with no originating Review/root cannot use
+A historical checker-rooted task is recovered only from exact durable
+CheckerRun, Submission, and matching audit lineage; it is not legacy solely
+because no Review exists. A genuinely rootless or ambiguous task cannot use
 normal repair. Reconciliation records the defect. An Operator may use the
 planned evidence-linked `review.revision_context.legacy_close` command to set
 the task `cancelled`, release the assignment, and close any queue with terminal
@@ -595,13 +618,13 @@ revalidation.
 - Candidate: active covered Project Manager grant only.
 - Planned surface: `POST /api/v1/tasks/{task_id}/revision-context/repair`.
 - Resource facts: exact project, task, current/source assignments, prior
-  Submission, originating `needs_revision` Review, episode, current head
+  Submission, exact RevisionObligation origin, episode, current head
   ID/digest, and current guide/policy facts.
-- Guards: covered project, exact Review-rooted episode, exact current blocked or
+- Guards: covered project, exact obligation-rooted episode, exact current blocked or
   invalid head, nonterminal task, no crossed lineage, append one validated
   successor only, no root/edit/branch.
 - Transaction revalidation: authority, project, task, assignments, prior
-  Submission, Review, episode, head, and current guide/policies under canonical
+  Submission, source Review or CheckerRun, obligation, head, and current guide/policies under canonical
   locks.
 - Hidden behavior dependency: `WS-REV-001-11` and the task-owned revision
   participant.
@@ -614,9 +637,10 @@ revalidation.
   `POST /api/v1/admin/review-reconciliation/{finding_id}/legacy-revision-close`.
 - Resource facts: exact unresolved
   `legacy_revision_context_unrecoverable` finding, project, task, assignment,
-  optional queue, and server-proven absence of Review/root.
+  optional queue, and server-proven absence of a recoverable Review/CheckerRun
+  obligation root.
 - Guards: exact unresolved current finding, legacy task still
-  `needs_revision`, no healthy Review-rooted obligation, exact replay only.
+  `needs_revision`, no healthy or recoverable obligation, exact replay only.
 - Effects: task cancelled, assignment released, queue administratively closed;
   no synthetic Review, FinalAcceptance, or CON record.
 - Hidden behavior dependency: `WS-REV-001-11`.
@@ -628,9 +652,9 @@ revalidation.
   not substitute.
 - Planned surface:
   `POST /api/v1/tasks/{task_id}/revision-obligation/close`.
-- Resource facts: exact project, task, assignment, originating
-  `needs_revision` Review, current preparation head, frozen limit/deadline, and
-  server proof of the selected reached cause.
+- Resource facts: exact project, task, assignment, RevisionObligation, its exact
+  source Review or CheckerRun, current preparation head, frozen limit/deadline,
+  and server proof of the selected reached cause.
 - Guards: exact current head/cause, task still `needs_revision`, and terminal
   reason exactly `revision_limit_reached` or `revision_deadline_expired`;
   missing, not-reached, stale, arbitrary, crossed, or cross-project input denies.

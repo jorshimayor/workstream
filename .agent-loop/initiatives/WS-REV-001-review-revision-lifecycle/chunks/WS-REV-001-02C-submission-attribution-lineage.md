@@ -102,8 +102,10 @@ CON, compensation, contribution, reputation, adjudication, or synthetic reject
   publication remains an explicitly allowed set-once extension and is not
   implemented here.
 - Version allocation and predecessor selection lock the Task plus current chain
-  head so concurrent submissions cannot allocate the same version or create two
-  successors.
+  head. Concurrent initial creates yield one v1 and an exact replay or stable
+  conflict, never v2. After prepared cutover, concurrent creates against one
+  exact preparation head yield one N+1 and an exact replay or conflict, never
+  N+2; a new version requires a later committed revision obligation/head.
 - TaskAssignment continues to store only task identity and contributor/freeze
   terms; it receives no guide or revision-preparation duplicate.
 - Submission creation revalidates that the canonical contributor ActorProfile
@@ -119,16 +121,21 @@ CON, compensation, contribution, reputation, adjudication, or synthetic reject
 
 ```text
 cd backend && alembic upgrade head
+cd backend && alembic heads
 cd backend && pytest -q tests/test_alembic.py tests/test_tasks.py
 cd backend && ruff check app/modules/tasks tests/test_alembic.py tests/test_tasks.py
 cd backend && docstr-coverage --config .docstr.yaml
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 backend/.venv/bin/python scripts/test_agent_gates.py
+git diff --check
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+cd backend && coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 ```
 
-The full isolated PostgreSQL suite must preserve the repository-wide 78 percent
-floor. Every materially changed tasks module must remain at or above 90 percent
-coverage.
+Migration proof also covers prior-head preflight, safe downgrade/re-upgrade,
+protected-row refusal, failed-preflight rollback/no partial DDL, direct SQL, and
+a single head on real PostgreSQL.
 
 ## Required reviewers
 
