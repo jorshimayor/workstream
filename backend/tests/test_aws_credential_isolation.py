@@ -229,6 +229,12 @@ def test_isolated_session_contains_exactly_one_selected_provider(
         }
     if method == "iam-role":
         assert provider._role_fetcher._imds_v1_disabled is True
+        assert (
+            provider._role_fetcher._session._proxy_config.proxy_url_for(
+                "http://169.254.169.254/latest/meta-data/"
+            )
+            is None
+        )
 
 
 @pytest.mark.parametrize(
@@ -266,7 +272,9 @@ def test_isolated_session_contains_exactly_one_selected_provider(
             lambda tmp_path: {
                 "HOME": str(tmp_path),
                 "AWS_CONTAINER_CREDENTIALS_FULL_URI": "http://127.0.0.1:9/full",
-                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/relative",
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+                    "/v2/credentials/workstream-runtime"
+                ),
             },
             "container full credential URI is forbidden",
         ),
@@ -274,11 +282,23 @@ def test_isolated_session_contains_exactly_one_selected_provider(
             "container-role",
             lambda tmp_path: {
                 "HOME": str(tmp_path),
-                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/relative",
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+                    "/v2/credentials/workstream-runtime"
+                ),
                 "AWS_CONTAINER_AUTHORIZATION_TOKEN": "token",
+            },
+            "container identity token is forbidden",
+        ),
+        (
+            "container-role",
+            lambda tmp_path: {
+                "HOME": str(tmp_path),
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": (
+                    "/v2/credentials/workstream-runtime"
+                ),
                 "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": str(tmp_path / "token"),
             },
-            "container identity token is ambiguous",
+            "container identity token is forbidden",
         ),
         (
             "iam-role",
@@ -326,6 +346,52 @@ def test_selected_workload_identity_source_must_be_complete(
         _aws_settings(tmp_path, method),
         environment(tmp_path),
         message,
+    )
+
+
+@pytest.mark.parametrize(
+    "relative_uri",
+    [
+        "/relative",
+        "/v2/credentials/",
+        "/v2/credentials/workstream/runtime",
+        "https://credentials.example.test/v2/credentials/runtime",
+        "/v2/credentials/" + "a" * 513,
+    ],
+)
+def test_container_role_rejects_noncanonical_relative_uri(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    relative_uri: str,
+) -> None:
+    _assert_rejects_before_session_construction(
+        monkeypatch,
+        _aws_settings(tmp_path, "container-role"),
+        _container_environment(
+            tmp_path,
+            AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=relative_uri,
+        ),
+        "container identity location is invalid",
+    )
+
+
+def test_iam_metadata_session_ignores_ambient_proxy_environment(tmp_path: Path) -> None:
+    session = s3_compatible.create_isolated_aws_workload_identity_session(
+        _aws_settings(tmp_path, "iam-role"),
+        environ=_iam_environment(
+            tmp_path,
+            HTTP_PROXY="http://127.0.0.1:9",
+            HTTPS_PROXY="http://127.0.0.1:9",
+            ALL_PROXY="http://127.0.0.1:9",
+        ),
+    )
+    provider = session.get_component("credential_provider").providers[0]
+
+    assert (
+        provider._role_fetcher._session._proxy_config.proxy_url_for(
+            "http://169.254.169.254/latest/meta-data/"
+        )
+        is None
     )
 
 

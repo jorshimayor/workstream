@@ -22,23 +22,14 @@
   `codex/ws-art-001-02b1-s3-compatible-minio-aws`.
 - The ART worktree consumes merged AUTH, REV, and CON contracts without
   editing or activating their independently owned runtime behavior.
-- Active implementation chunk: `WS-AUTH-001-09C` on
-  `codex/ws-auth-001-09c-actor-identity-admin-reads`.
-- AUTH-09C is bounded to two exact administrative read routes and activates
-  only `actor.profile.read` and `actor.identity_link.read`. AUTH-09D remains
-  inactive.
-- Start basis: trusted `main` at `a10d901` after PR #141.
+- AUTH-09C merged through PR #146 as `0ffdabf`; AUTH-09D remains inactive
+  until an explicit human start.
+- ART integration basis: trusted `main` at `0ffdabf` after PR #146.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: PR #146's original Backend, Agent Gates, and CodeRabbit checks
-  passed. All five valid CodeRabbit proof findings are repaired at `c64bcc7`,
-  trusted `main` through PR #141 is integrated, and focused unit, real
-  PostgreSQL, and Agent Gates proof passes. All required exact integrated-head
-  internal repair tracks pass at `c47d627`; push and replacement external
-  checks remain. No service caller becomes executable before AUTH-09E.
 - Current ART gate: integrate trusted `main`, complete deterministic 02B1
   proof, and pass all nine exact-SHA internal reviewer tracks before opening
   the ART PR. No later ART chunk starts automatically.
@@ -58,9 +49,8 @@
 - Parallel artifact checkpoint: ART-02A1, ART-02A2, and ART-02A3 merged through
   PRs #127, #129, and #141. ART-02B1 is active and adds real MinIO protocol
   proof plus a fail-closed, runtime-ineligible native AWS profile.
-- Authorization checkpoint: AUTH-07B through AUTH-09B merged through PRs #130,
-  #131, #132, and #143. Signed memory stopped after 09B, and the user explicitly
-  started AUTH-09C.
+- Authorization checkpoint: AUTH-07B through AUTH-09C merged through PRs #130,
+  #131, #132, #143, and #146. AUTH-09D remains inactive.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

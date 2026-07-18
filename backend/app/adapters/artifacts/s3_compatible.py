@@ -19,9 +19,13 @@ from aiobotocore.credentials import (
     AioInstanceMetadataProvider,
 )
 from aiobotocore.session import AioSession
-from aiobotocore.utils import AioInstanceMetadataFetcher
+from aiobotocore.utils import AioInstanceMetadataFetcher, _RefCountedSession
 from botocore.exceptions import BotoCoreError, ClientError
 
+from app.adapters.artifacts.references import (
+    artifact_provider_object_ref,
+    parse_artifact_provider_object_ref,
+)
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.interfaces.artifacts import (
@@ -49,7 +53,9 @@ from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactS
 
 
 _IDENTITY = ExternalServiceAdapterIdentity(ARTIFACT_STORE_CAPABILITY_KEY, "s3_compatible")
-_PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
+_CONTAINER_RELATIVE_URI = re.compile(
+    r"^/v2/credentials/[A-Za-z0-9._-]{1,512}$"
+)
 _PRECONDITION_ERROR_CODES = frozenset(
     {"409", "412", "ConditionalRequestConflict", "PreconditionFailed"}
 )
@@ -252,7 +258,7 @@ class S3CompatibleArtifactStore:
         commitment = source.commitment
         if commitment.byte_count > HARD_MAXIMUM_ARTIFACT_BYTES:
             raise ArtifactLimitExceededError("artifact source exceeds provider limit")
-        provider_object_ref = self._provider_object_ref(commitment)
+        provider_object_ref = artifact_provider_object_ref(commitment)
         body = _CommittedSourceBody(source, self._buffer_bytes)
         try:
             if commitment.byte_count == 0:
@@ -270,9 +276,9 @@ class S3CompatibleArtifactStore:
                             IfNoneMatch="*",
                         )
             if not body.complete:
-                if await self._matches_commitment(provider_object_ref, commitment):
-                    return ArtifactPutResult(provider_object_ref, replayed=True)
-                raise ArtifactStoreUnavailableError("S3 artifact operation failed")
+                raise ArtifactInputMismatchError(
+                    "S3 provider did not consume the sealed artifact source"
+                )
             return ArtifactPutResult(provider_object_ref, replayed=False)
         except ClientError as error:
             if _provider_error_code(error) in _PRECONDITION_ERROR_CODES:
@@ -294,7 +300,7 @@ class S3CompatibleArtifactStore:
         self._require_initialized()
         if type(commitment) is not ArtifactCommitment:
             raise ArtifactOperationConflictError("artifact commitment is invalid")
-        provider_object_ref = self._provider_object_ref(commitment)
+        provider_object_ref = artifact_provider_object_ref(commitment)
         observed = await self.head(provider_object_ref)
         if not observed.exists:
             return ArtifactPutObservation(provider_object_ref, committed=False)
@@ -308,7 +314,7 @@ class S3CompatibleArtifactStore:
     ) -> AsyncIterator[bytes]:
         """Stream a full object or one bounded byte range."""
         self._require_initialized()
-        self._parse_provider_object_ref(provider_object_ref)
+        parse_artifact_provider_object_ref(provider_object_ref)
         if byte_range is not None and type(byte_range) is not ArtifactByteRange:
             raise ArtifactOperationConflictError("artifact byte range is invalid")
         selected_range = byte_range or ArtifactByteRange()
@@ -375,7 +381,7 @@ class S3CompatibleArtifactStore:
     async def head(self, provider_object_ref: str) -> ArtifactObjectHead:
         """Return exact size or authoritative absence without provider details."""
         self._require_initialized()
-        self._parse_provider_object_ref(provider_object_ref)
+        parse_artifact_provider_object_ref(provider_object_ref)
         try:
             async with asyncio.timeout(self._operation_total_timeout_seconds):
                 async with self._client() as client:
@@ -458,23 +464,8 @@ class S3CompatibleArtifactStore:
 
     def _object_key(self, provider_object_ref: str) -> str:
         """Apply only the configured private prefix to a digest-derived reference."""
-        self._parse_provider_object_ref(provider_object_ref)
+        parse_artifact_provider_object_ref(provider_object_ref)
         return f"{self._private_prefix}/{provider_object_ref}"
-
-    @staticmethod
-    def _provider_object_ref(commitment: ArtifactCommitment) -> str:
-        """Derive one identity-free reference solely from the server commitment."""
-        digest_hex = commitment.sha256[7:]
-        return f"sha256/{digest_hex[:2]}/{digest_hex[2:]}"
-
-    @staticmethod
-    def _parse_provider_object_ref(provider_object_ref: str) -> None:
-        """Reject caller-selected keys outside the canonical digest grammar."""
-        if (
-            not isinstance(provider_object_ref, str)
-            or _PROVIDER_OBJECT_REF.fullmatch(provider_object_ref) is None
-        ):
-            raise ArtifactOperationConflictError("artifact provider reference is invalid")
 
 
 class _CommittedSourceBody:
@@ -657,14 +648,17 @@ def validate_aws_workload_identity_environment(
             raise ArtifactConfigurationError(
                 "AWS container full credential URI is forbidden"
             )
-        if "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" not in environment:
+        relative_uri = environment.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+        if (
+            not isinstance(relative_uri, str)
+            or _CONTAINER_RELATIVE_URI.fullmatch(relative_uri) is None
+        ):
             raise ArtifactConfigurationError("AWS container identity location is invalid")
-        auth = _CONTAINER_ENVIRONMENT.intersection(environment) & {
+        if {
             "AWS_CONTAINER_AUTHORIZATION_TOKEN",
             "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
-        }
-        if len(auth) > 1:
-            raise ArtifactConfigurationError("AWS container identity token is ambiguous")
+        }.intersection(environment):
+            raise ArtifactConfigurationError("AWS container identity token is forbidden")
     else:
         if "AWS_EC2_METADATA_SERVICE_ENDPOINT" in environment:
             raise ArtifactConfigurationError("custom AWS metadata endpoint is forbidden")
@@ -700,7 +694,13 @@ def create_isolated_aws_workload_identity_session(
             disable_env_vars=True,
         )
     elif selected == "container-role":
-        provider = AioContainerProvider(environ=environment)
+        provider = AioContainerProvider(
+            environ={
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": environment[
+                    "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
+                ]
+            }
+        )
     elif selected == "iam-role":
         provider = AioInstanceMetadataProvider(
             iam_role_fetcher=AioInstanceMetadataFetcher(
@@ -717,6 +717,10 @@ def create_isolated_aws_workload_identity_session(
                     ),
                     "ec2_metadata_v1_disabled": True,
                 },
+                session=_RefCountedSession(
+                    timeout=settings.artifact_s3_connect_timeout_seconds,
+                    proxies={},
+                ),
             )
         )
     else:

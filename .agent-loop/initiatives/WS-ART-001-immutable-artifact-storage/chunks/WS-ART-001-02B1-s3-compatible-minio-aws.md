@@ -13,7 +13,8 @@ credential-delivery contract.
 
 ## Allowed Files
 
-- `backend/app/adapters/artifacts/s3_compatible.py` and adapter registration;
+- `backend/app/adapters/artifacts/s3_compatible.py`, the shared canonical
+  provider-reference helper, and adapter registration;
 - `backend/app/interfaces/artifacts.py` only to register the closed
   `minio-v1` and `aws-s3-v1` namespace profiles, their exact descriptor keys,
   and the stable AWS live-proof-required error;

@@ -4184,8 +4184,9 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "No later artifact chunk starts automatically" in artifact_status.replace(
         "\n", " "
     )
-    assert "| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 |" in (
-        work_queue
+    assert (
+        "| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | "
+        "Merged through PR #146 as `0ffdabf`" in work_queue
     )
     assert "| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Active" in (
         work_queue

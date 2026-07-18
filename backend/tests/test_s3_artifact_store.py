@@ -512,6 +512,38 @@ async def test_precondition_failure_requires_exact_replay_verification(
 
 
 @pytest.mark.asyncio
+async def test_success_without_full_source_consumption_is_not_replay(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Reject a success response when the SDK did not validate all source bytes."""
+    store = initialize_minio_store(private_prefix="negative/unconsumed-success")
+
+    class Client:
+        async def put_object(self, **_kwargs: object) -> object:
+            return {}
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    async def must_not_classify_as_replay(*_args: object) -> bool:
+        raise AssertionError("unconsumed successful writes are not replay candidates")
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    monkeypatch.setattr(store, "_matches_commitment", must_not_classify_as_replay)
+    try:
+        async with minted_source(tmp_path / "scratch", b"unconsumed") as source:
+            with pytest.raises(
+                ArtifactInputMismatchError,
+                match="did not consume the sealed artifact source",
+            ):
+                await store.put(source)
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
 async def test_nonprecondition_put_error_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

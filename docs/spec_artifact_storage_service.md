@@ -470,12 +470,14 @@ only the dedicated test bucket; tests do not emulate S3 calls.
 
 `aws_s3` accepts only a native endpoint-less AWS configuration, explicit
 region, and exactly one allowlisted workload-identity method. The composition
-root validates that environment but then raises
-`artifact_provider_live_proof_required` before constructing the adapter
-factory, building or loading the credential resolver, claiming a namespace, or
-performing provider I/O. Chunk 07 alone may make native AWS runtime-eligible by
-adding the immutable live activation proof defined below. MinIO conformance is
-not AWS activation evidence.
+root validates settings and then raises `artifact_provider_live_proof_required`
+before validating credential environment, constructing the adapter factory,
+building or loading the credential resolver, claiming a namespace, or
+performing provider I/O. The credential-environment validator and isolated
+resolver are inactive deployment-proof support in this chunk; startup does not
+invoke them. Chunk 07 alone may make native AWS runtime-eligible by adding the
+immutable live activation proof defined below. MinIO conformance is not AWS
+activation evidence.
 
 Cloudflare R2 has no v0.1 runtime mode, credential issuer, sidecar, secret
 contract, configuration profile, or deployment proof. Any future provider
