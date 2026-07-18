@@ -1,17 +1,25 @@
 # Review Log
 
-## 2026-07-18 - WS-AUTH-001-09D-A Deterministic Evidence Passed
+## 2026-07-18 - WS-AUTH-001-09D-A Deterministic Evidence Repaired
 
-- Candidate `a4029bd` implements migration `0026`, truthful linked lifecycle
-  invalidation, and only the three reviewed actor-profile lifecycle routes.
-- The five exact migration proofs, expanded PostgreSQL lifecycle matrix and
-  blocker-controlled race proof, focused regression repairs, and the real HTTP
-  API contract pass. No timing sleeps establish concurrency order.
+- Initial exact-head QA/test-delta review rejected `43192d` because lifecycle
+  denial rows retained matched-grant IDs, database guards permitted missing or
+  stale reactivation provenance, the service/failure matrix was incomplete,
+  and ordered races did not observe a PostgreSQL waiter.
+- Candidate `b025460` removes matched-grant internals from lifecycle denials,
+  requires fresh complete profile/link reactivation provenance, covers a fixed
+  service target and nine injected transaction stages, and observes every
+  ordered second request in PostgreSQL `wait_event_type='Lock'`.
+- All five exact migration proofs pass in 184.12 seconds. The expanded real
+  PostgreSQL matrix passes in 100.36 seconds and the blocker-controlled race
+  proof passes in 140.69 seconds. No timing sleeps establish race order.
 - Focused branch coverage passes at 90.70 percent for actors and 91.78 percent
-  for authorization; the new lifecycle service is 100 percent branch-covered.
-- Ruff, stale wording and authorization scans, Markdown links, 87 Agent Gates,
-  merge-intent validation, and diff integrity pass. Exact-head internal review,
-  PR publication, external checks, and explicit human merge approval remain.
+  for authorization; the clean authorization selection passes all 110 tests and
+  the new lifecycle service is 100 percent branch-covered.
+- Ruff, the real HTTP API contract, stale scans, Markdown links, 87 Agent
+  Gates, merge-intent validation, and diff integrity pass. Exact-head internal
+  review remains before PR publication. External checks and explicit human
+  merge approval follow.
   `WS-AUTH-001-09D-B` and `WS-AUTH-001-09E` remain inactive.
 
 ## 2026-07-18 - WS-AUTH-001-09D-A Preimplementation Review Passed
