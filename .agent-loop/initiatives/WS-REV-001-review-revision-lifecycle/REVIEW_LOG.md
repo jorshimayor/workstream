@@ -625,3 +625,263 @@ updates the discovered migration/test inventory and preserves the previously
 reviewed PREP, FinalAcceptance, transaction ownership, revision rebase, and no-
 adjudication boundaries. The exact `7a76da2` approval predates this rebase and
 must be replaced by fresh exact-SHA review and evidence before publication.
+
+## WS-REV-001-01 Start And Plan Review - 2026-07-17
+
+PR #128 merged as trusted main
+`0302bcf854a565d429e232ad6b076a1931ea74e4`, and the user explicitly started
+`WS-REV-001-01` from that exact base on branch `codex/ws-rev-001-01`.
+
+The initial L1 plan review passed with conditions. The contract was amended to
+name the complete active-document surface, forbid all four archival inputs,
+require literal hashes plus exact trusted-base diffs, specify the fail-closed
+scanner classifier and fixtures, publish exact four-action and six-service
+manifests, reconcile initiative state, and require exact-SHA internal evidence
+plus a changed-path audit. The amended contract then passed plan re-review.
+
+Deterministic evidence later exposed random WeasyPrint font-subset bytes. The
+render scope was amended to include `render_pdf.sh`, fix the PDF identifier,
+and embed full fonts. Plan re-review then found that the renderer rewrote four
+unchanged context PNGs outside Chunk 01 scope. The renderer now compares pixels
+through temporary outputs and preserves existing target bytes when unchanged;
+verification also binds all four paths to trusted base `0302bcf`. Consecutive
+renders produced identical lifecycle PDF and PNG hashes without changing a
+context image. The repaired L1 contract passed final plan review.
+
+Implementation remains specification and gate work only. No runtime endpoint,
+authorization availability, artifact capability, contribution behavior,
+adjudication behavior, or reputation mutation is introduced.
+
+## WS-REV-001-01 First Exact-SHA Review - 2026-07-17
+
+Candidate `06548c56e9db63e7f73c581c2c974a3ce798ba2f` passed deterministic
+evidence but failed senior engineering, architecture, QA/test, product/ops,
+docs, test-delta, and CI-integrity review. Security/auth and reuse/dedup passed.
+
+The valid findings and repairs are:
+
+- Added active ADR 0003, the Project Guide template, and three README-linked
+  roadmaps to Chunk 01. They now remove automatic revision rejection,
+  policy-selected latest-context rebase, legacy finding severity/closure,
+  direct Review-to-submitter contribution, active reputation, and product
+  second-review assumptions.
+- Moved `task_assignment_id` from Assignment to immutable Submission, removed
+  policy-selected rebase fields, added ReviewEvidenceArtifact, and corrected
+  FinalAcceptance, contribution-source, blocking-finding, reputation, and
+  adjudication model invariants.
+- Made the decision transaction commit before later revision preparation,
+  contributor response, replacement Submission, and checker work in both
+  sequence sources; regenerated the lifecycle image and architecture PDF.
+- Added `NEEDS_REVISION -> CANCELLED`, prohibited direct acceptance from
+  revision, required CheckerRun-rooted automated revision, removed pre-submit
+  revision-lane wording, and made reject findings optional beside its bounded
+  human reason.
+- Added planned/unavailable status to queue, first-user-flow, compensation, and
+  roadmap surfaces. Initiative state now finishes Chunk 01 and stops before 02.
+- Replaced filename-only scanner admission with fail-closed classification for
+  every docs file, exact reference/archive handling, local structural
+  exceptions only, and adversarial tests for keyword decoys, unrelated
+  negation, legacy severity, direct contribution, and unclassified copies.
+
+The repaired scanner passes across the full active docs tree and the expanded
+agent-gate suite passes 85 tests. A new exact-SHA review is required; the failed
+candidate is historical evidence only.
+
+The roadmap scope amendment also records that neither ignored local roadmap
+export existed at start or after repair. The contract fails closed if an XLSX or
+CSV appears without its paired export, exact one-sheet name, current Workstream
+definition, and ignored/untracked status. No spreadsheet file is committed.
+The expanded L1 chunk contract then passed final plan re-review with no
+remaining scope or proof blocker.
+
+A later repeat-render proof showed that ImageMagick SVG antialiasing can change
+context-diagram pixels across invocations, which also changes the composed PDF.
+The renderer default now rebuilds only Chunk 01's lifecycle PNG and PDF; full
+context regeneration requires explicit `--all`. The four context images are
+restored and remain trusted-base bound.
+
+## WS-REV-001-01 Second Exact-SHA Review And Repair - 2026-07-17
+
+Candidate `0a0be1acd870f769ac5d27661a01d45ce3b402b6` failed the grouped
+senior-engineering/architecture, QA/product/test-delta, and
+security/docs/CI-integrity reviews. Reuse/dedup remained passing. The failed
+candidate is historical evidence only.
+
+The valid findings produced this repair:
+
+- reconciled all three active roadmaps and the Project Guide template to
+  immutable finding responses/resolutions, decision-specific evidence, the
+  FinalAcceptance contribution matrix, payable-only awards, and deferred
+  reputation;
+- removed remaining automatic-reject, mandatory second-review, overturned-
+  decision, and adjudication-like product semantics from active decision,
+  risk, data-model, operations, and diagram surfaces;
+- expanded the fail-closed scanner and adversarial fixtures for spaced legacy
+  closure, plural automatic rejection, unconditional payment, passive
+  reputation, direct-contribution decoys containing FinalAcceptance, and mixed
+  reviewer-rebase negation;
+- separated concealed `review.queue.read`, `review.claim`, and
+  `review.decision` operations, with fresh token verification, AUTH PREP,
+  canonical lock/recomposition order, exact handle validation/consumption,
+  evaluation, and staged evidence before the first feature mutation; and
+- regenerated the two context diagrams whose v0.1 reputation content changed,
+  while the Workstream context and future identity/payment/reputation images
+  remain byte-bound to trusted base.
+
+The amended L1 contract added the affected active sources and generated files
+to allowed scope. Its final plan re-review passed after the renderer was made
+portable and deterministic: it requires the repository-standard PlantUML
+1.2026.6 jar, verifies SHA-256
+`89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690`,
+uses that jar unconditionally, fixes `SOURCE_DATE_EPOCH`, strips lifecycle PNG
+metadata, and exposes explicit `--review-context` source-to-SVG-to-PNG
+rendering. Two complete pinned render passes produced identical SVG, PNG, and
+PDF hashes.
+
+The repaired stale-review and stale-workstream gates pass, the expanded agent
+gate suite passes all 85 tests, archival literal hashes remain exact, and both
+local roadmap exports remain absent. A new committed exact-SHA candidate and
+full internal reviewer fanout are still required before PR publication.
+
+## WS-REV-001-01 CON PR #142 Main Reconciliation - 2026-07-17
+
+Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` later passed all nine
+required reviewer tracks and its evidence gate. Before publication, CON planning
+PR #142 merged to main at `a947b8693a97bdb94c9dc63202a51e197834d613` from
+branch head `4b13c3ee28ecddd7c92be70ad2059c130604f9d1`.
+
+`git pull --no-rebase origin main` exposed conflicts in 15 shared active
+documents. The reconciliation retains CON's exact reviewer/submitter operation
+shapes, frozen-policy award rules, source constraints, and joint transaction
+boundary while preserving REV's blocking/advisory finding model, optional
+reject findings, deterministic revision preparation, deferred reputation, and
+no-adjudication v0.1 boundary. The newly supplied CON reference Markdown is an
+exact historical path in the fail-closed review scanner: it is a noncanonical
+working transcription, not an archival or runtime-authority input.
+
+PR #142 contains planning and documentation only. It activates no CON or REV
+runtime behavior. Because current-main reconciliation changed review-relevant
+files, the earlier exact-SHA PASS is historical and a fresh full reviewer pass
+is required on the merge candidate.
+
+## WS-REV-001-01 Current-Main Candidate Repair - 2026-07-17
+
+Exact candidate `1c7c3e75cffbe91a44d5cd10d333a5ec0fcf1fd4` passed the
+current-main plan review but failed the first full reviewer fanout. Senior
+engineering, architecture, QA, and product/ops found that three active
+operational workflows inverted or ambiguously described the canonical reviewer
+CON operation, FinalAcceptance, task-effect, and submitter CON operation order.
+They also found an optional human simulation inserted into automated checker
+admission, an undefined disputed-reject owner, and missing planned/unavailable
+review-lifecycle status in the operator workflow.
+
+The repair aligns every numbered accept workflow to Review and lease/queue
+closure -> reviewer CON operation -> FinalAcceptance -> accepted task and
+completed assignment -> submitter CON operation. Submitted-work admission is
+now a mandatory durable CheckerRun decision; human judgment begins only with an
+immutable Review. Terminal-reject sampling is explicitly non-mutating and has
+no dispute, reopen, or adjudication path. Focused scanner fixtures and
+structural workflow-order tests prevent recurrence. Candidate `1c7c3e75` is
+historical failure evidence; a new exact-SHA full reviewer fanout is required.
+
+The first repair candidate `e2797fb1` then failed the repair-cycle plan gate:
+the two structural tests were not registered in the custom runner, payment
+wording left task effects versus the submitter operation implicit, and a global
+accept-order regex rejected valid branch-scoped prose. The follow-up registers
+both tests, raises the executed gate count, asserts the complete payment order,
+and removes the overbroad regex while retaining exact human-admission and
+disputed-reject protections.
+
+Candidate `76ed3c14` passed the repaired plan gate and eight of nine full-review
+tracks. The docs track then found two remaining active-flow contradictions:
+Flow 4 used severity/no-blocker shorthand instead of exact durable, final,
+current `allow_review` admission, and generic Flow 6 applied Review-rooted
+revision records to checker-caused remediation. The repair binds Flow 4 and
+Flow 5 to the exact admitting CheckerRun, keeps setup/provenance defects on
+`evaluation_pending` / `task_setup_blocked`, scopes Flow 6 to immutable
+`Review(needs_revision)`, and states that checker remediation has only
+CheckerResult lineage and returns through the normal submission/checker spine.
+The registered structural test now covers these distinctions.
+
+The follow-up plan gate accepted the active prose and required the regression
+to bind Flow 5's verified facts and every checker-forbidden Review record or
+reviewer contribution explicitly. The final fixture scopes those assertions to
+the checker-remediation `creates no` clause.
+
+## WS-REV-001-01 AUTH-09B Main Reconciliation - 2026-07-18
+
+After candidate `df098f203fae4982806568dcc25a81043d9f7211` passed all nine
+tracks, AUTH-09B PR #143 advanced main to
+`053242b90d927ace3fab92eeca72da27a61cecec`. The branch pulled that merge
+cleanly. Only `scripts/test_agent_gates.py` overlapped, and Git retained both
+AUTH's new gates and REV's registered 87-test baseline without conflict.
+
+AUTH-09B activates only `actor.service.provision`, changing the current
+catalogue snapshot to 74 PermissionIds and 65 ActionIds split into 10 active and
+55 planned. It supplies controlled provisioning for AUTH's existing closed
+identity registry but adds none of REV's six future identities, admits no
+service token, and activates no review action. All 24 REV action dependencies
+remain unavailable. The prior exact-SHA PASS is historical; the reconciled
+candidate requires fresh deterministic and full reviewer evidence against
+`053242b`.
+
+## WS-REV-001-01 PR #145 Initial External Gate - 2026-07-18
+
+PR #145 opened from head `9ad0420e`. GitHub Agent Gates failed only at the
+schema-v2 merge-intent validator because the existing `WS-REV-001-02` contract
+heading omitted the successor title declared by the exact REV-01 merge intent.
+The repair adds that exact title to the heading without changing successor
+scope or starting Chunk 02. CodeRabbit reported a review-limit cooldown and
+produced no findings.
+
+## WS-REV-001-01 CON-01 Main Reconciliation - 2026-07-18
+
+While PR #145 replacement Backend was running, CON-01 PR #144 advanced main to
+`e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`. The branch pulled it and resolved
+one `architecture_data_model.md` conflict by retaining the exact shared
+FinalAcceptance fields plus explicit canonical reviewer ActorProfile and
+immutable ReviewPolicy foreign-key semantics.
+
+CON-01 now publishes `docs/spec_contribution_compensation.md` and ADR 0016 as
+canonical CON authority. It confirms REV's one-commit transaction, ordered
+reviewer/accept-only submitter operations, FinalAcceptance-only submitter
+trigger, frozen policies, and no ART call. It adds no runtime. The prior PR
+candidate and replacement checks are historical; fresh exact-SHA internal and
+external gates are required against `e118e33`.
+
+The first CON-01 reconciliation plan gate found one stale central PLAN paragraph
+that still called the older WS-XINT handoff current and treated CON as unmerged
+sibling evidence. The repair names merged CON-01 `e118e33`, its active
+specification, and ADR 0016 as canonical authority while retaining XINT only as
+historical supporting context and preserving every downstream runtime gate.
+
+## WS-REV-001-01 Final Scope Verification Repair - 2026-07-18
+
+After ART-02A3 reconciliation and a fresh nine-track PASS, CodeRabbit correctly
+reported that the final path listing did not fail on unexpected scope. Candidate
+`7742730` added a committed path allowlist and documented why trusted current
+main `a10d901` defines PR scope while planning base `0302bcf` remains the
+archival byte-integrity anchor.
+
+Internal security/docs/CI review then found that path-only comparison could not
+distinguish an approved modification from deleting the same path. Candidate
+`7785b832` replaces it with an exact 71-entry
+`git diff --name-status --no-renames` A/M manifest. The exact comparison
+passes; simulated status change, removal, rename as D+A, and addition each fail.
+All deterministic gates and all nine exact-SHA reviewer tracks pass. The proof
+is intentionally chunk-specific rather than a permanent global CI rule pinned
+to one historical main SHA.
+
+## WS-REV-001-01 AUTH-09C Main Reconciliation - 2026-07-18
+
+AUTH-09C PR #146 advanced main to `0ffdabf3`. The branch merged it and resolved
+the sole conflict in `scripts/test_agent_gates.py` by adopting main's current
+AUTH-09C and merged ART-02A3 assertions while retaining REV's pre-merge ART
+phase checks in their fallback branches. No test or assertion was removed.
+
+AUTH-09C keeps 74 PermissionIds and 65 ActionIds, activating only
+`actor.profile.read` and `actor.identity_link.read` and moving the split to
+12 active / 53 planned. It adds no REV identity or action; all 24 REV
+dependencies remain unavailable. The trusted PR-scope base is now
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43`. Fresh deterministic evidence and
+all nine exact-SHA reviewer tracks are required.

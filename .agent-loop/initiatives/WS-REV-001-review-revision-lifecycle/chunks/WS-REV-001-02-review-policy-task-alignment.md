@@ -1,4 +1,4 @@
-# Chunk Contract: WS-REV-001-02
+# Chunk Contract: WS-REV-001-02 - Locked Review Policy And Task Lifecycle Alignment
 
 ## Goal
 
