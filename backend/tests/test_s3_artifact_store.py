@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 import hashlib
 import os
@@ -33,6 +34,8 @@ from app.interfaces.artifacts import (
     artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
+from app.modules.artifacts.preparation import ArtifactPreparationService
+from app.modules.artifacts.sources import ArtifactCommitment
 from tests.assertion_helpers import assert_secret_not_retained
 from tests.artifact_store_helpers import minted_source
 from tests.test_artifact_store_conformance import ArtifactStoreConformanceTests
@@ -801,6 +804,57 @@ async def test_uncertain_transport_put_uses_real_minio_verification(
                 with pytest.raises(ArtifactIntegrityError):
                     await store.put(source)
         assert client_calls >= 3
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_mode", ["precondition", "transport"])
+async def test_replay_paths_cannot_accept_malformed_source(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    failure_mode: str,
+) -> None:
+    """Require source proof even when an exact provider object is visible."""
+    store = initialize_minio_store(private_prefix="negative/malformed-replay")
+    provider_checked = False
+
+    class Client:
+        async def put_object(self, **kwargs: object) -> object:
+            if failure_mode == "precondition":
+                raise _client_error("PreconditionFailed", 412)
+            body: Any = kwargs["Body"]
+            assert await body.read(4) == b"go"
+            raise OSError("connection closed after partial source consumption")
+
+    @asynccontextmanager
+    async def fake_client() -> Any:
+        yield Client()
+
+    async def malformed_stream(
+        _self: ArtifactPreparationService,
+        _binding: object,
+        _commitment: ArtifactCommitment,
+    ) -> AsyncIterator[bytes]:
+        yield b"goodX"
+
+    async def exact_provider_match(*_args: object) -> bool:
+        nonlocal provider_checked
+        provider_checked = True
+        return True
+
+    monkeypatch.setattr(store, "_client", fake_client)
+    monkeypatch.setattr(store, "_matches_commitment", exact_provider_match)
+    try:
+        async with minted_source(tmp_path / "scratch", b"good") as source:
+            monkeypatch.setattr(
+                ArtifactPreparationService,
+                "open_committed_stream",
+                malformed_stream,
+            )
+            with pytest.raises(ArtifactInputMismatchError):
+                await store.put(source)
+        assert provider_checked is False
     finally:
         store.close()
 

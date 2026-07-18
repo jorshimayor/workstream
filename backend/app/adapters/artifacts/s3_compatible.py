@@ -339,6 +339,7 @@ class S3CompatibleArtifactStore:
                 status in {409, 412}
                 and _provider_error_code(error) in _PRECONDITION_ERROR_CODES
             ):
+                await self._validate_replay_source(body)
                 if await self._matches_commitment(provider_object_ref, commitment):
                     return ArtifactPutResult(provider_object_ref, replayed=True)
                 raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
@@ -346,6 +347,7 @@ class S3CompatibleArtifactStore:
         except ArtifactStoreError:
             raise
         except (TimeoutError, BotoCoreError, OSError):
+            await self._validate_replay_source(body)
             if await self._matches_commitment(provider_object_ref, commitment):
                 return ArtifactPutResult(provider_object_ref, replayed=True)
             raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
@@ -495,6 +497,14 @@ class S3CompatibleArtifactStore:
             return False
         return True
 
+    async def _validate_replay_source(self, body: _CommittedSourceBody) -> None:
+        """Finish validating the sealed source before accepting any replay."""
+        try:
+            async with asyncio.timeout(self._operation_total_timeout_seconds):
+                await body.validate_complete()
+        except TimeoutError:
+            raise ArtifactStoreUnavailableError("S3 artifact operation failed") from None
+
     @asynccontextmanager
     async def _client(self) -> AsyncIterator[Any]:
         """Create one bounded S3 client from the already-isolated session."""
@@ -595,6 +605,13 @@ class _CommittedSourceBody:
         if self._commitment.byte_count != 0:
             raise ArtifactInputMismatchError("artifact source is not empty")
         if await self.read(1) != b"" or not self._complete:
+            raise ArtifactInputMismatchError("artifact source violates commitment")
+
+    async def validate_complete(self) -> None:
+        """Consume and validate every remaining sealed source byte."""
+        while await self.read(self._buffer_bytes):
+            pass
+        if not self._complete:
             raise ArtifactInputMismatchError("artifact source violates commitment")
 
     async def _require_source_exhausted(self) -> None:
