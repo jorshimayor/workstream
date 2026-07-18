@@ -10,7 +10,13 @@
   requires fresh complete profile/link reactivation provenance, covers a fixed
   service target and nine injected transaction stages, and observes every
   ordered second request in PostgreSQL `wait_event_type='Lock'`.
-- All five exact migration proofs pass in 184.12 seconds. The expanded real
+- A second exact-head architecture/migration review rejected `e1ea98f` because
+  code-owned activation custody still named the retired 09D parent and the
+  migration tests did not exercise every upgrade/downgrade refusal branch.
+- Candidate `3d68933` assigns profile actions to exact owner 09D-A and inactive
+  link actions to 09D-B, then proves partial attribution, padded and multibyte
+  reason refusal, profile/link success evidence, and both link-denial tokens.
+- All five exact migration proofs pass in 181.50 seconds. The expanded real
   PostgreSQL matrix passes in 100.36 seconds and the blocker-controlled race
   proof passes in 140.69 seconds. No timing sleeps establish race order.
 - Focused branch coverage passes at 90.70 percent for actors and 91.78 percent
