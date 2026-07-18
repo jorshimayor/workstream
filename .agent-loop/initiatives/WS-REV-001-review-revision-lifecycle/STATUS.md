@@ -23,6 +23,11 @@ task/assignment lifecycle compatibility, and 02C Submission
 attribution/context/lineage. No backend model, service, migration, or persistence
 test has changed.
 
+Planning candidate `0292825a52f884f42d82e1522637f2ff2bf4bb7a` passed the
+repaired circuit breaker, all required internal reviewer tracks, mandatory
+contract scanners, Markdown links, 87 agent gates, and schema-v2 merge-intent
+validation. It is planning-publication ready, not runtime-ready.
+
 ## Chunk 01 merge history
 
 While Chunk 01 was under review, CON planning PR #142 merged to main at

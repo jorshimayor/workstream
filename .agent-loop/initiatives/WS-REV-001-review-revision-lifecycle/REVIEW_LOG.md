@@ -908,3 +908,10 @@ foundation afterward from the then-current head. Planning converts parent 02 to
 a non-executable split record, defines children 02A/02B/02C, corrects the Review
 FK wording, and records the full future test matrix. No backend model, service,
 migration, or persistence test is edited.
+
+Candidate `0292825a52f884f42d82e1522637f2ff2bf4bb7a` passed the repaired
+circuit breaker and all required internal planning tracks. Mandatory stale
+authorization/Workstream/review/artifact scanners, Markdown links, 87 agent
+gates, diff integrity, and the schema-v2 merge-intent validator pass. Remaining
+gates are the dependency-owned AUTH merges, a separate 02A start, and the two
+human-owned duration defaults before 02B.
