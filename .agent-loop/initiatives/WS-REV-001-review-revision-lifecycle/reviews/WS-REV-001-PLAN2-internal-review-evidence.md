@@ -3,7 +3,7 @@
 ## Candidate
 
 - Trusted base: `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
-- Reviewed planning candidate: `6985909ea83e74de22f1067777be0af2138b28de`
+- Reviewed planning candidate: `a5d6b2ced4aef4e5df316af65246e10dcdc524d1`
 - Scope: complete REV initiative/runtime-readiness reconciliation, four active
   product documents including `docs/spec_review_lifecycle.md`, and one schema-v2
   merge intent
@@ -17,17 +17,17 @@ Valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: 6985909ea83e74de22f1067777be0af2138b28de
+Reviewed code SHA: a5d6b2ced4aef4e5df316af65246e10dcdc524d1
 
-Reviewed at: 2026-07-18T19:31:24Z
+Reviewed at: 2026-07-18T20:14:06Z
 
-Reviewer run IDs: /root/rev01_senior_arch_reuse@6985909ea83e74de22f1067777be0af2138b28de; /root/rev01_qa_product_test@6985909ea83e74de22f1067777be0af2138b28de; /root/rev01_security_docs_ci@6985909ea83e74de22f1067777be0af2138b28de
+Reviewer run IDs: /root/rev01_senior_arch_reuse@a5d6b2ced4aef4e5df316af65246e10dcdc524d1; /root/rev01_qa_product_test@a5d6b2ced4aef4e5df316af65246e10dcdc524d1; /root/rev01_security_docs_ci@a5d6b2ced4aef4e5df316af65246e10dcdc524d1
 
 ## Circuit breaker
 
 PASS with a documented planning-only size exception. The full authorized
-initiative refresh changes 33 files and contracts substantially more than the
-default review guideline, but 3,879 lines are contraction/removal, no runtime or
+initiative refresh changes 37 files and contracts substantially more than the
+default review guideline, but 3,884 lines are contraction/removal, no runtime or
 schema is implemented, oversized runtime parents are non-executable split
 records, only PLAN2 is active, and every successor requires a separate start.
 
@@ -35,21 +35,21 @@ records, only PLAN2 is active, and every successor requires a separate start.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| Senior engineering | PASS AFTER FIXES | None | Runtime ownership, lock ordering, child boundaries, AUTH-09D-A reconciliation, and stop gates are explicit. |
-| QA/test | PASS AFTER FIXES | None | Backfill refusal, direct SQL, races, rollback, immutable history, checker/human separation, and release proof are covered. |
-| Security/auth | PASS AFTER FIXES | None | AUTH owns contributor clean cut; REV owns lifecycle lineage; all 24 REV action dependencies remain unavailable. |
-| Product/ops | PASS AFTER FIXES | None | Accept, needs-revision, reject, FinalAcceptance, contribution, checker remediation, and human revision flows are unambiguous. |
-| Architecture | PASS AFTER FIXES | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns public request acknowledgement, authorization cutover, and activation. |
-| CI integrity | PASS AFTER FIXES | None | Merge intent is unique; global 78 percent and focused 90 percent future coverage gates are preserved; no CI file changed. |
-| Docs | PASS AFTER FIXES | None | Active authority is current through AUTH-09D-A PR #148 and historical catalogue snapshots remain historical. |
+| Senior engineering | PASS | None | Runtime ownership, lock ordering, child boundaries, AUTH-09D-A reconciliation, and stop gates are explicit. |
+| QA/test | PASS | None | Backfill refusal, direct SQL, races, rollback, immutable history, checker/human separation, and release proof are covered. |
+| Security/auth | PASS | None | AUTH owns contributor clean cut; REV owns lifecycle lineage; all 24 REV action dependencies remain unavailable. |
+| Product/ops | PASS | None | Accept, needs-revision, reject, FinalAcceptance, contribution, checker remediation, and human revision flows are unambiguous. |
+| Architecture | PASS | None | Submission persists exact checker-remediation cause; 09A4 owns final source XOR; AUTH-14 owns public request acknowledgement, authorization cutover, and activation. |
+| CI integrity | PASS | None | Merge intent is unique; global 78 percent and independent focused 90 percent future coverage gates are preserved; no CI file changed. |
+| Docs | PASS | None | Active authority is current through AUTH-09D-A PR #148; `docs/reference_specs/` remains frozen; historical catalogue snapshots remain historical. |
 | Reuse/dedup | PASS | None | Canonical Submission, CheckerRun, ActorProfile, RevisionContextPreparation, ART capabilities, and CON participants are reused. |
 | Test delta | PASS | None | No executable test changed, was removed, skipped, weakened, or rewritten. |
 
 No Critical, High, or Medium finding remains.
 
-The reviewed commit includes the initiative review-log entry and the initial
-evidence/trust artifacts. The follow-up commit changes only recognized review
-evidence to bind this exact-SHA result and repair the AUTH-14 summary wording.
+The reviewed commit includes the initiative review log, external-review repair,
+and initial response/evidence/trust artifacts. The follow-up changes only
+recognized review evidence to bind this exact-SHA result and record final gates.
 
 ## Findings repaired
 
@@ -70,6 +70,12 @@ evidence to bind this exact-SHA result and repair the AUTH-14 summary wording.
   foundation as 02A's only unmerged AUTH runtime dependency.
 - Updated live AUTH catalogue truth to 74 PermissionIds and 65 ActionIds split
   into 15 active and 50 planned while preserving historical snapshots.
+- Made 03B the sole packet-manifest persistence owner, made 06A its consumer,
+  and made chunk 10 consume the task participant delivered by 09A2.
+- Added pinned executable chunk 08 commands with independent reviews/tasks 90
+  percent floors; excluded exact CheckerRun remediation from legacy closure.
+- Corrected active-spec versus frozen `docs/reference_specs/` scope and assigned
+  release-control implementation exclusively to 12A1 through 12A4.
 
 ## Deterministic evidence
 

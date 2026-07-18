@@ -5,6 +5,7 @@
 - Pull request: #150
 - Reviewer: CodeRabbit
 - Reviewed head: `e311709a29367d298442ee9a28e2192f6d4d704b`
+- Internally reviewed repaired head: `a5d6b2ced4aef4e5df316af65246e10dcdc524d1`
 - Actionable threads: 6
 
 ## Comments addressed
@@ -39,7 +40,16 @@ approval, and merging PLAN2 does not start 02A.
 
 ## Commands rerun
 
-Pending after the repaired candidate is committed and internally reviewed.
+- `git diff --check 99ae4c963e53f317175dcb308b9e47c93ccf19ed..HEAD`: PASS.
+- Four stale-contract scanners: PASS.
+- `python3 scripts/check_markdown_links.py`: PASS for 36 Markdown files.
+- Agent gates: 87 passed.
+- `alembic heads`: one head, `0026_actor_profile_lifecycle`.
+- Schema-v2 PLAN2 merge-intent validation: PASS.
+- Pinned Ruff, docstring-coverage, and coverage executables: present; pinned
+  docstring command: PASS.
+- `python3 scripts/check_internal_review_evidence.py`: PASS after exact-SHA
+  evidence rebind.
 
 ## Remaining risks
 
