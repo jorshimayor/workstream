@@ -225,7 +225,7 @@ def test_alternate_validation_never_passes_secret_into_pydantic(
         obj: object,
         **kwargs: object,
     ) -> BaseSettings:
-        observed["input"] = obj
+        observed["input"] = dict(obj) if isinstance(obj, Mapping) else obj
         raise PydanticBoundaryReached
 
     monkeypatch.setattr(BaseSettings, base_method_name, classmethod(capture_input))
@@ -824,6 +824,58 @@ def test_invalid_minio_secret_is_absent_from_application_traceback(
     )
 
     with pytest.raises(ValueError, match="invalid artifact storage secret") as caught:
+        if method_name == "constructor":
+            Settings(**payload)
+        elif method_name == "model_validate_json":
+            Settings.model_validate_json(json.dumps(payload))
+        else:
+            getattr(Settings, method_name)(payload)
+
+    assert_secret_not_retained(
+        caught.value,
+        secret,
+        traceback_module_prefixes=("app.",),
+    )
+
+
+@pytest.mark.parametrize(
+    ("method_name", "delegated_method", "error_type"),
+    [
+        ("constructor", "__init__", RuntimeError),
+        ("model_validate", "model_validate", RuntimeError),
+        ("model_validate_json", "model_validate", TypeError),
+        ("model_validate_strings", "model_validate_strings", TypeError),
+    ],
+)
+def test_unexpected_validation_errors_do_not_retain_minio_secrets(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    method_name: str,
+    delegated_method: str,
+    error_type: type[Exception],
+) -> None:
+    """Unexpected delegated errors must still clear every credential local."""
+    secret = "minio-secret-from-unexpected-validator-error"
+    payload = _minio_setting_values(
+        tmp_path,
+        artifact_scratch_root=str(tmp_path / "scratch"),
+        artifact_s3_secret_access_key=secret,
+    )
+
+    def fail_validation(*args: object, **kwargs: object) -> None:
+        del args, kwargs
+        raise error_type("forced validation failure")
+
+    if delegated_method == "__init__":
+        monkeypatch.setattr(BaseSettings, delegated_method, fail_validation)
+    else:
+        monkeypatch.setattr(
+            BaseSettings,
+            delegated_method,
+            classmethod(fail_validation),
+        )
+
+    with pytest.raises(error_type, match="^forced validation failure$") as caught:
         if method_name == "constructor":
             Settings(**payload)
         elif method_name == "model_validate_json":

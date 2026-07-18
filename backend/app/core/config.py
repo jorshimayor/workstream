@@ -212,7 +212,7 @@ class Settings(BaseSettings):
             self._set_artifact_s3_static_secrets(s3_secrets)
             if not _ALTERNATE_VALIDATION_RESTORES_SECRETS.get():
                 self._validate_artifact_s3_secret_contract()
-        except ValueError:
+        except Exception:
             _clear_settings_private_secrets(self)
             values.clear()
             secret = None
@@ -257,7 +257,7 @@ class Settings(BaseSettings):
         ):
             try:
                 return cls.model_validate(parsed, **kwargs)
-            except ValueError:
+            except Exception:
                 parsed = None
                 json_data = b""
                 raise
@@ -313,7 +313,7 @@ class Settings(BaseSettings):
             settings._set_artifact_s3_static_secrets(s3_secrets)
             settings._validate_artifact_s3_secret_contract()
             return settings
-        except ValueError:
+        except Exception:
             if settings is not None:
                 _clear_settings_private_secrets(settings)
             sanitized.clear()
