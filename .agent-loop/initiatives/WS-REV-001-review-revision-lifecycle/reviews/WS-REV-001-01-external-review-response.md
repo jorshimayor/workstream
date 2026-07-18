@@ -4,8 +4,8 @@
 
 - PR: `#145`
 - Initial published head: `9ad0420e4c8f3ce0933a85fc75f133a340f91fcd`
-- Reviewed repair candidate: `5af0adcec3cc184c4455292ec2f04e7505a90857`
-- Trusted base: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
+- Reviewed repair candidate: `a184e4110cd1b14718165b3f8ebf73e53e03db0a`
+- Trusted base: `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`
 
 ## Comments Addressed
 
@@ -40,6 +40,15 @@
   distinguish an approved modification from deleting the same path. The final
   status-aware manifest closes that gap; adversarial status-change, removal,
   rename-as-delete-plus-add, and unreviewed-addition probes all fail.
+- AUTH-09C PR #146 later advanced main. The branch resolved the sole conflict in
+  `scripts/test_agent_gates.py` by retaining all 80 main tests and seven REV
+  tests: main's AUTH-09C/merged ART assertions are current, and REV's earlier
+  ART phases remain fallback branches. The active REV contract now records
+  AUTH-09C's exact 65-action, 12-active, 53-planned snapshot without activating
+  any of the 24 unavailable REV dependencies.
+- Internal plan review found three remaining records that called AUTH-09B's
+  65/10/55 snapshot current. They now label AUTH-09B historical, AUTH-09C
+  65/12/53 current, and future release counts dynamic.
 
 ## Comments Deferred
 

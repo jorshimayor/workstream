@@ -31,6 +31,9 @@ not v0.1 behavior.
 - Reconciled merged AUTH-09B's controlled provisioning capability and exact
   `65 / 10 active / 55 planned` catalogue without activating any REV identity
   or action.
+- Reconciled merged AUTH-09C's two bounded actor-registry reads and exact
+  `65 / 12 active / 53 planned` catalogue while keeping all 24 REV
+  dependencies unavailable.
 - Reconciled merged CON-01's active specification and ADR 0016 while retaining
   its no-runtime status and downstream persistence/participant gates.
 - Reconciled merged ART-02A3's active byte-only v2 LocalStorage clean cut while
@@ -104,8 +107,8 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 The plan gate and all nine required reviewer tracks passed exact SHA
-`5af0adcec3cc184c4455292ec2f04e7505a90857` against trusted main
-`a10d9018007d2e847b4870e9b26cbd24e24c7bb4`: senior engineering, QA/test,
+`a184e4110cd1b14718165b3f8ebf73e53e03db0a` against trusted main
+`0ffdabf3dbb77e4e066683fde1a095d744ff1f43`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
 
@@ -125,6 +128,12 @@ was addressed with an exact status manifest and an explicit current-main versus
 archival-base rationale. Internal review caught and repaired the first
 path-only version before publication. External checks supplement internal
 review and do not replace it.
+
+AUTH-09C then advanced main and conflicted only in the shared agent-gate
+lifecycle test. The resolution preserves all 80 main tests plus seven REV tests,
+adopts the merged AUTH/ART state, and retains the earlier ART fallback branches.
+Three stale catalogue-provenance statements found internally were corrected
+before the final exact-SHA review.
 
 ## Remaining Risks
 

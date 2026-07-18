@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `5af0adcec3cc184c4455292ec2f04e7505a90857`
+Reviewed code SHA: `a184e4110cd1b14718165b3f8ebf73e53e03db0a`
 
-Trusted main SHA: `a10d9018007d2e847b4870e9b26cbd24e24c7bb4`
+Trusted main SHA: `0ffdabf3dbb77e4e066683fde1a095d744ff1f43`
 
-Reviewed at: `2026-07-18T05:54:45Z`
+Reviewed at: `2026-07-18T09:19:23Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -16,15 +16,15 @@ Valid findings addressed: yes
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| Senior engineering | PASS | None | Status-aware scope proof is maintainable, deterministic, and bounded to Chunk 01 |
-| QA/test | PASS | None | Exact 71-entry scope match, four adversarial probes, structural regressions, and 87 agent gates verified |
-| Security/auth | PASS | None | AUTH PREP order, grants, lease privacy, exact admission, and unavailable surfaces verified |
-| Product/ops | PASS | None | Decision effects, checker versus human revision, no synthetic reject, and contribution lineage verified |
+| Senior engineering | PASS | None | AUTH-09B is historical, AUTH-09C is current, and future catalogue counts remain dynamic |
+| QA/test | PASS | None | All 80 main tests plus seven REV tests, exact 71-entry scope, and 87 executed gates verified |
+| Security/auth | PASS | None | AUTH-09C activates only two bounded reads; all 24 REV dependencies remain unavailable |
+| Product/ops | PASS | None | AUTH reconciliation changes no review lifecycle, runtime scope, or Chunk 02 behavior |
 | Architecture | PASS | None | REV/AUTH/ART/CON ownership and current-main versus archival-base separation remain correct |
-| Docs | PASS | None | Status-manifest semantics and chunk-specific non-global-CI boundary are exact and unambiguous |
+| Docs | PASS | None | AUTH-09C 65/12/53 current state and historical catalogue provenance are consistent |
 | Reuse/dedup | PASS | None | Git status output and existing gates are reused without a parallel global scope mechanism |
-| Test delta | PASS | None | Base 80 tests and all assertions retained; seven REV tests add coverage |
-| CI integrity | PASS | None | Exact A/M status comparison fails on additions, deletions, renames, and status drift without weakening durable CI |
+| Test delta | PASS | None | All 80 trusted-main tests are AST-identical; seven REV tests add coverage |
+| CI integrity | PASS | None | Conflict resolution preserves every gate, workflow, threshold, and exact A/M scope check |
 
 ## Finding Disposition
 
@@ -65,7 +65,14 @@ that same file. Candidate `7785b832` replaces it with an exact
 `--name-status --no-renames` A/M manifest. All 71 statuses match, while
 adversarial status-change, removal, rename-as-D+A, and addition probes fail.
 Candidate `5af0adc` adds only the required accurate review-log entry, and a
-final exact-SHA review passed the plan gate and all nine tracks.
+final exact-SHA review passed the plan gate and all nine tracks. AUTH-09C PR
+#146 later advanced main to `0ffdabf3`. The branch resolved the single shared
+agent-gate conflict without removing or semantically changing any of main's 80
+tests and retained all seven REV additions. Candidate `f1004158` passed eight
+tracks, but plan/senior review found three records that still called AUTH-09B's
+65/10/55 snapshot current. Candidate `a184e411` labels AUTH-09B historical,
+AUTH-09C 65/12/53 current, and later release totals dynamic. Fresh exact-SHA
+review passed the plan gate and all nine tracks.
 
 ## Deterministic Evidence
 
