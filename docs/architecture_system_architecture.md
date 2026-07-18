@@ -63,7 +63,9 @@ Approved stack:
 - Backend API: Python with FastAPI
 - ORM, migrations, and API schemas: SQLAlchemy 2.x async + Alembic + Pydantic schemas
 - Database: Postgres
-- File storage: local development can use filesystem-backed storage only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof
+- Artifact storage: product services use ART v2 typed, provider-neutral
+  capabilities; local development may use the filesystem provider, AWS S3 is
+  the v0.1 hosted provider, and MinIO is the local/CI protocol proof
 - Auth: external Flow authentication token verification through an auth interface/adapter; Workstream does not own login, signup, password reset, password storage, or primary auth sessions
 - Jobs: async-first background execution through Celery-backed workers for product lifecycle jobs
 
