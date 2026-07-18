@@ -65,8 +65,8 @@ review queue, lease, Review, finding, FinalAcceptance, ART, CON, or adjudication
   GuideSourceSnapshot, GuideSufficiencyReport, ProjectSetupRun,
   SubmissionArtifactPolicy, EffectiveProjectSubmissionArtifactPolicy,
   PreSubmitCheckerPolicy, PostSubmitCheckerPolicy, ReviewPolicy,
-  RevisionPolicy, and the exact current `PaymentPolicy` row if it still exists.
-  Same-type rows lock by ascending ID. If CON removes PaymentPolicy first, the
+  RevisionPolicy, and the exact legacy economic-policy row from the current
+  schema if it still exists. Same-type rows lock by ascending ID. If CON removes it first, the
   refresh removes that lock rather than adding an alias.
 - First activation reads database time after locks, allocates
   `max(activation_sequence)+1`, and records the canonical approver/effective
