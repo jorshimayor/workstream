@@ -67,13 +67,14 @@ internal review evidence.
 
 ## External Review
 
-External checks are separate from internal agent review and have not yet run on
-this candidate.
+External checks are separate from internal agent review. Their detailed status
+and response are recorded in
+`.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02C1-external-review-response.md`.
 
 | Source | Status | Notes |
 |---|---:|---|
-| GitHub Actions | Pending | Must prove Agent Gates, Backend, and every required repository check on the published branch. |
-| CodeRabbit | Pending | Review comments, resolutions, and reruns will be recorded in a separate external-review response file. |
+| GitHub Actions | Running | Replacement Agent Gates passed; Backend must complete on the final evidence-only head. |
+| CodeRabbit | PASS | No actionable review thread; the valid PR-description warning was fixed and the repository docstring gate independently passes. |
 | Human review | Pending | Only the user may approve merge. |
 
 ## Remaining Risks
