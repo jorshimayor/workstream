@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 from alembic import command
@@ -19,6 +18,7 @@ from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.actors.service_identities import ServiceIdentity
+from app.modules.checkers.models import CheckerRun
 from app.modules.artifacts.models import (
     ArtifactAdmissionCharge,
     ArtifactAdmissionScope,
@@ -31,7 +31,6 @@ from app.modules.artifacts.models import (
     ArtifactUploadItem,
     ArtifactUploadSession,
 )
-from app.modules.artifacts.repository import CheckerOutputAdmissionFacts
 from app.modules.artifacts.schemas import (
     CheckerOutputArtifactAdmissionRequest,
     ContributorArtifactAdmissionRequest,
@@ -52,12 +51,19 @@ from app.modules.authorization.runtime import (
     IdentityLinkStatus,
 )
 from app.modules.projects.models import (
+    EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
     GuideSourceSnapshotItem,
+    PaymentPolicy,
+    PostSubmitCheckerPolicy,
+    PreSubmitCheckerPolicy,
     Project,
     ProjectGuide,
+    ReviewPolicy,
+    RevisionPolicy,
+    SubmissionArtifactPolicy,
 )
-from app.modules.tasks.models import WorkstreamTask
+from app.modules.tasks.models import Submission, WorkstreamTask
 from tests.artifact_store_helpers import (
     artifact_admission_limit_settings,
     minted_source,
@@ -273,6 +279,252 @@ async def _seed_contributor_items(
         )
     await session.commit()
     return project_id, task_id, tuple(item_ids)
+
+
+async def _seed_checker_output_relationships(session) -> tuple[str, str, str]:
+    """Persist one complete checker-run ownership chain for admission proof."""
+    project_id = str(uuid4())
+    guide_id = str(uuid4())
+    snapshot_id = str(uuid4())
+    submission_policy_id = str(uuid4())
+    effective_policy_id = str(uuid4())
+    pre_submit_policy_id = str(uuid4())
+    post_submit_policy_id = str(uuid4())
+    task_id = str(uuid4())
+    submission_id = str(uuid4())
+    checker_run_id = str(uuid4())
+    guide_version = "v1"
+    snapshot_hash = canonical_json_hash({"items": []})
+    submission_policy_body = {"required_artifacts": []}
+    submission_policy_hash = canonical_json_hash(submission_policy_body)
+    effective_policy_body = {"required_artifacts": [], "artifact_hash_algorithm": "sha256"}
+    effective_policy_hash = canonical_json_hash(effective_policy_body)
+    pre_submit_bundle = {"schema_version": "v1", "rules": []}
+    pre_submit_bundle_hash = canonical_json_hash(pre_submit_bundle)
+    post_submit_policy_body = {"required_checkers": []}
+    post_submit_policy_hash = canonical_json_hash(post_submit_policy_body)
+    now = datetime.now(UTC)
+
+    session.add(Project(id=project_id, name="Checker project", slug=f"checker-{project_id}"))
+    await session.flush()
+    session.add(
+        ProjectGuide(
+            id=guide_id,
+            project_id=project_id,
+            version=guide_version,
+            status="active",
+            content_markdown="# Checker guide",
+            approved_by="setup-actor",
+            effective_at=now,
+            created_by="setup-actor",
+        )
+    )
+    await session.flush()
+    session.add(
+        GuideSourceSnapshot(
+            id=snapshot_id,
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            manifest_schema_version="v1",
+            manifest_json={"items": []},
+            bundle_hash=snapshot_hash,
+            captured_by="setup-actor",
+        )
+    )
+    await session.flush()
+    session.add(
+        SubmissionArtifactPolicy(
+            id=submission_policy_id,
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            source_snapshot_id=snapshot_id,
+            source_snapshot_hash=snapshot_hash,
+            policy_version="v1",
+            lifecycle_status="approved",
+            policy_body=submission_policy_body,
+            policy_hash=submission_policy_hash,
+            derivation_source="test",
+            source_material_refs=[],
+            created_by="setup-actor",
+            approved_by_role="admin",
+            approved_by_actor="setup-actor",
+            approved_at=now,
+        )
+    )
+    await session.flush()
+    session.add(
+        EffectiveProjectSubmissionArtifactPolicy(
+            id=effective_policy_id,
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            source_snapshot_id=snapshot_id,
+            source_snapshot_hash=snapshot_hash,
+            submission_artifact_policy_id=submission_policy_id,
+            submission_artifact_policy_hash=submission_policy_hash,
+            lifecycle_status="approved",
+            merge_algorithm_version="v1",
+            effective_policy=effective_policy_body,
+            effective_policy_hash=effective_policy_hash,
+            created_by="setup-actor",
+        )
+    )
+    await session.flush()
+    session.add(
+        PreSubmitCheckerPolicy(
+            id=pre_submit_policy_id,
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            source_snapshot_id=snapshot_id,
+            source_snapshot_hash=snapshot_hash,
+            effective_policy_id=effective_policy_id,
+            effective_policy_hash=effective_policy_hash,
+            lifecycle_status="compiled",
+            compiler_version="v1",
+            compiled_bundle=pre_submit_bundle,
+            compiled_bundle_hash=pre_submit_bundle_hash,
+            checker_names=[],
+            checker_configs={},
+            created_by="setup-actor",
+        )
+    )
+    await session.flush()
+    session.add_all(
+        [
+            PostSubmitCheckerPolicy(
+                id=post_submit_policy_id,
+                project_id=project_id,
+                guide_id=guide_id,
+                guide_version=guide_version,
+                source_snapshot_id=snapshot_id,
+                source_snapshot_hash=snapshot_hash,
+                effective_policy_id=effective_policy_id,
+                effective_policy_hash=effective_policy_hash,
+                pre_submit_checker_policy_id=pre_submit_policy_id,
+                pre_submit_checker_bundle_hash=pre_submit_bundle_hash,
+                required_checkers=[],
+                warning_checkers=[],
+                blocking_severities=["error"],
+                policy_hash=post_submit_policy_hash,
+                policy_body=post_submit_policy_body,
+                lifecycle_status="approved",
+                approved_by_role="admin",
+                approved_by_actor="setup-actor",
+                approved_at=now,
+                created_by="setup-actor",
+            ),
+            ReviewPolicy(
+                id=str(uuid4()),
+                project_id=project_id,
+                guide_version=guide_version,
+                requires_second_review=False,
+                allowed_decisions=["accept", "needs_revision", "reject"],
+                minimum_finding_fields=[],
+            ),
+            RevisionPolicy(
+                id=str(uuid4()),
+                project_id=project_id,
+                guide_version=guide_version,
+                max_revision_rounds=1,
+                revision_deadline_hours=24,
+                auto_reject_after_limit=True,
+                allowed_resubmission_states=["needs_revision"],
+            ),
+            PaymentPolicy(
+                id=str(uuid4()),
+                project_id=project_id,
+                guide_version=guide_version,
+            ),
+        ]
+    )
+    await session.flush()
+    session.add(
+        WorkstreamTask(
+            id=task_id,
+            project_id=project_id,
+            locked_guide_version=guide_version,
+            locked_post_submit_checker_policy_id=post_submit_policy_id,
+            locked_post_submit_checker_policy_version=guide_version,
+            locked_post_submit_checker_policy_hash=post_submit_policy_hash,
+            locked_post_submit_checker_policy_body=post_submit_policy_body,
+            locked_review_policy_version=guide_version,
+            locked_revision_policy_version=guide_version,
+            locked_payment_policy_version=guide_version,
+            locked_guide_source_snapshot_id=snapshot_id,
+            locked_guide_source_snapshot_hash=snapshot_hash,
+            locked_effective_project_submission_artifact_policy_id=effective_policy_id,
+            locked_effective_project_submission_artifact_policy_hash=effective_policy_hash,
+            locked_pre_submit_checker_policy_id=pre_submit_policy_id,
+            locked_pre_submit_checker_bundle_hash=pre_submit_bundle_hash,
+            title="Checker admission task",
+            description="Prove checker output admission.",
+            status="draft",
+            created_by="setup-actor",
+        )
+    )
+    await session.flush()
+    session.add(
+        Submission(
+            id=submission_id,
+            task_id=task_id,
+            worker_id=str(uuid4()),
+            version=1,
+            status="submitted",
+            summary="Checker source submission",
+            package_hash=canonical_json_hash({"submission": submission_id}),
+            artifact_hash_manifest=[],
+            worker_attestation="complete",
+            locked_guide_version=guide_version,
+            locked_post_submit_checker_policy_id=post_submit_policy_id,
+            locked_post_submit_checker_policy_version=guide_version,
+            locked_post_submit_checker_policy_hash=post_submit_policy_hash,
+            locked_post_submit_checker_policy_body=post_submit_policy_body,
+            locked_review_policy_version=guide_version,
+            locked_revision_policy_version=guide_version,
+            locked_payment_policy_version=guide_version,
+            locked_guide_source_snapshot_id=snapshot_id,
+            locked_guide_source_snapshot_hash=snapshot_hash,
+            locked_effective_project_submission_artifact_policy_id=effective_policy_id,
+            locked_effective_project_submission_artifact_policy_hash=effective_policy_hash,
+            locked_pre_submit_checker_policy_id=pre_submit_policy_id,
+            locked_pre_submit_checker_bundle_hash=pre_submit_bundle_hash,
+        )
+    )
+    await session.flush()
+    session.add(
+        CheckerRun(
+            id=checker_run_id,
+            task_id=task_id,
+            submission_id=submission_id,
+            submission_version=1,
+            trigger_source="submission_finalized",
+            status="queued",
+            routing_recommendation="not_evaluated",
+            outcome_source="none",
+            triggered_by="setup-actor",
+            triggered_by_subject="setup-subject",
+            triggered_by_issuer="https://issuer.example.test",
+            trigger_auth_source="test",
+            attempt_number=1,
+            is_current_for_submission=True,
+            locked_guide_version=guide_version,
+            locked_post_submit_checker_policy_id=post_submit_policy_id,
+            locked_post_submit_checker_policy_version=guide_version,
+            locked_post_submit_checker_policy_hash=post_submit_policy_hash,
+            locked_post_submit_checker_policy_body=post_submit_policy_body,
+            locked_review_policy_version=guide_version,
+            locked_revision_policy_version=guide_version,
+            locked_payment_policy_version=guide_version,
+            package_hash=canonical_json_hash({"submission": submission_id}),
+            artifact_hash_manifest=[],
+            artifact_manifest_hash=canonical_json_hash([]),
+        )
+    )
+    await session.commit()
+    return project_id, task_id, checker_run_id
 
 
 async def _count(session, model: type) -> int:
@@ -748,6 +1000,9 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
     factory = async_sessionmaker(engine, expire_on_commit=False)
     try:
         async with factory() as session:
+            project_id, task_id, checker_run_id = await _seed_checker_output_relationships(
+                session
+            )
             session.add(
                 ActorProfile(
                     id=str(actor_id),
@@ -772,38 +1027,77 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
             await session.commit()
             async with minted_source(tmp_path / "scratch-source", b"checker") as source:
                 service = ArtifactAdmissionService(session, settings, namespace)
-                service._repo.get_checker_output_admission_facts = AsyncMock(
-                    return_value=CheckerOutputAdmissionFacts(
-                        checker_run_id="run-id",
-                        project_id="project-id",
-                        task_id="task-id",
-                    )
-                )
-                facts = await service._checker_output_facts(
-                    CheckerOutputArtifactAdmissionRequest(
-                        authorization_context=context,
-                        checker_run_id=uuid4(),
-                        logical_role="platform-review",
-                        source=source,
-                    )
-                )
-                assert facts.producer_ref == (
-                    ServiceIdentity.ARTIFACT_CHECKER_OUTPUT.value
-                )
-
                 forged = context.model_copy(update={"identity_link_id": uuid4()})
                 with pytest.raises(
                     ArtifactAdmissionRelationshipError,
                     match="service identity is unavailable",
                 ):
-                    await service._checker_output_facts(
+                    await service.admit(
                         CheckerOutputArtifactAdmissionRequest(
                             authorization_context=forged,
-                            checker_run_id=uuid4(),
+                            checker_run_id=UUID(checker_run_id),
                             logical_role="platform-review",
                             source=source,
                         )
                     )
+                assert await _count(session, ArtifactStorageNamespace) == 0
+                assert await _count(session, ArtifactAdmissionScope) == 0
+                assert await _count(session, ArtifactAdmissionCharge) == 0
+                assert await _count(session, ArtifactPutAttempt) == 0
+                await session.rollback()
+
+                request = CheckerOutputArtifactAdmissionRequest(
+                    authorization_context=context,
+                    checker_run_id=UUID(checker_run_id),
+                    logical_role="platform-review",
+                    source=source,
+                )
+                result = await service.admit(request)
+                replay = await service.admit(request)
+
+            attempt = await session.get(ArtifactPutAttempt, str(result.attempt_id))
+            scopes = (
+                await session.execute(
+                    select(ArtifactAdmissionScope).order_by(
+                        ArtifactAdmissionScope.scope_type,
+                        ArtifactAdmissionScope.scope_id,
+                    )
+                )
+            ).scalars().all()
+            links = (
+                await session.execute(
+                    select(ArtifactPutAttemptCharge).where(
+                        ArtifactPutAttemptCharge.attempt_id == str(result.attempt_id)
+                    )
+                )
+            ).scalars().all()
+            assert attempt is not None
+            assert replay.attempt_id == result.attempt_id
+            assert replay.charge_ids == result.charge_ids
+            assert attempt.status == "prepared"
+            assert attempt.producer_request_type == "checker_output"
+            assert attempt.producer_type == "service_identity"
+            assert attempt.producer_ref == ServiceIdentity.ARTIFACT_CHECKER_OUTPUT.value
+            assert attempt.project_id == project_id
+            assert attempt.task_id == task_id
+            assert attempt.checker_run_id == checker_run_id
+            assert attempt.logical_role == "platform-review"
+            assert attempt.executor_id is None
+            assert attempt.lease_expires_at is None
+            assert attempt.execution_generation == 0
+            assert {scope.scope_type for scope in scopes} == {
+                "deployment",
+                "producer",
+                "project",
+                "task",
+            }
+            assert len(result.charge_ids) == 4
+            assert len(links) == 4
+            assert await _count(session, ArtifactPutAttempt) == 1
+            assert await _count(session, ArtifactAdmissionCharge) == 4
+            assert await _count(session, ArtifactContent) == 0
+            assert await _count(session, ArtifactReplica) == 0
+            assert await _count(session, ArtifactOperationReceipt) == 0
     finally:
         await engine.dispose()
 
