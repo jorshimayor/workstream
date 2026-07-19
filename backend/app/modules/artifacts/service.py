@@ -448,6 +448,7 @@ class ArtifactAdmissionService:
             not isinstance(value, str)
             or value != value.strip()
             or not value
+            or not value.isascii()
             or len(value) > 100
             or any(ord(character) < 32 or ord(character) == 127 for character in value)
         ):

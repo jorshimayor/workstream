@@ -686,6 +686,65 @@ async def test_exact_replay_returns_one_attempt_and_one_charge_set(
         await engine.dispose()
 
 
+async def test_contributor_admission_rejects_cross_project_task_relationship(
+    admission_database_env: str,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path)
+    namespace = _namespace(settings)
+    context = _context()
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as session:
+            async with minted_source(tmp_path / "scratch-source", b"contributor") as source:
+                _, _, item_ids = await _seed_contributor_items(
+                    session,
+                    actor_profile_id=str(context.actor_profile_id),
+                    commitments=(
+                        (
+                            source.commitment.sha256,
+                            source.commitment.byte_count,
+                            source.commitment.media_type,
+                        ),
+                    ),
+                )
+                item = await session.get(ArtifactUploadItem, item_ids[0])
+                assert item is not None
+                upload_session = await session.get(ArtifactUploadSession, item.session_id)
+                assert upload_session is not None
+                unrelated_project_id = str(uuid4())
+                session.add(
+                    Project(
+                        id=unrelated_project_id,
+                        name="Unrelated admission project",
+                        slug=f"unrelated-{unrelated_project_id}",
+                    )
+                )
+                await session.flush()
+                upload_session.project_id = unrelated_project_id
+                await session.commit()
+
+                with pytest.raises(
+                    ArtifactAdmissionRelationshipError,
+                    match="contributor upload item relationship is unavailable",
+                ):
+                    await ArtifactAdmissionService(session, settings, namespace).admit(
+                        ContributorArtifactAdmissionRequest(
+                            authorization_context=context,
+                            upload_item_id=UUID(item_ids[0]),
+                            source=source,
+                        )
+                    )
+
+            assert await _count(session, ArtifactStorageNamespace) == 0
+            assert await _count(session, ArtifactAdmissionScope) == 0
+            assert await _count(session, ArtifactAdmissionCharge) == 0
+            assert await _count(session, ArtifactPutAttempt) == 0
+    finally:
+        await engine.dispose()
+
+
 async def test_same_content_distinct_operations_deduplicate_scope_bytes(
     admission_database_env: str,
     tmp_path: Path,
@@ -1027,6 +1086,24 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
             await session.commit()
             async with minted_source(tmp_path / "scratch-source", b"checker") as source:
                 service = ArtifactAdmissionService(session, settings, namespace)
+                with pytest.raises(
+                    ArtifactAdmissionRelationshipError,
+                    match="logical role is invalid",
+                ):
+                    await service.admit(
+                        CheckerOutputArtifactAdmissionRequest(
+                            authorization_context=context,
+                            checker_run_id=UUID(checker_run_id),
+                            logical_role="é" * 100,
+                            source=source,
+                        )
+                    )
+                assert await _count(session, ArtifactStorageNamespace) == 0
+                assert await _count(session, ArtifactAdmissionScope) == 0
+                assert await _count(session, ArtifactAdmissionCharge) == 0
+                assert await _count(session, ArtifactPutAttempt) == 0
+                await session.rollback()
+
                 forged = context.model_copy(update={"identity_link_id": uuid4()})
                 with pytest.raises(
                     ArtifactAdmissionRelationshipError,

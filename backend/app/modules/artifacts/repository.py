@@ -145,8 +145,8 @@ class ArtifactRepository:
             await self._session.execute(
                 select(
                     ArtifactUploadItem.id,
-                    ArtifactUploadSession.project_id,
-                    ArtifactUploadSession.task_id,
+                    WorkstreamTask.project_id,
+                    WorkstreamTask.id.label("task_id"),
                     ArtifactUploadSession.actor_id,
                     ArtifactUploadSession.state.label("session_state"),
                     ArtifactUploadItem.state.label("item_state"),
@@ -158,8 +158,15 @@ class ArtifactRepository:
                     ArtifactUploadSession,
                     ArtifactUploadSession.id == ArtifactUploadItem.session_id,
                 )
+                .join(
+                    WorkstreamTask,
+                    (WorkstreamTask.id == ArtifactUploadSession.task_id)
+                    & (WorkstreamTask.project_id == ArtifactUploadSession.project_id),
+                )
                 .where(ArtifactUploadItem.id == upload_item_id)
-                .with_for_update(of=(ArtifactUploadSession, ArtifactUploadItem))
+                .with_for_update(
+                    of=(ArtifactUploadSession, ArtifactUploadItem, WorkstreamTask)
+                )
             )
         ).one_or_none()
         if row is None:
