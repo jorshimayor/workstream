@@ -56,7 +56,15 @@ fresh repository-wide evidence on the combined tree.
 AUTH-09D-B PR #152 then advanced trusted main to `93dd3924`, activating only
 identity-link revoke/reactivate and expanding AUTH lifecycle proof. It adds no
 migration, CON/task-claim identifier, fixed-service admission, or outbox seam;
-the contributor foundation and AUTH-09E remain later gates.
+at that historical point the contributor foundation and AUTH-09E remained
+later gates.
+Contributor-foundation PR #153 then advanced trusted main to `8d5eb15b`. It
+clean-cuts TaskAssignment and Submission attribution to canonical human
+`contributor_id`, adds writer revalidation, and owns
+`0027_contributor_foundation`. It adds no CON/outbox identifier, service
+admission, dispatcher, review lifecycle, or authority change. CON-02A is now
+the linear `0028_shared_transactional_outbox` child; AUTH-09E remains a later
+gate.
 
 ## Inspected and already aligned
 

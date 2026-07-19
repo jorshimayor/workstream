@@ -68,7 +68,19 @@ def assert_secret_not_retained(
                 traceback_module_prefixes=traceback_module_prefixes,
             )
     elif isinstance(value, Mapping):
-        for key, item in value.items():
+        try:
+            items = tuple(value.items())
+        except Exception:
+            state = getattr(value, "__dict__", None)
+            assert isinstance(state, dict), "mapping state could not be inspected"
+            assert_secret_not_retained(
+                state,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+            return
+        for key, item in items:
             assert_secret_not_retained(
                 key,
                 secret,

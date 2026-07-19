@@ -10,8 +10,9 @@
 
 ## Trusted baseline
 
-- `origin/main` at `93dd392484b397cfdfaaa833631dc2c27f591ed7`, merging AUTH-09D-B
-  PR #152 and ART-02B1 PR #151 after planning-only REV PLAN2 PR #150,
+- `origin/main` at `8d5eb15b384fd75787ce98a099400a1d335d2560`, merging
+  contributor-foundation PR #153 after AUTH-09D-B PR #152 and ART-02B1 PR #151
+  after planning-only REV PLAN2 PR #150,
   AUTH-09D-A PR #148, REV-02
   PR #147, REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143,
   reviewed REV planning PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
@@ -26,8 +27,10 @@
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
   `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates
   only the three actor-profile lifecycle actions; AUTH-09D-B activates only
-  identity-link revoke/reactivate. The contributor foundation and fixed-service
-  admission remain planned. No CON or task-claim ActionId exists,
+  identity-link revoke/reactivate. Contributor-foundation PR #153 clean-cuts
+  TaskAssignment and Submission attribution to canonical human
+  `contributor_id` and adds write revalidation without changing catalogue or
+  availability. Fixed-service admission remains planned. No CON or task-claim ActionId exists,
   and these administrative operations grant no service runtime authority.
 - PR #140 remains the source for AUTH activation-custody, prepared-protocol,
   revised chunk,

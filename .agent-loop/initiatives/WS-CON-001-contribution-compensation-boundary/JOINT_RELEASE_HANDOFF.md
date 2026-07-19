@@ -13,9 +13,12 @@ The canonical cross-boundary source is merged
 `0302bcf`; REV-01 PR #145 canonically published it, REV-02 PR #147 decomposed
 the first runtime parent, and planning-only REV PLAN2 PR #150 refreshed the
 remaining runtime child gates. They remain the reviewed owner contract in
-current main `93dd3924`; ART-02B1 PR #151 changes ArtifactStore provider
+current main `8d5eb15b`; ART-02B1 PR #151 changes ArtifactStore provider
 implementation and proof only, while AUTH-09D-B PR #152 changes administrative
-identity-link lifecycle only; neither enters this transaction;
+identity-link lifecycle only. Contributor-foundation PR #153 changes canonical
+TaskAssignment/Submission attribution to `contributor_id` and enforces human
+lineage/write identity but adds no review or contribution transaction behavior;
+none enters this transaction;
 runtime REV behavior remains
 unimplemented.
 

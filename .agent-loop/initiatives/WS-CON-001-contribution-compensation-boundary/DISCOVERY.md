@@ -2,7 +2,8 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `93dd3924`, including AUTH-09D-B PR #152,
+- trusted `origin/main` refreshed to `8d5eb15b`, including contributor-foundation
+  PR #153, AUTH-09D-B PR #152,
   ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147,
   REV-01 PR #145, AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR
   #143, REV planning PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT
@@ -38,8 +39,10 @@
   `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
   lifecycle actions; AUTH-09D-B activates only `actor.identity_link.revoke`
   and `actor.identity_link.reactivate`. No WS-CON or task-claim ActionId is
-  registered. The contributor-field/canonical-human foundation and AUTH-09E
-  fixed-service admission remain proposed.
+  registered. The contributor-field/canonical-human foundation is merged:
+  TaskAssignment and Submission now expose `contributor_id`, enforce canonical
+  human ActorProfile lineage, and revalidate active human writers. AUTH-09E
+  fixed-service admission remains proposed.
 - Current AUTH supports actor-self, AdminRoleGrant evaluation, and controlled
   human-administrator provisioning of an approved fixed service
   ActorProfile/ActorIdentityLink. Independent ProjectRoleGrant runtime,
@@ -56,9 +59,9 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `93dd3924` still ends its migration chain at AUTH-owned
-  `0026_actor_profile_lifecycle`; CON-02A owns linear revision
-  `0027_shared_transactional_outbox` and must import its model through
+- Trusted `main` at `8d5eb15b` ends its migration chain at AUTH-owned
+  `0027_contributor_foundation`; CON-02A owns linear revision
+  `0028_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
 - `app.core.hashing.canonical_json_hash` is the only repository canonical JSON
   encoder. It sorts object keys, rejects non-finite numbers, uses compact UTF-8
@@ -113,7 +116,15 @@
 - AUTH-09D-B PR #152 activates exactly the two identity-link lifecycle
   mutations and expands AUTH routes/tests without adding a migration, CON
   action, task-claim action, fixed-service admission, or outbox seam. The
-  reviewed contributor foundation follows it; AUTH-09E remains a later gate.
+  at that point the reviewed contributor foundation followed it; AUTH-09E
+  remains a later gate.
+- Contributor-foundation PR #153 clean-cuts TaskAssignment and Submission
+  attribution to `contributor_id`, installs database-enforced
+  canonical-human lineage, and adds transaction-local active-human write
+  revalidation. It owns migration `0027_contributor_foundation` and therefore
+  moves CON-02A to linear child `0028_shared_transactional_outbox`. It changes
+  no ActionId, PermissionId, availability, grant, evaluator, service admission,
+  review lifecycle, dispatcher seam, or outbox behavior.
 
 ## Canonical merged changes affecting CON
 

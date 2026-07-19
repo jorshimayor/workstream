@@ -28,8 +28,8 @@ trusted main.
 
 ## What Changed
 
-- Added one linear `0027_shared_transactional_outbox` migration after the
-  AUTH-owned `0026_actor_profile_lifecycle` revision.
+- Added one linear `0028_shared_transactional_outbox` migration after the
+  AUTH-owned `0027_contributor_foundation` revision.
 - Added the generic outbox model, strict append schemas, reservation repository,
   and flush-only service.
 - Registered the model in shared SQLAlchemy metadata.
@@ -80,6 +80,18 @@ is unchanged; the new participant is infrastructure for later callers.
 
 ## Acceptance Criteria Proof
 
+- Current PR #153 reconciliation: 43 passed, 32 deselected in 177.40 seconds
+  on the exact bounded isolated outbox/migration row; outbox coverage is 95.73
+  percent against the 90 percent subsystem floor.
+- Current helper regression suite: 8 passed in 0.21 seconds. A Pydantic opaque
+  mapping compatibility repair preserves fail-closed secret graph inspection.
+- Current AUTH revision-specific lifecycle proof: 1 passed in 63.77 seconds,
+  preserving AUTH's exact `0026` downgrade/reupgrade behavior independently of
+  repository head.
+- Alembic now reports exactly one head: `0028_shared_transactional_outbox`,
+  with parent `0027_contributor_foundation`.
+- The following `0027` rows are retained as historical pre-PR #153 evidence;
+  they do not replace the current `0028` proof above or GitHub CI.
 - Post-review exact bounded row: 43 passed, 30 deselected in 60.22 seconds,
   with 95.73% outbox coverage against the 90% subsystem floor.
 - Reconciled exact contract selector: 8 passed, 56 deselected.
@@ -92,7 +104,7 @@ is unchanged; the new participant is infrastructure for later callers.
   identity-link lifecycle/concurrency suite passed 78 tests in 378.36 seconds.
 - Affected AUTH lifecycle downgrade tests: 2 passed, including atomic rollback
   to the full `0027` head when AUTH refuses `0026 -> 0025`.
-- Alembic reports exactly one head: `0027_shared_transactional_outbox`.
+- Alembic historically reported exactly one head: `0027_shared_transactional_outbox`.
 - Isolated database runner self-tests: 16 passed in 102.10 seconds with the
   required admin URL.
 - Real API contract end-to-end on the `0027` chain: passed.
@@ -100,14 +112,14 @@ is unchanged; the new participant is infrastructure for later callers.
   (4:55:41), with 85.35% repository coverage against the 78% floor.
 - The pre-reconciliation isolated evidence records tree `f72bb6e`, database
   `workstream_test_d513fb2f03b1`, and the superseded Alembic head
-  `0026_shared_transactional_outbox`; current `0027` focused proof is recorded
-  above and GitHub CI must supply repository-wide proof after publication.
+  `0026_shared_transactional_outbox`; the superseded `0027` focused proof is
+  retained above and GitHub CI must supply repository-wide proof after publication.
 - Agent-loop gates: 88 passed after AUTH-09D-B.
 - Ruff, 90.4% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
-- AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
-  above is current, exact-SHA internal reviewers pass, and GitHub CI must pass
-  after publication.
+- AUTH-09D-A reconciliation historically moved the migration to `0027`; PR #153
+  supersedes that revision with the current `0028` proof above, and GitHub CI
+  must pass after publication.
 - REV PLAN2 PR #150 then advanced trusted main to `983b9e53`. It changes only
   planning/specification files, preserves the 02A runtime boundary, and updates
   future CON/REV child gates. A two-hour suite on the prior head was stopped,
@@ -120,6 +132,12 @@ is unchanged; the new participant is infrastructure for later callers.
   only identity-link revoke/reactivate and adds AUTH route/test coverage, with
   no migration or 02A boundary change. The one-hour run on the prior tree was
   stopped and discarded.
+- Contributor-foundation PR #153 then advanced trusted main to `8d5eb15b`. It
+  clean-cuts TaskAssignment/Submission attribution to canonical human
+  `contributor_id`, adds writer revalidation, and owns `0027`. It changes no
+  CON authority or outbox behavior; CON's migration is now the linear `0028`
+  child. Fresh bounded proof and exact-SHA internal review supersede the older
+  publication evidence, while the full suite remains GitHub CI-owned.
 - A fourth local run on the frozen current head was stopped after approximately
   4 hours 15 minutes by human direction that repository-wide suites must run in
   GitHub CI. Its metadata was removed and it is not counted. The existing
@@ -162,12 +180,12 @@ isolation control, or coverage threshold is waived.
 
 ## Reviewer Results
 
-- Senior engineering: PASS WITH LOW RISKS.
-- QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test
-  delta, and CI integrity: PASS.
-- Reviewed code SHA: `460573287270965d730c83f5f1e52f3acf1c0671`.
-- Every prior blocking finding is resolved and no sub-agent session remains
-  open.
+- The pre-PR #153 implementation passed all nine tracks at historical code SHA
+  `460573287270965d730c83f5f1e52f3acf1c0671`.
+- That review is superseded for publication by the `8d5eb15b` / `0028`
+  reconciliation. Fresh exact-SHA senior engineering, QA/test, security/auth,
+  product/ops, architecture, docs, reuse/dedup, test-delta, and CI-integrity
+  results must be recorded before push.
 
 ## External Review
 

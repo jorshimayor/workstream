@@ -1,5 +1,6 @@
 """Tests for shared security-sensitive assertion helpers."""
 
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pydantic import SecretStr
 import pytest
@@ -65,3 +66,23 @@ def test_slotted_dataclass_state_rejects_forbidden_value() -> None:
 
     with pytest.raises(AssertionError):
         assert_secret_not_retained(SlottedRecord(payload="forbidden"), "forbidden")
+
+
+def test_raising_mapping_falls_back_to_inspecting_object_state() -> None:
+    """Fail closed on retained secrets when a framework mapping cannot iterate."""
+
+    class RaisingMapping(Mapping[str, str]):
+        def __init__(self, payload: str) -> None:
+            self.payload = payload
+
+        def __getitem__(self, key: str) -> str:
+            raise RuntimeError(key)
+
+        def __iter__(self) -> Iterator[str]:
+            raise RuntimeError("opaque framework mapping")
+
+        def __len__(self) -> int:
+            return 1
+
+    with pytest.raises(AssertionError):
+        assert_secret_not_retained(RaisingMapping("forbidden"), "forbidden")

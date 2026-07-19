@@ -23,32 +23,31 @@
   ART-02C1 remains inactive pending signed memory and a separate explicit start.
 - AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory at
   `cf8a3e8` recorded the stopped gate and exact 09D-B successor.
-- PR-ready implementation chunk: `WS-AUTH-001-09D-B` in PR #152 on
-  `codex/ws-auth-001-09d-b-identity-link-lifecycle`, started from trusted
-  `main` at `99ae4c9` after the user's explicit start signal. Contract repair
-  passed required L1 preimplementation review at exact contract `9ec6390b`.
-  Implementation, deterministic proof, and required internal review pass; the
-  branch now integrates trusted `main` at `1b5422f`.
+- AUTH-09D-B merged through PR #152 as `93dd392`; signed schema-v2 memory at
+  `912a6254` stopped and named the contributor foundation as its exact
+  successor.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: refreshed external checks and explicit human review for PR
-  #152. The inactive
-  `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` is the next same-initiative gate; it
-  changes no action availability. No service caller becomes executable before
-  AUTH-09E.
+- Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`, explicitly
+  started by the user on 2026-07-19 from trusted `main` at `93dd392`. Current
+  exact contract `2a21166d` passed required L1 preimplementation review;
+  initial findings are repaired, and exact code SHA `4d1fc507` passed all nine
+  required internal tracks. PR publication and external checks are the current
+  gate; Backend must still prove 78/90 percent aggregate coverage. It changes no action
+  availability, and no service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: trusted main contains 74 PermissionIds and 65
-  ActionIds, with 15 active actions: the two actor-self actions, seven AUTH-08
+  ActionIds, with 17 active actions: the two actor-self actions, seven AUTH-08
   administrative actions, AUTH-09B `actor.service.provision`, AUTH-09C
   `actor.profile.read` plus `actor.identity_link.read`, and the three merged
-  AUTH-09D-A profile lifecycle actions. PR #152 activates only the two 09D-B
-  identity-link lifecycle actions, producing a candidate total of 17.
+  AUTH-09D-A profile lifecycle actions, and the two AUTH-09D-B identity-link
+  lifecycle actions.
   Merged AUTH-09A defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
@@ -59,9 +58,10 @@
   merged through PRs #127, #129, #141, and #151. ART-02B1 adds real MinIO
   protocol proof plus a fail-closed, runtime-ineligible native AWS profile;
   ART-02C1 remains inactive.
-- Authorization checkpoint: AUTH-07B through AUTH-09D-A merged through PRs
-  #130, #131, #132, #143, #146, and #148. AUTH-09D-B is the reviewed PR #152
-  candidate; its contributor foundation and AUTH-09E remain inactive.
+- Authorization checkpoint: AUTH-07B through AUTH-09D-B merged through PRs
+  #130, #131, #132, #143, #146, #148, and #152. The contributor foundation is
+  internally approved at code SHA `4d1fc507`; AUTH-09E remains
+  inactive.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

@@ -10,10 +10,13 @@ points ledger, or reputation scoring.
 
 The supplied WS-CON reference pair is input to reconcile, not authority to
 accept blindly. The active contract follows trusted repository decisions and
-current main `93dd3924`, including AUTH-09D-B PR #152, ART-02B1 PR #151, REV
-PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147, REV-01 PR #145, AUTH-09C
-PR #146, ART PR #141, AUTH-09B PR #143, REV planning PR #128, AUTH PR #140,
-and the underlying WS-XINT-001 boundary from PR #139.
+current main `8d5eb15b`, including the contributor foundation in AUTH PR #153,
+AUTH-09D-B PR #152, ART-02B1 PR #151, REV PLAN2 PR #150, AUTH-09D-A PR #148,
+REV-02 PR #147, REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR
+#143, REV planning PR #128, AUTH PR #140, and the underlying WS-XINT-001
+boundary from PR #139. PR #153 establishes canonical human `contributor_id`
+lineage for TaskAssignment and Submission; it does not add CON authority,
+service admission, review behavior, or outbox execution.
 
 ## Success state
 

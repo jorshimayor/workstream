@@ -1,21 +1,39 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
-## AUTH-09D-B Current-Main Reconciliation
+## Contributor Foundation Current-Main Reconciliation
+
+Trusted main advanced to `8d5eb15b384fd75787ce98a099400a1d335d2560`
+through contributor-foundation PR #153. The merge clean-cuts TaskAssignment and
+Submission attribution to canonical human `contributor_id`, adds database
+lineage guards and transaction-local active-human writer revalidation, and
+owns `0027_contributor_foundation`. It changes no ActionId, PermissionId,
+availability, grant, evaluator, fixed-service admission, review lifecycle,
+dispatcher seam, or outbox behavior. CON-02A remains authorization-neutral and
+moves to the exact linear child `0028_shared_transactional_outbox`. AUTH-09E
+remains later.
+
+The AUTH merge also deliberately makes its actor-lifecycle downgrade tests
+revision-specific rather than treating repository `head` as `0026`. CON
+preserves that test ownership and adds separate dedicated `0028` migration/head
+proof. Repository-wide proof remains GitHub CI-owned; local reconciliation
+proof is bounded to the outbox and migration selectors.
+
+## AUTH-09D-B Historical Reconciliation
 
 Trusted main advanced to `93dd392484b397cfdfaaa833631dc2c27f591ed7`
 through AUTH-09D-B PR #152. The canonical catalogue remains 74 PermissionIds
 and 65 ActionIds, now 17 active and 48 planned. The merge activates exactly
 `actor.identity_link.revoke` and `actor.identity_link.reactivate`; it adds no
 CON/task-claim ActionId, fixed-service admission, migration, or outbox seam.
-The contributor-field/canonical-human foundation is proposed next, with
+At that historical point the contributor-field/canonical-human foundation was proposed next, with
 AUTH-09E still later. CON-02A therefore remains authorization-neutral at
-`0027`, while the expanded AUTH backend suite requires fresh evidence.
+`0027`. PR #153 supersedes that migration-head statement as described above.
 
 The exact isolated PostgreSQL plus MinIO suite on the prior `1b5422fc`
 baseline was stopped after one hour solely because PR #152 advanced trusted
 main. Its metadata was removed and it is not accepted evidence.
 
-## ART-02B1 Current-Main Reconciliation
+## ART-02B1 Historical Reconciliation
 
 Trusted main advanced to `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`
 through ART-02B1 PR #151. The merge adds the S3-compatible ArtifactStore
@@ -32,7 +50,7 @@ removed and it is not accepted evidence. Verification must restart on the
 frozen `1b5422fc` baseline after installing the newly merged locked runtime
 dependencies and starting the real MinIO test provider required by main.
 
-## REV PLAN2 Current-Main Reconciliation
+## REV PLAN2 Historical Reconciliation
 
 Trusted main advanced to `983b9e534b84f1590fafecc0ce1355cf131257ce`
 through planning-only REV PLAN2 PR #150. The merge changes no backend runtime,
@@ -50,7 +68,7 @@ after two hours solely because PR #150 advanced trusted main. It produced no
 accepted evidence artifact and is not counted below. Exact verification must
 restart on the frozen `983b9e53` baseline.
 
-## AUTH-09D-A Current-Main Reconciliation
+## AUTH-09D-A Historical Reconciliation
 
 Trusted main advanced to `99ae4c963e53f317175dcb308b9e47c93ccf19ed`
 through AUTH-09D-A PR #148 before publication. AUTH now owns
@@ -101,8 +119,8 @@ coverage threshold change.
    below, database-owned occurrence time, closed delivery-state shapes,
    immutable envelope/payload custody, permanent physical delete/truncate
    denial, terminal archival-in-place, and a nonempty-table downgrade guard in
-   linear revision `0027_shared_transactional_outbox` after AUTH-owned
-   `0026_actor_profile_lifecycle`.
+   linear revision `0028_shared_transactional_outbox` after AUTH-owned
+   `0027_contributor_foundation`.
 3. Add strict typed append input/output schemas. The caller supplies stable
    event identity and canonical event facts but not occurrence or delivery
    state. The service hashes only the validated payload with
@@ -326,10 +344,11 @@ contract, collision matrix, and proof details above resolve every finding.
 Architecture, senior engineering, reuse/dedup, QA/test, product/ops, docs,
 security/auth, and CI integrity all returned PASS before implementation began.
 
-After implementation began, ART PR #141 advanced trusted `main` and took
-revision 0025. The human explicitly requested a pull. Reconciliation preserves
-the reviewed schema and behavior while moving only CON's revision identity and
-parent to linear `0027_shared_transactional_outbox` after
-`0026_actor_profile_lifecycle`. AUTH-09D-A adds no shared outbox or authorization seam, so
-no implementation boundary or non-goal changes. Final exact-SHA review must
-cover this current-main reconciliation.
+After implementation began, ART PR #141 and AUTH-09D-A advanced trusted `main`
+and moved CON through historical revisions 0026 and 0027. Contributor-
+foundation PR #153 now owns AUTH revision `0027_contributor_foundation`.
+Reconciliation preserves the reviewed schema and behavior while moving only
+CON's revision identity and parent to linear
+`0028_shared_transactional_outbox`. None of these merges adds a shared outbox
+or CON authorization seam, so no implementation boundary or non-goal changes.
+Final exact-SHA review must cover this current-main reconciliation.

@@ -8,10 +8,10 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `93dd392484b397cfdfaaa833631dc2c27f591ed7`
+Trusted main SHA: `8d5eb15b384fd75787ce98a099400a1d335d2560`
 
 The implementation is limited to one linear PostgreSQL migration after
-AUTH-owned revision 0026, the generic outbox persistence/append module, shared
+AUTH-owned revision `0027_contributor_foundation`, the generic outbox persistence/append module, shared
 metadata registration, focused tests,
 initiative evidence, and exactly one merge intent. It adds no dispatcher,
 delivery executor, Celery registration, broker, route, feature handler, AUTH
@@ -42,6 +42,34 @@ repository-wide suites in GitHub CI. Its metadata was removed and it is not
 evidence. The active verification rule now uses bounded focused proof locally
 and requires the existing GitHub Backend full-suite job on the pushed PR.
 
+Contributor-foundation PR #153 advances trusted main to `8d5eb15b`, owns
+`0027_contributor_foundation`, clean-cuts TaskAssignment/Submission attribution
+to canonical human `contributor_id`, and adds active-human write revalidation.
+It changes no CON authority or outbox behavior. CON-02A is therefore reconciled
+as linear child `0028_shared_transactional_outbox`; AUTH's revision-specific
+`0026` lifecycle tests remain revision-specific, while CON owns separate
+outbox-head proof. Fresh bounded verification and exact-SHA reviewer results
+below supersede earlier publication evidence.
+
+## Current PR #153 Reconciliation Verification Results
+
+```text
+43 passed, 32 deselected in 177.40s (exact bounded isolated outbox/migration row)
+outbox coverage: 95.73% (required: at least 90%)
+8 passed in 0.21s (security-sensitive assertion helper suite)
+1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
+Alembic heads: one head, 0028_shared_transactional_outbox
+Ruff on CON-02A, both 0027/0028 migrations, and reconciliation tests: passed
+repository-wide isolated PostgreSQL plus real-MinIO suite: required in GitHub CI after push
+```
+
+The first bounded run exposed a test-helper compatibility failure while walking
+an opaque Pydantic internal `Mapping`; the outbox exception and formatted
+traceback contained no secret. The helper now falls back to recursively
+inspecting concrete object state and fails closed when state is unavailable.
+Its dedicated regression test proves a raising mapping cannot hide a retained
+secret. The repaired exact bounded row passed as recorded above.
+
 ## Implemented Contract
 
 - One immutable event envelope contains caller-provided event, aggregate,
@@ -64,7 +92,7 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 - Exact replay preserves database occurrence time; any immutable drift or split
   event/idempotency identity raises `outbox_idempotency_conflict`.
 
-## Current Reconciliation Verification Results
+## Pre-PR #153 Reconciliation Verification Results
 
 ```text
 43 passed, 30 deselected in 60.22s (exact bounded isolated outbox row after final review repair)
@@ -81,7 +109,7 @@ Docstring coverage: passed at 90.4%
 Markdown links: passed for 15 changed Markdown files
 Workstream/AUTH/ART/REV stale-contract scans: passed after PR #152 reconciliation
 merge intent and git diff --check: passed
-Alembic heads: one head, 0027_shared_transactional_outbox after PR #152
+Alembic heads: one head, 0027_shared_transactional_outbox after PR #152 (historical)
 repository-wide isolated PostgreSQL plus real-MinIO suite: required in GitHub CI after push
 ```
 
@@ -89,9 +117,9 @@ repository-wide isolated PostgreSQL plus real-MinIO suite: required in GitHub CI
 
 These results were produced on the former `f18b620` / outbox-0026 chain. They
 prove the implementation before AUTH-09D-A but are not publication evidence for
-the reconciled `93dd3924` / outbox-0027 chain. Current bounded focused evidence
-is recorded above; GitHub CI owns exact-head repository-wide proof after the
-full PR is pushed.
+the reconciled `93dd3924` / outbox-0027 chain. PR #153 supersedes that chain;
+fresh bounded `8d5eb15b` / outbox-0028 evidence is recorded separately and
+GitHub CI owns exact-head repository-wide proof after the full PR is pushed.
 
 ```text
 33 passed in 151.73s on the former ART 0025 -> CON 0026 chain
@@ -138,9 +166,9 @@ list, and string subclasses plus slotted dataclass state cannot bypass deep
 inspection through the tested override paths.
 Existing assertions, skips, coverage settings, and test commands are unchanged.
 
-## Required Internal Review
+## Superseded Pre-PR #153 Internal Review
 
-Reviewed code SHA: `460573287270965d730c83f5f1e52f3acf1c0671`
+Historical reviewed code SHA: `460573287270965d730c83f5f1e52f3acf1c0671`
 
 Reviewed at: 2026-07-19T09:15:29Z
 
@@ -149,6 +177,10 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/con01_arch_s
 Valid findings addressed: yes
 
 Open sub-agent sessions: none
+
+This review remains useful implementation history but is not publication
+evidence for the `8d5eb15b` / `0028` reconciliation. All nine tracks must bind
+to the new exact candidate SHA before push.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|

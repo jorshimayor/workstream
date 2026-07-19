@@ -44,10 +44,23 @@ None for these comments. The existing human-only PR merge decision remains.
 - Canonical repository docstring coverage: passed at 90.4 percent.
 - Agent-loop gates: 88 passed.
 - `git diff --check`: passed.
-- Exact repair-SHA internal re-review and evidence rebinding: pending.
+- Exact repair-SHA internal re-review and evidence rebinding after main
+  reconciliation: pending.
 
-The GitHub Backend full suite remains in progress and is not replaced by local
-proof.
+After these repairs, contributor-foundation PR #153 advanced trusted main to
+`8d5eb15b`. CON is being reconciled onto its `0027_contributor_foundation`
+migration as `0028_shared_transactional_outbox`; the merge adds no CON
+authorization or outbox behavior. The superseded GitHub Backend run is not
+accepted as proof. Fresh bounded local evidence and exact-SHA internal review
+must pass before the PR update, then GitHub reruns the full suite.
+
+Bounded reconciliation proof now passes: 43 selected outbox/migration tests
+with 32 deselected, 95.73 percent outbox coverage, eight assertion-helper
+tests, the exact AUTH `0026` lifecycle downgrade/reupgrade test, one Alembic
+head at `0028_shared_transactional_outbox`, and Ruff. Markdown links, stale
+Workstream/AUTH/ART/REV scans, canonical 90.4 percent docstring coverage, 88
+agent-loop gates, and diff hygiene also pass. Exact-SHA internal review remains
+before push.
 
 ## Remaining risks
 

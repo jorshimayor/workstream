@@ -144,6 +144,7 @@ AUTH_09B_COVERAGE_COMMANDS = (
     "coverage report --include='app/modules/actors/*' --precision=2 --fail-under=90",
     "coverage report --include='app/modules/authorization/*' "
     "--precision=2 --fail-under=90",
+    "coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90",
     "coverage report "
     "--include='app/interfaces/auth.py,app/core/auth.py,app/adapters/auth/dev.py,"
     "app/adapters/auth/flow.py' --precision=2 --fail-under=90",
@@ -4169,9 +4170,11 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09D` | Split |" in auth_status
     assert "Merged through PR #148 as `99ae4c9`" in auth_map
     assert "| `WS-AUTH-001-09D-A` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09D-B` | Ready for PR |" in auth_status
-    assert "PR-ready implementation chunk\n\n`WS-AUTH-001-09D-B`" in auth_status
-    assert "`codex/ws-auth-001-09d-b-identity-link-lifecycle`" in auth_status
+    assert "| `WS-AUTH-001-09D-B` | Merged |" in auth_status
+    assert "Active implementation chunk\n\n`WS-AUTH-001-CONTRIBUTOR-FOUNDATION`" in (
+        auth_status
+    )
+    assert "`codex/ws-auth-001-contributor-foundation`" in auth_status
     assert "PR #148 is open" not in auth_status
     stale_auth_09d_state = (
         "Only 09D-A implementation is active",
@@ -4185,34 +4188,24 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in auth_map
         assert stale_text not in work_queue
     assert (
-        "| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | "
-        "PR #152 open; trusted main `1b5422f` integrated; refreshed checks and "
-        "explicit human review pending"
-        in work_queue
+        "Internal review passed at `4d1fc507`; PR/external checks pending; "
+        "aggregate coverage mandatory in Backend" in work_queue
     )
     assert (
-        "PR-ready implementation chunk: `WS-AUTH-001-09D-B` in PR #152"
+        "Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`"
         in loop_state
     )
-    assert (
-        "Current gate: refreshed external checks and explicit human review for PR\n"
-        "  #152" in loop_state
-    )
-    assert "ActionIds, with 15 active actions" in loop_state
-    assert (
-        "PR #152 activates only the two 09D-B\n"
-        "  identity-link lifecycle actions, producing a candidate total of 17"
-        in loop_state
-    )
+    assert "ActionIds, with 17 active actions" in loop_state
+    assert "candidate total of 17" not in loop_state
     assert "with 12 active actions" not in loop_state
     assert "five 09D-A/09D-B lifecycle actions" not in loop_state
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And "
-        "Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and "
-        "explicit start" in auth_map
+        "Canonical-Human Lineage | L1 | Internal review passed at `4d1fc507`; "
+        "PR/external checks pending; Backend coverage mandatory" in auth_map
     )
     assert (
-        "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Proposed |" in auth_status
+        "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | PR ready |" in auth_status
     )
     assert (
         "| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | "
@@ -4225,8 +4218,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "Inactive until contributor-foundation merge/memory and explicit user start"
         in work_queue
     )
-    assert (
-        "No service caller becomes executable before\n  AUTH-09E" in loop_state
+    assert "no service caller becomes executable before AUTH-09E" in loop_state.replace(
+        "\n", " "
     )
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Merged through PR #141 as `a10d901`" in artifact_map

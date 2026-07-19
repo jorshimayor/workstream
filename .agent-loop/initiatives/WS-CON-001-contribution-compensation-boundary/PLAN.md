@@ -2,9 +2,9 @@
 
 ## Proposed approach
 
-Adopt AUTH-09D-B PR #152, ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148,
+Adopt contributor-foundation PR #153, AUTH-09D-B PR #152, ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148,
 merged REV-02 PR #147, REV-01 PR #145, and the underlying REV planning PR #128
-plus trusted main `93dd3924`, including
+plus trusted main `8d5eb15b`, including
 AUTH-09C PR #146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and
 the underlying WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
 hidden, reviewable chunks. The
@@ -164,7 +164,8 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `93dd3924`, merging AUTH-09D-B PR #152 and ART-02B1 PR #151 after planning-only REV
+Trusted `main` is `8d5eb15b`, merging contributor-foundation PR #153 after
+AUTH-09D-B PR #152 and ART-02B1 PR #151 and after planning-only REV
 PLAN2 PR #150, AUTH-09D-A PR #148 and REV-02 PR #147,
 REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, REV planning
 PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
@@ -175,7 +176,10 @@ AUTH-09C activates only administrative `actor.profile.read` and
 `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
 lifecycle actions; AUTH-09D-B activates only identity-link revoke/reactivate.
 None grants service execution or runtime admission. The contributor foundation
-and AUTH-09E remain proposed. PR #140 adds reviewed AUTH
+is merged: TaskAssignment and Submission now use canonical human
+`contributor_id`, and contributor writes revalidate an active human profile and
+identity link. It changes no ActionId, PermissionId, grant, evaluator, service
+admission, or review lifecycle. AUTH-09E remains proposed. PR #140 adds reviewed AUTH
 custody/PREP/activation contracts only; the custody transfers and prepared
 protocol remain proposed runtime work.
 

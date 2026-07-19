@@ -51,6 +51,15 @@ reviewed but inactive contributor-foundation contract. It adds no migration,
 CON/task-claim action, fixed-service admission, or outbox seam. CON-02A remains
 the same `0027` implementation, but repository-wide evidence must rerun in
 GitHub CI after the full PR is pushed.
+Trusted `main` then advanced to `8d5eb15b` through contributor-foundation PR
+#153. That merge clean-cuts TaskAssignment and Submission human attribution to
+`contributor_id`, adds canonical-human database lineage and active-human writer
+revalidation, and owns `0027_contributor_foundation`. It changes no ActionId,
+PermissionId, grant, evaluator, action availability, fixed-service admission,
+review lifecycle, dispatcher seam, or outbox behavior. CON-02A therefore moves
+to the linear child `0028_shared_transactional_outbox`; its generic,
+authorization-neutral behavior is otherwise unchanged. Repository-wide proof
+remains GitHub CI-owned.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -126,15 +135,17 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation is reconciled with trusted main `93dd3924`
+`WS-CON-001-02A` implementation is reconciled with trusted main `8d5eb15b`
 after the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
 but AUTH-09D-A changed backend runtime, tests, and the migration head, so
-repository-wide evidence must rerun on the `0027` chain in GitHub CI. Current
-focused evidence passes at 43 selected tests with 95.73 percent outbox coverage,
-and all nine required internal tracks pass exact code SHA `46057328`. GitHub CI
-is now the remaining automated publication gate. The first reconciled
+repository-wide evidence must rerun on the `0028` chain in GitHub CI. Fresh
+bounded proof passes 43 selected tests with 32 deselected and 95.73 percent
+outbox coverage; the exact AUTH revision-specific lifecycle test and the
+assertion-helper regression suite also pass. All nine exact-SHA internal tracks
+must pass after the `0028` reconciliation before the PR is republished; GitHub
+CI then owns the full-suite gate. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
 because ART PR #151 advanced trusted main; a third was stopped after one hour
@@ -163,7 +174,7 @@ It stops before dispatcher mechanics and CON-02B.
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
 | Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
-| Fixed service runtime | AUTH | AUTH-09A through 09D-B are merged; merge the contributor foundation, approve/register any new CON identity/static row, then complete AUTH-09E before protected service calls |
+| Fixed service runtime | AUTH | AUTH-09A through 09D-B and the contributor foundation are merged; approve/register any new CON identity/static row, then complete AUTH-09E before protected service calls |
 | Feature handler authority | Human + AUTH + CON | Approve exact identities/actions/static rows; no dispatcher inheritance |
 | AUTH prepared protocol | AUTH | Merge AUTH-PREP after AUTH-09E; all CON-sensitive mutations consume its exact opaque handle contract |
 | task.claim | AUTH + task + CON | Only PermissionId exists; after AUTH-10/PREP and stable task seam, merge CON-05A freeze and task-owned composition; AUTH-13 enumerates/registers/evaluates/activates afterward |
