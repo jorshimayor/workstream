@@ -2,7 +2,7 @@
 
 ## Status
 
-Fresh exact-SHA internal review. PR #152 merged AUTH-09D-B as `93dd392`; signed
+Internal review passed. PR #152 merged AUTH-09D-B as `93dd392`; signed
 schema-v2 memory at `912a6254` stopped and named this same-initiative
 successor. The user explicitly started this chunk on 2026-07-19. Its branch
 starts from trusted `main` at `93dd392`, whose single Alembic head is
@@ -11,7 +11,8 @@ L1 preimplementation reviewer tracks before runtime edits began.
 Initial candidate `e41c33c0` failed diagnostic-privacy, exact proof, docs, and
 evidence review. Bounded repair and deterministic evidence are complete; GitHub
 Backend must still prove the full-suite 78 percent and actor/task 90 percent
-reports before merge.
+reports before merge. Exact code SHA `4d1fc507` passed all nine required
+internal tracks; PR publication and external checks are current.
 
 ## Parent initiative
 
