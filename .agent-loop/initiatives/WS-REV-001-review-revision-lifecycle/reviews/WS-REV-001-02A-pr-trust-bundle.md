@@ -84,7 +84,7 @@ separate human start.
 ## Tests/checks run
 
 All four stale-contract scanners, Markdown links, loop-memory state, 88 agent
-gate tests, docstring coverage at 90.3 percent, one-head Alembic verification,
+gate tests, docstring coverage at 90.5 percent, one-head Alembic verification,
 schema-v2 merge-intent validation, scope checks, ancestry checks, and diff
 integrity passed on the planning candidate.
 

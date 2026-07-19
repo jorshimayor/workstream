@@ -35,10 +35,10 @@ Before the ART #154 rebase, internal evidence was rebound to reviewed candidate
 `c545cd10272e10709a13b6212ef62fd1adc4f39f` and passed at evidence head
 `ebb8db88550c623d87296681581e81e5bc6ef426`. Those SHAs and results are now
 historical because the conflict-free ART #154 rebase rewrote the branch. The
-rebased candidate requires fresh exact-SHA review and evidence rebinding. Merge
-remains blocked until that evidence passes and every GitHub and CodeRabbit check
-on the final pushed head passes with no unresolved finding, followed by the
-user's approval of PR #156.
+rebased candidate has now passed fresh exact-SHA review and evidence rebinding.
+Merge remains blocked until the rebased branch is force-pushed and every GitHub
+and CodeRabbit check on the final pushed head passes with no unresolved finding,
+followed by the user's approval of PR #156.
 
 ## Comments deferred
 
@@ -56,7 +56,7 @@ not start 02A1 or change product, architecture, security, or migration behavior.
 - Loop-memory state: PASS.
 - Agent gates: PASS, 88 tests.
 - Merge-intent validation: PASS.
-- Docstring coverage: PASS, 90.3 percent overall.
+- Docstring coverage after ART rebase: PASS, 90.5 percent overall.
 - Alembic heads before the ART rebase: PASS, one head,
   `0027_contributor_foundation`. After conflict-free rebase onto ART PR #154:
   PASS, one head, `0028_artifact_admission`.
