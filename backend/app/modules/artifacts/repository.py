@@ -34,6 +34,7 @@ class GuideAdmissionFacts:
 
     guide_source_item_id: str
     project_id: str
+    captured_by: str
     content_hash: str
     media_type: str
 
@@ -115,6 +116,7 @@ class ArtifactRepository:
                 select(
                     GuideSourceSnapshotItem.id,
                     GuideSourceSnapshot.project_id,
+                    GuideSourceSnapshot.captured_by,
                     GuideSourceSnapshotItem.content_hash,
                     GuideSourceSnapshotItem.media_type,
                 )
@@ -130,6 +132,7 @@ class ArtifactRepository:
         return GuideAdmissionFacts(
             guide_source_item_id=row.id,
             project_id=row.project_id,
+            captured_by=row.captured_by,
             content_hash=row.content_hash,
             media_type=row.media_type,
         )

@@ -326,6 +326,7 @@ class ArtifactAdmissionService:
         commitment = request.source.commitment
         if (
             row is None
+            or row.captured_by != str(context.actor_profile_id)
             or row.content_hash != commitment.sha256
             or row.media_type != commitment.media_type
         ):
@@ -338,7 +339,7 @@ class ArtifactAdmissionService:
         return _AdmissionFacts(
             request_type="guide",
             producer_type="actor_profile",
-            producer_ref=str(context.actor_profile_id),
+            producer_ref=row.captured_by,
             project_id=row.project_id,
             task_id=None,
             guide_source_item_id=item_id,

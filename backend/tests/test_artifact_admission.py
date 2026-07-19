@@ -141,6 +141,7 @@ def _context(
 async def _seed_guide(
     session,
     *,
+    captured_by: str,
     content_hash: str,
     media_type: str,
 ) -> tuple[str, str]:
@@ -176,7 +177,7 @@ async def _seed_guide(
             manifest_schema_version="v1",
             manifest_json={"items": [item_id]},
             bundle_hash=canonical_json_hash({"items": [item_id]}),
-            captured_by="test",
+            captured_by=captured_by,
         )
     )
     await session.flush()
@@ -298,9 +299,30 @@ async def test_guide_admission_derives_three_scopes_without_provider_evidence(
             ) as source:
                 project_id, item_id = await _seed_guide(
                     session,
+                    captured_by=str(context.actor_profile_id),
                     content_hash=source.commitment.sha256,
                     media_type=source.commitment.media_type,
                 )
+                with pytest.raises(
+                    ArtifactAdmissionRelationshipError,
+                    match="guide source item relationship is unavailable",
+                ):
+                    await ArtifactAdmissionService(
+                        session,
+                        settings,
+                        namespace,
+                    ).admit(
+                        GuideArtifactAdmissionRequest(
+                            authorization_context=_context(),
+                            guide_source_item_id=UUID(item_id),
+                            source=source,
+                        )
+                    )
+                assert await _count(session, ArtifactStorageNamespace) == 0
+                assert await _count(session, ArtifactAdmissionScope) == 0
+                assert await _count(session, ArtifactAdmissionCharge) == 0
+                assert await _count(session, ArtifactPutAttempt) == 0
+                await session.rollback()
                 result = await ArtifactAdmissionService(
                     session,
                     settings,
