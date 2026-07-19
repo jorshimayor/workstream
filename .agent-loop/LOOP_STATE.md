@@ -18,42 +18,50 @@
   inactive.
 - AUTH-09C merged through PR #146 as `0ffdabf`; signed schema-v2 memory at
   `eeb3dc2` recorded its two administrative reads and stopped.
-- PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on
-  2026-07-18; the user then explicitly started ART-02B1.
-- Active ART implementation chunk: `WS-ART-001-02B1` on
-  `codex/ws-art-001-02b1-s3-compatible-minio-aws`.
-- The ART worktree consumes merged AUTH, REV, and CON contracts without
-  editing or activating their independently owned runtime behavior.
-- AUTH-09D-A merged through PR #148 as `99ae4c9`; AUTH-09D-B remains inactive
-  until signed memory and an explicit human start.
-- ART integration basis: trusted `main` at `99ae4c9` after PR #148.
+- PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on 2026-07-18.
+  PR #151 then merged `WS-ART-001-02B1` as `1b5422f` on 2026-07-19;
+  ART-02C1 remains inactive pending signed memory and a separate explicit start.
+- AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory at
+  `cf8a3e8` recorded the stopped gate and exact 09D-B successor.
+- PR-ready implementation chunk: `WS-AUTH-001-09D-B` in PR #152 on
+  `codex/ws-auth-001-09d-b-identity-link-lifecycle`, started from trusted
+  `main` at `99ae4c9` after the user's explicit start signal. Contract repair
+  passed required L1 preimplementation review at exact contract `9ec6390b`.
+  Implementation, deterministic proof, and required internal review pass; the
+  branch now integrates trusted `main` at `1b5422f`.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current ART gate: integrate trusted `main`, complete deterministic 02B1
-  proof, and pass all nine exact-SHA internal reviewer tracks before opening
-  the ART PR. No later ART chunk starts automatically.
+- Current gate: refreshed external checks and explicit human review for PR
+  #152. The inactive
+  `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` is the next same-initiative gate; it
+  changes no action availability. No service caller becomes executable before
+  AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: merged main contains 74 PermissionIds and 65
-  ActionIds, with 12 active actions: the two actor-self actions, seven AUTH-08
-  administrative actions, AUTH-09B `actor.service.provision`, and AUTH-09C
-  `actor.profile.read` plus `actor.identity_link.read`. Merged AUTH-09A defines
-  seven fixed artifact
+- Authorization checkpoint: trusted main contains 74 PermissionIds and 65
+  ActionIds, with 15 active actions: the two actor-self actions, seven AUTH-08
+  administrative actions, AUTH-09B `actor.service.provision`, AUTH-09C
+  `actor.profile.read` plus `actor.identity_link.read`, and the three merged
+  AUTH-09D-A profile lifecycle actions. PR #152 activates only the two 09D-B
+  identity-link lifecycle actions, producing a candidate total of 17.
+  Merged AUTH-09A defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
   AUTH planning requires availability-neutral ART custody transfer, fixed-service
   admission, prepared mutation authority, and exact AUTH-only activation chunks;
   neither reconciliation PR activates feature behavior.
-- Parallel artifact checkpoint: ART-02A1, ART-02A2, and ART-02A3 merged through
-  PRs #127, #129, and #141. ART-02B1 is active and adds real MinIO protocol
-  proof plus a fail-closed, runtime-ineligible native AWS profile.
+- Parallel artifact checkpoint: ART-02A1, ART-02A2, ART-02A3, and ART-02B1
+  merged through PRs #127, #129, #141, and #151. ART-02B1 adds real MinIO
+  protocol proof plus a fail-closed, runtime-ineligible native AWS profile;
+  ART-02C1 remains inactive.
 - Authorization checkpoint: AUTH-07B through AUTH-09D-A merged through PRs
-  #130, #131, #132, #143, #146, and #148. AUTH-09D-B remains inactive.
+  #130, #131, #132, #143, #146, and #148. AUTH-09D-B is the reviewed PR #152
+  candidate; its contributor foundation and AUTH-09E remain inactive.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

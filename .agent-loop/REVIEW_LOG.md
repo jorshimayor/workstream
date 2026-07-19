@@ -1,5 +1,55 @@
 # Review Log
 
+## 2026-07-18 - WS-AUTH-001-09D-B Internal Review Passed
+
+- Identity-link revoke/reactivate implementation, real PostgreSQL concurrency,
+  exact rollback/evidence proof, and the contributor-foundation sequencing
+  repair passed all required reviewer tracks at exact head `bd0b063b`.
+- QA's four proof blockers, architecture/docs' three closeout blockers, and the
+  contributor-contract's two scope/allowlist blockers were repaired without a
+  production compatibility path, threshold reduction, skip, or lifecycle
+  expansion.
+- Exact evidence is 112 authorization tests at 90.11 percent branch coverage,
+  two mandatory PostgreSQL nodes in 241.09 seconds, the live HTTP drill, Ruff,
+  both stale scans, Markdown links, 87 Agent Gates, merge-intent validation,
+  and diff integrity.
+- Ready PR publication is the remaining local gate. The contributor foundation
+  remains inactive behind merge, signed memory, and a separate explicit start.
+
+## 2026-07-18 - AUTH Contributor Foundation Sequence Reconciled
+
+- Current REV planning correctly identified that deferring assignment and
+  Submission ownership renames to AUTH-13/14 creates a dependency cycle.
+- Durable AUTH planning now names inactive same-initiative successor
+  `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` immediately after 09D-B. Its bounded
+  contract owns only the two `contributor_id` clean cuts, database-backed
+  canonical-human lineage, and transaction-local active-human revalidation.
+- AUTH-13/14 now consume those canonical fields and retain their later
+  authorization/lifecycle responsibilities. Fixed future migration
+  reservations are retired; each unmerged chunk allocates from trusted `main`.
+- This planning repair changes no 09D-B runtime behavior and starts no successor.
+
+## 2026-07-18 - WS-AUTH-001-09D-B Preimplementation Review Passed
+
+- Required L1 review initially rejected broad race, rollback, lock-order,
+  allowed-file, evidence, and process-state contracts before runtime edits.
+- Exact candidate `9ec6390b` repairs every valid finding: canonical
+  profile/link/grant target locking, exact link evidence, closed missing-target
+  denial flow, four actor-self lock/timestamp cases, nine-stage rollback on both
+  operations, blocker-observed PostgreSQL races, 90 percent authorization
+  coverage, and explicit 09E inactivity.
+- Senior engineering, QA/test, security/auth, product/ops, architecture, CI
+  integrity, docs, reuse/dedup, and test delta pass. Bounded runtime
+  implementation may begin for 09D-B only.
+
+## 2026-07-18 - WS-AUTH-001-09D-B Explicitly Started
+
+- PR #148 merged AUTH-09D-A as `99ae4c9`; signed schema-v2 memory `cf8a3e8`
+  stopped and named 09D-B as the same-initiative successor.
+- The user explicitly started 09D-B. Its broad inherited contract is being
+  repaired to exact files, exclusions, behavior, proof, reviewers, and human
+  review focus before any runtime edit.
+
 ## 2026-07-18 - WS-AUTH-001-09D-A External Repair Review Passed
 
 - PR #148 CodeRabbit correctly found an API/database normalization mismatch:
