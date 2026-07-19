@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `b4d54469b1590cf43fd9f496c64b6172577c0eec`
+Reviewed code SHA: `2595f0ce0964624e8ae022d6cbee04d260826612`
 
-Reviewed at: 2026-07-19T08:09:47Z
+Reviewed at: 2026-07-19T08:58:54Z
 
-Reviewer run IDs: senior-engineering=019f795c-78be-7701-b920-ac956612bf3d; QA/test=019f795c-7b83-7602-a5d2-aa19f4f4c7c9; security/auth=019f795c-81a9-7cd0-9f4c-e6adf9f4b558; product/ops=019f795c-8985-7582-b695-c528c99d4321; architecture=019f795c-9173-70e0-86a9-709afb162a52; reuse/dedup=019f795c-9ba9-7153-b7e9-4f6f900dbe21; CI-integrity=019f7966-0cb2-7343-a08e-946e26c51127; test-delta=019f7966-168e-7053-93e6-f43d184e96da; docs=019f7966-1dec-7be2-8417-c4ea9bc5329a
+Reviewer run IDs: senior-engineering=019f797a-e6b0-7920-8f87-bb01c93fb972; QA/test=019f797a-e989-7441-9d6d-f52ca2a20276; security/auth=019f797a-ed1b-7c63-b8d6-2143a4152d07; product/ops=019f7988-7323-7851-b17d-8452f9db01c0; architecture=019f7988-7bfc-7670-b9bb-67342ee934b3; reuse/dedup=019f797b-03a8-7cd0-a5de-b8e5ae3c052b; CI-integrity=019f7988-8341-7b83-8324-11461058509a; test-delta=019f7988-908c-7873-a536-2360ebb123bf; docs=019f7988-a143-7a53-a3b6-c8a304d06c22
 
 The reviewed base is trusted `main` at
 `93dd392484b397cfdfaaa833631dc2c27f591ed7`, including merged AUTH PR #152.
@@ -59,7 +59,7 @@ this evidence and requires a new exact-SHA review cycle.
 - Replaced read-only guide admission facts with row locks on both the exact
   source item and its immutable snapshot, plus a two-transaction lock-timeout
   regression test.
-- Proved capacity failure leaves no scope, charge, attempt, or audit residue.
+- Proved capacity failure leaves no partial admission state.
 - Proved an attempt-only populated state prevents destructive migration
   downgrade.
 - Moved provider-object reference parsing and construction behind the canonical
@@ -69,6 +69,10 @@ this evidence and requires a new exact-SHA review cycle.
 - Revalidated replay capacity and the exact attempt-charge set before returning
   an existing attempt.
 - Bound checker output to the canonical submission and task relationship.
+- Corrected the declared `02C2` successor contract heading to the canonical
+  merge-intent grammar without starting or changing `02C2` behavior.
+- Replaced inaccurate audit-event wording with the exact durable admission
+  evidence and admission-ledger terms used by this chunk.
 
 ## Commands Run
 

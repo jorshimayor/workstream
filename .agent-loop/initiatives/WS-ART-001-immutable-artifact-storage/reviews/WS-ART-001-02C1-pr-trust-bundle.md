@@ -59,7 +59,7 @@ percent repository coverage floor.
 
 ## Internal Review
 
-Reviewed code SHA: `b4d54469b1590cf43fd9f496c64b6172577c0eec`
+Reviewed code SHA: `2595f0ce0964624e8ae022d6cbee04d260826612`
 
 All nine required reviewer tracks passed with no unresolved findings. Every
 reviewer session is closed. Run IDs and repaired findings are recorded in the
