@@ -13,7 +13,8 @@ The canonical cross-boundary source is merged
 `0302bcf`; REV-01 PR #145 canonically published it, REV-02 PR #147 decomposed
 the first runtime parent, and planning-only REV PLAN2 PR #150 refreshed the
 remaining runtime child gates. They remain the reviewed owner contract in
-current main `983b9e53`;
+current main `1b5422fc`; ART-02B1 PR #151 changes ArtifactStore provider
+implementation and proof only and does not enter this transaction;
 runtime REV behavior remains
 unimplemented.
 

@@ -10,14 +10,17 @@
 
 ## Trusted baseline
 
-- `origin/main` at `983b9e534b84f1590fafecc0ce1355cf131257ce`, merging
-  planning-only REV PLAN2 PR #150 after AUTH-09D-A PR #148, REV-02 PR #147,
-  REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, reviewed
-  REV planning PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
+- `origin/main` at `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`, merging ART-02B1
+  PR #151 after planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02
+  PR #147, REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143,
+  reviewed REV planning PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
 - PR #128 remains planning authority, not Review runtime implementation.
 - REV PLAN2 PR #150 is the current runtime-readiness planning authority. It
   splits future REV parent records into executable children but changes no
   backend runtime, migration, AUTH catalogue, or 02A outbox contract.
+- ART-02B1 PR #151 adds the S3-compatible ArtifactStore adapter and real MinIO
+  proof plus inactive AWS-profile support. It adds no migration or outbox seam,
+  and remains outside the core Review-to-CON transaction.
 - Runtime AUTH is 74 PermissionIds, 65 ActionIds, 15 active, 50 planned.
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
   `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates

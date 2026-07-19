@@ -37,6 +37,12 @@ their exact CON gates, while preserving the ordered reviewer/submitter
 operations, accept-only FinalAcceptance, REV-owned audit/outbox staging, and
 single commit. It adds no backend runtime, migration, AUTH catalogue entry, or
 02A behavior. CON-02A therefore remains the same `0027` implementation.
+Trusted `main` then advanced to `1b5422fc` through ART-02B1 PR #151. That merge
+adds the S3-compatible ArtifactStore adapter, MinIO/AWS configuration, exact SDK
+pins, CI MinIO service, and substantial backend tests. It adds no migration,
+outbox seam, CON identifier, or core transaction dependency, so CON-02A remains
+the same `0027` implementation. Because it materially changes dependencies,
+CI, and repository tests, full-suite evidence must be regenerated.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -110,7 +116,7 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation is reconciled with trusted main `983b9e53`
+`WS-CON-001-02A` implementation is reconciled with trusted main `1b5422fc`
 after the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
@@ -118,8 +124,9 @@ but AUTH-09D-A changed backend runtime, tests, and the migration head, so
 repository-wide evidence must rerun on the `0027` chain before exact-SHA
 internal review. Current focused evidence already passes. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
-trusted main; it is not counted as evidence. It stops before dispatcher
-mechanics and CON-02B.
+trusted main; a second attempt was stopped after 3 hours 7 minutes solely
+because ART PR #151 advanced trusted main. Neither is counted as evidence. It
+stops before dispatcher mechanics and CON-02B.
 
 | Chunk | Status | Notes |
 |---|---|---|

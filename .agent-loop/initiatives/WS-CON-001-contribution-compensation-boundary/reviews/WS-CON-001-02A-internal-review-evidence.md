@@ -8,7 +8,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `983b9e534b84f1590fafecc0ce1355cf131257ce`
+Trusted main SHA: `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`
 
 The implementation is limited to one linear PostgreSQL migration after
 AUTH-owned revision 0026, the generic outbox persistence/append module, shared
@@ -24,6 +24,11 @@ outside the chunk and is excluded from every commit and review.
 REV PLAN2 PR #150 is planning/specification-only. It preserves the exact 02A
 runtime and migration while refreshing future CON/REV gate names. The first
 post-AUTH full-suite attempt was stopped after two hours when that PR advanced
+trusted main; its metadata was removed and it is not evidence.
+
+ART-02B1 PR #151 changes no 02A code or migration, but it adds locked S3 SDK
+dependencies, a real MinIO CI service, and substantial backend tests. A second
+full-suite attempt was stopped after 3 hours 7 minutes when that PR advanced
 trusted main; its metadata was removed and it is not evidence.
 
 ## Implemented Contract
@@ -49,28 +54,28 @@ trusted main; its metadata was removed and it is not evidence.
 ## Current Reconciliation Verification Results
 
 ```text
-36 passed in 156.17s on current main's ART 0025 -> AUTH 0026 -> CON 0027 chain
+76 passed in 243.28s on current main's outbox/migration plus real-MinIO ART suite
 outbox coverage: 95.43% (required: at least 90%)
 8 passed, 56 deselected in 50.92s (exact contract selector)
 2 passed in 88.51s (affected AUTH lifecycle downgrade tests)
 16 passed in 102.10s (isolated database runner self-tests with admin URL)
 real API contract end-to-end on 0027: passed
-87 passed (agent-loop gates)
+88 passed (agent-loop gates after ART-02B1)
 Ruff: passed
 Docstring coverage: passed at 90.9%
 Markdown links: passed for 15 changed Markdown files
-Workstream/AUTH/ART/REV stale-contract scans: passed after PR #150 reconciliation
+Workstream/AUTH/ART/REV stale-contract scans: passed after PR #151 reconciliation
 merge intent and git diff --check: passed
-Alembic heads: one head, 0027_shared_transactional_outbox
+Alembic heads: one head, 0027_shared_transactional_outbox after PR #151
 full-suite fail-closed ceiling: 25,200s; tests/isolation/coverage unchanged
-repository-wide isolated PostgreSQL suite: pending on frozen `983b9e53` SHA
+repository-wide isolated PostgreSQL plus real-MinIO suite: pending on frozen `1b5422fc` SHA
 ```
 
 ## Pre-Reconciliation Verification Results
 
 These results were produced on the former `f18b620` / outbox-0026 chain. They
 prove the implementation before AUTH-09D-A but are not publication evidence for
-the reconciled `983b9e53` / outbox-0027 chain. Current focused evidence is
+the reconciled `1b5422fc` / outbox-0027 chain. Current focused evidence is
 recorded above; the exact full suite must rerun before reviewer fanout.
 
 ```text

@@ -1,5 +1,22 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
+## ART-02B1 Current-Main Reconciliation
+
+Trusted main advanced to `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`
+through ART-02B1 PR #151. The merge adds the S3-compatible ArtifactStore
+adapter, real MinIO integration, inactive AWS-profile support, exact SDK pins,
+CI services/coverage gates, and substantial artifact/configuration tests. It
+adds no migration, outbox import, dispatcher seam, AUTH/CON identifier, ART
+call in the core transaction, or 02A allowed-file change. Alembic therefore
+still ends at CON-owned `0027_shared_transactional_outbox`, while the expanded
+dependency and test tree requires fresh deterministic evidence.
+
+The exact isolated suite on the prior `983b9e53` baseline was stopped after 3
+hours 7 minutes solely because PR #151 advanced trusted main. Its metadata was
+removed and it is not accepted evidence. Verification must restart on the
+frozen `1b5422fc` baseline after installing the newly merged locked runtime
+dependencies and starting the real MinIO test provider required by main.
+
 ## REV PLAN2 Current-Main Reconciliation
 
 Trusted main advanced to `983b9e534b84f1590fafecc0ce1355cf131257ce`

@@ -48,6 +48,11 @@ FinalAcceptance-sourced submitter contribution, reviewer contribution on all
 three decisions, REV-owned single commit, and shared outbox staging. Its split
 future REV child gates are reconciled in CON planning; it changes no backend,
 migration, AUTH catalogue, or CON-02A implementation.
+ART-02B1 PR #151 then advanced trusted main to `1b5422fc` with the
+S3-compatible ArtifactStore adapter, real MinIO integration, inactive AWS
+profile support, dependency pins, CI changes, and substantial tests. It adds no
+migration or outbox seam and does not change CON-02A behavior, but it requires
+fresh repository-wide evidence on the combined tree.
 
 ## Inspected and already aligned
 

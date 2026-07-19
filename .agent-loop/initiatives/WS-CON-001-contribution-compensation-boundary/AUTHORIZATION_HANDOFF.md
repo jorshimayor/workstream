@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-Trusted `main` is `983b9e53` after planning-only REV PLAN2 PR #150,
+Trusted `main` is `1b5422fc` after ART-02B1 PR #151 and planning-only REV PLAN2 PR #150,
 AUTH-09D-A PR #148, REV-02 PR #147 and
 REV-01 PR #145, layered on AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143,
 merged REV planning PR #128, AUTH-09A/AUTH PR #140, and the earlier WS-XINT PR

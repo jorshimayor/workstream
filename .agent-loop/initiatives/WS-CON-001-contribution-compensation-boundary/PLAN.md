@@ -2,9 +2,9 @@
 
 ## Proposed approach
 
-Adopt planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, merged REV-02 PR
-#147, REV-01 PR #145, and the underlying REV planning PR #128 plus trusted main
-`983b9e53`, including
+Adopt ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148,
+merged REV-02 PR #147, REV-01 PR #145, and the underlying REV planning PR #128
+plus trusted main `1b5422fc`, including
 AUTH-09C PR #146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and
 the underlying WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
 hidden, reviewable chunks. The
@@ -164,8 +164,8 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `983b9e53`, merging planning-only REV PLAN2 PR #150 after
-AUTH-09D-A PR #148 and REV-02 PR #147,
+Trusted `main` is `1b5422fc`, merging ART-02B1 PR #151 after planning-only REV
+PLAN2 PR #150, AUTH-09D-A PR #148 and REV-02 PR #147,
 REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, REV planning
 PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
 Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 15 active actions,

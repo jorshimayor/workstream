@@ -2,11 +2,11 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `983b9e53`, including planning-only REV
-  PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147, REV-01 PR #145,
-  AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR #143, REV
-  planning PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT PR #139
-  boundary;
+- trusted `origin/main` refreshed to `1b5422fc`, including ART-02B1 PR #151,
+  planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147,
+  REV-01 PR #145, AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR
+  #143, REV planning PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT
+  PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -53,7 +53,7 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `983b9e53` still ends its migration chain at AUTH-owned
+- Trusted `main` at `1b5422fc` still ends its migration chain at AUTH-owned
   `0026_actor_profile_lifecycle`; CON-02A owns linear revision
   `0027_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
@@ -101,6 +101,12 @@
   dispatcher/handler registry precedes REV-12P1, CON lifecycle hooks precede
   REV-12A3, and CON-11 precedes the sole product release in REV-13C. It changes
   no 02A runtime or migration.
+- ART-02B1 PR #151 adds the S3-compatible adapter, MinIO/AWS configuration,
+  exact SDK pins, CI MinIO service, and substantial artifact/configuration test
+  coverage. It adds no migration, outbox import, shared dispatcher seam, or
+  core CON dependency. It therefore leaves 02A's implementation boundary
+  unchanged while requiring fresh repository-wide evidence on the larger
+  dependency and test tree.
 
 ## Canonical merged changes affecting CON
 
