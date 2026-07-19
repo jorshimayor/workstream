@@ -1,5 +1,89 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Internal Review Passed
+
+- Exact code SHA `4d1fc507c343d483677a332c2a91885e32571693` passed senior,
+  QA/test, security/auth, product/ops, architecture, CI integrity, docs,
+  reuse/dedup, and test-delta review after all valid findings were repaired.
+- Internal review evidence and the PR trust bundle record deterministic proof,
+  repair history, human focus, and the mandatory external 78/90 coverage gate.
+- PR publication and external GitHub checks are current. AUTH-09E remains
+  inactive and requires a later merge/memory/explicit-start sequence.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Review Repair Evidenced
+
+- Malformed preflight values are now replaced with a fixed redacted marker;
+  realistic email/token-like inputs never appear, and each 22-row unsafe class
+  reports its total with only 20 sorted rows.
+- The repaired migration matrix passed two tests in 102.35 seconds, including
+  zero/extra/absent trigger arguments, nullable delegation, and missing/service
+  INSERT/UPDATE parity on both contributor tables.
+- All 12 repaired PostgreSQL races passed in 636.24 seconds. Lifecycle-first
+  submission cases prove zero checker/enqueue calls; task-write-first cases
+  prove exactly one of each after the valid contributor write commits.
+- Current docs name the reusable function, triggers, foreign keys, and indexes
+  without stale human-worker wording. Fresh exact-SHA internal review is the
+  current gate; Backend remains mandatory for aggregate 78/90 coverage.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Implementation Review Failed
+
+- Exact candidate `e41c33c0db501152694e862d9f3a02877e42cfce` failed required
+  internal review. A malformed legacy attribution value could leak through the
+  migration refusal diagnostic, direct-SQL trigger branches and invocation
+  counts were not fully proved, two current docs used stale human terminology,
+  and aggregate coverage had not yet been produced by GitHub Backend.
+- Repair redacts malformed values, bounds each class, closes the PostgreSQL and
+  race-test matrix, names every database object for operators/REV, and treats
+  the unchanged 78/90 percent reports as mandatory external pre-merge gates.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Targeted Evidence Collected
+
+- The clean `contributor_id` migration, canonical-human database guard,
+  transaction-local actor revalidation, task/assignment locks, API mappings,
+  current docs, persistent task coverage gate, and merge intent are implemented.
+- The repaired migration matrix passed two comprehensive tests in 102.35
+  seconds. The repaired 12 named real PostgreSQL lifecycle/task interleavings
+  passed in 636.24 seconds, and the
+  repaired canonical API-error test passed in 63.79 seconds.
+- Actor/task focused unit and database behavior tests passed, the real HTTP API
+  contract drill passed, and Ruff, docstring coverage, Markdown links, diff
+  integrity, and one Alembic head passed before reviewer repair.
+- GitHub Backend must still prove the unchanged 78 percent global and persistent
+  90 percent actor/task subsystem reports before merge. AUTH-09E remains
+  inactive.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Plan Review Passed
+
+- Exact repaired contract `2a21166daa747d3233845064826bce6573a85dbb`
+  passed senior/security/product, QA/migration/CI, and
+  architecture/reuse/docs/REV tracks after the initial preimplementation fail.
+- The approved boundary is actor-owned profile/link revalidation, exact
+  profile-link-task-assignment lock order, independent database lineage checks,
+  12 observed PostgreSQL races, persistent 90 percent actor/task coverage, and
+  no authorization action, permission, grant, decision, or availability change.
+- All 88 agent gates and diff integrity pass. Bounded implementation may begin
+  for this chunk only.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Contract Review Failed
+
+- Exact candidate `33f645b0` was rejected before runtime edits. Review found a
+  stale-link race, underspecified 403/503 mapping, unlocked task resources,
+  ambiguous migration diagnostics and downgrade dependencies, an overbroad
+  clean-cut claim, missing persistent task coverage, and stale agent-gate state.
+- Repair keeps actor/link validation actor-owned, preserves the exact
+  profile-link-task-assignment order, removes REV-02C attribution inference,
+  names every schema object and SQLSTATE, defines 12 observed PostgreSQL races,
+  and changes no action, permission, grant, or availability.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Explicitly Started
+
+- PR #152 merged AUTH-09D-B as `93dd392`; signed schema-v2 memory `912a6254`
+  stopped and named this chunk as the same-initiative successor.
+- The user explicitly started the contributor foundation. Trusted `main` has
+  one Alembic head, `0026_actor_profile_lifecycle`; exact migration, lineage,
+  lock-order, rollback, and clean-cut behavior are undergoing required L1
+  preimplementation review before runtime edits.
+
 ## 2026-07-18 - WS-AUTH-001-09D-B Internal Review Passed
 
 - Identity-link revoke/reactivate implementation, real PostgreSQL concurrency,

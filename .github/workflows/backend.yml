@@ -158,6 +158,14 @@ jobs:
           --precision=2
           --fail-under=90
 
+      - name: Task subsystem coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/modules/tasks/*'
+          --precision=2
+          --fail-under=90
+
       - name: Auth verifier boundary coverage
         working-directory: backend
         run: >-

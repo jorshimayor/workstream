@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | PR #152 open; trusted main `1b5422f` integrated; refreshed checks and explicit human review pending |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Internal review passed at `4d1fc507`; PR/external checks pending; aggregate coverage mandatory in Backend |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,6 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and explicit user start |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until contributor-foundation merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -95,12 +94,12 @@ stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
 started AUTH-09C. PR #146 merged it as `0ffdabf`; signed memory at `eeb3dc2`
 stopped. The user explicitly started AUTH-09D, and required review split it
 before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
-`cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B; exact
-contract `9ec6390b` passed required L1 review. Implementation, deterministic
-proof, and required internal review pass. PR #152 is open and integrates trusted
-main at `1b5422f`; refreshed external checks and explicit human review are the
-current gate. The contributor foundation is the next AUTH gate; 09E and
-POL-002-04 remain inactive pending their own gates and explicit starts.
+`cf8a3e8` stopped and named 09D-B. PR #152 merged 09D-B as `93dd392`; signed
+memory `912a6254` passed and stopped. The user explicitly started the
+contributor foundation from that trusted head. Its first L1 review rejected the
+underspecified contract before runtime edits; exact contract repair and
+rereview are current. AUTH-09E and POL-002-04 remain inactive pending their own
+gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

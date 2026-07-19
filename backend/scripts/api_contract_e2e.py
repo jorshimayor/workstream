@@ -1397,6 +1397,11 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
             worker_token,
             {"reason": "real worker claim"},
         )
+        ensure(
+            claim["assignment"]["contributor_id"]
+            == canonical_actor["actor_profile_id"],
+            "task claim did not return canonical contributor attribution",
+        )
         await request_json(
             client,
             "GET",
@@ -1454,6 +1459,10 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
                 ],
             },
             201,
+        )
+        ensure(
+            submission["contributor_id"] == canonical_actor["actor_profile_id"],
+            "submission did not return canonical contributor attribution",
         )
         for internal_field in (
             "artifact_hash_manifest",
