@@ -2,11 +2,14 @@
 
 ## Status
 
-Active contract review. PR #152 merged AUTH-09D-B as `93dd392`; signed
+Exact-SHA internal review. PR #152 merged AUTH-09D-B as `93dd392`; signed
 schema-v2 memory at `912a6254` stopped and named this same-initiative
 successor. The user explicitly started this chunk on 2026-07-19. Its branch
 starts from trusted `main` at `93dd392`, whose single Alembic head is
-`0026_actor_profile_lifecycle`.
+`0026_actor_profile_lifecycle`. Exact contract `2a21166d` passed all required
+L1 preimplementation reviewer tracks before runtime edits began.
+Implementation and deterministic evidence are complete; GitHub Backend remains
+authoritative for the full-suite 78 percent and actor/task 90 percent reports.
 
 ## Parent initiative
 

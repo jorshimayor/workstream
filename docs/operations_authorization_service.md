@@ -250,6 +250,39 @@ intake. Operator start override does not use the bridge. AUTH-13 removes the
 claim and start consumers; AUTH-14 removes the final submission consumer,
 compatibility route, and adapter.
 
+## Contributor Attribution Migration And Runtime Guard
+
+Migration `0027_contributor_foundation` clean-cuts `task_assignments.worker_id`
+and `submissions.worker_id` to `contributor_id`. Before any DDL, it locks
+`actor_profiles`, `task_assignments`, and `submissions` and independently
+classifies every old value as malformed UUID, missing ActorProfile, or service
+ActorProfile. Failure reports only bounded row/profile ID pairs and counts. It
+does not inspect issuer, subject, email, token claims, current assignment, or
+another table to infer a replacement.
+
+Remediate a refusal only from authoritative canonical-actor evidence. Create or
+repair the canonical human ActorProfile through its owning reviewed process,
+or correct a demonstrably wrong attribution through a separately reviewed data
+repair. Do not map by email or display name, select a latest profile, convert a
+service identity, fabricate an ActorProfile, or edit immutable audit history.
+Rerun from exact head `0026_actor_profile_lifecycle` and retain the bounded
+preflight result with the deployment evidence.
+
+After upgrade, both columns are non-null `varchar(36)` foreign keys. PostgreSQL
+rejects a missing profile with SQLSTATE `23503` and a service profile with
+`23514`. Suspended and deactivated human profiles remain valid historical
+references. Downgrade first locks the same tables and refuses before DDL when
+any non-owned dependency uses the shared lineage function; remove or migrate
+that dependent schema through its owning release before retrying.
+
+Claim and submission also revalidate current identity inside their mutation
+transaction in lock order ActorProfile, exact issuer/subject identity link,
+task, active assignment. An inactive or non-human identity returns HTTP 403
+`active_contributor_required`. Missing, mismatched, database-unavailable, or
+lock-failed canonical identity state rolls back and returns retryable HTTP 503
+`contributor_identity_unavailable`. These responses are identity eligibility,
+not permission decisions; grant and resource authorization remain separate.
+
 ## PostgreSQL Rate Controls
 
 First human access now uses the AUTH-04B PostgreSQL control. Future

@@ -16,8 +16,8 @@ from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import func, inspect, select, text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.schema import CreateIndex
 
 from app.adapters.auth.dev import actor_id_from_external_identity
@@ -35,7 +35,11 @@ from app.modules.actors.models import (
     LegacyWorkflowEligibility,
 )
 from app.modules.actors.schemas import LegacyWorkflowEligibilityActivationRequest
-from app.modules.actors.service import ActorService
+from app.modules.actors.service import (
+    ActiveHumanWriteActorRequired,
+    ActorService,
+    CanonicalWriteActorUnavailable,
+)
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
@@ -60,7 +64,13 @@ from app.modules.tasks.models import (
     WorkstreamTask,
 )
 from app.modules.tasks.repository import TaskRepository
-from app.modules.tasks.service import TaskService, TaskServiceError
+from app.modules.tasks.schemas import SubmissionCreate
+from app.modules.tasks.service import (
+    ActiveContributorRequired,
+    ContributorIdentityUnavailable,
+    TaskService,
+    TaskServiceError,
+)
 from app.schemas.auth import ActorContext
 
 
@@ -81,6 +91,52 @@ async def test_task_repository_delegates_audit_persistence() -> None:
     repository._audit_repository.list_audit_events.assert_awaited_once_with(
         "task", "task-1"
     )
+
+
+async def test_task_contributor_revalidation_maps_failures_and_rolls_back() -> None:
+    actor = ActorContext(
+        actor_id=actor_id("write-actor"),
+        external_subject="write-actor",
+        external_issuer="flow-test",
+        roles=("worker",),
+        claim_snapshot={},
+        auth_source="dev_mock",
+        is_dev_auth=True,
+    )
+    session = MagicMock(spec=AsyncSession)
+    session.rollback = AsyncMock()
+    service = TaskService(session)
+    service._actors.require_active_human_write_actor = AsyncMock(return_value=None)
+
+    assert await service._require_active_contributor(actor) is None
+    session.rollback.assert_not_awaited()
+
+    cases = (
+        (
+            ActiveHumanWriteActorRequired("inactive"),
+            ActiveContributorRequired,
+            "active_contributor_required",
+        ),
+        (
+            CanonicalWriteActorUnavailable("missing"),
+            ContributorIdentityUnavailable,
+            "contributor_identity_unavailable",
+        ),
+        (
+            OperationalError("select", {}, RuntimeError("database unavailable")),
+            ContributorIdentityUnavailable,
+            "contributor_identity_unavailable",
+        ),
+    )
+    for source_error, expected_error, code in cases:
+        service._actors.require_active_human_write_actor = AsyncMock(
+            side_effect=source_error
+        )
+        with pytest.raises(expected_error) as failure:
+            await service._require_active_contributor(actor)
+        assert failure.value.code == code
+
+    assert session.rollback.await_count == len(cases)
 
 
 async def delete_audit_fixture_as_owner(session: AsyncSession, event_id: str) -> None:
@@ -768,6 +824,553 @@ async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = No
     return worker_actor_id
 
 
+async def _wait_for_task_database_lock(
+    database_url: str,
+    application_name: str,
+) -> None:
+    """Wait until one named race participant is blocked on a PostgreSQL lock."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            for _ in range(5000):
+                waiting = await connection.scalar(
+                    text(
+                        "select exists(select 1 from pg_stat_activity where "
+                        "application_name = :application_name "
+                        "and wait_event_type = 'Lock')"
+                    ),
+                    {"application_name": application_name},
+                )
+                if waiting:
+                    return
+                await asyncio.sleep(0)
+    finally:
+        await engine.dispose()
+    raise AssertionError(f"{application_name} never reached the PostgreSQL lock")
+
+
+async def _task_contributor_race_snapshot(
+    connection: AsyncConnection,
+    task_id: str,
+) -> dict[str, object]:
+    """Capture every task-owned write surface relevant to contributor races."""
+    task = (
+        await connection.execute(
+            text(
+                "select status, assigned_to from workstream_tasks "
+                "where id = :task_id"
+            ),
+            {"task_id": task_id},
+        )
+    ).one()
+    assignments = (
+        await connection.execute(
+            text(
+                "select id, contributor_id, assigned_by, status, accepted_at, released_at "
+                "from task_assignments where task_id = :task_id order by id"
+            ),
+            {"task_id": task_id},
+        )
+    ).all()
+    submissions = (
+        await connection.execute(
+            text(
+                "select id, contributor_id, version, status, locked_at "
+                "from submissions where task_id = :task_id order by version"
+            ),
+            {"task_id": task_id},
+        )
+    ).all()
+    evidence_count = await connection.scalar(
+        text(
+            "select count(*) from evidence_items evidence "
+            "join submissions submission on submission.id = evidence.submission_id "
+            "where submission.task_id = :task_id"
+        ),
+        {"task_id": task_id},
+    )
+    checker_run_count = await connection.scalar(
+        text("select count(*) from checker_runs where task_id = :task_id"),
+        {"task_id": task_id},
+    )
+    checker_result_count = await connection.scalar(
+        text("select count(*) from checker_results where task_id = :task_id"),
+        {"task_id": task_id},
+    )
+    audit_events = (
+        await connection.execute(
+            text(
+                "select id, event_type, from_status, to_status, actor_id, event_payload "
+                "from audit_events where entity_type = 'task' and entity_id = :task_id "
+                "order by created_at, id"
+            ),
+            {"task_id": task_id},
+        )
+    ).all()
+    idempotency_count = await connection.scalar(
+        text("select count(*) from authority_idempotency_records")
+    )
+    return {
+        "task": tuple(task),
+        "assignments": [tuple(row) for row in assignments],
+        "submissions": [tuple(row) for row in submissions],
+        "evidence_count": evidence_count,
+        "checker_run_count": checker_run_count,
+        "checker_result_count": checker_result_count,
+        "audit_events": [tuple(row) for row in audit_events],
+        "idempotency_count": idempotency_count,
+    }
+
+
+async def _read_task_contributor_race_snapshot(
+    database_url: str,
+    task_id: str,
+) -> dict[str, object]:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            return await _task_contributor_race_snapshot(connection, task_id)
+    finally:
+        await engine.dispose()
+
+
+async def _run_contributor_lifecycle_write(
+    database_url: str,
+    *,
+    actor_profile_id: str,
+    identity_link_id: str,
+    transition: str,
+    task_id: str,
+    application_name: str,
+    entered: asyncio.Event,
+    locked: asyncio.Event | None = None,
+    release: asyncio.Event | None = None,
+    observe_task_after_lock: bool = False,
+) -> dict[str, object] | None:
+    """Apply one canonical-order lifecycle write in an independent transaction."""
+    engine = create_async_engine(database_url)
+    observed: dict[str, object] | None = None
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text("select set_config('application_name', :name, true)"),
+                {"name": application_name},
+            )
+            entered.set()
+            await connection.execute(
+                text("select id from actor_profiles where id = :id for update"),
+                {"id": actor_profile_id},
+            )
+            await connection.execute(
+                text("select id from actor_identity_links where id = :id for update"),
+                {"id": identity_link_id},
+            )
+            if locked is not None:
+                locked.set()
+            if release is not None:
+                await release.wait()
+            if observe_task_after_lock:
+                observed = await _task_contributor_race_snapshot(connection, task_id)
+
+            if transition == "suspend":
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status = 'suspended', "
+                        "suspended_by = :actor_id, suspended_at = clock_timestamp(), "
+                        "suspension_reason = 'contributor lock race' where id = :actor_id"
+                    ),
+                    {"actor_id": actor_profile_id},
+                )
+            elif transition == "deactivate":
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status = 'deactivated', "
+                        "deactivated_by = :actor_id, deactivated_at = clock_timestamp(), "
+                        "deactivation_reason = 'contributor lock race' where id = :actor_id"
+                    ),
+                    {"actor_id": actor_profile_id},
+                )
+            else:
+                assert transition == "revoke_link"
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status = 'revoked', "
+                        "revoked_by = :actor_id, revoked_at = clock_timestamp(), "
+                        "revoked_reason = 'contributor lock race' where id = :link_id"
+                    ),
+                    {"actor_id": actor_profile_id, "link_id": identity_link_id},
+                )
+        return observed
+    finally:
+        await engine.dispose()
+
+
+async def _run_task_contributor_write(
+    database_url: str,
+    *,
+    actor: ActorContext,
+    task_id: str,
+    operation: str,
+    application_name: str,
+    entered: asyncio.Event,
+) -> object:
+    """Run one task write in its own named PostgreSQL session."""
+    engine = create_async_engine(database_url)
+    try:
+        async with AsyncSession(engine, expire_on_commit=False) as session:
+            await session.execute(
+                text("select set_config('application_name', :name, true)"),
+                {"name": application_name},
+            )
+            entered.set()
+            service = TaskService(session)
+            if operation == "claim":
+                return await service.claim_task(actor, task_id, "contributor lock race")
+            assert operation == "submission"
+            return await service.create_submission(
+                actor,
+                task_id,
+                SubmissionCreate.model_validate(complete_submission_payload()),
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _read_contributor_lifecycle_state(
+    database_url: str,
+    actor_profile_id: str,
+    identity_link_id: str,
+) -> tuple[str, str]:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            profile_status = await connection.scalar(
+                text("select status from actor_profiles where id = :id"),
+                {"id": actor_profile_id},
+            )
+            link_status = await connection.scalar(
+                text("select status from actor_identity_links where id = :id"),
+                {"id": identity_link_id},
+            )
+            assert isinstance(profile_status, str)
+            assert isinstance(link_status, str)
+            return profile_status, link_status
+    finally:
+        await engine.dispose()
+
+
+async def _restore_contributor_after_lifecycle_race(
+    database_url: str,
+    actor_profile_id: str,
+    identity_link_id: str,
+) -> None:
+    """Return a terminal test actor to active state under explicit test custody."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            reset = await connection.begin()
+            try:
+                await connection.execute(
+                    text(
+                        "alter table actor_profiles disable trigger "
+                        "actor_profile_history_guard"
+                    )
+                )
+                await connection.execute(
+                    text(
+                        "alter table actor_identity_links disable trigger "
+                        "actor_identity_link_history_guard"
+                    )
+                )
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status = 'active', "
+                        "suspended_by = null, suspended_at = null, "
+                        "suspension_reason = null, reactivated_by = null, "
+                        "reactivated_at = null, reactivation_reason = null, "
+                        "deactivated_by = null, deactivated_at = null, "
+                        "deactivation_reason = null where id = :id"
+                    ),
+                    {"id": actor_profile_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status = 'active', "
+                        "revoked_by = null, revoked_at = null, revoked_reason = null, "
+                        "reactivated_by = null, reactivated_at = null, "
+                        "reactivation_reason = null where id = :id"
+                    ),
+                    {"id": identity_link_id},
+                )
+                await reset.commit()
+            except BaseException:
+                await reset.rollback()
+                raise
+            finally:
+                enable = await connection.begin()
+                try:
+                    await connection.execute(
+                        text(
+                            "alter table actor_identity_links enable trigger "
+                            "actor_identity_link_history_guard"
+                        )
+                    )
+                    await connection.execute(
+                        text(
+                            "alter table actor_profiles enable trigger "
+                            "actor_profile_history_guard"
+                        )
+                    )
+                    await enable.commit()
+                except BaseException:
+                    await enable.rollback()
+                    raise
+    finally:
+        await engine.dispose()
+
+
+@pytest.fixture
+async def contributor_lifecycle_race_cleanup(
+    task_database_env: str,
+) -> AsyncIterator[list[tuple[str, str]]]:
+    """Restore lifecycle race actors before the migration fixture downgrades."""
+    actors: list[tuple[str, str]] = []
+    yield actors
+    for actor_profile_id, identity_link_id in actors:
+        await _restore_contributor_after_lifecycle_race(
+            task_database_env,
+            actor_profile_id,
+            identity_link_id,
+        )
+
+
+_CONTRIBUTOR_LOCK_RACE_CASES = [
+    (operation, transition, ordering)
+    for operation in ("claim", "submission")
+    for transition in ("suspend", "deactivate", "revoke_link")
+    for ordering in ("lifecycle_first", "task_write_first")
+]
+
+
+@pytest.mark.parametrize(
+    ("operation", "transition", "ordering"),
+    _CONTRIBUTOR_LOCK_RACE_CASES,
+    ids=["-".join(case) for case in _CONTRIBUTOR_LOCK_RACE_CASES],
+)
+async def test_contributor_task_writes_serialize_with_lifecycle_changes(
+    task_client: AsyncClient,
+    task_database_env: str,
+    contributor_lifecycle_race_cleanup: list[tuple[str, str]],
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    transition: str,
+    ordering: str,
+) -> None:
+    """Prove all twelve contributor-write and lifecycle lock order outcomes."""
+    project = await create_active_project(task_client)
+    subject = f"race-{operation}-{transition}-{ordering}"
+    contributor_id = actor_id(subject)
+    if operation == "claim":
+        task = await create_ready_task(task_client, project["id"])
+        await seed_worker_profile(subject)
+    else:
+        task = await create_started_task(
+            task_client,
+            project["id"],
+            monkeypatch,
+            subject,
+        )
+        monkeypatch.setattr(
+            "app.modules.tasks.service.enqueue_pre_review_gate",
+            hold_pre_review_enqueue,
+        )
+
+    async with db_session.get_session_factory()() as session:
+        identity_link_id = await session.scalar(
+            select(ActorIdentityLink.id).where(
+                ActorIdentityLink.actor_profile_id == contributor_id
+            )
+        )
+    assert identity_link_id is not None
+    contributor_lifecycle_race_cleanup.append((contributor_id, identity_link_id))
+
+    actor = ActorContext(
+        actor_id=contributor_id,
+        external_subject=subject,
+        external_issuer="flow-test",
+        roles=("worker",),
+        claim_snapshot={"roles": ["worker"]},
+        auth_source="dev_mock",
+        is_dev_auth=True,
+    )
+    task_id = task["id"]
+    before = await _read_task_contributor_race_snapshot(task_database_env, task_id)
+    task_application_name = f"ws-race-{operation}-{transition}-{ordering}-task"
+    lifecycle_application_name = (
+        f"ws-race-{operation}-{transition}-{ordering}-lifecycle"
+    )
+
+    if ordering == "lifecycle_first":
+        lifecycle_entered = asyncio.Event()
+        lifecycle_locked = asyncio.Event()
+        release_lifecycle = asyncio.Event()
+        lifecycle_call = asyncio.create_task(
+            _run_contributor_lifecycle_write(
+                task_database_env,
+                actor_profile_id=contributor_id,
+                identity_link_id=identity_link_id,
+                transition=transition,
+                task_id=task_id,
+                application_name=lifecycle_application_name,
+                entered=lifecycle_entered,
+                locked=lifecycle_locked,
+                release=release_lifecycle,
+            ),
+            name=lifecycle_application_name,
+        )
+        await lifecycle_entered.wait()
+        await lifecycle_locked.wait()
+        task_entered = asyncio.Event()
+        task_call = asyncio.create_task(
+            _run_task_contributor_write(
+                task_database_env,
+                actor=actor,
+                task_id=task_id,
+                operation=operation,
+                application_name=task_application_name,
+                entered=task_entered,
+            ),
+            name=task_application_name,
+        )
+        await task_entered.wait()
+        lock_error: AssertionError | None = None
+        try:
+            await _wait_for_task_database_lock(
+                task_database_env,
+                task_application_name,
+            )
+        except AssertionError as exc:
+            lock_error = exc
+        finally:
+            release_lifecycle.set()
+        lifecycle_result, task_result = await asyncio.gather(
+            lifecycle_call,
+            task_call,
+            return_exceptions=True,
+        )
+        if lock_error is not None:
+            raise lock_error
+        assert lifecycle_result is None
+        assert isinstance(task_result, ActiveContributorRequired)
+        assert task_result.code == "active_contributor_required"
+        assert await _read_task_contributor_race_snapshot(
+            task_database_env,
+            task_id,
+        ) == before
+    else:
+        task_locked = asyncio.Event()
+        release_task = asyncio.Event()
+        original_guard = ActorService.require_active_human_write_actor
+
+        async def hold_task_after_contributor_lock(
+            service: ActorService,
+            current_actor: ActorContext,
+        ) -> None:
+            await original_guard(service, current_actor)
+            if current_actor.actor_id == contributor_id:
+                task_locked.set()
+                await release_task.wait()
+
+        monkeypatch.setattr(
+            ActorService,
+            "require_active_human_write_actor",
+            hold_task_after_contributor_lock,
+        )
+        task_entered = asyncio.Event()
+        task_call = asyncio.create_task(
+            _run_task_contributor_write(
+                task_database_env,
+                actor=actor,
+                task_id=task_id,
+                operation=operation,
+                application_name=task_application_name,
+                entered=task_entered,
+            ),
+            name=task_application_name,
+        )
+        await task_entered.wait()
+        await task_locked.wait()
+        lifecycle_entered = asyncio.Event()
+        lifecycle_call = asyncio.create_task(
+            _run_contributor_lifecycle_write(
+                task_database_env,
+                actor_profile_id=contributor_id,
+                identity_link_id=identity_link_id,
+                transition=transition,
+                task_id=task_id,
+                application_name=lifecycle_application_name,
+                entered=lifecycle_entered,
+                observe_task_after_lock=True,
+            ),
+            name=lifecycle_application_name,
+        )
+        await lifecycle_entered.wait()
+        lock_error = None
+        try:
+            await _wait_for_task_database_lock(
+                task_database_env,
+                lifecycle_application_name,
+            )
+        except AssertionError as exc:
+            lock_error = exc
+        finally:
+            release_task.set()
+        task_result, observed_after_task_commit = await asyncio.gather(
+            task_call,
+            lifecycle_call,
+            return_exceptions=True,
+        )
+        if lock_error is not None:
+            raise lock_error
+        if isinstance(task_result, BaseException):
+            raise task_result
+        if isinstance(observed_after_task_commit, BaseException):
+            raise observed_after_task_commit
+        assert isinstance(observed_after_task_commit, dict)
+        if operation == "claim":
+            assert task_result.assignment.contributor_id == contributor_id
+            assert observed_after_task_commit["task"] == (
+                "claimed",
+                contributor_id,
+            )
+            assignments = observed_after_task_commit["assignments"]
+            assert isinstance(assignments, list)
+            assert len(assignments) == 1
+            assert assignments[0][1] == contributor_id
+        else:
+            assert task_result.contributor_id == contributor_id
+            assert observed_after_task_commit["task"] == (
+                "submitted",
+                contributor_id,
+            )
+            submissions = observed_after_task_commit["submissions"]
+            assert isinstance(submissions, list)
+            assert len(submissions) == 1
+            assert submissions[0][1] == contributor_id
+
+    profile_status, link_status = await _read_contributor_lifecycle_state(
+        task_database_env,
+        contributor_id,
+        identity_link_id,
+    )
+    if transition == "suspend":
+        assert (profile_status, link_status) == ("suspended", "active")
+    elif transition == "deactivate":
+        assert (profile_status, link_status) == ("deactivated", "active")
+    else:
+        assert (profile_status, link_status) == ("active", "revoked")
+
+
 async def seed_actor_profile(
     subject: str,
     *,
@@ -1087,6 +1690,38 @@ async def test_task_router_service_errors_use_canonical_request_context(
     assert denied.status_code == 403
     assert denied.json()["detail"] == "bounded permission failure"
     assert denied.json()["error"]["code"] == "permission_not_granted"
+
+    async def fail_inactive_contributor(*_args, **_kwargs):
+        raise ActiveContributorRequired(ActiveContributorRequired.message)
+
+    monkeypatch.setattr(TaskService, "claim_task", fail_inactive_contributor)
+    inactive = await task_client.post(
+        "/api/v1/tasks/task-id/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+
+    assert inactive.status_code == 403
+    assert inactive.json()["detail"] == "Active contributor identity required"
+    assert inactive.json()["error"]["code"] == "active_contributor_required"
+    assert inactive.json()["error"]["retryable"] is False
+
+    async def fail_contributor_lookup(*_args, **_kwargs):
+        raise ContributorIdentityUnavailable(ContributorIdentityUnavailable.message)
+
+    monkeypatch.setattr(TaskService, "create_submission", fail_contributor_lookup)
+    unavailable = await task_client.post(
+        "/api/v1/tasks/task-id/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert unavailable.status_code == 503
+    assert unavailable.json()["error"]["message"] == (
+        "Contributor identity verification unavailable"
+    )
+    assert unavailable.json()["error"]["code"] == "contributor_identity_unavailable"
+    assert unavailable.json()["error"]["retryable"] is True
 
 
 async def test_legacy_eligibility_service_updates_existing_submitter_row(
@@ -2054,7 +2689,7 @@ async def test_full_task_claim_start_flow_writes_audit_events(
     )
     assert claim.status_code == 200, claim.text
     assert claim.json()["task"]["status"] == "claimed"
-    assert claim.json()["assignment"]["worker_id"] == worker_actor_id
+    assert claim.json()["assignment"]["contributor_id"] == worker_actor_id
 
     start = await task_client.post(
         f"/api/v1/tasks/{ready_task['id']}/start",
@@ -2381,7 +3016,7 @@ async def test_worker_can_create_profile_before_claiming_task(
 
     assert claim.status_code == 200, claim.text
     assert claim.json()["task"]["status"] == "claimed"
-    assert claim.json()["assignment"]["worker_id"] == actor_id("worker-self-profile")
+    assert claim.json()["assignment"]["contributor_id"] == actor_id("worker-self-profile")
 
 
 async def test_worker_profile_response_excludes_identity_display_fields(
@@ -2648,7 +3283,7 @@ async def test_assigned_worker_submit_auto_enters_pre_review_gate(
     assert response.status_code == 201, response.text
     submission = response.json()
     assert submission["task_id"] == started_task["id"]
-    assert submission["worker_id"] == worker_actor_id
+    assert submission["contributor_id"] == worker_actor_id
     assert submission["version"] == 1
     assert submission["status"] == "submitted"
     assert submission["finalized_at"] is not None
@@ -2786,7 +3421,7 @@ async def test_submission_schema_rejects_worker_supplied_locked_context(
     payload = complete_submission_payload()
     payload.update(
         {
-            "worker_id": actor_id("worker-one"),
+            "contributor_id": actor_id("worker-one"),
             "version": 1,
             "status": "submitted",
             "locked_guide_version": "malicious",
@@ -3476,7 +4111,7 @@ async def test_database_rejects_submission_without_post_submit_policy_context(
         submission = Submission(
             id=str(uuid4()),
             task_id=task.id,
-            worker_id=actor_id("worker-one"),
+            contributor_id=actor_id("worker-one"),
             version=1,
             status="submitted",
             summary="Bypass submission without post-submit policy provenance.",
@@ -5449,7 +6084,7 @@ async def test_database_enforces_unique_submission_version(
             Submission(
                 id=str(uuid4()),
                 task_id=body["task_id"],
-                worker_id=body["worker_id"],
+                contributor_id=body["contributor_id"],
                 version=body["version"],
                 status="submitted",
                 summary="duplicate",
@@ -5531,6 +6166,8 @@ async def test_invalid_transitions_are_rejected(task_client: AsyncClient) -> Non
 async def test_database_enforces_one_active_assignment_per_task(task_client: AsyncClient) -> None:
     project = await create_active_project(task_client)
     ready_task = await create_ready_task(task_client, project["id"])
+    first_contributor_id = await seed_worker_profile("assignment-contributor-one")
+    second_contributor_id = await seed_worker_profile("assignment-contributor-two")
 
     async with db_session.get_session_factory()() as session:
         session.add_all(
@@ -5538,14 +6175,14 @@ async def test_database_enforces_one_active_assignment_per_task(task_client: Asy
                 TaskAssignment(
                     id=str(uuid4()),
                     task_id=ready_task["id"],
-                    worker_id="worker-1",
+                    contributor_id=first_contributor_id,
                     assigned_by="operator",
                     status="active",
                 ),
                 TaskAssignment(
                     id=str(uuid4()),
                     task_id=ready_task["id"],
-                    worker_id="worker-2",
+                    contributor_id=second_contributor_id,
                     assigned_by="operator",
                     status="active",
                 ),
@@ -5560,6 +6197,8 @@ async def test_released_assignment_does_not_block_new_active_assignment(
 ) -> None:
     project = await create_active_project(task_client)
     ready_task = await create_ready_task(task_client, project["id"])
+    first_contributor_id = await seed_worker_profile("released-contributor-one")
+    second_contributor_id = await seed_worker_profile("released-contributor-two")
 
     async with db_session.get_session_factory()() as session:
         session.add_all(
@@ -5567,14 +6206,14 @@ async def test_released_assignment_does_not_block_new_active_assignment(
                 TaskAssignment(
                     id=str(uuid4()),
                     task_id=ready_task["id"],
-                    worker_id="worker-1",
+                    contributor_id=first_contributor_id,
                     assigned_by="operator",
                     status="released",
                 ),
                 TaskAssignment(
                     id=str(uuid4()),
                     task_id=ready_task["id"],
-                    worker_id="worker-2",
+                    contributor_id=second_contributor_id,
                     assigned_by="operator",
                     status="active",
                 ),

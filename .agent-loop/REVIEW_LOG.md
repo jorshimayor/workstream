@@ -1,5 +1,32 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Evidence Complete
+
+- The clean `contributor_id` migration, canonical-human database guard,
+  transaction-local actor revalidation, task/assignment locks, API mappings,
+  current docs, persistent task coverage gate, and merge intent are implemented.
+- Two comprehensive migration tests passed in 89.20 seconds. All 12 named real
+  PostgreSQL lifecycle/task interleavings passed in 601.93 seconds, and the
+  repaired canonical API-error test passed in 63.79 seconds.
+- Actor/task focused unit and database behavior tests passed, the real HTTP API
+  contract drill passed, and Ruff, docstring coverage, stale-wording scans,
+  Markdown links, diff integrity, one Alembic head, and all 88 agent gates pass.
+- GitHub Backend remains authoritative for the unchanged 78 percent global and
+  persistent 90 percent actor/task subsystem reports. Exact-SHA internal review
+  is the current gate; AUTH-09E remains inactive.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Plan Review Passed
+
+- Exact repaired contract `2a21166daa747d3233845064826bce6573a85dbb`
+  passed senior/security/product, QA/migration/CI, and
+  architecture/reuse/docs/REV tracks after the initial preimplementation fail.
+- The approved boundary is actor-owned profile/link revalidation, exact
+  profile-link-task-assignment lock order, independent database lineage checks,
+  12 observed PostgreSQL races, persistent 90 percent actor/task coverage, and
+  no authorization action, permission, grant, decision, or availability change.
+- All 88 agent gates and diff integrity pass. Bounded implementation may begin
+  for this chunk only.
+
 ## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Contract Review Failed
 
 - Exact candidate `33f645b0` was rejected before runtime edits. Review found a

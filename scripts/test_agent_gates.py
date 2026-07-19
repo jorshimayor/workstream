@@ -144,6 +144,7 @@ AUTH_09B_COVERAGE_COMMANDS = (
     "coverage report --include='app/modules/actors/*' --precision=2 --fail-under=90",
     "coverage report --include='app/modules/authorization/*' "
     "--precision=2 --fail-under=90",
+    "coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90",
     "coverage report "
     "--include='app/interfaces/auth.py,app/core/auth.py,app/adapters/auth/dev.py,"
     "app/adapters/auth/flow.py' --precision=2 --fail-under=90",
@@ -4170,9 +4171,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "Merged through PR #148 as `99ae4c9`" in auth_map
     assert "| `WS-AUTH-001-09D-A` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09D-B` | Merged |" in auth_status
-    assert (
-        "Active implementation chunk\n\n"
-        "`WS-AUTH-001-CONTRIBUTOR-FOUNDATION`" in auth_status
+    assert "Active implementation chunk\n\n`WS-AUTH-001-CONTRIBUTOR-FOUNDATION`" in (
+        auth_status
     )
     assert "`codex/ws-auth-001-contributor-foundation`" in auth_status
     assert "PR #148 is open" not in auth_status
@@ -4187,7 +4187,10 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in auth_status
         assert stale_text not in auth_map
         assert stale_text not in work_queue
-    assert "Active contract review from trusted main `93dd392`" in work_queue
+    assert (
+        "Implementation and deterministic evidence complete; exact-SHA internal "
+        "review active" in work_queue
+    )
     assert (
         "Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`"
         in loop_state
@@ -4198,11 +4201,11 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "five 09D-A/09D-B lifecycle actions" not in loop_state
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And "
-        "Canonical-Human Lineage | L1 | Active contract review after explicit "
-        "user start" in auth_map
+        "Canonical-Human Lineage | L1 | Implementation/evidence complete; "
+        "exact-SHA internal review active" in auth_map
     )
     assert (
-        "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contract review |" in auth_status
+        "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | In review |" in auth_status
     )
     assert (
         "| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | "

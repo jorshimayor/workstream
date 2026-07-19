@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Active contract review from trusted main `93dd392` after explicit user start |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Implementation and deterministic evidence complete; exact-SHA internal review active |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

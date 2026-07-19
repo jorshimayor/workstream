@@ -1157,6 +1157,13 @@ Fields:
 - `released_at`
 - `status`
 
+Migration `0027_contributor_foundation` clean-cuts the persisted human owner
+from `worker_id` to `contributor_id`. The non-null `varchar(36)` value is a
+foreign key to `ActorProfile.id`; an invoker-rights PostgreSQL trigger rejects
+service profiles. The trigger deliberately permits suspended and deactivated
+human profiles because this column preserves historical attribution rather
+than current authority.
+
 ## Submission
 
 Fields:
@@ -1193,6 +1200,14 @@ Fields:
 - `supersedes_submission_id`
 - `remediation_source_checker_run_id` (checker-remediation submissions only)
 - `revision_context_preparation_id` (human-Review revision submissions only)
+
+The current Submission `contributor_id` uses the same migration, foreign-key,
+and canonical-human trigger contract as TaskAssignment. Claim and submission
+creation additionally lock and revalidate the caller's exact active human
+ActorProfile and active issuer/subject identity link before locking the task
+and active assignment. That transaction participant establishes current
+identity eligibility only; project roles, grants, actions, and resource policy
+remain owned by the authorization service.
 
 The contributor submission packet supplies the task id, summary, outputs,
 artifact hashes, evidence references, and contributor attestation. Workstream assigns the
