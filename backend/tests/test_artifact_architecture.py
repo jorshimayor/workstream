@@ -35,6 +35,13 @@ CANONICAL_TYPE_ALIASES = {
     "ArtifactBindingResourceType",
 }
 RAW_TYPES = {"ArtifactStore", "ArtifactStorageOrchestrator"}
+INTERNAL_ADMISSION_TYPES = {
+    "ArtifactAdmissionService",
+    "ArtifactAdmissionResult",
+    "CheckerOutputArtifactAdmissionRequest",
+    "ContributorArtifactAdmissionRequest",
+    "GuideArtifactAdmissionRequest",
+}
 PROVIDER_METHODS = {"put", "observe_put_result", "open", "head"}
 CONCRETE_ADAPTER_MODULES = {
     "app.adapters.artifacts.local",
@@ -76,7 +83,7 @@ def test_product_api_and_workers_cannot_import_or_inject_raw_artifact_types() ->
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
                 imported = {alias.name for alias in node.names}
-                forbidden = imported & RAW_TYPES
+                forbidden = imported & (RAW_TYPES | INTERNAL_ADMISSION_TYPES)
                 if forbidden:
                     violations.append(f"{path.relative_to(BACKEND_ROOT)} imports {sorted(forbidden)}")
                 if (
@@ -101,6 +108,22 @@ def test_product_api_and_workers_cannot_import_or_inject_raw_artifact_types() ->
                         violations.append(
                             f"{path.relative_to(BACKEND_ROOT)} injects {sorted(forbidden)}"
                         )
+    assert violations == []
+
+
+def test_artifact_domain_has_no_provider_execution_during_admission_foundation() -> None:
+    """Keep 02C1 free of all provider write and acknowledgement execution."""
+    violations: list[str] = []
+    for path in _python_files(APP_ROOT / "modules" / "artifacts"):
+        for node in ast.walk(_tree(path)):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"put", "observe_put_result"}
+            ):
+                violations.append(
+                    f"{path.relative_to(BACKEND_ROOT)} calls {node.func.attr}"
+                )
     assert violations == []
 
 

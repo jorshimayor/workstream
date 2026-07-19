@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02C1 - Admission And Put-Attempt Foundation
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02B1
+Initiative: `WS-ART-001` | Risk: L1 | Status: Active after explicit user start
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -80,7 +80,7 @@ coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 
 ```bash
 docker compose up -d --wait postgres redis minio
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_admission.py tests/test_config.py -q --cov=app.interfaces.artifact_operations --cov=app.modules.artifacts --cov=app.modules.audit --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_admission.py tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_preparation.py tests/test_artifact_store_conformance.py tests/test_artifacts.py tests/test_local_artifact_store.py tests/test_s3_artifact_store.py tests/test_audit.py tests/test_config.py -q --cov=app.interfaces.artifact_operations --cov=app.modules.artifacts --cov=app.modules.audit --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py
