@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -144,13 +145,49 @@ def _context(
     )
 
 
+async def _seed_human_actor(
+    session,
+    context: AuthorizationContext,
+) -> None:
+    """Persist the exact active human actor carried by a test context."""
+    actor_profile_id = str(context.actor_profile_id)
+    if await session.get(ActorProfile, actor_profile_id) is not None:
+        return
+    session.add(
+        ActorProfile(
+            id=actor_profile_id,
+            actor_kind="human",
+            status="active",
+            provisioning_method="automatic_first_access",
+            service_identity=None,
+            created_by="test",
+        )
+    )
+    await session.flush()
+    session.add(
+        ActorIdentityLink(
+            id=str(context.identity_link_id),
+            actor_profile_id=actor_profile_id,
+            issuer="https://issuer.example.test",
+            subject=f"human-{actor_profile_id}",
+            subject_kind="human",
+            status="active",
+            linked_by="test",
+            last_verified_at=datetime.now(UTC),
+        )
+    )
+    await session.flush()
+
+
 async def _seed_guide(
     session,
     *,
-    captured_by: str,
+    context: AuthorizationContext,
     content_hash: str,
     media_type: str,
 ) -> tuple[str, str]:
+    await _seed_human_actor(session, context)
+    captured_by = str(context.actor_profile_id)
     project_id = str(uuid4())
     guide_id = str(uuid4())
     snapshot_id = str(uuid4())
@@ -206,9 +243,11 @@ async def _seed_guide(
 async def _seed_contributor_items(
     session,
     *,
-    actor_profile_id: str,
+    context: AuthorizationContext,
     commitments: tuple[tuple[str, int, str], ...],
 ) -> tuple[str, str, tuple[str, ...]]:
+    await _seed_human_actor(session, context)
+    actor_profile_id = str(context.actor_profile_id)
     project_id = str(uuid4())
     task_id = str(uuid4())
     upload_session_id = str(uuid4())
@@ -551,13 +590,13 @@ async def test_guide_admission_derives_three_scopes_without_provider_evidence(
             ) as source:
                 project_id, item_id = await _seed_guide(
                     session,
-                    captured_by=str(context.actor_profile_id),
+                    context=context,
                     content_hash=source.commitment.sha256,
                     media_type=source.commitment.media_type,
                 )
                 with pytest.raises(
                     ArtifactAdmissionRelationshipError,
-                    match="guide source item relationship is unavailable",
+                    match="artifact admission human identity is unavailable",
                 ):
                     await ArtifactAdmissionService(
                         session,
@@ -637,6 +676,125 @@ async def test_guide_admission_derives_three_scopes_without_provider_evidence(
         await engine.dispose()
 
 
+async def test_human_admission_revalidates_exact_active_profile_and_link(
+    admission_database_env: str,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path)
+    namespace = _namespace(settings)
+    context = _context()
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as session:
+            async with minted_source(
+                tmp_path / "guide-source",
+                b"guide",
+                media_type="text/markdown",
+            ) as guide_source:
+                _, guide_item_id = await _seed_guide(
+                    session,
+                    context=context,
+                    content_hash=guide_source.commitment.sha256,
+                    media_type=guide_source.commitment.media_type,
+                )
+                async with minted_source(
+                    tmp_path / "contributor-source",
+                    b"work",
+                ) as contributor_source:
+                    _, _, upload_item_ids = await _seed_contributor_items(
+                        session,
+                        context=context,
+                        commitments=(
+                            (
+                                contributor_source.commitment.sha256,
+                                contributor_source.commitment.byte_count,
+                                contributor_source.commitment.media_type,
+                            ),
+                        ),
+                    )
+                    requests = (
+                        GuideArtifactAdmissionRequest(
+                            authorization_context=context,
+                            guide_source_item_id=UUID(guide_item_id),
+                            source=guide_source,
+                        ),
+                        ContributorArtifactAdmissionRequest(
+                            authorization_context=context,
+                            upload_item_id=UUID(upload_item_ids[0]),
+                            source=contributor_source,
+                        ),
+                    )
+                    forged_context = context.model_copy(
+                        update={"identity_link_id": uuid4()}
+                    )
+                    for request in requests:
+                        with pytest.raises(
+                            ArtifactAdmissionRelationshipError,
+                            match="artifact admission human identity is unavailable",
+                        ):
+                            await ArtifactAdmissionService(
+                                session, settings, namespace
+                            ).admit(
+                                replace(
+                                    request,
+                                    authorization_context=forged_context,
+                                )
+                            )
+
+                    link = await session.get(
+                        ActorIdentityLink,
+                        str(context.identity_link_id),
+                    )
+                    assert link is not None
+                    link.status = "revoked"
+                    link.revoked_by = "test"
+                    link.revoked_at = datetime.now(UTC)
+                    link.revoked_reason = "test revocation"
+                    await session.commit()
+                    for request in requests:
+                        with pytest.raises(
+                            ArtifactAdmissionRelationshipError,
+                            match="artifact admission human identity is unavailable",
+                        ):
+                            await ArtifactAdmissionService(
+                                session, settings, namespace
+                            ).admit(request)
+
+                    link.status = "active"
+                    link.revoked_by = None
+                    link.revoked_at = None
+                    link.revoked_reason = None
+                    link.reactivated_by = "test"
+                    link.reactivated_at = datetime.now(UTC)
+                    link.reactivation_reason = "test reactivation"
+                    profile = await session.get(
+                        ActorProfile,
+                        str(context.actor_profile_id),
+                    )
+                    assert profile is not None
+                    profile.status = "suspended"
+                    profile.suspended_by = "test"
+                    profile.suspended_at = datetime.now(UTC)
+                    profile.suspension_reason = "test suspension"
+                    await session.commit()
+                    for request in requests:
+                        with pytest.raises(
+                            ArtifactAdmissionRelationshipError,
+                            match="artifact admission human identity is unavailable",
+                        ):
+                            await ArtifactAdmissionService(
+                                session, settings, namespace
+                            ).admit(request)
+
+            assert await _count(session, ArtifactStorageNamespace) == 0
+            assert await _count(session, ArtifactAdmissionScope) == 0
+            assert await _count(session, ArtifactAdmissionCharge) == 0
+            assert await _count(session, ArtifactPutAttempt) == 0
+    finally:
+        await engine.dispose()
+
+
 async def test_exact_replay_returns_one_attempt_and_one_charge_set(
     admission_database_env: str,
     tmp_path: Path,
@@ -651,7 +809,7 @@ async def test_exact_replay_returns_one_attempt_and_one_charge_set(
             async with minted_source(tmp_path / "scratch-source", b"same") as source:
                 _, _, item_ids = await _seed_contributor_items(
                     session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(
                         (
                             source.commitment.sha256,
@@ -686,6 +844,134 @@ async def test_exact_replay_returns_one_attempt_and_one_charge_set(
         await engine.dispose()
 
 
+async def test_exact_replay_reacquires_released_charges_under_capacity(
+    admission_database_env: str,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path, maximum_bytes=4)
+    namespace = _namespace(settings)
+    context = _context()
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as session:
+            async with minted_source(tmp_path / "first-source", b"aaaa") as first_source:
+                async with minted_source(
+                    tmp_path / "second-source", b"bbbb"
+                ) as second_source:
+                    first_sha256 = first_source.commitment.sha256
+                    second_sha256 = second_source.commitment.sha256
+                    _, _, item_ids = await _seed_contributor_items(
+                        session,
+                        context=context,
+                        commitments=(
+                            (
+                                first_source.commitment.sha256,
+                                first_source.commitment.byte_count,
+                                first_source.commitment.media_type,
+                            ),
+                            (
+                                second_source.commitment.sha256,
+                                second_source.commitment.byte_count,
+                                second_source.commitment.media_type,
+                            ),
+                        ),
+                    )
+                    first_request = ContributorArtifactAdmissionRequest(
+                        authorization_context=context,
+                        upload_item_id=UUID(item_ids[0]),
+                        source=first_source,
+                    )
+                    second_request = ContributorArtifactAdmissionRequest(
+                        authorization_context=context,
+                        upload_item_id=UUID(item_ids[1]),
+                        source=second_source,
+                    )
+                    first = await ArtifactAdmissionService(
+                        session, settings, namespace
+                    ).admit(first_request)
+                    first_attempt = await session.get(
+                        ArtifactPutAttempt,
+                        str(first.attempt_id),
+                    )
+                    assert first_attempt is not None
+                    first_attempt.status = "absent_replay_required"
+                    counters = (
+                        await session.execute(select(ArtifactAdmissionScope))
+                    ).scalars().all()
+                    first_charges = (
+                        await session.execute(
+                            select(ArtifactAdmissionCharge).where(
+                                ArtifactAdmissionCharge.sha256
+                                == first_sha256
+                            )
+                        )
+                    ).scalars().all()
+                    released_at = datetime.now(UTC)
+                    for charge in first_charges:
+                        charge.state = "released"
+                        charge.released_at = released_at
+                        charge.cas_version += 1
+                    for counter in counters:
+                        counter.counted_bytes = 0
+                        counter.cas_version += 1
+                    await session.commit()
+
+                    await ArtifactAdmissionService(session, settings, namespace).admit(
+                        second_request
+                    )
+                    with pytest.raises(ArtifactAdmissionCapacityError):
+                        await ArtifactAdmissionService(
+                            session, settings, namespace
+                        ).admit(first_request)
+
+                    second_charges = (
+                        await session.execute(
+                            select(ArtifactAdmissionCharge).where(
+                                ArtifactAdmissionCharge.sha256
+                                == second_sha256
+                            )
+                        )
+                    ).scalars().all()
+                    counters = (
+                        await session.execute(select(ArtifactAdmissionScope))
+                    ).scalars().all()
+                    for charge in second_charges:
+                        charge.state = "released"
+                        charge.released_at = datetime.now(UTC)
+                        charge.cas_version += 1
+                    for counter in counters:
+                        counter.counted_bytes = 0
+                        counter.cas_version += 1
+                    await session.commit()
+
+                    replay = await ArtifactAdmissionService(
+                        session, settings, namespace
+                    ).admit(first_request)
+
+            assert replay.replayed is True
+            assert replay.attempt_id == first.attempt_id
+            refreshed_first_charges = (
+                await session.execute(
+                    select(ArtifactAdmissionCharge).where(
+                        ArtifactAdmissionCharge.sha256
+                        == first_sha256
+                    )
+                )
+            ).scalars().all()
+            refreshed_counters = (
+                await session.execute(select(ArtifactAdmissionScope))
+            ).scalars().all()
+            assert {charge.state for charge in refreshed_first_charges} == {
+                "provisional"
+            }
+            assert {charge.released_at for charge in refreshed_first_charges} == {None}
+            assert {counter.counted_bytes for counter in refreshed_counters} == {4}
+            assert await _count(session, ArtifactPutAttempt) == 2
+    finally:
+        await engine.dispose()
+
+
 async def test_contributor_admission_rejects_cross_project_task_relationship(
     admission_database_env: str,
     tmp_path: Path,
@@ -700,7 +986,7 @@ async def test_contributor_admission_rejects_cross_project_task_relationship(
             async with minted_source(tmp_path / "scratch-source", b"contributor") as source:
                 _, _, item_ids = await _seed_contributor_items(
                     session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(
                         (
                             source.commitment.sha256,
@@ -764,7 +1050,7 @@ async def test_same_content_distinct_operations_deduplicate_scope_bytes(
                 )
                 _, _, item_ids = await _seed_contributor_items(
                     seed_session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(commitment, commitment),
                 )
 
@@ -816,7 +1102,7 @@ async def test_completed_charge_deduplicates_and_released_charge_is_reacquired(
                 )
                 _, _, item_ids = await _seed_contributor_items(
                     session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(commitment, commitment, commitment),
                 )
                 service = ArtifactAdmissionService(session, settings, namespace)
@@ -899,7 +1185,7 @@ async def test_concurrent_distinct_content_cannot_oversubscribe_any_scope(
                 async with factory() as seed_session:
                     _, _, item_ids = await _seed_contributor_items(
                         seed_session,
-                        actor_profile_id=str(context.actor_profile_id),
+                        context=context,
                         commitments=(
                             (
                                 first_source.commitment.sha256,
@@ -963,7 +1249,7 @@ async def test_capacity_failure_rolls_back_namespace_scopes_charges_and_attempt(
             async with minted_source(tmp_path / "scratch-source", b"four") as source:
                 _, _, item_ids = await _seed_contributor_items(
                     session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(
                         (
                             source.commitment.sha256,
@@ -1007,7 +1293,7 @@ async def test_changed_input_for_existing_operation_fails_closed(
             async with minted_source(tmp_path / "scratch-a", b"aaaa") as first_source:
                 _, _, item_ids = await _seed_contributor_items(
                     session,
-                    actor_profile_id=str(context.actor_profile_id),
+                    context=context,
                     commitments=(
                         (
                             first_source.commitment.sha256,

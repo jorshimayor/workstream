@@ -64,14 +64,15 @@ class CheckerOutputAdmissionFacts:
 
 
 @dataclass(frozen=True, slots=True)
-class ServiceActorFacts:
-    """Locked service profile and identity-link state."""
+class ActorAdmissionFacts:
+    """Locked actor profile and exact identity-link state."""
 
     actor_profile_id: str
     actor_kind: str
     actor_status: str
     service_identity: str | None
     identity_link_id: str
+    identity_link_subject_kind: str
     identity_link_status: str
 
 
@@ -209,8 +210,10 @@ class ArtifactRepository:
             task_id=row.task_id,
         )
 
-    async def lock_service_actor(self, actor_profile_id: str) -> ServiceActorFacts | None:
-        """Lock one canonical service profile and its exact identity link."""
+    async def lock_admission_actor(
+        self, actor_profile_id: str
+    ) -> ActorAdmissionFacts | None:
+        """Lock one canonical actor profile and its exact identity link."""
         row = (
             await self._session.execute(
                 select(
@@ -219,6 +222,7 @@ class ArtifactRepository:
                     ActorProfile.status.label("actor_status"),
                     ActorProfile.service_identity,
                     ActorIdentityLink.id.label("identity_link_id"),
+                    ActorIdentityLink.subject_kind.label("identity_link_subject_kind"),
                     ActorIdentityLink.status.label("identity_link_status"),
                 )
                 .join(ActorIdentityLink, ActorIdentityLink.actor_profile_id == ActorProfile.id)
@@ -228,12 +232,13 @@ class ArtifactRepository:
         ).one_or_none()
         if row is None:
             return None
-        return ServiceActorFacts(
+        return ActorAdmissionFacts(
             actor_profile_id=row.id,
             actor_kind=row.actor_kind,
             actor_status=row.actor_status,
             service_identity=row.service_identity,
             identity_link_id=row.identity_link_id,
+            identity_link_subject_kind=row.identity_link_subject_kind,
             identity_link_status=row.identity_link_status,
         )
 

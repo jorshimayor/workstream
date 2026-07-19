@@ -214,13 +214,6 @@ class ArtifactAdmissionService:
                     ],
                 }
             )
-            replay = await self._existing_attempt_result(
-                facts.operation_identity,
-                request_digest,
-            )
-            if replay is not None:
-                return replay
-
             counters = await self._repo.ensure_and_lock_admission_scopes(
                 [
                     (scope.scope_type, scope.scope_id, scope.limit_bytes)
@@ -230,12 +223,10 @@ class ArtifactAdmissionService:
             # A concurrent first caller may have committed while these shared
             # scope locks were pending. Recheck under serialization before any
             # counter or charge mutation.
-            replay = await self._existing_attempt_result(
+            replay = await self._existing_attempt(
                 facts.operation_identity,
                 request_digest,
             )
-            if replay is not None:
-                return replay
             charges = await self._reserve_charges(
                 scopes=scopes,
                 counters=counters,
@@ -243,6 +234,16 @@ class ArtifactAdmissionService:
                 sha256=commitment.sha256,
                 byte_count=commitment.byte_count,
             )
+            if replay is not None:
+                linked_charge_ids = await self._repo.list_put_attempt_charge_ids(
+                    replay.id
+                )
+                reserved_charge_ids = tuple(sorted(charge.id for charge in charges))
+                if linked_charge_ids != reserved_charge_ids:
+                    raise ArtifactAdmissionConfigurationError(
+                        "artifact admission replay charge set is incomplete"
+                    )
+                return await self._result(replay, replayed=True)
             database_now = await self._repo.database_now()
             attempt = ArtifactPutAttempt(
                 id=str(uuid4()),
@@ -323,6 +324,7 @@ class ArtifactAdmissionService:
             raise ArtifactAdmissionRelationshipError(
                 "guide artifact producer must be a human actor"
             )
+        await self._require_active_human_actor(context)
         item_id = str(request.guide_source_item_id)
         row = await self._repo.get_guide_admission_facts(item_id)
         commitment = request.source.commitment
@@ -360,6 +362,7 @@ class ArtifactAdmissionService:
             raise ArtifactAdmissionRelationshipError(
                 "contributor artifact producer must be a human actor"
             )
+        await self._require_active_human_actor(context)
         item_id = str(request.upload_item_id)
         row = await self._repo.get_contributor_admission_facts(item_id)
         commitment = request.source.commitment
@@ -402,7 +405,7 @@ class ArtifactAdmissionService:
                 "checker output producer must be a service actor"
             )
         logical_role = request.logical_role
-        service_actor = await self._repo.lock_service_actor(
+        service_actor = await self._repo.lock_admission_actor(
             str(context.actor_profile_id)
         )
         if (
@@ -410,6 +413,7 @@ class ArtifactAdmissionService:
             or service_actor.actor_kind != "service"
             or service_actor.actor_status != "active"
             or service_actor.identity_link_id != str(context.identity_link_id)
+            or service_actor.identity_link_subject_kind != "service"
             or service_actor.identity_link_status != "active"
             or service_actor.service_identity
             != ServiceIdentity.ARTIFACT_CHECKER_OUTPUT.value
@@ -442,6 +446,24 @@ class ArtifactAdmissionService:
             logical_role=logical_role,
             operation_identity=operation_identity,
         )
+
+    async def _require_active_human_actor(
+        self, context: AuthorizationContext
+    ) -> None:
+        """Revalidate and lock exact human identity state inside admission."""
+        actor = await self._repo.lock_admission_actor(str(context.actor_profile_id))
+        if (
+            actor is None
+            or actor.actor_kind != "human"
+            or actor.actor_status != "active"
+            or actor.service_identity is not None
+            or actor.identity_link_id != str(context.identity_link_id)
+            or actor.identity_link_subject_kind != "human"
+            or actor.identity_link_status != "active"
+        ):
+            raise ArtifactAdmissionRelationshipError(
+                "artifact admission human identity is unavailable"
+            )
 
     @staticmethod
     def _validate_logical_role(value: str) -> str:
@@ -495,12 +517,12 @@ class ArtifactAdmissionService:
             )
         return {key: int(value) for key, value in values.items()}
 
-    async def _existing_attempt_result(
+    async def _existing_attempt(
         self,
         operation_identity: str,
         request_digest: str,
-    ) -> ArtifactAdmissionResult | None:
-        """Return an exact replay or reject changed input for one operation."""
+    ) -> ArtifactPutAttempt | None:
+        """Load an exact replay or reject changed input for one operation."""
         existing = await self._repo.get_put_attempt_by_operation(operation_identity)
         if existing is None:
             return None
@@ -508,7 +530,7 @@ class ArtifactAdmissionService:
             raise ArtifactAdmissionConflictError(
                 "artifact admission operation input changed"
             )
-        return await self._result(existing, replayed=True)
+        return existing
 
     async def _reserve_charges(
         self,
