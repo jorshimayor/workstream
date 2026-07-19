@@ -826,9 +826,9 @@ request/correlation IDs and ActionId `actor.service.provision`.
 Provisioning is not token verification. The new service profile's
 `last_seen_at` and link's `last_verified_at` stay null, including on replay.
 Only the human caller timestamps advance on a committed create or replay.
-Service tokens remain denied before actor lookup on both central AUTH and
-legacy dependencies until AUTH-09E explicitly activates fixed-service
-admission.
+Provisioned service tokens enter only the central AUTH typed-service path;
+legacy dependencies continue to reject them. Unprovisioned service tokens deny
+without actor first-access, timestamp observation, or rate-control activity.
 
 If route-owned persistence or decision evidence fails, roll back the entire
 unit and return the bounded retryable `503 service_unavailable` envelope. Do

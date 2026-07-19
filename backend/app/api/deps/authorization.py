@@ -71,7 +71,7 @@ async def get_authorization_actor(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     rate_control: Annotated[RateControlService, Depends(get_rate_control_service)],
 ) -> ResolvedActor:
-    """Resolve an exact human self target without pre-kernel lifecycle denial."""
+    """Resolve an exact human or fixed-service target before kernel lifecycle denial."""
     if result.token.subject_kind not in {"human", "service"}:
         raise actor_registry_http_error(UnsupportedSubjectKind("Unsupported subject kind"))
     service = ActorService(session)
