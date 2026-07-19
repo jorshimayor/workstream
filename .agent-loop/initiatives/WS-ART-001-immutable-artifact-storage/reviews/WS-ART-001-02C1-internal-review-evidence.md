@@ -4,102 +4,111 @@
 
 `WS-ART-001-02C1`: Admission And Put-Attempt Foundation
 
-open sub-agent sessions: none
+Open sub-agent sessions: none.
 
-valid findings addressed: yes
+Valid findings addressed: yes.
 
 ## Reviewed Revision
 
-Reviewed code SHA: `2595f0ce0964624e8ae022d6cbee04d260826612`
+Reviewed implementation SHA: `535069cfb1a7312d731bb14a6023ceb0894402e9`
 
-Reviewed at: 2026-07-19T08:58:54Z
+Trusted base: `8d5eb15b384fd75787ce98a099400a1d335d2560`
 
-Reviewer run IDs: senior-engineering=019f797a-e6b0-7920-8f87-bb01c93fb972; QA/test=019f797a-e989-7441-9d6d-f52ca2a20276; security/auth=019f797a-ed1b-7c63-b8d6-2143a4152d07; product/ops=019f7988-7323-7851-b17d-8452f9db01c0; architecture=019f7988-7bfc-7670-b9bb-67342ee934b3; reuse/dedup=019f797b-03a8-7cd0-a5de-b8e5ae3c052b; CI-integrity=019f7988-8341-7b83-8324-11461058509a; test-delta=019f7988-908c-7873-a536-2360ebb123bf; docs=019f7988-a143-7a53-a3b6-c8a304d06c22
+Reviewed on: 2026-07-19.
 
-The reviewed base is trusted `main` at
-`93dd392484b397cfdfaaa833631dc2c27f591ed7`, including merged AUTH PR #152.
-Only review artifacts and initiative status may change after the reviewed SHA.
-Any implementation, test, workflow, policy, or chunk-contract change invalidates
+Reviewer sessions: senior engineering, security/auth, and CI integrity used
+`/root/review_senior_6392825f`; architecture, product/ops, and test delta used
+`/root/review_arch_6392825f`; QA/test, reuse/dedup, and docs used
+`/root/plan_review_actor_boundary`. Each track explicitly rebound its review to
+the final SHA above. All sessions completed.
+
+Only review evidence, trust-bundle, external-response, and initiative-status
+files may change after the reviewed implementation SHA. Any implementation,
+test, workflow, policy, specification, or chunk-contract change invalidates
 this evidence and requires a new exact-SHA review cycle.
 
 ## Reviewed Change
 
-- Added durable task, producer, project, and deployment admission scopes with
-  server-owned limits and unique content charges.
-- Added closed guide, contributor, and checker-output admission requests whose
-  relationships and producer authority are resolved and locked by Workstream.
-- Atomically claims the storage namespace, reserves capacity, writes durable
-  admission evidence, and creates one `prepared` `ArtifactPutAttempt` before
-  provider I/O.
-- Deduplicates exact replay while reacquiring released charges only after
-  capacity and linked-charge revalidation.
-- Locks guide source items and snapshots during authoritative admission so the
-  persisted attempt cannot race mutable guide facts.
-- Keeps provider execution, verification, publication, recovery, routes, and
-  product cutover out of scope and inactive.
-- Adds migration `0027` with populated-state downgrade refusal across scopes,
-  charges, attempts, and attempt-charge links.
+- Adds server-owned deployment, project, producer, and task admission scopes,
+  unique content charges, and one atomic prepared put attempt before provider
+  I/O.
+- Accepts only closed guide, contributor, and checker-output requests and
+  derives canonical relationships and scope limits inside Workstream.
+- Uses an actors-owned same-transaction proof boundary that locks the exact
+  profile then identity link and returns frozen primitive state; ART no longer
+  imports or queries actor persistence.
+- Leaves every prepared execution field inactive: `next_run_at`, executor,
+  lease, terminal result, replica, and receipt are null and execution generation
+  is zero.
+- Makes release timestamps biconditional with released charge state.
+- Adds deterministic database contention proof for same-content deduplication
+  and distinct-content oversubscription.
+- Adds migration `0028_artifact_admission`, following
+  `0027_contributor_foundation`, with populated-state downgrade refusal.
 
 ## Reviewer Results
 
-| Reviewer | Result | Blocking findings | Notes |
+| Reviewer | Result | Blocking findings | Disposition |
 |---|---:|---|---|
-| senior engineering | PASS | None | Transaction, replay, rollback, failure, and scope behavior are maintainable and bounded. |
-| QA/test | PASS | None | Real PostgreSQL concurrency, lock, rollback, relationship, and migration cases satisfy the contract. |
-| security/auth | PASS | None | Exact actor, identity-link, service-identity, relationship, scope, and replay checks fail closed. |
-| product/ops | PASS | None | Admission remains internal and does not alter task, review, revision, contribution, or compensation lifecycle state. |
-| architecture | PASS | None | Provider-neutral boundaries and transaction ownership are preserved with no route or provider execution drift. |
-| reuse/dedup | PASS | None | Canonical artifact interfaces are reused and no parallel provider-reference or admission abstraction remains. |
-| CI integrity | PASS | None | The new audit coverage gate is additive; the repository 78 percent floor and cumulative 90 percent gates remain fail closed. |
-| test delta | PASS | None | No skipped or weakened tests; removed direct-write tests correspond to the deliberately removed provider-finalization path. |
-| docs | PASS | None | Active docs, migration behavior, terminology, scope exclusions, and links match the implementation. |
+| senior engineering | PASS | None | Transaction and ownership repairs are bounded and maintainable. |
+| architecture | PASS | None | Actors own persistence proof; ART remains provider-neutral and dormant. |
+| QA/test | PASS | One repaired High | Distinct actors and a scope-reservation barrier now prove real ledger contention. |
+| security/auth | PASS | None | Exact identity, relationship, configuration, and quota checks fail closed without duplicating AUTH. |
+| product/ops | PASS | None | No task, submission, checker, review, contribution, compensation, or reputation lifecycle mutation. |
+| reuse/dedup | PASS | None | Canonical actor and artifact interfaces are reused; optional test-only barrier duplication is documented. |
+| CI integrity | PASS | None | All prior 90-percent gates and the repository 78-percent floor remain fail closed. |
+| test delta | PASS | None | Removed tests match intentionally removed provider execution; retained behavior gains stronger proof. |
+| docs | PASS after regeneration | Evidence was stale | Migration, inactive scheduling, status, evidence, and trust bundle are synchronized. |
 
-## Valid Findings Addressed
+## Findings Addressed
 
-- Replaced read-only guide admission facts with row locks on both the exact
-  source item and its immutable snapshot, plus a two-transaction lock-timeout
-  regression test.
-- Proved capacity failure leaves no partial admission state.
-- Proved an attempt-only populated state prevents destructive migration
-  downgrade.
-- Moved provider-object reference parsing and construction behind the canonical
-  provider-neutral artifact interface.
-- Revalidated canonical active human profiles and identity links during guide
-  and contributor admission.
-- Revalidated replay capacity and the exact attempt-charge set before returning
-  an existing attempt.
-- Bound checker output to the canonical submission and task relationship.
-- Corrected the declared `02C2` successor contract heading to the canonical
-  merge-intent grammar without starting or changing `02C2` behavior.
-- Replaced inaccurate audit-event wording with the exact durable admission
-  evidence and admission-ledger terms used by this chunk.
+- Removed ART's direct `ActorProfile` and `ActorIdentityLink` queries and added
+  an actors-owned frozen admission proof in the caller's transaction.
+- Made `next_run_at` nullable and null for `prepared`, enforced by the prepared
+  execution-inactive database constraint.
+- Enforced `(state = 'released') = (released_at is not null)`.
+- Preclaimed the namespace in concurrency fixtures, used distinct actors, and
+  synchronized immediately before the real scope reservation method. The
+  same-content case proves two attempts, seven unique charges, eight links, and
+  four counted deployment bytes; oversubscription proves one success, one typed
+  capacity failure, one attempt, and four charges.
+- Corrected active migration wording from `0027` to
+  `0028_artifact_admission`.
 
-## Commands Run
+## Deterministic Proof
 
-```bash
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_admission.py tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_preparation.py tests/test_artifact_store_conformance.py tests/test_artifacts.py tests/test_local_artifact_store.py tests/test_s3_artifact_store.py tests/test_audit.py tests/test_config.py -q --cov=app.interfaces.artifact_operations --cov=app.modules.artifacts --cov=app.modules.audit --cov=app.core.config --cov-report=term-missing --cov-fail-under=90
-cd backend && .venv/bin/ruff check app tests
-python3 scripts/check_stale_artifact_contracts.py
-python3 scripts/test_agent_gates.py
-python3 scripts/check_markdown_links.py
-git diff --check
+The isolated real-PostgreSQL/MinIO focused matrix ran against the reviewed SHA:
+
+```text
+371 passed in 757.38s
+scoped coverage: 94.02%
+required scoped floor: 90%
+Alembic head: 0028_artifact_admission
 ```
 
-Results: 369 tests passed in 650.13 seconds with 94.32 percent scoped
-coverage. Ruff, the stale artifact contract scan, 88 agent-gate tests,
-Markdown links, and diff integrity passed. GitHub Backend CI remains
-authoritative for the isolated full repository suite and 78 percent floor.
+Additional results:
+
+- Ruff: PASS.
+- configured docstring coverage: PASS at 90.5 percent.
+- stale artifact contract scan: PASS at `artifact_store_cutover`.
+- agent gates: PASS, 88 tests.
+- Markdown links: PASS.
+- schema-v2 merge-intent validation: PASS.
+- `git diff --check`: PASS.
+
+GitHub Backend remains authoritative for the isolated full repository suite and
+78-percent repository-wide floor on the published final head.
 
 ## Remaining Risks
 
-- Provider execution, provider acknowledgement verification, and publication
-  remain intentionally unavailable until separately approved later chunks.
-- Native AWS remains runtime-ineligible pending its separately owned live proof.
-- The admission service remains an internal foundation and is not yet wired to
-  project or submission product routes.
+- Provider execution, acknowledgement observation, verification, publication,
+  recovery, routes, and product cutover remain intentionally unavailable.
+- Native AWS remains runtime-ineligible pending separately owned live proof.
+- External GitHub and CodeRabbit checks remain pending until the rebased final
+  candidate is published.
 
 ## Stop Condition
 
-Publish this evidence-bound candidate for GitHub Actions, CodeRabbit, and
-explicit human review. Do not merge without the user's approval and do not
-start `WS-ART-001-02C2` automatically.
+Publish the evidence-bound candidate to existing PR #154, wait for fresh
+external checks, and stop for explicit user merge approval. Do not start
+`WS-ART-001-02C2` automatically.

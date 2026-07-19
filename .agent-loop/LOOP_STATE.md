@@ -45,8 +45,10 @@
   gate; Backend must still prove 78/90 percent aggregate coverage. It changes no action
   availability, and no service caller becomes executable before AUTH-09E.
 - Current ART gate: integrate trusted `main`, complete deterministic 02C1
-  proof, and pass all nine exact-SHA internal reviewer tracks before opening
-  the ART PR. No later ART chunk starts automatically.
+  proof, and pass all nine exact-SHA internal reviewer tracks. Those steps are
+  complete; publish the final candidate to existing PR #154, then pass fresh
+  external checks and explicit human review. No later ART chunk starts
+  automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

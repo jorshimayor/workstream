@@ -2,53 +2,39 @@
 
 ## Boundary
 
-This file records GitHub Actions and CodeRabbit review separately from the
-internal sub-agent evidence. It does not replace or modify the internal review
-verdicts.
+This file records GitHub Actions and CodeRabbit separately from internal
+review. It does not replace internal exact-SHA evidence.
 
-Reviewed code SHA: `2595f0ce0964624e8ae022d6cbee04d260826612`
+Reviewed implementation SHA: `535069cfb1a7312d731bb14a6023ceb0894402e9`
 
-Current evidence-only head before this record: `7ca05d5b4d54bcc337d107de781e6e289135c2d6`
+Trusted base: `8d5eb15b384fd75787ce98a099400a1d335d2560`
 
-## GitHub Actions
+PR: #154, `https://github.com/Flow-Research/workstream/pull/154`
 
-The first Agent Gates run failed closed because the already-declared `02C2`
-contract heading omitted the canonical ` - ` separator required by merge-intent
-validation. The merge intent was not weakened or changed to a null successor.
-The contract heading was corrected, `02C2` remained proposed and inactive, and
-local merge-intent validation plus all 88 Agent Gates passed.
+## Historical Evidence
 
-The replacement Agent Gates run passed. Backend is rerunning the authoritative
-isolated full suite and 78 percent repository floor on the final external-review
-evidence head.
-
-## CodeRabbit
-
-CodeRabbit completed with no review submission, no inline review thread, and no
-actionable comment.
-
-Its pre-merge summary raised two warnings:
-
-1. The generic docstring calculation reported 54.37 percent. No code change was
-   made for this warning because the repository's authoritative configured
-   command, `docstr-coverage --config .docstr.yaml`, passed at 90.4 percent
-   against the enforced 80 percent floor.
-2. The original PR description did not reproduce every trust-bundle section.
-   This was valid metadata feedback. The PR description now includes the chunk
-   and merge intent, approved intent, design, alternatives, scope, evidence,
-   acceptance proof, test delta, reviewer table, CI integrity, risks, follow-up,
-   human focus, and merge-ownership checklist.
+Earlier GitHub and CodeRabbit results ran on pre-rebase heads and are not
+evidence for the reviewed implementation SHA. The old remote Backend failure
+was caused by stale migration-head expectations before the contributor
+foundation rebase; local current-SHA migration and focused proof pass. No old
+external PASS is carried forward.
 
 ## Current Status
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | PASS | No actionable review threads; both warnings were assessed and the valid metadata warning was fixed. |
-| Agent Gates | PASS | Canonical successor validation and all repository agent gates pass. |
-| Backend | Pending | Final evidence-only head must complete the isolated full suite and coverage gates. |
+| GitHub Agent Gates | Pending | Await publication of the rebased final candidate. |
+| GitHub Backend | Pending | Must run the full isolated suite, all scoped gates, and 78-percent floor on the final head. |
+| CodeRabbit | Pending | Request a fresh review on the published final head. |
 | Human review | Pending | Only the user may approve merge. |
+
+## Response Rule
+
+Assess only external findings verified against the published final head. Any
+implementation, test, workflow, policy, specification, or chunk-contract repair
+requires affected internal reviewers to rerun and evidence to be rebound.
 
 ## Stop Condition
 
-Wait for the final GitHub Backend result and explicit human review. Do not
+Wait for fresh external checks and explicit user approval of PR #154. Do not
 merge and do not start `WS-ART-001-02C2` automatically.
