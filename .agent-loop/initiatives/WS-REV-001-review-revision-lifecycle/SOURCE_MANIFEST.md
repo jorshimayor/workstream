@@ -222,14 +222,20 @@ AUTH-09D-A merged through PR #148 at trusted main
 `0026_actor_profile_lifecycle`, ActorProfile lifecycle fields/constraints,
 direct-SQL history guards, service behavior, and tests are merged authority.
 
-The following are explicitly unmerged discovery evidence and not authority:
+PLAN2 later merged through PR #150. AUTH-09D-B merged through PR #152, then
+`WS-AUTH-001-CONTRIBUTOR-FOUNDATION` merged through PR #153 at trusted main
+`8d5eb15b384fd75787ce98a099400a1d335d2560` from reviewed PR head
+`6a70b33fee0c63da8893fca35da967d59d3d410a`. Its final reviewed code candidate
+is `0ca5a6326a893e6671848dacde484b7c784b7bd0`. Migration
+`0027_contributor_foundation`, the two canonical `contributor_id` fields,
+ActorProfile FKs, reusable `public.require_human_actor_profile_reference()`,
+active-human transaction revalidation, and successful Backend/Agent
+Gates/CodeRabbit proof are merged authority for the 02A split children.
 
-- the human-directed but unnamed AUTH contributor/canonical-human foundation;
-- any unmerged CON outbox work that still claims the now-consumed `0026` number.
-
-Trusted main has the single head `0026_actor_profile_lifecycle`, retains both
-retired task contributor storage names, and contains no merged contributor
-foundation.
+Any unmerged CON outbox work or later sibling migration remains discovery only
+and must rebase from the then-current head. Trusted main at the parent 02A split
+start has the single head `0027_contributor_foundation`; no child reserves a
+later revision before its own explicit start refresh.
 Current Submission storage also has no immutable causal field for the exact
 needs-revision CheckerRun that admits a corrected checker-remediation N+1. 02C
 owns the planned server-derived `remediation_source_checker_run_id`, exact
