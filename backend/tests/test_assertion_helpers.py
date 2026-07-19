@@ -86,3 +86,26 @@ def test_raising_mapping_falls_back_to_inspecting_object_state() -> None:
 
     with pytest.raises(AssertionError):
         assert_secret_not_retained(RaisingMapping("forbidden"), "forbidden")
+
+
+def test_nested_mapping_can_mutate_parent_dict_during_inspection() -> None:
+    """Snapshot parent entries before nested framework state mutates them."""
+    parent: dict[str, object] = {}
+
+    class ParentMutatingMapping(Mapping[str, str]):
+        def __getitem__(self, key: str) -> str:
+            raise KeyError(key)
+
+        def __iter__(self) -> Iterator[str]:
+            return iter(())
+
+        def __len__(self) -> int:
+            return 0
+
+        def items(self):
+            parent["lazily_imported"] = "safe"
+            return ().__iter__()
+
+    parent["framework_state"] = ParentMutatingMapping()
+
+    assert_secret_not_retained(parent, "forbidden")
