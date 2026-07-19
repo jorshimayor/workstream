@@ -106,14 +106,17 @@ separately gated.
 
 ## External review
 
-GitHub Backend and Agent Gates passed. CodeRabbit passed with one actionable
-source-manifest finding: a historical PLAN2 AUTH-09D-A/`0026` review-base
-sentence could be mistaken for the later parent 02A start. The repair labels
-that snapshot as historical and restates the full 02A trusted-main SHA,
-`0027_contributor_foundation` head, and then-current-head child allocation rule.
+On prior pushed head `8f12f656`, GitHub Backend and Agent Gates passed, and
+CodeRabbit passed with one actionable source-manifest finding: a historical
+PLAN2 AUTH-09D-A/`0026` review-base sentence could be mistaken for the later
+parent 02A start. The repair labels that snapshot as historical and restates the
+full 02A trusted-main SHA, `0027_contributor_foundation` head, and
+then-current-head child allocation rule.
 Fresh deterministic and internal review evidence passes for the repaired
-candidate. GitHub and CodeRabbit must recheck the republished head; human review
-remains pending.
+candidate. At evidence head `ebb8db88`, Agent Gates passed, Backend remained
+pending, and CodeRabbit's evidence-status comment required this repair. Merge is
+blocked until all GitHub and CodeRabbit checks pass on the final pushed head with
+no unresolved actionable comment. Human review remains pending.
 
 ## Remaining risks
 
@@ -138,4 +141,6 @@ safety, Task triplet integrity, and the absence of runtime changes.
 ## Human merge ownership
 
 Only the user may approve and merge this specific PR. Merge does not authorize
-02A1 or any other runtime implementation.
+02A1 or any other runtime implementation. Do not merge while any current-head
+GitHub or CodeRabbit check is pending or failed, or while an actionable review
+comment remains unresolved.

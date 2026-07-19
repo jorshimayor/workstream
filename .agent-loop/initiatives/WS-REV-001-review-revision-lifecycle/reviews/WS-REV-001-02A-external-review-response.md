@@ -26,6 +26,17 @@ from the parent 02A `0027_contributor_foundation` start and requires every
 executable child to allocate from the then-current trusted-main head at its own
 explicit start.
 
+### Publication evidence status
+
+CodeRabbit's current-head re-review correctly found that the first response
+mixed the historical stale-SHA gate with repaired-candidate evidence and pending
+republish checks. The stale-SHA failure below is now explicitly historical.
+Internal evidence is rebound to reviewed candidate
+`c545cd10272e10709a13b6212ef62fd1adc4f39f` and passed at evidence head
+`ebb8db88550c623d87296681581e81e5bc6ef426`. Merge remains blocked until every
+GitHub and CodeRabbit check on the final pushed head passes with no unresolved
+finding, followed by the user's approval of PR #156.
+
 ## Comments deferred
 
 None.
@@ -45,10 +56,13 @@ not start 02A1 or change product, architecture, security, or migration behavior.
 - Docstring coverage: PASS, 90.3 percent overall.
 - Alembic heads: PASS, one head, `0027_contributor_foundation`.
 - Diff integrity: PASS.
-- Internal-review evidence: expected stale-SHA failure until the repaired
-  candidate is committed, fully re-reviewed, and evidence is rebound.
+- Internal-review evidence: PASS after exact-SHA review and rebind. The earlier
+  stale-SHA failure was the expected historical result before candidate
+  `c545cd10` was reviewed and evidence head `ebb8db88` was committed.
 
 ## Remaining risks
 
 ART PR #154 remains unmerged and owns its own migration rebase. Every future REV
 child must refresh trusted main and the sole Alembic head before implementation.
+PR #156 must not merge while any current-head GitHub or CodeRabbit check is
+pending or failed, or while any actionable comment remains unresolved.
