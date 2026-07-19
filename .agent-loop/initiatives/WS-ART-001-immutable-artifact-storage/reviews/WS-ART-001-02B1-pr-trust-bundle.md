@@ -87,7 +87,7 @@ External review response file:
 | Source | Status | Notes |
 |---|---:|---|
 | GitHub Actions | Pending | Agent Gates passed; Backend reruns the isolated full suite, repository floor, cumulative focused gates, and real MinIO proof on the repaired candidate. |
-| CodeRabbit | Repairs verified; rerun pending | Four valid findings were fixed and automatically resolved. The immediate incremental rerun was rate-limited. |
+| CodeRabbit | Final verification pending | Four implementation findings were fixed and resolved; the post-fix review found only two evidence-wording corrections, now fixed. |
 | Human review | Pending | Only the user may approve merge. |
 
 ## Remaining Risks

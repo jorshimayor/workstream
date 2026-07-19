@@ -53,7 +53,7 @@ this evidence and requires a new exact-head review cycle.
   descriptor schemas.
 - Bounded copied request-body bytes independently of source chunk size by
   retaining unconsumed source bytes through a memoryview cursor.
-- Required selected AWS workload credentials to materialize successfully before
+- Required the selected AWS workload credentials to materialize successfully before
   explicit resolution can report success.
 - Canonicalized equivalent IPv6 MinIO literals before deriving endpoint and
   namespace identity.
@@ -128,7 +128,7 @@ python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
-Results: 443 real-service focused tests passed after the external-review repairs.
+Results: 443 real-service-focused tests passed after the external-review repairs.
 `S3CompatibleArtifactStore` coverage is 91 percent, S3 validation coverage is
 97 percent, and combined changed-subsystem coverage is 92.52 percent. Ruff,
 dependency integrity, stale contract/authorization/review/wording scans,
