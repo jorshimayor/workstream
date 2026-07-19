@@ -333,6 +333,8 @@ async def _seed_checker_output_relationships(session) -> tuple[str, str, str]:
     post_submit_policy_id = str(uuid4())
     task_id = str(uuid4())
     submission_id = str(uuid4())
+    contributor_id = str(uuid4())
+    contributor_link_id = str(uuid4())
     checker_run_id = str(uuid4())
     guide_version = "v1"
     snapshot_hash = canonical_json_hash({"items": []})
@@ -508,10 +510,34 @@ async def _seed_checker_output_relationships(session) -> tuple[str, str, str]:
     )
     await session.flush()
     session.add(
+        ActorProfile(
+            id=contributor_id,
+            actor_kind="human",
+            status="active",
+            provisioning_method="automatic_first_access",
+            service_identity=None,
+            created_by="test",
+        )
+    )
+    await session.flush()
+    session.add(
+        ActorIdentityLink(
+            id=contributor_link_id,
+            actor_profile_id=contributor_id,
+            issuer="https://issuer.example.test",
+            subject=f"human-{contributor_id}",
+            subject_kind="human",
+            status="active",
+            linked_by="test",
+            last_verified_at=now,
+        )
+    )
+    await session.flush()
+    session.add(
         Submission(
             id=submission_id,
             task_id=task_id,
-            worker_id=str(uuid4()),
+            contributor_id=contributor_id,
             version=1,
             status="submitted",
             summary="Checker source submission",
