@@ -701,6 +701,164 @@ async def test_authorization_route_database_failures_rollback_and_map_to_retryab
 
 
 @pytest.mark.parametrize(
+    ("outcome", "expected_error", "expected_events"),
+    [
+        ("success", None, ["reserve", "authorize", "touch", "complete", "commit"]),
+        ("replay", None, ["reserve", "authorize", "touch", "commit"]),
+        (
+            "mismatch",
+            "idempotency_mismatch",
+            ["reserve", "authorize", "rollback", "record_mismatch", "commit"],
+        ),
+        (
+            "conflict",
+            "identity_link_already_revoked",
+            [
+                "reserve",
+                "authorize",
+                "touch",
+                "complete",
+                "rollback",
+                "record_conflict",
+                "commit",
+            ],
+        ),
+        (
+            "sql_failure",
+            "service_unavailable",
+            ["reserve", "authorize", "touch", "complete", "rollback"],
+        ),
+    ],
+)
+async def test_identity_link_lifecycle_route_preserves_outcome_transaction_contract(
+    monkeypatch: pytest.MonkeyPatch,
+    outcome: str,
+    expected_error: str | None,
+    expected_events: list[str],
+) -> None:
+    """Prove route-owned ordering and stable mapping for every lifecycle outcome."""
+    caller_id = uuid4()
+    target_link_id = uuid4()
+    target_actor_id = uuid4()
+    idempotency_key = uuid4()
+    events: list[str] = []
+    response_reference = AuthorityResponseReference(
+        resource_type=AuthorityResourceType.ACTOR_IDENTITY_LINK,
+        resource_id=target_link_id,
+        version=None,
+        http_status=200,
+    )
+    response = IdentityLinkLifecycleMutationResponse(
+        resource_type="actor_identity_link",
+        resource_id=target_link_id,
+        version=None,
+        http_status=200,
+    )
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=idempotency_key,
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(caller_id),
+        operation=AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE,
+        request_digest=DIGEST,
+    )
+    reservation = {
+        "success": ClaimedReservation(claim=claim),
+        "replay": ReplayedReservation(response=response_reference),
+        "mismatch": MismatchedReservation(),
+        "conflict": ClaimedReservation(claim=claim),
+        "sql_failure": ClaimedReservation(claim=claim),
+    }[outcome]
+
+    class Session:
+        async def commit(self) -> None:
+            events.append("commit")
+
+        async def rollback(self) -> None:
+            events.append("rollback")
+
+    class Authorization:
+        async def require(self, action_id, resource):
+            events.append("authorize")
+            assert action_id is ActionId.ACTOR_IDENTITY_LINK_REVOKE
+            assert isinstance(resource, ActorIdentityLinkLifecycleResourceContext)
+            assert resource.resource_id == target_link_id
+            assert resource.transition == "revoke"
+            assert resource.existing_idempotency_record is (outcome in {"replay", "mismatch"})
+            return SimpleNamespace(revalidated=True)
+
+    class RouteActorService:
+        def __init__(self, session) -> None:
+            assert session is test_session
+
+        async def touch_after_authorization(self, resolved) -> None:
+            assert resolved.profile.id == str(caller_id)
+            events.append("touch")
+
+    class RouteLifecycleService:
+        def __init__(self, session) -> None:
+            assert session is test_session
+
+        async def reserve(self, **kwargs):
+            events.append("reserve")
+            assert kwargs["idempotency_key"] == idempotency_key
+            assert kwargs["actor_profile_id"] == caller_id
+            assert kwargs["request"].identity_link_id == target_link_id
+            return reservation
+
+        async def record_mismatch(self, **kwargs) -> None:
+            events.append("record_mismatch")
+            assert kwargs["actor_profile_id"] == caller_id
+
+        async def complete(self, **kwargs):
+            events.append("complete")
+            assert kwargs["actor_profile_id"] == caller_id
+            assert kwargs["reason"] == "Revoke exact identity link"
+            if outcome == "conflict":
+                raise IdentityLinkLifecycleConflict(
+                    "identity_link_already_revoked",
+                    target_actor_id,
+                )
+            if outcome == "sql_failure":
+                raise SQLAlchemyError("lifecycle write failed")
+            return response
+
+        async def record_conflict(self, **kwargs) -> None:
+            events.append("record_conflict")
+            assert kwargs["target_actor_profile_id"] == target_actor_id
+            assert kwargs["code"] == "identity_link_already_revoked"
+
+    test_session = Session()
+    monkeypatch.setattr(authorization_router, "ActorService", RouteActorService)
+    monkeypatch.setattr(
+        authorization_router,
+        "IdentityLinkLifecycleService",
+        RouteLifecycleService,
+    )
+
+    call = authorization_router._mutate_identity_link_lifecycle(
+        identity_link_id=target_link_id,
+        payload=ActorLifecycleBody(reason="Revoke exact identity link"),
+        idempotency_key=idempotency_key,
+        resolved=SimpleNamespace(profile=SimpleNamespace(id=str(caller_id))),
+        authorization=Authorization(),
+        session=test_session,  # type: ignore[arg-type]
+        operation=AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE,
+        action=ActionId.ACTOR_IDENTITY_LINK_REVOKE,
+        transition="revoke",
+    )
+    if expected_error is None:
+        assert await call == response
+    else:
+        with pytest.raises(StructuredHTTPException) as failure:
+            await call
+        assert failure.value.error_code == expected_error
+        assert failure.value.status_code == (503 if outcome == "sql_failure" else 409)
+        assert failure.value.retryable is (outcome == "sql_failure")
+    assert events == expected_events
+
+
+@pytest.mark.parametrize(
     "definitions, message",
     [
         (ACTION_DEFINITIONS[:-1], "incomplete"),
