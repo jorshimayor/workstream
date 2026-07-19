@@ -1,5 +1,13 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
+## ART-02C1 Current-Main Reconciliation
+
+ART-02C1 PR #154 merged at trusted main `44f2467c` and owns
+`0028_artifact_admission`. The reviewed 02A design and scope remain unchanged;
+its migration is now the exact linear child
+`0029_shared_transactional_outbox`. Fresh bounded proof and all nine exact-SHA
+reviewer tracks are required before PR #155 is republished.
+
 ## Contributor Foundation Current-Main Reconciliation
 
 Trusted main advanced to `8d5eb15b384fd75787ce98a099400a1d335d2560`

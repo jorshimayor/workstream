@@ -125,6 +125,9 @@
   moves CON-02A to linear child `0028_shared_transactional_outbox`. It changes
   no ActionId, PermissionId, availability, grant, evaluator, service admission,
   review lifecycle, dispatcher seam, or outbox behavior.
+- ART-02C1 PR #154 owns `0028_artifact_admission` on trusted main `44f2467c`.
+  It adds no outbox seam or CON authority, so CON-02A moves unchanged to the
+  linear child `0029_shared_transactional_outbox`.
 
 ## Canonical merged changes affecting CON
 

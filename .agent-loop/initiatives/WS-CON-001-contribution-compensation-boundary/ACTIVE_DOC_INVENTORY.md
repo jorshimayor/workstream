@@ -65,6 +65,11 @@ clean-cuts TaskAssignment and Submission attribution to canonical human
 admission, dispatcher, review lifecycle, or authority change. CON-02A is now
 the linear `0028_shared_transactional_outbox` child; AUTH-09E remains a later
 gate.
+ART-02C1 PR #154 then advanced trusted main to `44f2467c`. It owns
+`0028_artifact_admission` and adds durable artifact-admission and prepared-put
+state without changing the generic outbox boundary. CON-02A is therefore the
+linear `0029_shared_transactional_outbox` child; ART remains absent from the
+outbox append path.
 
 ## Inspected and already aligned
 

@@ -28,8 +28,8 @@ trusted main.
 
 ## What Changed
 
-- Added one linear `0028_shared_transactional_outbox` migration after the
-  AUTH-owned `0027_contributor_foundation` revision.
+- Added one linear `0029_shared_transactional_outbox` migration after the
+  ART-owned `0028_artifact_admission` revision.
 - Added the generic outbox model, strict append schemas, reservation repository,
   and flush-only service.
 - Registered the model in shared SQLAlchemy metadata.
@@ -88,8 +88,10 @@ is unchanged; the new participant is infrastructure for later callers.
 - Current AUTH revision-specific lifecycle proof: 1 passed in 63.77 seconds,
   preserving AUTH's exact `0026` downgrade/reupgrade behavior independently of
   repository head.
-- Alembic now reports exactly one head: `0028_shared_transactional_outbox`,
-  with parent `0027_contributor_foundation`.
+- Alembic reports exactly one head at `0029_shared_transactional_outbox`, with
+  parent `0028_artifact_admission`.
+- The exact ART `0028` / CON `0029` bounded row selects 43 tests with 32
+  deselected and passes at 95.73 percent focused outbox coverage.
 - The following `0027` rows are retained as historical pre-PR #153 evidence;
   they do not replace the current `0028` proof above or GitHub CI.
 - Post-review exact bounded row: 43 passed, 30 deselected in 60.22 seconds,

@@ -51,7 +51,7 @@ trap 'rm -rf "$metadata_dir"' EXIT
 (cd backend && .venv/bin/python -m coverage erase)
 (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 900 -- .venv/bin/python -m pytest -q tests/test_outbox.py tests/test_alembic.py -k outbox --cov=app --cov-report=)
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/outbox/*' --fail-under=90)
-(cd backend && .venv/bin/ruff check app/modules/outbox app/db/models.py tests/assertion_helpers.py tests/test_assertion_helpers.py tests/test_outbox.py tests/test_alembic.py alembic/versions/0028_shared_transactional_outbox.py)
+(cd backend && .venv/bin/ruff check app/modules/outbox app/db/models.py tests/assertion_helpers.py tests/test_assertion_helpers.py tests/test_outbox.py tests/test_alembic.py alembic/versions/0029_shared_transactional_outbox.py)
 ```
 
 Local pass requires a non-empty selected test set, PostgreSQL upgrade and guarded

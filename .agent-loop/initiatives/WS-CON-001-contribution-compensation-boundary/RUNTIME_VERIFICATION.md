@@ -24,7 +24,7 @@ git diff --check
 
 | Chunk | Separate focused subsystem reports (one `coverage report` per entry) | `<RUFF_TARGETS>` |
 |---|---|---|
-| CON-02A | `app/modules/outbox/*` | `app/modules/outbox app/db/models.py tests/assertion_helpers.py tests/test_assertion_helpers.py tests/test_outbox.py tests/test_alembic.py alembic/versions/0028_shared_transactional_outbox.py` |
+| CON-02A | `app/modules/outbox/*` | `app/modules/outbox app/db/models.py tests/assertion_helpers.py tests/test_assertion_helpers.py tests/test_outbox.py tests/test_alembic.py alembic/versions/0029_shared_transactional_outbox.py` |
 | CON-02B | `app/modules/outbox/*`; `app/workers/outbox.py` | `app/modules/outbox app/workers/outbox.py app/workers/celery_app.py app/core/config.py tests/test_outbox.py tests/test_config.py` |
 | CON-02C | `app/modules/audit/*` | `app/modules/audit tests/test_audit.py` |
 | CON-03A | `app/modules/compensation/*` | `app/modules/compensation app/db/models.py tests/test_compensation.py alembic/versions/<exact-file>.py` |

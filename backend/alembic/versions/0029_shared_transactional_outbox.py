@@ -1,7 +1,7 @@
 """add shared transactional outbox persistence
 
-Revision ID: 0028_shared_transactional_outbox
-Revises: 0027_contributor_foundation
+Revision ID: 0029_shared_transactional_outbox
+Revises: 0028_artifact_admission
 Create Date: 2026-07-18
 """
 
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0028_shared_transactional_outbox"
-down_revision = "0027_contributor_foundation"
+revision = "0029_shared_transactional_outbox"
+down_revision = "0028_artifact_admission"
 branch_labels = depends_on = None
 
 

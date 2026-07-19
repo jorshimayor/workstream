@@ -60,6 +60,11 @@ review lifecycle, dispatcher seam, or outbox behavior. CON-02A therefore moves
 to the linear child `0028_shared_transactional_outbox`; its generic,
 authorization-neutral behavior is otherwise unchanged. Repository-wide proof
 remains GitHub CI-owned.
+Trusted `main` then advanced to `44f2467c` through ART-02C1 PR #154. ART owns
+`0028_artifact_admission`; it adds no outbox seam or CON authority. CON-02A
+therefore moves unchanged to the linear child
+`0029_shared_transactional_outbox`. Fresh bounded and exact-SHA review evidence
+must bind this reconciliation before PR #155 is republished.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation

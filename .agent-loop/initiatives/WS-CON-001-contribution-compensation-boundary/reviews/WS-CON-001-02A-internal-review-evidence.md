@@ -8,7 +8,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `8d5eb15b384fd75787ce98a099400a1d335d2560`
+Trusted main SHA: `44f2467cedc266d2efe261119cfff436ac6b7715`
 
 The implementation is limited to one linear PostgreSQL migration after
 AUTH-owned revision `0027_contributor_foundation`, the generic outbox persistence/append module, shared
@@ -51,15 +51,21 @@ as linear child `0028_shared_transactional_outbox`; AUTH's revision-specific
 outbox-head proof. Fresh bounded verification and exact-SHA reviewer results
 below supersede earlier publication evidence.
 
-## Current PR #153 Reconciliation Verification Results
+ART-02C1 PR #154 advances trusted main to `44f2467c` and owns
+`0028_artifact_admission`. It changes no outbox or CON authority behavior.
+CON-02A is reconciled as its linear child
+`0029_shared_transactional_outbox`; all earlier `0028` outbox results remain
+historical until the bounded `0029` row and exact-SHA reviewers pass.
+
+## Current PR #154 Reconciliation Verification Results
 
 ```text
-43 passed, 32 deselected in 177.40s (exact bounded isolated outbox/migration row)
-outbox coverage: 95.73% (required: at least 90%)
+43 passed, 32 deselected (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
+outbox coverage: 95.73% (234 statements, 10 missed; required: at least 90%)
 8 passed in 0.21s (security-sensitive assertion helper suite)
 1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
-Alembic heads: one head, 0028_shared_transactional_outbox
-Ruff on CON-02A, both 0027/0028 migrations, and reconciliation tests: passed
+Alembic heads: one head, `0029_shared_transactional_outbox`
+Ruff on CON-02A, ART `0028`, CON `0029`, and reconciliation tests: passed
 repository-wide isolated PostgreSQL plus real-MinIO suite: required in GitHub CI after push
 ```
 

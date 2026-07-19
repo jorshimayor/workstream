@@ -123,7 +123,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove exact 0028 schema plus ACCESS EXCLUSIVE commit/rollback behavior."""
+    """Prove exact 0029 schema plus ACCESS EXCLUSIVE commit/rollback behavior."""
     config = _alembic_config()
     committed_project_id = str(uuid4())
     rolled_back_project_id = str(uuid4())
@@ -133,7 +133,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             command.upgrade(config, "head")
             schema = asyncio.run(_outbox_schema(isolated_database_env))
             assert schema == {
-                "revision": "0028_shared_transactional_outbox",
+                "revision": "0029_shared_transactional_outbox",
                 "columns": {
                     "aggregate_id",
                     "aggregate_type",
@@ -193,10 +193,10 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             )
             assert committed == "refused_after_commit"
             assert asyncio.run(_current_revision(isolated_database_env)) == (
-                "0028_shared_transactional_outbox"
+                "0029_shared_transactional_outbox"
             )
             asyncio.run(_remove_outbox_migration_row(isolated_database_env, committed_project_id))
-            command.downgrade(config, "0027_contributor_foundation")
+            command.downgrade(config, "0028_artifact_admission")
             assert "outbox_events" not in asyncio.run(_fetch_table_names(isolated_database_env))
 
             command.upgrade(config, "head")
@@ -210,7 +210,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
             )
             assert rolled_back == "succeeded_after_rollback"
             assert asyncio.run(_current_revision(isolated_database_env)) == (
-                "0027_contributor_foundation"
+                "0028_artifact_admission"
             )
         finally:
             command.upgrade(config, "head")

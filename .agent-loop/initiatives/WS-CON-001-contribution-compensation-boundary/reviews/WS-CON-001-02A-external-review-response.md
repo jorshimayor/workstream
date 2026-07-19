@@ -62,6 +62,12 @@ Workstream/AUTH/ART/REV scans, canonical 90.4 percent docstring coverage, 88
 agent-loop gates, and diff hygiene also pass. Exact-SHA internal review remains
 before push.
 
+ART-02C1 PR #154 subsequently merged at trusted main `44f2467c` and owns
+`0028_artifact_admission`. CON-02A is now reconciled as
+`0029_shared_transactional_outbox`. The exact bounded `0029` row now passes 43
+selected tests with 32 deselected and 95.73 percent focused outbox coverage;
+all nine exact-SHA reviewers remain required before publication.
+
 ## Remaining risks
 
 - GitHub must complete the full backend suite and repository-wide 78 percent
