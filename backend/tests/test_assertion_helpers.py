@@ -1,5 +1,6 @@
 """Tests for shared security-sensitive assertion helpers."""
 
+from dataclasses import dataclass
 from pydantic import SecretStr
 import pytest
 from types import SimpleNamespace
@@ -42,6 +43,25 @@ def test_builtin_container_subclasses_cannot_hide_forbidden_values() -> None:
         def __iter__(self):
             raise RuntimeError("hostile iterator")
 
-    for value in (HostileDict(value="forbidden"), HostileList(["forbidden"])):
+    class HostileString(str):
+        def __contains__(self, item: object) -> bool:
+            raise RuntimeError("hostile membership")
+
+    for value in (
+        HostileDict(value="forbidden"),
+        HostileList(["forbidden"]),
+        HostileString("forbidden"),
+    ):
         with pytest.raises(AssertionError):
             assert_secret_not_retained(value, "forbidden")
+
+
+def test_slotted_dataclass_state_rejects_forbidden_value() -> None:
+    """Inspect slotted reservation-style records without requiring __dict__."""
+
+    @dataclass(frozen=True, slots=True)
+    class SlottedRecord:
+        payload: str
+
+    with pytest.raises(AssertionError):
+        assert_secret_not_retained(SlottedRecord(payload="forbidden"), "forbidden")

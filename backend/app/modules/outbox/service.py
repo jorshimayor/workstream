@@ -105,7 +105,7 @@ class OutboxService:
         if len(reservation.records) != 1 or not _matches(
             reservation.records[0], validated, digest
         ):
-            del value, validated
+            del value, validated, reservation
             _raise_idempotency_conflict()
         record = reservation.records[0]
         return OutboxAppendResult(

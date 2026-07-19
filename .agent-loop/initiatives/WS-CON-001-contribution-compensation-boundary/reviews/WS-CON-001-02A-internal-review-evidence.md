@@ -67,8 +67,8 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 ## Current Reconciliation Verification Results
 
 ```text
-41 passed, 30 deselected in 184.58s (exact bounded isolated outbox row after final review repair)
-outbox coverage after final review repair: 95.61% (required: at least 90%)
+43 passed, 30 deselected in 60.22s (exact bounded isolated outbox row after final review repair)
+outbox coverage after final review repair: 95.73% (required: at least 90%)
 78 passed in 378.36s on current main's outbox/migration, real-MinIO ART, and AUTH-09D-B suite
 pre-repair outbox coverage: 95.43%
 8 passed, 56 deselected in 50.92s (exact contract selector)
@@ -77,7 +77,7 @@ pre-repair outbox coverage: 95.43%
 real API contract end-to-end on 0027: passed
 88 passed (agent-loop gates after AUTH-09D-B)
 Ruff: passed
-Docstring coverage: passed at 90.9%
+Docstring coverage: passed at 90.4%
 Markdown links: passed for 15 changed Markdown files
 Workstream/AUTH/ART/REV stale-contract scans: passed after PR #152 reconciliation
 merge intent and git diff --check: passed
@@ -126,14 +126,16 @@ superseded when AUTH-09D-A changed the backend and migration head.
 
 Tests add strict schema/privacy bounds; one core-schema error boundary across
 constructor, model methods, and `TypeAdapter` Python/JSON/string modes; valid
-mode parity; hostile dict/list/string subclasses; payload-free outbox traceback
-locals; defensive nested-payload snapshotting across the first await; stable
-database error redaction; caller rollback including injected post-reservation
-failure; exact replay; immutable drift; split identity; concurrent commit/
-rollback races; direct-SQL custody; legal and illegal delivery transitions;
-terminal archival; delete/truncate denial; exact migration surface; and
-concurrent downgrade writer behavior. Shared secret-retention helper tests prove
-built-in subclasses cannot bypass deep inspection.
+mode parity; hostile top-level and nested dict/list/string subclasses;
+payload-free outbox traceback locals, including idempotency conflicts;
+defensive nested-payload snapshotting across the first await; stable database
+error redaction; caller rollback including injected post-reservation failure;
+exact replay; immutable drift; split identity; concurrent commit/rollback
+races; direct-SQL custody; legal and illegal delivery transitions; terminal
+archival; delete/truncate denial; exact migration surface; and concurrent
+downgrade writer behavior. Shared secret-retention helper tests prove dict,
+list, and string subclasses plus slotted dataclass state cannot bypass deep
+inspection through the tested override paths.
 Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Required Internal Review

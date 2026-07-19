@@ -214,6 +214,33 @@ def test_outbox_all_validation_entry_points_detach_rejected_input() -> None:
         )
 
 
+def test_outbox_rejects_hostile_top_level_payload_before_traversal() -> None:
+    marker = "top-level-payload-override-must-not-run"
+    calls: list[str] = []
+
+    class ExplodingDict(dict[str, object]):
+        def items(self):
+            calls.append(marker)
+            raise RuntimeError(marker)
+
+    adapter = TypeAdapter(OutboxAppendInput)
+    values = _event(uuid4()).model_dump()
+    values["payload"] = ExplodingDict(value="safe")
+    string_values = _event(uuid4()).model_dump(mode="json")
+    string_values["event_version"] = str(string_values["event_version"])
+    string_values["payload"] = ExplodingDict(value="safe")
+    for call in (
+        lambda: OutboxAppendInput(**values),
+        lambda: OutboxAppendInput.model_validate(values),
+        lambda: OutboxAppendInput.model_validate_strings(string_values),
+        lambda: adapter.validate_python(values),
+        lambda: adapter.validate_strings(string_values),
+    ):
+        with pytest.raises(OutboxInputError, match="^outbox_invalid_input$"):
+            call()
+    assert calls == []
+
+
 @pytest.mark.asyncio
 async def test_outbox_service_detaches_hostile_nested_container_failure() -> None:
     marker = f"private-marker-{uuid4()}"
@@ -574,6 +601,35 @@ async def test_outbox_reused_identity_with_immutable_drift_conflicts(
                 match="^outbox_idempotency_conflict$",
             ):
                 await OutboxService(session).append(drift)
+
+
+@pytest.mark.asyncio
+async def test_outbox_conflict_does_not_retain_stored_payload(
+    outbox_factory: tuple[async_sessionmaker[AsyncSession], UUID],
+) -> None:
+    factory, project_id = outbox_factory
+    marker = f"stored-conflict-{uuid4()}"
+    value = _event(project_id, payload={"detail": marker})
+    async with factory() as session:
+        async with session.begin():
+            await OutboxService(session).append(value)
+    drift = OutboxAppendInput(
+        **{**value.model_dump(), "payload": {"detail": "changed"}}
+    )
+    async with factory() as session:
+        async with session.begin():
+            with pytest.raises(
+                OutboxIdempotencyConflict,
+                match="^outbox_idempotency_conflict$",
+            ) as raised:
+                await OutboxService(session).append(drift)
+            assert_secret_not_retained(
+                raised.value,
+                marker,
+                traceback_module_prefixes=("app.modules.outbox",),
+            )
+            assert raised.value.__context__ is None
+            assert raised.value.__cause__ is None
 
 
 @pytest.mark.asyncio

@@ -56,8 +56,8 @@ feature chunks own execution behavior.
 
 ## Proof
 
-- Post-review exact bounded row: 41 passed, 30 deselected in 184.58 seconds,
-  with 95.61% outbox coverage against the 90% subsystem floor.
+- Post-review exact bounded row: 43 passed, 30 deselected in 60.22 seconds,
+  with 95.73% outbox coverage against the 90% subsystem floor.
 - Reconciled exact contract selector: 8 passed, 56 deselected.
 - Current-main outbox plus migration/lifecycle-guard suite: 36 passed in
   156.17 seconds; the reconciled outbox implementation retains 95.43% focused
@@ -79,7 +79,7 @@ feature chunks own execution behavior.
   `0026_shared_transactional_outbox`; current `0027` focused proof is recorded
   above and GitHub CI must supply repository-wide proof after publication.
 - Agent-loop gates: 88 passed after AUTH-09D-B.
-- Ruff, 90.9% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
+- Ruff, 90.4% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
 - AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
   above is current, while exact-SHA internal reviewer results must pass before
@@ -109,12 +109,14 @@ command, coverage threshold, or CI configuration changed.
 
 Internal-review repairs add regression proof for one detached Pydantic
 core-schema boundary across model methods and `TypeAdapter`, valid Python/JSON/
-string-mode parity, hostile dict/list/string subclasses, payload-free outbox
-traceback locals, nested payload mutation while reservation is blocked,
-payload-free database failures, and caller rollback after an injected
-post-reservation failure. The shared deep-retention assertion now inspects
-built-in subclasses without invoking hostile overrides. The exact documented
-focused command generates fresh coverage before enforcing the subsystem floor.
+string-mode parity, hostile top-level and nested dict/list/string subclasses,
+payload-free outbox traceback locals including idempotency conflicts, nested
+payload mutation while reservation is blocked, payload-free database failures,
+and caller rollback after an injected post-reservation failure. The shared deep-
+retention assertion now inspects dict/list/string subclasses and slotted
+dataclass state without invoking the tested hostile overrides. The exact
+documented focused command generates fresh coverage before enforcing the
+subsystem floor.
 
 Repository-wide tests and the 78 percent repository coverage floor run only in
 the existing GitHub Backend full-suite job. Local proof is bounded to focused

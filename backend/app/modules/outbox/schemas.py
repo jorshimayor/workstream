@@ -8,7 +8,14 @@ import re
 from typing import Any, NoReturn, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, GetCoreSchemaHandler, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    GetCoreSchemaHandler,
+    field_validator,
+    model_validator,
+)
 from pydantic_core import SchemaValidator, core_schema
 
 _KEY = re.compile(r"^[a-z][a-z0-9_]{0,127}$")
@@ -137,6 +144,14 @@ class OutboxAppendInput(BaseModel):
     causation_event_id: UUID | None = None
     idempotency_key: str = Field(pattern=r"^[A-Za-z0-9._:-]{1,200}$")
     payload: dict[str, Any]
+
+    @field_validator("payload", mode="before")
+    @classmethod
+    def validate_payload_object(cls, value: object) -> object:
+        """Reject mapping subclasses before Pydantic traverses their overrides."""
+        if type(value) is not dict:
+            raise ValueError("payload_object")
+        return value
 
     @classmethod
     def __get_pydantic_core_schema__(
