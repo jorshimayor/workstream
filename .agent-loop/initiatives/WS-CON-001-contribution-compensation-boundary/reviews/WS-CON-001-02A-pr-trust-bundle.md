@@ -56,8 +56,8 @@ feature chunks own execution behavior.
 
 ## Proof
 
-- Post-review exact bounded row: 38 passed, 30 deselected in 92.29 seconds,
-  with 95.45% outbox coverage against the 90% subsystem floor.
+- Post-review exact bounded row: 40 passed, 30 deselected in 146.65 seconds,
+  with 95.15% outbox coverage against the 90% subsystem floor.
 - Reconciled exact contract selector: 8 passed, 56 deselected.
 - Current-main outbox plus migration/lifecycle-guard suite: 36 passed in
   156.17 seconds; the reconciled outbox implementation retains 95.43% focused
@@ -107,11 +107,12 @@ No existing test was deleted, skipped, weakened, or rewritten to accept broken
 behavior. No workflow, dependency, package script, test runner, lint/typecheck
 command, coverage threshold, or CI configuration changed.
 
-Internal-review repairs add regression proof for ordinary validation error
-redaction, nested payload mutation while reservation is blocked, payload-free
-database failures, and caller rollback after an injected post-reservation
-failure. The exact documented focused command now generates fresh coverage
-before enforcing the subsystem floor.
+Internal-review repairs add regression proof for detached errors across every
+exported Pydantic validation entry point and hostile container subclasses,
+nested payload mutation while reservation is blocked, payload-free database
+failures, and caller rollback after an injected post-reservation failure. The
+exact documented focused command now generates fresh coverage before enforcing
+the subsystem floor.
 
 Repository-wide tests and the 78 percent repository coverage floor run only in
 the existing GitHub Backend full-suite job. Local proof is bounded to focused

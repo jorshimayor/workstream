@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +24,7 @@ def _validated_input(value: object) -> OutboxAppendInput:
     try:
         fields = dict(object.__getattribute__(value, "__dict__"))
         validated = OutboxAppendInput.model_validate(fields)
-    except (AttributeError, TypeError, ValueError, ValidationError):
+    except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
         pass
     if validated is None:
         raise OutboxInputError("outbox_invalid_input")

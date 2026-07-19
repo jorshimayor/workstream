@@ -8,7 +8,7 @@ import re
 from typing import Any, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _KEY = re.compile(r"^[a-z][a-z0-9_]{0,127}$")
 _SECRET_KEYS = frozenset(
@@ -64,12 +64,12 @@ def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
     nodes[0] += 1
     if nodes[0] > _MAX_NODES:
         raise ValueError("payload_nodes")
-    if isinstance(value, dict):
+    if type(value) is dict:
         if depth > _MAX_DEPTH or len(value) > _MAX_MEMBERS:
             raise ValueError("payload_container")
         budget = 2 + max(0, len(value) - 1)
         for key, item in value.items():
-            if not isinstance(key, str):
+            if type(key) is not str:
                 raise ValueError("payload_key")
             normalized = key.casefold().replace("-", "_")
             if normalized in _SECRET_KEYS:
@@ -80,13 +80,13 @@ def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
             budget += (6 * len(key_bytes)) + 3
             budget += _encoding_budget(item, depth=depth + 1, nodes=nodes)
         return budget
-    if isinstance(value, list):
+    if type(value) is list:
         if depth > _MAX_DEPTH or len(value) > _MAX_MEMBERS:
             raise ValueError("payload_container")
         return 2 + max(0, len(value) - 1) + sum(
             _encoding_budget(item, depth=depth + 1, nodes=nodes) for item in value
         )
-    if isinstance(value, str):
+    if type(value) is str:
         encoded = value.encode("utf-8")
         if len(encoded) > _MAX_STRING_BYTES:
             raise ValueError("payload_string")
@@ -134,13 +134,53 @@ class OutboxAppendInput(BaseModel):
 
     def __init__(self, **data: Any) -> None:
         """Map ordinary validation failures to one payload-free domain error."""
-        invalid = False
+        admitted = True
         try:
             super().__init__(**data)
-        except ValidationError:
-            invalid = True
-        if invalid:
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = False
+        if not admitted:
             raise OutboxInputError("outbox_invalid_input")
+
+    @classmethod
+    def model_validate(cls, obj: object, **kwargs: Any) -> Self:
+        """Validate an object while replacing detailed diagnostics with one error."""
+        admitted = None
+        try:
+            admitted = super().model_validate(obj, **kwargs)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = None
+        if admitted is None:
+            raise OutboxInputError("outbox_invalid_input")
+        return admitted
+
+    @classmethod
+    def model_validate_json(
+        cls,
+        json_data: str | bytes | bytearray,
+        **kwargs: Any,
+    ) -> Self:
+        """Validate JSON while replacing detailed diagnostics with one error."""
+        admitted = None
+        try:
+            admitted = super().model_validate_json(json_data, **kwargs)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = None
+        if admitted is None:
+            raise OutboxInputError("outbox_invalid_input")
+        return admitted
+
+    @classmethod
+    def model_validate_strings(cls, obj: object, **kwargs: Any) -> Self:
+        """Validate string input while replacing detailed diagnostics with one error."""
+        admitted = None
+        try:
+            admitted = super().model_validate_strings(obj, **kwargs)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = None
+        if admitted is None:
+            raise OutboxInputError("outbox_invalid_input")
+        return admitted
 
     @model_validator(mode="after")
     def validate_payload(self) -> Self:

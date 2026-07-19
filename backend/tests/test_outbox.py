@@ -23,6 +23,7 @@ from app.modules.outbox.schemas import (
 )
 from app.modules.outbox.repository import OutboxRepository
 from app.modules.outbox.service import OutboxService
+from tests.assertion_helpers import assert_secret_not_retained
 
 
 def _alembic_config() -> Config:
@@ -100,23 +101,6 @@ def _unsafe_event(project_id: UUID, payload: object) -> OutboxAppendInput:
     return OutboxAppendInput.model_construct(**values)
 
 
-def _assert_marker_unreachable(error: BaseException, marker: str) -> None:
-    pending: list[BaseException] = [error]
-    seen: set[int] = set()
-    while pending:
-        current = pending.pop()
-        if id(current) in seen:
-            continue
-        seen.add(id(current))
-        assert marker not in str(current)
-        assert marker not in repr(current)
-        assert marker not in repr(getattr(current, "params", None))
-        if current.__context__ is not None:
-            pending.append(current.__context__)
-        if current.__cause__ is not None:
-            pending.append(current.__cause__)
-
-
 def test_outbox_input_requires_closed_tokens_and_object_payload() -> None:
     project_id = uuid4()
     with pytest.raises(OutboxInputError, match="^outbox_invalid_input$"):
@@ -159,7 +143,48 @@ def test_outbox_normal_validation_detaches_rejected_secret_input() -> None:
         OutboxAppendInput(**values)
     rendered = "".join(traceback.format_exception(raised.value))
     assert marker not in rendered
-    _assert_marker_unreachable(raised.value, marker)
+    assert_secret_not_retained(raised.value, marker)
+    assert raised.value.__context__ is None
+    assert raised.value.__cause__ is None
+
+
+def test_outbox_all_validation_entry_points_detach_rejected_input() -> None:
+    marker = f"private-marker-{uuid4()}"
+
+    class ExplodingDict(dict[str, object]):
+        def items(self):
+            raise RuntimeError(marker)
+
+    values = _event(uuid4()).model_dump()
+    values["payload"] = {"nested": ExplodingDict({"value": "safe"})}
+    calls = (
+        lambda: OutboxAppendInput(**values),
+        lambda: OutboxAppendInput.model_validate(values),
+        lambda: OutboxAppendInput.model_validate_json(
+            '{"payload":{"authorization":"' + marker + '"}}'
+        ),
+        lambda: OutboxAppendInput.model_validate_strings(values),
+    )
+    for call in calls:
+        with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
+            call()
+        assert_secret_not_retained(raised.value, marker)
+        assert raised.value.__context__ is None
+        assert raised.value.__cause__ is None
+
+
+@pytest.mark.asyncio
+async def test_outbox_service_detaches_hostile_nested_container_failure() -> None:
+    marker = f"private-marker-{uuid4()}"
+
+    class ExplodingDict(dict[str, object]):
+        def items(self):
+            raise RuntimeError(marker)
+
+    value = _unsafe_event(uuid4(), {"nested": ExplodingDict({"value": "safe"})})
+    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
+        await OutboxService(cast(AsyncSession, None)).append(value)
+    assert_secret_not_retained(raised.value, marker)
     assert raised.value.__context__ is None
     assert raised.value.__cause__ is None
 
@@ -344,7 +369,7 @@ async def test_outbox_database_error_never_reflects_payload(
             await OutboxService(session).append(value)
         rendered = "".join(traceback.format_exception(raised.value))
         assert marker not in rendered
-        _assert_marker_unreachable(raised.value, marker)
+        assert_secret_not_retained(raised.value, marker)
         assert raised.value.__context__ is None
         assert raised.value.__cause__ is None
         await transaction.rollback()
