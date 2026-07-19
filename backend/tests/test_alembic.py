@@ -2722,7 +2722,7 @@ async def _outbox_downgrade_writer_race(
                 asyncio.to_thread(
                     command.downgrade,
                     config,
-                    "0027_contributor_foundation",
+                    "0028_artifact_admission",
                 )
             )
             await asyncio.sleep(0.1)

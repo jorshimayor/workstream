@@ -60,8 +60,8 @@ historical until the bounded `0029` row and exact-SHA reviewers pass.
 ## Current PR #154 Reconciliation Verification Results
 
 ```text
-43 passed, 32 deselected (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
-outbox coverage: 95.73% (234 statements, 10 missed; required: at least 90%)
+49 passed, 32 deselected in 102.27s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
+outbox coverage: 95.80% (238 statements, 10 missed; required: at least 90%)
 8 passed in 0.21s (security-sensitive assertion helper suite)
 1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
 Alembic heads: one head, `0029_shared_transactional_outbox`

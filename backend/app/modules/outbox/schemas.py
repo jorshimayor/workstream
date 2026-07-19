@@ -39,6 +39,9 @@ _SECRET_KEYS = frozenset(
         "signed_url",
     }
 )
+_SECRET_KEY_PARTS = frozenset(
+    {"credential", "credentials", "password", "secret", "token"}
+)
 _MAX_DEPTH = 16
 _MAX_MEMBERS = 1024
 _MAX_NODES = 4096
@@ -72,6 +75,18 @@ def _raise_input_error() -> NoReturn:
     raise OutboxInputError("outbox_invalid_input")
 
 
+def _is_sensitive_key(value: str) -> bool:
+    """Reject explicit and conventionally secret-bearing JSON field names."""
+    normalized = value.casefold().replace("-", "_")
+    parts = frozenset(normalized.split("_"))
+    return (
+        normalized in _SECRET_KEYS
+        or bool(parts & _SECRET_KEY_PARTS)
+        or normalized == "key"
+        or normalized.endswith("_key")
+    )
+
+
 def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
     """Return a conservative canonical UTF-8 size bound while validating JSON."""
     nodes[0] += 1
@@ -84,8 +99,7 @@ def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
         for key, item in value.items():
             if type(key) is not str:
                 raise ValueError("payload_key")
-            normalized = key.casefold().replace("-", "_")
-            if normalized in _SECRET_KEYS:
+            if _is_sensitive_key(key):
                 raise ValueError("payload_sensitive")
             key_bytes = key.encode("utf-8")
             if len(key_bytes) > _MAX_KEY_BYTES or _KEY.fullmatch(key) is None:

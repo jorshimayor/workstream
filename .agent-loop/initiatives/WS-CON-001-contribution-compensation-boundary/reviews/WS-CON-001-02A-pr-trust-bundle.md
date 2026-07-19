@@ -90,8 +90,8 @@ is unchanged; the new participant is infrastructure for later callers.
   repository head.
 - Alembic reports exactly one head at `0029_shared_transactional_outbox`, with
   parent `0028_artifact_admission`.
-- The exact ART `0028` / CON `0029` bounded row selects 43 tests with 32
-  deselected and passes at 95.73 percent focused outbox coverage.
+- The exact ART `0028` / CON `0029` bounded row passes 49 tests with 32
+  deselected in 102.27 seconds and 95.80 percent focused outbox coverage.
 - The following `0027` rows are retained as historical pre-PR #153 evidence;
   they do not replace the current `0028` proof above or GitHub CI.
 - Post-review exact bounded row: 43 passed, 30 deselected in 60.22 seconds,
