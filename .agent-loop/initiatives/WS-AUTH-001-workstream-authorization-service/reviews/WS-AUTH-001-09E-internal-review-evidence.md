@@ -1,6 +1,6 @@
 # WS-AUTH-001-09E Internal Review Evidence
 
-Reviewed code SHA: `fea5dc1628f9a25062ec951be60de1770c66bc15`
+Reviewed code SHA: `5ae522bcaf77b4060baef78092a247cbbfc627e4`
 
 Reviewed implementation SHA: `881ac7fc`
 
@@ -10,7 +10,10 @@ Reviewed against trusted main: `8d5eb15b384fd75787ce98a099400a1d335d2560`
 
 Integrated implementation reviewed against trusted main: `44f2467c`
 
-Reviewed at: `2026-07-19T17:55:37Z`
+Final closeout reviewed against trusted main:
+`3b1d63796c086f53fc2b0aeefe096387b82485ec`
+
+Reviewed at: `2026-07-19T18:10:49Z`
 
 Reviewer run IDs: `review_senior`, `review_qa`, `review_security`,
 `review_product_ops`, `review_architecture`, `review_ci`, `review_docs`,
