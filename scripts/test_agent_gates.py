@@ -4186,12 +4186,26 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in work_queue
     assert (
         "| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | "
-        "Implemented; deterministic proof and required internal review pass; "
-        "ready PR publication"
+        "PR #152 open; trusted main `1b5422f` integrated; refreshed checks and "
+        "explicit human review pending"
         in work_queue
     )
-    assert "PR-ready implementation chunk: `WS-AUTH-001-09D-B`" in loop_state
-    assert "Current gate: ready 09D-B PR publication and external checks" in loop_state
+    assert (
+        "PR-ready implementation chunk: `WS-AUTH-001-09D-B` in PR #152"
+        in loop_state
+    )
+    assert (
+        "Current gate: refreshed external checks and explicit human review for PR\n"
+        "  #152" in loop_state
+    )
+    assert "ActionIds, with 15 active actions" in loop_state
+    assert (
+        "PR #152 activates only the two 09D-B\n"
+        "  identity-link lifecycle actions, producing a candidate total of 17"
+        in loop_state
+    )
+    assert "with 12 active actions" not in loop_state
+    assert "five 09D-A/09D-B lifecycle actions" not in loop_state
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And "
         "Canonical-Human Lineage | L1 | Inactive until 09D-B merge/memory and "
@@ -4233,13 +4247,22 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | "
         "Merged through PR #146 as `0ffdabf`" in work_queue
     )
-    assert "| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Active" in (
+    assert (
+        "| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | "
+        "Merged through PR #151 as `1b5422f` on 2026-07-19" in work_queue
+    )
+    assert (
+        "PR #151 then merged `WS-ART-001-02B1` as `1b5422f` on 2026-07-19"
+        in loop_state
+    )
+    assert (
+        "ART-02C1 remains inactive pending signed memory and a separate explicit start"
+        in loop_state.replace("\n", " ")
+    )
+    assert "Current ART gate: integrate trusted `main`" not in loop_state
+    assert "| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Active" not in (
         work_queue
     )
-    assert "Current ART gate: integrate trusted `main`, complete deterministic 02B1" in (
-        loop_state
-    )
-    assert "No later ART chunk starts automatically" in loop_state.replace("\n", " ")
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
