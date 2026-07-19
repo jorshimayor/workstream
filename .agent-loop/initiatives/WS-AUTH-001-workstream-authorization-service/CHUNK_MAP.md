@@ -203,7 +203,8 @@ AUTH-09D. Required preimplementation review rejected the combined lifecycle
 contract before runtime edits, so it was split into 09D-A and 09D-B. PR #148
 merged 09D-A as `99ae4c9`; signed memory `cf8a3e8` stopped and named 09D-B. The
 user explicitly started 09D-B; exact contract `9ec6390b` passed required L1
-review. Implementation, deterministic proof, and required internal review pass;
-ready PR publication is the current gate. The contributor foundation is the next
-same-initiative gate; 09E and POL-002-04 remain inactive pending their own gates
-and explicit starts.
+review. PR #152 merged it as `93dd392`; signed memory `912a6254` passed and
+stopped. The user explicitly started the contributor foundation. Its first L1
+review rejected the underspecified contract before runtime edits; exact repair
+and rereview are current. AUTH-09E and POL-002-04 remain inactive pending their
+own gates and explicit starts.

@@ -47,23 +47,22 @@ P1
 ## Allowed files
 
 ```text
-backend/app/modules/actors/{models,repository}.py
-backend/app/modules/authorization/{repository,service,runtime}.py
-backend/app/modules/tasks/{models,schemas,repository,service}.py
-backend/app/modules/checkers/** only for exact renamed contributor-ID reads
+backend/app/modules/actors/{models,repository,service}.py
+backend/app/modules/tasks/{models,schemas,repository,router,service}.py
 backend/app/db/models.py
-backend/alembic/versions/<then-current-next>_contributor_foundation.py
+backend/alembic/versions/0027_contributor_foundation.py
 backend/tests/test_actors.py
 backend/tests/test_authorization.py
 backend/tests/test_auth.py
 backend/tests/test_tasks.py
-backend/tests/test_checkers.py
 backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
-.github/workflows/backend.yml only if a persistent focused coverage command is missing
+.github/workflows/backend.yml
+scripts/test_agent_gates.py
 docs/architecture_data_model.md
 docs/operations_authorization_service.md
 docs/spec_authorization_service.md
+docs/spec_chunk_5_submission_packet_foundation.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/merge-intents/WS-AUTH-001-CONTRIBUTOR-FOUNDATION.json
 .agent-loop/LOOP_STATE.md
@@ -83,101 +82,165 @@ Submission task-assignment lineage, predecessor chains, or guide stamps owned by
 renaming the separately enumerated AUTH-14 attestation and contributor-facing fields
 token-role removal, legacy workflow eligibility removal, or AUTH-13/14 route cutover
 compatibility aliases, dual fields, fallback reads/writes, or data duplication
+AuthorizationService, authorization runtime/resource contexts, authorization
+repositories, permissions, decisions, or authority evidence
+skip/xfail additions, assertion weakening, test deletion, coverage exclusion, or
+coverage-threshold reduction
 ```
 
 ## Acceptance criteria
 
 - The retired `TaskAssignment` human-owner field is clean-cut to
-  `contributor_id` across the
-  PostgreSQL column and index, SQLAlchemy model, Pydantic response, service and
-  repository references, audit payloads, scripts, and tests. The old name is
-  absent; no property, response alias, shadow column, or dual write remains.
+  `contributor_id` across the live PostgreSQL column and index, SQLAlchemy
+  model, Pydantic response, service and repository references, new audit
+  payloads, scripts, current docs, and generated OpenAPI. No property, response
+  alias, shadow column, or dual write remains.
 - The retired `Submission` human-owner field receives the same clean cut.
   Existing task,
   submission, checker, and revision behavior and attribution remain unchanged
   apart from the intentional response-field rename and fail-closed
   transaction-local active-human write revalidation.
-- Both `contributor_id` columns are non-null foreign keys to the canonical
-  `actor_profiles.id` root. A single reviewed, reusable PostgreSQL lineage
-  primitive rejects a service ActorProfile for either field and is suitable for
-  later canonical-human actor fields without creating another actor registry.
-- The migration preflight reports every missing ActorProfile, non-human
-  ActorProfile, malformed identifier, and inconsistent assignment/submission
-  attribution with bounded row identifiers, then aborts atomically. It never
-  guesses an actor, maps by email, selects the latest profile, or fabricates
-  remediation data.
-- Existing valid values are preserved exactly by column rename. Upgrade and
-  downgrade preserve values and indexes; downgrade refuses if a downstream
-  constraint depends on the reusable lineage primitive.
-- Direct SQL tests reject missing and service ActorProfiles for both tables,
-  accept canonical human ActorProfiles, and prove later suspension or
-  deactivation does not rewrite immutable historical attribution.
-- AUTH exposes one narrow transaction-local operation that locks and
-  revalidates an exact ActorProfile as active and human under the canonical
-  profile-before-resource order. It returns no grants or identity claims and
-  introduces no second authorization path.
-- Task claim and submission creation consume that operation at their sensitive
-  write boundary without changing their existing role, task-state, assignment,
-  checker, or commit semantics. Profile suspension/deactivation racing either
-  write is proved in both lock orders; the losing write leaves no assignment,
-  submission, checker result, audit mutation, or partial evidence.
+- Both `contributor_id` columns are non-null `varchar(36)` foreign keys to the
+  canonical `actor_profiles.id` root. The exact foreign keys are
+  `fk_task_assignments_contributor_id_actor_profiles` and
+  `fk_submissions_contributor_id_actor_profiles`. A single reviewed, reusable
+  PostgreSQL lineage primitive rejects a service ActorProfile for either field.
+- Preflight classifies each source row independently and in this order:
+  `malformed` when the value does not match
+  `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`; `missing`
+  only for a well-formed value without an ActorProfile; and `service` only for a
+  well-formed existing service ActorProfile. There is no assignment/submission
+  cross-table inference in this chunk; REV-02C owns exact assignment lineage.
+  One deterministic diagnostic contains total count plus at most 20 sorted
+  `(row_id, actor_profile_id)` pairs per table/class and no issuer, subject,
+  email, display name, or token data. Any class aborts atomically.
+- Preflight refusal from exact head `0026` leaves the Alembic revision, both old
+  column names/types/values, old index names/definitions, and the absence of
+  new foreign keys, functions, and triggers unchanged. It never guesses an
+  actor, maps by email, selects a current/latest assignment or profile, or
+  fabricates remediation data.
+- Existing valid values are preserved byte-for-byte while each column is
+  renamed and narrowed from `varchar(100)` to `varchar(36)`. The indexes
+  `ix_task_assignments_worker_id` and `ix_submissions_worker_id` are renamed to
+  `ix_task_assignments_contributor_id` and
+  `ix_submissions_contributor_id` with the same ordering and uniqueness.
+- The exact invoker-rights function
+  `require_human_actor_profile_reference()` accepts exactly one trigger argument
+  naming a field present in `to_jsonb(NEW)`, uses that safe field extraction
+  without dynamic SQL, and reads `public.actor_profiles`. A missing/extra
+  argument or absent field fails with SQLSTATE `55000`; null returns `NEW` so
+  the owning column decides nullability; no matching profile returns `NEW` so
+  the foreign key emits `23503`; a found service profile fails with `23514`.
+  Actor kind is immutable, and status is deliberately not checked by this
+  historical-lineage trigger.
+- Exact triggers `task_assignments_contributor_human` and
+  `submissions_contributor_human` run before INSERT or UPDATE OF
+  `contributor_id`. Direct SQL proves INSERT and contributor-ID UPDATE reject
+  missing/service profiles, unrelated UPDATE does not invoke the guard, and
+  active/suspended/deactivated human profiles remain valid without historical
+  rewrite.
+- Downgrade locks all three tables, checks for every non-owned trigger/dependency
+  on `require_human_actor_profile_reference()`, and reports at most 20 sorted
+  dependent object names. Any dependency refuses before DDL and leaves the
+  upgraded schema intact. Otherwise it drops the two owned triggers and
+  foreign keys, uses `DROP FUNCTION ... RESTRICT`, restores exact old index and
+  column names/types, and preserves every ID, value, and row count.
+- The actors module exposes exactly one transaction participant,
+  `ActorService.require_active_human_write_actor(actor: ActorContext) -> None`.
+  It reuses `ActorRepository.get_actor_profile(..., for_update=True)` with
+  `populate_existing`, requires human/active, then locks the exact canonical
+  identity link selected by verified issuer/subject, checks it belongs to that
+  profile and is active, and returns no profile, link, grant, role, permission,
+  action, claim, or decision data. This is identity revalidation, not a second
+  authorization path.
+- Claim and submission keep current coarse-role checks first, then use lock
+  order `ActorProfile -> exact ActorIdentityLink -> WorkstreamTask -> active
+  TaskAssignment`. `TaskRepository.get_task(..., for_update=True)` and
+  `get_active_assignment(..., for_update=True)` refresh the locked rows;
+  submission version allocation occurs while the task lock is held. Existing
+  task-state, assignment, checker, and caller-owned commit behavior remains.
+- Non-human, suspended, deactivated, or revoked-link callers receive stable
+  non-disclosing 403 code `active_contributor_required` and message `Active
+  contributor identity required`. A missing/mismatched canonical profile/link
+  or SQL/lock failure rolls back and returns retryable 503 code
+  `contributor_identity_unavailable` and message `Contributor identity
+  verification unavailable`. Invalid legacy roles still fail before identity
+  revalidation; active callers reach existing resource concealment rules.
+- Named independent PostgreSQL sessions and observed
+  `pg_stat_activity.wait_event_type='Lock'`, never timing sleeps, prove claim and
+  submission against profile suspension and terminal deactivation in both lock
+  orders (eight cases), plus identity-link revocation in both lock orders (four
+  cases). Lifecycle-first makes the task write lose with no assignment,
+  submission, evidence, checker result/call/enqueue, audit mutation,
+  idempotency row, or partial state. Task-write-first proves the valid write
+  commits before the later lifecycle transition and preserves its history.
 - Behavior tests preserve claim, start, initial submit, checker-caused revision
   resubmission, audit history, idempotency, concealment, and rollback behavior
   while asserting the canonical `contributor_id` response and evidence shape.
 - Migration tests cover valid upgrade/downgrade/upgrade, each unsafe preflight
   refusal, direct-SQL kind enforcement, dependency-aware downgrade refusal, and
   one Alembic head.
-- Changed actor, authorization, and task modules remain at or above 90 percent
-  focused coverage; repository-wide coverage does not fall below 78 percent.
+- Changed actor and task modules remain at or above 90 percent focused
+  coverage. CI adds a persistent task-subsystem 90 percent report without
+  changing existing actor/authorization gates or the repository-wide 78
+  percent command. Whole-app coverage remains at or above 78 percent.
+- The clean-cut corpus is live tables/indexes/constraints, `backend/app`, public
+  schemas/OpenAPI, `backend/scripts`, and the current docs allowed above.
+  Historical migrations `0003`/`0004`, immutable pre-0027 audit rows, archived
+  loop/reference evidence, migration tests that exercise the prior schema,
+  legacy role/eligibility tokens, `WorkstreamTask.assigned_to`, and the
+  separately owned `worker_attestation` are explicit exclusions. Existing
+  audit rows are never rewritten; every new assignment/submission audit payload
+  uses `contributor_id`.
 
 ## Proposed implementation
 
 1. Allocate migration `0027_contributor_foundation` from the confirmed single
    head. Under an access-exclusive lock on `actor_profiles`,
-   `task_assignments`, and `submissions`, preflight bounded identifiers and
-   attribution consistency, rename both columns and their generated indexes,
-   and add non-null foreign keys to `actor_profiles.id` without rewriting
-   values.
-2. Install one reusable PostgreSQL trigger function whose column name is an
-   explicit trigger argument. Its table-specific triggers reject any new or
-   changed contributor reference whose referenced profile is not human. The
-   foreign keys own existence; the trigger owns kind. Actor status is not part
-   of historical lineage, so later suspension or deactivation remains valid.
-3. Add one authorization repository/service operation that locks the exact
-   `ActorProfile` row with `FOR UPDATE`, refreshes it in the current
-   transaction, and returns only success/failure for `human` plus `active`.
-   It does not inspect identity links, grants, roles, actions, token claims, or
-   permissions.
-4. Invoke that guard after the existing coarse role check but before loading
-   task or assignment resources in claim and submission creation. Map failure
-   to one stable task-layer 403 and keep caller-owned commit/rollback behavior.
-5. Clean-cut ORM, response, audit, checker-context, script, test, and current
-   documentation reads to `contributor_id`. Keep `worker_attestation` and
-   legacy role/eligibility cutover fields unchanged because AUTH-13/14 own
-   those separate compatibility removals.
-6. Prove migration refusal and preservation, direct-SQL lineage enforcement,
-   claim/submission behavior and rollback, and both lock orders against profile
-   suspension/deactivation before the focused and repository-wide evidence
-   gates.
+   `task_assignments`, and `submissions`, run the exact three-class independent
+   preflight, rename/narrow both columns and rename their indexes, then add the
+   two named non-null foreign keys without changing any value.
+2. Install the named invoker-rights trigger function and two named triggers.
+   Foreign keys alone own existence, the trigger owns only immutable human kind,
+   and normal column constraints own nullability.
+3. Add the one actor-owned service operation that locks/revalidates the exact
+   profile followed by the exact verified identity link. Do not edit
+   authorization repositories, runtime contexts, decisions, grants, evidence,
+   actions, or permissions.
+4. Invoke it after the existing coarse role check and before the newly locked
+   task/assignment reads in claim and submission creation. Implement the exact
+   403/503 mappings and roll back every failed revalidation before responding.
+5. Clean-cut the exact live corpus to `contributor_id`, including new audit
+   evidence and OpenAPI. Preserve the enumerated historical/legacy exclusions;
+   AUTH-13/14 and REV retain their separately declared work.
+6. Prove migration refusal/preservation, direct-SQL behavior, the 12 observed
+   lock races, existing task/revision behavior, focused 90 percent actor/task
+   coverage, unchanged authorization coverage, and whole-app 78 percent before
+   reviewer fanout.
 
 ## Verification commands
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
-  tests/test_actors.py tests/test_auth.py tests/test_alembic.py \
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> .venv/bin/python \
+  scripts/run_isolated_tests.py --metadata-json <actor-metadata> \
+  --timeout-seconds 3600 -- .venv/bin/python -m pytest -q tests/test_actors.py \
+  tests/test_auth.py tests/test_tasks.py tests/test_alembic.py \
   --cov=app.modules.actors --cov-report=term-missing --cov-fail-under=90)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
-  tests/test_authorization.py tests/test_auth.py tests/test_alembic.py \
-  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
-  tests/test_tasks.py tests/test_checkers.py tests/test_alembic.py \
-  --cov=app.modules.tasks --cov-report=term-missing --cov-fail-under=90)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> .venv/bin/python \
+  scripts/run_isolated_tests.py --metadata-json <task-metadata> \
+  --timeout-seconds 3600 -- .venv/bin/python -m pytest -q tests/test_tasks.py \
+  tests/test_alembic.py --cov=app.modules.tasks --cov-report=term-missing \
+  --cov-fail-under=90)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> .venv/bin/python \
+  scripts/run_isolated_tests.py --metadata-json <full-metadata> \
+  --timeout-seconds 12600 -- .venv/bin/python -m pytest -q \
+  --ignore=tests/test_isolated_database_runner.py --cov=app \
+  --cov-report=term-missing --cov-fail-under=78)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> .venv/bin/python \
+  scripts/run_isolated_tests.py --metadata-json <api-metadata> \
+  --timeout-seconds 3600 -- .venv/bin/python scripts/api_contract_e2e.py)
+python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py

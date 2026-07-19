@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Contract Review Failed
+
+- Exact candidate `33f645b0` was rejected before runtime edits. Review found a
+  stale-link race, underspecified 403/503 mapping, unlocked task resources,
+  ambiguous migration diagnostics and downgrade dependencies, an overbroad
+  clean-cut claim, missing persistent task coverage, and stale agent-gate state.
+- Repair keeps actor/link validation actor-owned, preserves the exact
+  profile-link-task-assignment order, removes REV-02C attribution inference,
+  names every schema object and SQLSTATE, defines 12 observed PostgreSQL races,
+  and changes no action, permission, grant, or availability.
+
 ## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Explicitly Started
 
 - PR #152 merged AUTH-09D-B as `93dd392`; signed schema-v2 memory `912a6254`

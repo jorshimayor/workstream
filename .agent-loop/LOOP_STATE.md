@@ -40,11 +40,11 @@
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: trusted main contains 74 PermissionIds and 65
-  ActionIds, with 15 active actions: the two actor-self actions, seven AUTH-08
+  ActionIds, with 17 active actions: the two actor-self actions, seven AUTH-08
   administrative actions, AUTH-09B `actor.service.provision`, AUTH-09C
   `actor.profile.read` plus `actor.identity_link.read`, and the three merged
-  AUTH-09D-A profile lifecycle actions. PR #152 activates only the two 09D-B
-  identity-link lifecycle actions, producing a candidate total of 17.
+  AUTH-09D-A profile lifecycle actions, and the two AUTH-09D-B identity-link
+  lifecycle actions.
   Merged AUTH-09A defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
@@ -55,9 +55,9 @@
   merged through PRs #127, #129, #141, and #151. ART-02B1 adds real MinIO
   protocol proof plus a fail-closed, runtime-ineligible native AWS profile;
   ART-02C1 remains inactive.
-- Authorization checkpoint: AUTH-07B through AUTH-09D-A merged through PRs
-  #130, #131, #132, #143, #146, and #148. AUTH-09D-B is the reviewed PR #152
-  candidate; its contributor foundation and AUTH-09E remain inactive.
+- Authorization checkpoint: AUTH-07B through AUTH-09D-B merged through PRs
+  #130, #131, #132, #143, #146, #148, and #152. The contributor foundation is
+  in active contract review; AUTH-09E remains inactive.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

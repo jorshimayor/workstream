@@ -94,12 +94,12 @@ stopped. AUTH-09B merged through PR #143 as `053242b`; the user then explicitly
 started AUTH-09C. PR #146 merged it as `0ffdabf`; signed memory at `eeb3dc2`
 stopped. The user explicitly started AUTH-09D, and required review split it
 before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
-`cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B; exact
-contract `9ec6390b` passed required L1 review. Implementation, deterministic
-proof, and required internal review pass. PR #152 is open and integrates trusted
-main at `1b5422f`; refreshed external checks and explicit human review are the
-current gate. The contributor foundation is the next AUTH gate; 09E and
-POL-002-04 remain inactive pending their own gates and explicit starts.
+`cf8a3e8` stopped and named 09D-B. PR #152 merged 09D-B as `93dd392`; signed
+memory `912a6254` passed and stopped. The user explicitly started the
+contributor foundation from that trusted head. Its first L1 review rejected the
+underspecified contract before runtime edits; exact contract repair and
+rereview are current. AUTH-09E and POL-002-04 remain inactive pending their own
+gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
