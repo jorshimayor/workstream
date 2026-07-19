@@ -103,7 +103,7 @@ subsystems remain explicit in the executable child contracts.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
 reuse/dedup, test delta, and CI integrity all pass on rebased planning SHA
-`6613f0611acd4682e54c4175065a34e65fc62942` against ART-merged trusted base
+`73a6c31ffb54a11cd22992dd3b6d0de5413d7e05` against ART-merged trusted base
 `44f2467cedc266d2efe261119cfff436ac6b7715`. The circuit breaker approved the
 planning-only size exception because every executable boundary is split and
 separately gated.
@@ -130,7 +130,8 @@ no unresolved actionable comment. Human review remains pending.
 On the ART-rebased head, CodeRabbit also found that the Revision-context
 conformance row omitted deferred owner 02A2. The row now includes 02A2 and its
 prepared `If-Match`-protected superseded-guide reactivation proof; runtime and
-the explicit-start gate are unchanged.
+the explicit-start gate are unchanged. Exact-SHA internal review and evidence
+rebinding pass for that repaired candidate.
 
 ## Remaining risks
 

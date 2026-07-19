@@ -35,7 +35,10 @@ Before the ART #154 rebase, internal evidence was rebound to reviewed candidate
 `c545cd10272e10709a13b6212ef62fd1adc4f39f` and passed at evidence head
 `ebb8db88550c623d87296681581e81e5bc6ef426`. Those SHAs and results are now
 historical because the conflict-free ART #154 rebase rewrote the branch. The
-rebased candidate has now passed fresh exact-SHA review and evidence rebinding.
+first rebased candidate passed fresh exact-SHA review and evidence rebinding;
+that result became historical when the conformance matrix changed. The repaired
+conformance candidate `73a6c31ffb54a11cd22992dd3b6d0de5413d7e05` has now
+passed fresh exact-SHA review and evidence rebinding.
 Merge remains blocked until the rebased branch is force-pushed and every GitHub
 and CodeRabbit check on the final pushed head passes with no unresolved finding,
 followed by the user's approval of PR #156.
@@ -72,7 +75,7 @@ not start 02A1 or change product, architecture, security, or migration behavior.
 - Diff integrity: PASS.
 - Internal-review evidence before ART #154 rebase: historical PASS after review
   of candidate `c545cd10` and evidence head `ebb8db88`. Rebased candidate
-  `6613f0611acd4682e54c4175065a34e65fc62942` passed all required tracks and its
+  `73a6c31ffb54a11cd22992dd3b6d0de5413d7e05` passed all required tracks and its
   evidence is rebound against base
   `44f2467cedc266d2efe261119cfff436ac6b7715`.
 

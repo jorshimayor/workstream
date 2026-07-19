@@ -3,7 +3,7 @@
 ## Candidate
 
 - Trusted base: `44f2467cedc266d2efe261119cfff436ac6b7715`
-- Reviewed planning candidate: `6613f0611acd4682e54c4175065a34e65fc62942`
+- Reviewed planning candidate: `73a6c31ffb54a11cd22992dd3b6d0de5413d7e05`
 - Scope: 21 REV initiative Markdown paths and the one required schema-v2 merge
   intent, including internal/external review publication artifacts
 - Runtime status: prohibited; no backend runtime, model, schema, migration,
@@ -16,16 +16,16 @@ Valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: 6613f0611acd4682e54c4175065a34e65fc62942
+Reviewed code SHA: 73a6c31ffb54a11cd22992dd3b6d0de5413d7e05
 
-Reviewed at: 2026-07-19T16:53:21Z
+Reviewed at: 2026-07-19T17:12:07Z
 
-Reviewer run IDs: /root/rev02a_external_senior@6613f0611acd4682e54c4175065a34e65fc62942; /root/rev02a_external_qa@6613f0611acd4682e54c4175065a34e65fc62942; /root/rev02a_external_security@6613f0611acd4682e54c4175065a34e65fc62942
+Reviewer run IDs: /root/rev02a_external_senior@73a6c31ffb54a11cd22992dd3b6d0de5413d7e05; /root/rev02a_external_qa@73a6c31ffb54a11cd22992dd3b6d0de5413d7e05; /root/rev02a_external_security@73a6c31ffb54a11cd22992dd3b6d0de5413d7e05
 
 ## Circuit breaker
 
 PASS with a documented planning-only size exception. The candidate changes 22
-paths with 1,498 insertions and 290 deletions, above the default review-size
+paths with 1,548 insertions and 290 deletions, above the default review-size
 guideline, but it changes no runtime, schema, migration, workflow, dependency,
 test, or product-document behavior. It replaces one unreviewable L1 runtime
 contract with three independently gated executable child contracts. Each child
@@ -164,6 +164,16 @@ external-response artifact still described pre-rebase `c545cd10`/`ebb8db88`
 evidence as current; the evidence-only repair now labels it historical and was
 re-reviewed to PASS. No finding remains, and no runtime or child implementation
 started.
+
+## Post-rebase conformance review
+
+CodeRabbit found that the `Revision context` conformance row omitted deferred
+owner 02A2. Candidate `73a6c31` adds 02A2 and its prepared
+`If-Match`-protected superseded-guide reactivation proof, matching the existing
+Guide chronology row, plan, decisions, chunk map, status, and 02A2 contract.
+All required tracks reviewed the exact candidate against `44f2467c`; the change
+does not start 02A2, activate its action, or move its detailed 428/412, AUTH,
+locking, audit, or database-transition contract. No finding remains.
 
 ## Disposition
 
