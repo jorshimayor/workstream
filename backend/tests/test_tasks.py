@@ -65,12 +65,14 @@ from app.modules.tasks.models import (
     WorkstreamTask,
 )
 from app.modules.tasks.repository import TaskRepository
-from app.modules.tasks.schemas import SubmissionCreate
+from app.modules.tasks.schemas import SubmissionCreate, TaskCreate
 from app.modules.tasks.service import (
     ActiveContributorRequired,
     ContributorIdentityUnavailable,
+    TaskLockedContextInvalid,
     TaskService,
     TaskServiceError,
+    TaskTransitionBlocked,
 )
 from app.schemas.auth import ActorContext
 
@@ -138,6 +140,440 @@ async def test_task_contributor_revalidation_maps_failures_and_rolls_back() -> N
         assert failure.value.code == code
 
     assert session.rollback.await_count == len(cases)
+
+
+def task_service_actor(*roles: str) -> ActorContext:
+    """Build a verified actor for direct task-service behavior tests."""
+    return ActorContext(
+        actor_id=actor_id("task-service-actor"),
+        external_subject="task-service-actor",
+        external_issuer="flow-test",
+        roles=roles,
+        claim_snapshot={},
+        auth_source="dev_mock",
+        is_dev_auth=True,
+    )
+
+
+async def test_task_service_create_persists_canonical_attribution_and_audit() -> None:
+    actor = task_service_actor("project_manager")
+    session = MagicMock(spec=AsyncSession)
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+    service = TaskService(session)
+    service._project_repo.get_project = AsyncMock(return_value=MagicMock())
+    service._repo.add_task = AsyncMock(side_effect=lambda task: task)
+    service._write_task_audit = AsyncMock()
+    response = MagicMock(name="task_response")
+    service._task_response = MagicMock(return_value=response)
+    payload = TaskCreate.model_validate(complete_task_payload())
+
+    result = await service.create_task(actor, "project-1", payload)
+
+    task = service._repo.add_task.await_args.args[0]
+    assert result is response
+    assert isinstance(task, WorkstreamTask)
+    assert task.project_id == "project-1"
+    assert task.created_by == actor.actor_id
+    assert task.status == "draft"
+    assert task.title == payload.title
+    service._write_task_audit.assert_awaited_once_with(
+        actor,
+        task,
+        event_type="task_created",
+        from_status=None,
+        to_status="draft",
+        reason=None,
+        event_payload={"source_type": payload.source_type},
+    )
+    session.commit.assert_awaited_once_with()
+    session.refresh.assert_awaited_once_with(task)
+    service._task_response.assert_called_once_with(actor, task)
+
+
+async def test_task_service_read_contexts_preserve_visibility_and_operator_scope() -> None:
+    actor = task_service_actor("project_manager")
+    session = MagicMock(spec=AsyncSession)
+    service = TaskService(session)
+    task = MagicMock(spec=WorkstreamTask)
+    task.id = "task-1"
+    task.created_by = actor.actor_id
+    context = MagicMock(name="locked_context")
+    eligibility = MagicMock(name="legacy_eligibility")
+    task_response = MagicMock(name="task_response")
+    work_response = MagicMock(name="work_response")
+    requirements_response = MagicMock(name="requirements_response")
+    locked_response = MagicMock(name="locked_response")
+    service._get_task = AsyncMock(return_value=task)
+    service._ensure_task_visible = AsyncMock()
+    service._load_locked_task_context = AsyncMock(return_value=context)
+    service._legacy_workflow_eligibility.get_active_submitter_eligibility = AsyncMock(
+        return_value=eligibility
+    )
+    service._task_response = MagicMock(return_value=task_response)
+    service._work_context_response = MagicMock(return_value=work_response)
+    service._submission_requirements_response = MagicMock(
+        return_value=requirements_response
+    )
+    service._locked_context_response = MagicMock(return_value=locked_response)
+
+    assert await service.get_task(actor, task.id) is task_response
+    assert await service.get_task_work_context(actor, task.id) is work_response
+    assert (
+        await service.get_task_submission_requirements(actor, task.id)
+        is requirements_response
+    )
+    assert await service.get_task_locked_context(actor, task.id) is locked_response
+
+    assert service._get_task.await_count == 4
+    assert service._ensure_task_visible.await_count == 3
+    assert service._load_locked_task_context.await_count == 3
+    service._work_context_response.assert_called_once_with(
+        actor,
+        task,
+        context,
+        has_active_submitter_eligibility=False,
+    )
+    service._submission_requirements_response.assert_called_once_with(task, context)
+    service._locked_context_response.assert_called_once_with(task, context)
+
+
+async def test_task_service_screen_and_release_own_transaction_boundaries() -> None:
+    actor = task_service_actor("project_manager")
+    session = MagicMock(spec=AsyncSession)
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+    service = TaskService(session)
+    draft_task = MagicMock(spec=WorkstreamTask)
+    draft_task.id = "task-1"
+    draft_task.project_id = "project-1"
+    draft_task.status = "draft"
+    screened_task = MagicMock(spec=WorkstreamTask)
+    screened_task.id = draft_task.id
+    screened_task.project_id = draft_task.project_id
+    screened_task.status = "screening"
+    active_context = tuple(MagicMock(name=f"policy_{index}") for index in range(8))
+    screen_response = MagicMock(name="screen_response")
+    release_response = MagicMock(name="release_response")
+    service._get_task = AsyncMock(side_effect=(draft_task, screened_task))
+    service._ensure_transition_allowed = MagicMock()
+    service._load_active_policy_context = AsyncMock(return_value=active_context)
+    service._validate_task_contract_fields = MagicMock()
+    service._stamp_locked_context = MagicMock()
+    service._change_task_status = AsyncMock()
+    service._ensure_locked_context = MagicMock()
+    service._load_locked_task_context = AsyncMock(return_value=MagicMock())
+    service._task_response = MagicMock(side_effect=(screen_response, release_response))
+
+    assert (
+        await service.move_to_screening(actor, draft_task.id, "screening complete")
+        is screen_response
+    )
+    assert (
+        await service.release_to_ready(actor, screened_task.id, "release approved")
+        is release_response
+    )
+
+    service._stamp_locked_context.assert_called_once_with(draft_task, *active_context)
+    assert service._change_task_status.await_args_list[0].args == (
+        actor,
+        draft_task,
+        "screening",
+        "screening complete",
+    )
+    assert service._change_task_status.await_args_list[1].args == (
+        actor,
+        screened_task,
+        "ready",
+        "release approved",
+    )
+    service._ensure_locked_context.assert_called_once_with(screened_task)
+    service._load_locked_task_context.assert_awaited_once_with(screened_task)
+    assert session.commit.await_count == 2
+    assert session.refresh.await_args_list[0].args == (draft_task,)
+    assert session.refresh.await_args_list[1].args == (screened_task,)
+
+
+async def test_task_service_contributor_start_uses_exact_active_assignment() -> None:
+    actor = task_service_actor("worker")
+    session = MagicMock(spec=AsyncSession)
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+    service = TaskService(session)
+    task = MagicMock(spec=WorkstreamTask)
+    task.id = "task-1"
+    task.status = "claimed"
+    assignment = MagicMock(spec=TaskAssignment)
+    assignment.id = "assignment-1"
+    assignment.contributor_id = actor.actor_id
+    response = MagicMock(name="task_response")
+    service._get_task = AsyncMock(return_value=task)
+    service._ensure_transition_allowed = MagicMock()
+    service._repo.get_active_assignment = AsyncMock(return_value=assignment)
+    service._require_legacy_submitter_eligibility = AsyncMock(return_value=MagicMock())
+    service._change_task_status = AsyncMock()
+    service._task_response = MagicMock(return_value=response)
+
+    result = await service.start_task(actor, task.id, "starting work")
+
+    assert result is response
+    service._require_legacy_submitter_eligibility.assert_awaited_once_with(actor)
+    service._change_task_status.assert_awaited_once_with(
+        actor,
+        task,
+        "in_progress",
+        "starting work",
+        event_payload={
+            "assignment_id": assignment.id,
+            "contributor_id": actor.actor_id,
+            "operator_override": False,
+        },
+        event_type="task_status_changed",
+    )
+    session.commit.assert_awaited_once_with()
+    session.refresh.assert_awaited_once_with(task)
+
+
+async def test_task_service_finalize_requeues_locked_latest_submission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    actor = task_service_actor("project_manager")
+    session = MagicMock(spec=AsyncSession)
+    service = TaskService(session)
+    task = MagicMock(spec=WorkstreamTask)
+    task.id = "task-1"
+    task.created_by = actor.actor_id
+    submission = MagicMock(spec=Submission)
+    submission.id = "submission-1"
+    submission.task_id = task.id
+    submission.status = "submitted"
+    submission.locked_at = datetime.now(UTC)
+    persisted = MagicMock(spec=Submission)
+    repair_snapshot = {"status": "failed", "repairable": True}
+    requester_provenance = {"request_id": "request-1", "correlation_id": "correlation-1"}
+    checker_service = MagicMock()
+    checker_service.pre_review_gate_repair_snapshot = AsyncMock(
+        return_value=repair_snapshot
+    )
+    monkeypatch.setattr(
+        "app.modules.tasks.service.CheckerService",
+        MagicMock(return_value=checker_service),
+    )
+    response = MagicMock(name="submission_response")
+    service._get_submission = AsyncMock(return_value=submission)
+    service._get_task = AsyncMock(return_value=task)
+    service._ensure_submission_finalize_authorized = AsyncMock()
+    service._repo.get_latest_submission_for_task = AsyncMock(return_value=submission)
+    service._submission_finalization_requester_provenance = AsyncMock(
+        return_value=requester_provenance
+    )
+    service._enqueue_pre_review_gate_after_commit = AsyncMock(return_value="queue-task-1")
+    service._repo.get_submission = AsyncMock(return_value=persisted)
+    service._submission_response = MagicMock(return_value=response)
+
+    result = await service.finalize_submission(actor, submission.id)
+
+    assert result is response
+    service._ensure_submission_finalize_authorized.assert_awaited_once_with(actor, task)
+    checker_service.pre_review_gate_repair_snapshot.assert_awaited_once_with(submission.id)
+    service._submission_finalization_requester_provenance.assert_awaited_once_with(
+        task,
+        submission,
+    )
+    service._enqueue_pre_review_gate_after_commit.assert_awaited_once_with(
+        actor,
+        submission.id,
+        requester_provenance=requester_provenance,
+        repair_snapshot=repair_snapshot,
+    )
+    service._submission_response.assert_called_once_with(
+        actor,
+        persisted,
+        has_operator_access=True,
+    )
+
+
+@pytest.mark.parametrize("task_status", ["submitted", "in_progress"])
+async def test_task_service_dispatch_failure_records_bounded_repair_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+    task_status: str,
+) -> None:
+    session = MagicMock(spec=AsyncSession)
+    session.commit = AsyncMock()
+    service = TaskService(session)
+    submission = MagicMock(spec=Submission)
+    submission.id = "submission-1"
+    submission.task_id = "task-1"
+    submission.version = 3
+    task = MagicMock(spec=WorkstreamTask)
+    task.id = submission.task_id
+    task.status = task_status
+    system_actor = task_service_actor("admin")
+    monkeypatch.setattr(
+        "app.modules.tasks.service.pre_review_gate_system_actor",
+        MagicMock(return_value=system_actor),
+    )
+    service._get_submission = AsyncMock(return_value=submission)
+    service._get_task = AsyncMock(return_value=task)
+    service._change_task_status = AsyncMock()
+    service._write_task_audit = AsyncMock()
+    requester_payload = {"request_id": "request-1", "correlation_id": "correlation-1"}
+
+    await service._mark_pre_review_gate_dispatch_failed(
+        submission.id,
+        "checker-run-1",
+        "x" * 1200,
+        requester_payload,
+    )
+
+    expected_payload = {
+        "submission_id": submission.id,
+        "submission_version": submission.version,
+        "checker_run_id": "checker-run-1",
+        "failure_code": "pre_review_gate_enqueue_failed",
+        "failure_message": "x" * 1000,
+        **requester_payload,
+    }
+    if task_status == "submitted":
+        service._change_task_status.assert_awaited_once_with(
+            system_actor,
+            task,
+            "evaluation_pending",
+            reason="automatic pre-review gate dispatch failed; operator repair required",
+            event_payload=expected_payload,
+            event_type="pre_review_gate_dispatch_failed",
+        )
+        service._write_task_audit.assert_not_awaited()
+    else:
+        service._write_task_audit.assert_awaited_once_with(
+            system_actor,
+            task,
+            event_type="pre_review_gate_dispatch_failed",
+            from_status=task.status,
+            to_status=task.status,
+            reason="automatic pre-review gate dispatch failed; operator repair required",
+            event_payload=expected_payload,
+        )
+        service._change_task_status.assert_not_awaited()
+    session.commit.assert_awaited_once_with()
+
+
+async def test_task_service_finalization_provenance_fails_closed_without_lock_audit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = MagicMock(spec=AsyncSession)
+    service = TaskService(session)
+    task = MagicMock(spec=WorkstreamTask)
+    task.id = "task-1"
+    submission = MagicMock(spec=Submission)
+    submission.id = "submission-1"
+    events = [MagicMock(spec=AuditEvent)]
+    service._repo.list_audit_events = AsyncMock(return_value=events)
+    provenance = {"request_id": "request-1", "correlation_id": "correlation-1"}
+    finder = MagicMock(side_effect=(provenance, None))
+    monkeypatch.setattr(
+        "app.modules.tasks.service.find_submission_requester_provenance",
+        finder,
+    )
+
+    assert (
+        await service._submission_finalization_requester_provenance(task, submission)
+        == provenance
+    )
+    with pytest.raises(
+        TaskTransitionBlocked,
+        match="submission lock audit provenance is missing",
+    ):
+        await service._submission_finalization_requester_provenance(task, submission)
+
+    assert service._repo.list_audit_events.await_count == 2
+    assert finder.call_count == 2
+
+
+async def test_task_service_submission_lock_conflict_recovers_only_persisted_lock() -> None:
+    actor = task_service_actor("project_manager")
+    session = MagicMock(spec=AsyncSession)
+    service = TaskService(session)
+    task = MagicMock(spec=WorkstreamTask)
+    task.status = "submitted"
+    submission = MagicMock(spec=Submission)
+    submission.id = "submission-1"
+    submission.locked_at = None
+    persisted = MagicMock(spec=Submission)
+    persisted.locked_at = datetime.now(UTC)
+    service._repo.finalize_submission_if_unlocked = AsyncMock(return_value=False)
+    service._repo.get_submission = AsyncMock(side_effect=(persisted, None))
+    service._repo.lock_submission_evidence = AsyncMock()
+    service._write_task_audit = AsyncMock()
+
+    await service._finalize_submission_for_evaluation(actor, task, submission)
+
+    assert submission.locked_at == persisted.locked_at
+    service._repo.lock_submission_evidence.assert_not_awaited()
+    service._write_task_audit.assert_not_awaited()
+
+    submission.locked_at = None
+    with pytest.raises(TaskTransitionBlocked, match="submission lock conflicted; retry"):
+        await service._finalize_submission_for_evaluation(actor, task, submission)
+
+
+@pytest.mark.parametrize(
+    ("method_name", "args", "expected_field"),
+    [
+        ("_policy_list", ({"items": "not-a-list"}, "items"), "effective_policy.items"),
+        ("_policy_string_list", ({"items": [1]}, "items"), "effective_policy.items"),
+        ("_policy_bool", ({"flag": "true"}, "flag"), "effective_policy.flag"),
+        ("_policy_object", ({"rules": []}, "rules"), "effective_policy.rules"),
+        ("_optional_policy_text", ({"note": ""}, "note"), "effective_policy.note"),
+        ("_optional_policy_non_negative_int", ({"limit": -1}, "limit"), "effective_policy.limit"),
+        (
+            "_required_packet_fields",
+            ({"required_packet_fields": "summary"},),
+            "effective_policy.required_packet_fields",
+        ),
+        (
+            "_required_packet_fields",
+            ({"required_packet_fields": [""]},),
+            "effective_policy.required_packet_fields",
+        ),
+        ("_policy_rule_text", ([], "path", "files"), "effective_policy.files"),
+        (
+            "_policy_rule_text",
+            ({}, "path", "files"),
+            "effective_policy.files.path",
+        ),
+        ("_optional_policy_rule_text", ([], "note", "files"), "effective_policy.files"),
+        (
+            "_optional_policy_rule_text",
+            ({"note": ""}, "note", "files"),
+            "effective_policy.files.note",
+        ),
+        ("_policy_rule_bool", ([], "required", "files"), "effective_policy.files"),
+        (
+            "_policy_rule_bool",
+            ({"required": "true"}, "required", "files"),
+            "effective_policy.files.required",
+        ),
+    ],
+)
+def test_task_service_locked_policy_helpers_fail_closed_on_wrong_types(
+    method_name: str,
+    args: tuple[object, ...],
+    expected_field: str,
+) -> None:
+    service = TaskService(MagicMock(spec=AsyncSession))
+
+    with pytest.raises(TaskLockedContextInvalid) as failure:
+        getattr(service, method_name)(*args)
+
+    assert failure.value.details == {"field": expected_field}
+
+
+def test_task_service_optional_locked_policy_helpers_preserve_absence() -> None:
+    service = TaskService(MagicMock(spec=AsyncSession))
+
+    assert service._optional_policy_text({}, "note") is None
+    assert service._optional_policy_non_negative_int({}, "limit") is None
 
 
 async def delete_audit_fixture_as_owner(session: AsyncSession, event_id: str) -> None:
