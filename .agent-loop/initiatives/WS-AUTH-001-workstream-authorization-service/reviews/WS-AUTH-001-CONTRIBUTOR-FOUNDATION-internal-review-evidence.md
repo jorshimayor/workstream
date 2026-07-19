@@ -1,13 +1,13 @@
 # WS-AUTH-001-CONTRIBUTOR-FOUNDATION Internal Review Evidence
 
-Reviewed code SHA: `4db178147bae457d9fccb3643fe6bd3919ba41c2`
+Reviewed code SHA: `b48aa3dd8ba5ddc74b89524169a7df0a52a3fb27`
 
 Reviewed implementation SHA: `4d1fc507c343d483677a332c2a91885e32571693`
 
 Reviewed against trusted main:
 `93dd392484b397cfdfaaa833631dc2c27f591ed7`
 
-Reviewed at: `2026-07-19T06:14:30Z`
+Reviewed at: `2026-07-19T07:14:31Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`
 
@@ -29,6 +29,11 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
 - Actor/task unit and focused database behavior tests passed. The repaired
   canonical API-error test passed in 63.79 seconds, and the real HTTP API
   contract drill passed with canonical `contributor_id` claim/submission output.
+- The eight Alembic tests implicated by the first Backend run passed in their CI
+  order on one isolated PostgreSQL database in 959.71 seconds. The three root
+  lifecycle tests also passed independently in 339.89 seconds. Lifecycle tests
+  now target their owned `0026` revision; general-head and dedicated `0027`
+  contributor-foundation coverage remain unchanged.
 - Ruff, 90.3 percent repository docstring coverage, both stale-wording scans,
   Markdown links, diff integrity, one Alembic head, and all 88 agent gates pass.
 - No skip, xfail, assertion weakening, test deletion, coverage exclusion,
@@ -70,6 +75,14 @@ coverage as a mandatory external pre-merge gate. Fresh exact-SHA implementation
 review passed all nine tracks with no remaining findings. A final exact-head
 confirmation passed the same tracks on `4db178147`, whose only additional
 committed delta synchronizes lifecycle state and strict agent-gate assertions.
+The first GitHub Backend run then exposed five stale uses of `head` in tests
+whose assertions explicitly owned revision `0026`; PostgreSQL correctly rolled
+back the full `0027` to `0025` downgrade transaction when the `0026` evidence
+guard refused, so the asserted revision remained `0027`. Test-only repair
+`b48aa3dd` scopes those tests to `0026`. Fresh exact-SHA senior, QA/test,
+security/auth, product/ops, architecture, CI-integrity, docs, reuse/dedup, and
+test-delta review passed with no findings and confirmed that `0027` behavior is
+still covered by full-head and contributor-foundation tests.
 
 ## Remaining Risk And Gate
 

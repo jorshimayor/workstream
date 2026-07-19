@@ -30,6 +30,9 @@ attestation/profile route cleanup remain AUTH-13/14 work. AUTH-09E stays inactiv
 - Repaired migration matrix: 2 passed in 102.35 seconds.
 - Full observed contributor/lifecycle race matrix: 12 passed in 636.24 seconds.
 - Canonical API-error mapping: 1 passed in 63.79 seconds.
+- All eight Alembic tests implicated by the first Backend run passed in CI order
+  on one isolated PostgreSQL database in 959.71 seconds; the three root
+  lifecycle tests passed independently in 339.89 seconds.
 - Real HTTP API contract drill: passed.
 - Focused actor/task unit and database behavior tests: passed.
 - Ruff, docstring gate (90.3 percent), stale scanners, Markdown links, diff
@@ -46,6 +49,10 @@ closeout head `4db178147bae457d9fccb3643fe6bd3919ba41c2` against trusted main
 `93dd392484b397cfdfaaa833631dc2c27f591ed7` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after every valid finding was repaired.
+Test-only Backend repair `b48aa3dd8ba5ddc74b89524169a7df0a52a3fb27`
+then passed fresh exact-SHA review across the same tracks with no findings. The
+review confirmed that revision-specific lifecycle tests no longer conflate
+`head` with `0026`, while general-head and dedicated `0027` coverage remain.
 
 ## Human Review Focus
 
