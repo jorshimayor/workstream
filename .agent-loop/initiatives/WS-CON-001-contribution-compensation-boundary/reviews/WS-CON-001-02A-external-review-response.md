@@ -64,8 +64,9 @@ before push.
 
 ART-02C1 PR #154 subsequently merged at trusted main `44f2467c` and owns
 `0028_artifact_admission`. CON-02A is now reconciled as
-`0029_shared_transactional_outbox`. The exact bounded `0029` row now passes 67
-selected tests with 32 deselected and 95.83 percent focused outbox coverage;
+`0029_shared_transactional_outbox`. After REV-02A PR #156 advanced trusted main
+to `3b1d6379`, the exact bounded `0029` row passes 73 selected tests with 32
+deselected and 95.90 percent focused outbox coverage;
 all nine exact-SHA reviewers remain required before publication.
 
 ## Remaining risks

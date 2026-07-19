@@ -60,6 +60,10 @@ _COMPACT_KEY_LEXEMES = (
     "secretkey",
     "signingkey",
 )
+_KEY_QUALIFIERS = frozenset(
+    {"access", "api", "encryption", "private", "provider", "secret", "signing"}
+)
+_KEY_DESCRIPTORS = frozenset({"data", "material", "payload", "value"})
 _MAX_DEPTH = 16
 _MAX_MEMBERS = 1024
 _MAX_NODES = 4096
@@ -96,12 +100,25 @@ def _raise_input_error() -> NoReturn:
 def _is_sensitive_key(value: str) -> bool:
     """Reject explicit and conventionally secret-bearing JSON field names."""
     normalized = value.casefold().replace("-", "_")
-    parts = frozenset(normalized.split("_"))
+    ordered_parts = tuple(normalized.split("_"))
+    parts = frozenset(ordered_parts)
+    key_compound = any(
+        part == "key"
+        and (
+            (index > 0 and ordered_parts[index - 1] in _KEY_QUALIFIERS)
+            or (
+                index + 1 < len(ordered_parts)
+                and ordered_parts[index + 1] in _KEY_DESCRIPTORS
+            )
+        )
+        for index, part in enumerate(ordered_parts)
+    )
     return (
         normalized in _SECRET_KEYS
         or bool(parts & _SECRET_KEY_PARTS)
         or normalized == "key"
         or normalized.endswith("_key")
+        or key_compound
         or any(lexeme in normalized for lexeme in _COMPACT_SECRET_LEXEMES)
         or any(lexeme in normalized for lexeme in _COMPACT_KEY_LEXEMES)
     )

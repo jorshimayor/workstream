@@ -8,7 +8,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 
 ## Baseline And Scope
 
-Trusted main SHA: `44f2467cedc266d2efe261119cfff436ac6b7715`
+Trusted main SHA: `3b1d63796c086f53fc2b0aeefe096387b82485ec`
 
 The implementation is limited to one linear PostgreSQL migration after
 AUTH-owned revision `0027_contributor_foundation`, the generic outbox persistence/append module, shared
@@ -57,11 +57,16 @@ CON-02A is reconciled as its linear child
 `0029_shared_transactional_outbox`; all earlier `0028` outbox results remain
 historical until the bounded `0029` row and exact-SHA reviewers pass.
 
+REV-02A PR #156 then advances trusted main to `3b1d6379` with planning and
+contract decomposition only. It adds no migration, runtime model, outbox seam,
+or CON authority. The `0029` migration topology and generic outbox behavior
+remain unchanged; fresh exact-SHA proof and review bind to this baseline.
+
 ## Current PR #154 Reconciliation Verification Results
 
 ```text
-67 passed, 32 deselected in 204.56s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
-outbox coverage: 95.83% (240 statements, 10 missed; required: at least 90%)
+73 passed, 32 deselected in 170.87s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
+outbox coverage: 95.90% (244 statements, 10 missed; required: at least 90%)
 8 passed in 0.21s (security-sensitive assertion helper suite)
 1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
 Alembic heads: one head, `0029_shared_transactional_outbox`

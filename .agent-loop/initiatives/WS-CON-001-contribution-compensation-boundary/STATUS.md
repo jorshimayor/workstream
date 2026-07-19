@@ -65,6 +65,9 @@ Trusted `main` then advanced to `44f2467c` through ART-02C1 PR #154. ART owns
 therefore moves unchanged to the linear child
 `0029_shared_transactional_outbox`. Fresh bounded and exact-SHA review evidence
 must bind this reconciliation before PR #155 is republished.
+Trusted `main` then advanced to `3b1d6379` through planning-only REV-02A PR
+#156. It adds no migration, runtime outbox seam, or CON authority; CON remains
+the linear `0029_shared_transactional_outbox` child of ART `0028`.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
