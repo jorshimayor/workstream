@@ -28,6 +28,33 @@ external PASS is carried forward.
 | CodeRabbit | Pending | Request a fresh review on the published final head. |
 | Human review | Pending | Only the user may approve merge. |
 
+## Current-Head Triage
+
+Comments addressed:
+
+- The first Agent Gates and Backend runs on evidence head `a93be2ec` failed at
+  the shared internal-review evidence parser before tests. The regenerated
+  evidence used non-canonical provenance labels and verdict text.
+- Evidence now uses the required `Reviewed code SHA`, UTC `Reviewed at`, and
+  `Reviewer run IDs` labels. QA and docs use canonical `PASS after fixes` with
+  no remaining blocking findings.
+
+Comments deferred: none.
+
+Human decisions needed: explicit merge approval only after external checks pass.
+
+Commands rerun:
+
+```text
+PR_HEAD_SHA=a93be2ec25689e1f8e036321d8a45b1fe35455ed python3 scripts/check_internal_review_evidence.py: PASS
+python3 scripts/test_agent_gates.py: PASS, 88 tests
+python3 scripts/check_markdown_links.py: PASS
+git diff --check: PASS
+```
+
+Remaining risks: GitHub and CodeRabbit must complete against the corrected
+published evidence head.
+
 ## Response Rule
 
 Assess only external findings verified against the published final head. Any

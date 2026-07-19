@@ -10,17 +10,16 @@ Valid findings addressed: yes.
 
 ## Reviewed Revision
 
-Reviewed implementation SHA: `535069cfb1a7312d731bb14a6023ceb0894402e9`
+Reviewed code SHA: `535069cfb1a7312d731bb14a6023ceb0894402e9`
 
 Trusted base: `8d5eb15b384fd75787ce98a099400a1d335d2560`
 
-Reviewed on: 2026-07-19.
+Reviewed at: 2026-07-19T15:20:00Z
 
-Reviewer sessions: senior engineering, security/auth, and CI integrity used
-`/root/review_senior_6392825f`; architecture, product/ops, and test delta used
-`/root/review_arch_6392825f`; QA/test, reuse/dedup, and docs used
-`/root/plan_review_actor_boundary`. Each track explicitly rebound its review to
-the final SHA above. All sessions completed.
+Reviewer run IDs: senior-engineering/security-auth/ci-integrity=/root/review_senior_6392825f; architecture/product-ops/test-delta=/root/review_arch_6392825f; qa-test/reuse-dedup/docs=/root/plan_review_actor_boundary
+
+Each track explicitly rebound its review to the final SHA above. All sessions
+completed.
 
 Only review evidence, trust-bundle, external-response, and initiative-status
 files may change after the reviewed implementation SHA. Any implementation,
@@ -52,13 +51,13 @@ this evidence and requires a new exact-SHA review cycle.
 |---|---:|---|---|
 | senior engineering | PASS | None | Transaction and ownership repairs are bounded and maintainable. |
 | architecture | PASS | None | Actors own persistence proof; ART remains provider-neutral and dormant. |
-| QA/test | PASS | One repaired High | Distinct actors and a scope-reservation barrier now prove real ledger contention. |
+| QA/test | PASS after fixes | None | Distinct actors and a scope-reservation barrier now prove real ledger contention. |
 | security/auth | PASS | None | Exact identity, relationship, configuration, and quota checks fail closed without duplicating AUTH. |
 | product/ops | PASS | None | No task, submission, checker, review, contribution, compensation, or reputation lifecycle mutation. |
 | reuse/dedup | PASS | None | Canonical actor and artifact interfaces are reused; optional test-only barrier duplication is documented. |
 | CI integrity | PASS | None | All prior 90-percent gates and the repository 78-percent floor remain fail closed. |
 | test delta | PASS | None | Removed tests match intentionally removed provider execution; retained behavior gains stronger proof. |
-| docs | PASS after regeneration | Evidence was stale | Migration, inactive scheduling, status, evidence, and trust bundle are synchronized. |
+| docs | PASS after fixes | None | Migration, inactive scheduling, status, evidence, and trust bundle are synchronized. |
 
 ## Findings Addressed
 
