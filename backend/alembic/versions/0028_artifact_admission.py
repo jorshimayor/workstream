@@ -141,7 +141,7 @@ def upgrade() -> None:
             name="completed_timestamp",
         ),
         sa.CheckConstraint(
-            "state != 'released' or released_at is not null",
+            "(state = 'released') = (released_at is not null)",
             name="released_timestamp",
         ),
         sa.ForeignKeyConstraint(
@@ -187,8 +187,7 @@ def upgrade() -> None:
         sa.Column(
             "next_run_at",
             sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
+            nullable=True,
         ),
         sa.Column("executor_id", sa.String(36), nullable=True),
         sa.Column("lease_expires_at", sa.DateTime(timezone=True), nullable=True),
@@ -263,7 +262,8 @@ def upgrade() -> None:
             name="versions_nonnegative",
         ),
         sa.CheckConstraint(
-            "status != 'prepared' or (executor_id is null and lease_expires_at is null "
+            "status != 'prepared' or (next_run_at is null and executor_id is null "
+            "and lease_expires_at is null "
             "and execution_generation = 0 and terminal_result_code is null "
             "and terminal_at is null and replica_id is null and receipt_id is null)",
             name="prepared_execution_inactive",

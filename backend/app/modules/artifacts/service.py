@@ -18,6 +18,7 @@ from app.interfaces.artifacts import (
     artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
+from app.modules.actors.service import ActorService
 from app.modules.actors.service_identities import ServiceIdentity
 from app.modules.artifacts.models import (
     ArtifactAdmissionCharge,
@@ -173,6 +174,7 @@ class ArtifactAdmissionService:
         self._settings = settings
         self._namespace = namespace
         self._repo = ArtifactRepository(session)
+        self._actors = ActorService(session)
 
     async def admit(
         self,
@@ -265,7 +267,7 @@ class ArtifactAdmissionService:
                 operation_identity=facts.operation_identity,
                 request_digest=request_digest,
                 status="prepared",
-                next_run_at=database_now,
+                next_run_at=None,
                 executor_id=None,
                 lease_expires_at=None,
                 execution_generation=0,
@@ -405,8 +407,9 @@ class ArtifactAdmissionService:
                 "checker output producer must be a service actor"
             )
         logical_role = request.logical_role
-        service_actor = await self._repo.lock_admission_actor(
-            str(context.actor_profile_id)
+        service_actor = await self._actors.lock_admission_proof(
+            context.actor_profile_id,
+            context.identity_link_id,
         )
         if (
             service_actor is None
@@ -451,7 +454,10 @@ class ArtifactAdmissionService:
         self, context: AuthorizationContext
     ) -> None:
         """Revalidate and lock exact human identity state inside admission."""
-        actor = await self._repo.lock_admission_actor(str(context.actor_profile_id))
+        actor = await self._actors.lock_admission_proof(
+            context.actor_profile_id,
+            context.identity_link_id,
+        )
         if (
             actor is None
             or actor.actor_kind != "human"

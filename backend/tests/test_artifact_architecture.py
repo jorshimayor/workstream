@@ -339,3 +339,18 @@ def test_scratch_cleanup_worker_has_no_product_or_database_state() -> None:
     assert not any(
         module.startswith(forbidden_import_prefixes) for module in imported_modules
     )
+
+
+def test_artifact_repository_does_not_own_actor_persistence() -> None:
+    """Keep canonical actor models and queries behind the actors-owned proof API."""
+    path = APP_ROOT / "modules" / "artifacts" / "repository.py"
+    tree = _tree(path)
+    imported_modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            imported_modules.add(node.module)
+        elif isinstance(node, ast.Import):
+            imported_modules.update(alias.name for alias in node.names)
+    assert not any(module.startswith("app.modules.actors") for module in imported_modules)
+    assert "actor_profiles" not in path.read_text()
+    assert "actor_identity_links" not in path.read_text()

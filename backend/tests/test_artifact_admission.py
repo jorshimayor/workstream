@@ -19,6 +19,7 @@ from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootst
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.modules.actors.models import ActorIdentityLink, ActorProfile
+from app.modules.actors.service import ActorService
 from app.modules.actors.service_identities import ServiceIdentity
 from app.modules.checkers.models import CheckerRun
 from app.modules.artifacts.models import (
@@ -689,6 +690,7 @@ async def test_guide_admission_derives_three_scopes_without_provider_evidence(
             assert attempt.task_id is None
             assert attempt.executor_id is None
             assert attempt.lease_expires_at is None
+            assert attempt.next_run_at is None
             assert attempt.execution_generation == 0
             assert {scope.scope_type for scope in scopes} == {
                 "deployment",
@@ -878,6 +880,52 @@ async def test_guide_admission_facts_lock_snapshot_and_item(
             assert await _count(assertion_session, ArtifactAdmissionScope) == 0
             assert await _count(assertion_session, ArtifactAdmissionCharge) == 0
             assert await _count(assertion_session, ArtifactPutAttempt) == 0
+    finally:
+        await engine.dispose()
+
+
+async def test_actor_admission_proof_locks_exact_profile_then_link(
+    admission_database_env: str,
+) -> None:
+    context = _context()
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as seed_session:
+            await _seed_human_actor(seed_session, context)
+            await seed_session.commit()
+
+        async with factory() as lock_session:
+            async with lock_session.begin():
+                proof = await ActorService(lock_session).lock_admission_proof(
+                    context.actor_profile_id,
+                    context.identity_link_id,
+                )
+                assert proof is not None
+                assert proof.actor_profile_id == str(context.actor_profile_id)
+                assert proof.identity_link_id == str(context.identity_link_id)
+
+                mutations = (
+                    (
+                        "update actor_profiles set status = 'suspended' where id = :id",
+                        str(context.actor_profile_id),
+                    ),
+                    (
+                        "update actor_identity_links set status = 'revoked' where id = :id",
+                        str(context.identity_link_id),
+                    ),
+                )
+                for statement, row_id in mutations:
+                    async with factory() as mutation_session:
+                        with pytest.raises(DBAPIError, match="lock timeout"):
+                            async with mutation_session.begin():
+                                await mutation_session.execute(
+                                    text("set local lock_timeout = '200ms'")
+                                )
+                                await mutation_session.execute(
+                                    text(statement),
+                                    {"id": row_id},
+                                )
     finally:
         await engine.dispose()
 
@@ -1289,6 +1337,12 @@ async def test_concurrent_distinct_content_cannot_oversubscribe_any_scope(
                     )
 
                 async def admit(item_id: str, source):
+                    async with ready_lock:
+                        nonlocal ready_count
+                        ready_count += 1
+                        if ready_count == 2:
+                            start.set()
+                    await start.wait()
                     async with factory() as session:
                         return await ArtifactAdmissionService(
                             session,
@@ -1302,6 +1356,9 @@ async def test_concurrent_distinct_content_cannot_oversubscribe_any_scope(
                             )
                         )
 
+                ready_count = 0
+                ready_lock = asyncio.Lock()
+                start = asyncio.Event()
                 outcomes = await asyncio.gather(
                     admit(item_ids[0], first_source),
                     admit(item_ids[1], second_source),
@@ -1597,6 +1654,7 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
             assert attempt.logical_role == "platform-review"
             assert attempt.executor_id is None
             assert attempt.lease_expires_at is None
+            assert attempt.next_run_at is None
             assert attempt.execution_generation == 0
             assert {scope.scope_type for scope in scopes} == {
                 "deployment",
@@ -1754,11 +1812,11 @@ def test_artifact_admission_migration_refuses_populated_downgrade(
                         "(id,producer_request_type,producer_type,producer_ref,"
                         "project_id,guide_source_item_id,sha256,byte_count,media_type,"
                         "storage_namespace_id,namespace_fingerprint,canonical_target,"
-                        "operation_identity,request_digest,status,next_run_at,"
+                        "operation_identity,request_digest,status,"
                         "execution_generation,cas_version,prepared_at) values "
                         "(:id,'guide','actor_profile',:producer_ref,:project_id,"
                         ":item_id,:sha256,1,'text/markdown','primary',:fingerprint,"
-                        ":target,:operation_identity,:request_digest,'prepared',now(),"
+                        ":target,:operation_identity,:request_digest,'prepared',"
                         "0,0,now())"
                     ),
                     {

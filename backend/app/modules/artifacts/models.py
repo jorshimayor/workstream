@@ -302,7 +302,7 @@ class ArtifactAdmissionCharge(Base):
             name="completed_timestamp",
         ),
         CheckConstraint(
-            "state != 'released' or released_at is not null",
+            "(state = 'released') = (released_at is not null)",
             name="released_timestamp",
         ),
     )
@@ -386,7 +386,8 @@ class ArtifactPutAttempt(Base):
             name="versions_nonnegative",
         ),
         CheckConstraint(
-            "status != 'prepared' or (executor_id is null and lease_expires_at is null "
+            "status != 'prepared' or (next_run_at is null and executor_id is null "
+            "and lease_expires_at is null "
             "and execution_generation = 0 and terminal_result_code is null "
             "and terminal_at is null and replica_id is null and receipt_id is null)",
             name="prepared_execution_inactive",
@@ -434,9 +435,7 @@ class ArtifactPutAttempt(Base):
     operation_identity: Mapped[str] = mapped_column(String(71), nullable=False)
     request_digest: Mapped[str] = mapped_column(String(71), nullable=False)
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="prepared", index=True)
-    next_run_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
-    )
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     executor_id: Mapped[str | None] = mapped_column(String(36))
     lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     execution_generation: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)

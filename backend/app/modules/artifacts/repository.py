@@ -10,7 +10,6 @@ from sqlalchemy import func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.artifacts.models import (
     ArtifactAdmissionCharge,
     ArtifactAdmissionScope,
@@ -61,19 +60,6 @@ class CheckerOutputAdmissionFacts:
     checker_run_id: str
     project_id: str
     task_id: str
-
-
-@dataclass(frozen=True, slots=True)
-class ActorAdmissionFacts:
-    """Locked actor profile and exact identity-link state."""
-
-    actor_profile_id: str
-    actor_kind: str
-    actor_status: str
-    service_identity: str | None
-    identity_link_id: str
-    identity_link_subject_kind: str
-    identity_link_status: str
 
 
 class ArtifactRepository:
@@ -211,38 +197,6 @@ class ArtifactRepository:
             checker_run_id=row.id,
             project_id=row.project_id,
             task_id=row.task_id,
-        )
-
-    async def lock_admission_actor(
-        self, actor_profile_id: str
-    ) -> ActorAdmissionFacts | None:
-        """Lock one canonical actor profile and its exact identity link."""
-        row = (
-            await self._session.execute(
-                select(
-                    ActorProfile.id,
-                    ActorProfile.actor_kind,
-                    ActorProfile.status.label("actor_status"),
-                    ActorProfile.service_identity,
-                    ActorIdentityLink.id.label("identity_link_id"),
-                    ActorIdentityLink.subject_kind.label("identity_link_subject_kind"),
-                    ActorIdentityLink.status.label("identity_link_status"),
-                )
-                .join(ActorIdentityLink, ActorIdentityLink.actor_profile_id == ActorProfile.id)
-                .where(ActorProfile.id == actor_profile_id)
-                .with_for_update(of=(ActorProfile, ActorIdentityLink))
-            )
-        ).one_or_none()
-        if row is None:
-            return None
-        return ActorAdmissionFacts(
-            actor_profile_id=row.id,
-            actor_kind=row.actor_kind,
-            actor_status=row.actor_status,
-            service_identity=row.service_identity,
-            identity_link_id=row.identity_link_id,
-            identity_link_subject_kind=row.identity_link_subject_kind,
-            identity_link_status=row.identity_link_status,
         )
 
     async def ensure_and_lock_admission_scopes(

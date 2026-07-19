@@ -1152,7 +1152,7 @@ Implementation is a clean cut:
   Operator must reprovision an empty database/storage namespace out of band and
   reingest authoritative bytes through v2; records whose authoritative bytes
   are unavailable are not migrated.
-- migration `0027` installs the durable admission ledger and prepared
+- migration `0028_artifact_admission` installs the durable admission ledger and prepared
   put-attempt tables. Its downgrade locks every owned table and refuses to
   remove the foundation when any admission scope, charge, attempt, or
   attempt-charge link exists; downgrade is permitted only while all four

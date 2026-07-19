@@ -15,9 +15,13 @@ publication, recovery, Operator routes, and product cutovers inactive.
 - one artifact-foundation migration;
 - artifact admission and put-attempt models, schemas, repository, service, and
   contracts;
+- the actors-owned frozen admission-proof contract, repository lock, and
+  service method required to revalidate an exact profile/link pair in the
+  caller-owned admission transaction;
 - `backend/app/core/config.py` for durable byte limits;
 - generic audit repository only when existing audit support is insufficient;
 - focused PostgreSQL admission, concurrency, migration, and state tests;
+- focused actor/artifact ownership-boundary and transactional proof tests;
 - `.github/workflows/backend.yml` only to expand the exact 90 percent scoped gate;
 - `scripts/test_agent_gates.py` only to assert that backend CI retains this
   chunk's exact scoped coverage sources and fail-closed 90 percent threshold;
@@ -31,6 +35,8 @@ publication, recovery, Operator routes, and product cutovers inactive.
 - provider mutation replay, overwrite, delete, retain, or release;
 - task-claim or reviewer-lease changes;
 - production dispatch or activation.
+- AUTH permission decisions or action activation, actor provisioning or
+  lifecycle mutation, and actor-facing routes or product cutover.
 
 ## Acceptance Criteria
 
