@@ -28,10 +28,12 @@ product/ops, architecture, CI integrity, docs, reuse/dedup, and test delta.
 backend/app/api/deps/authorization.py
 backend/app/modules/actors/**
 backend/app/modules/authorization/**
+backend/app/modules/artifacts/service.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_authorization.py
 backend/tests/test_api_controls.py
+backend/tests/test_artifact_admission.py
 backend/scripts/api_contract_e2e.py
 scripts/test_agent_gates.py
 docs/spec_authorization_service.md
@@ -48,6 +50,13 @@ authored-state assertions for contributor foundation PR #153 and active
 AUTH-09E branch/queue/map/status wording. Preserve stale-state negative checks,
 unrelated initiative assertions, gate discovery and failure behavior, required
 tracks, skips/exclusions, and every coverage threshold.
+
+The artifact service and admission test are allowed only for the merge-induced
+closed-context compatibility repair after trusted main introduced ART-02C1.
+They may replace the stale exact check against the former concrete
+`AuthorizationContext` with exact membership in the human/service context
+types and update fixtures/proof accordingly. They may not change artifact
+lifecycle, persistence, capacity, provider I/O, or action availability.
 
 ## Not allowed
 
