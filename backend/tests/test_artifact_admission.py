@@ -1170,12 +1170,32 @@ async def test_contributor_admission_rejects_cross_project_task_relationship(
 async def test_same_content_distinct_operations_deduplicate_scope_bytes(
     admission_database_env: str,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     settings = _settings(tmp_path)
     namespace = _namespace(settings)
-    context = _context()
+    contexts = (_context(), _context())
     engine = create_async_engine(admission_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
+    original_reserve = ArtifactRepository.ensure_and_lock_admission_scopes
+    ready_count = 0
+    ready_lock = asyncio.Lock()
+    start = asyncio.Event()
+
+    async def synchronized_reserve(repository, scopes):
+        nonlocal ready_count
+        async with ready_lock:
+            ready_count += 1
+            if ready_count == 2:
+                start.set()
+        await start.wait()
+        return await original_reserve(repository, scopes)
+
+    monkeypatch.setattr(
+        ArtifactRepository,
+        "ensure_and_lock_admission_scopes",
+        synchronized_reserve,
+    )
     try:
         async with minted_source(tmp_path / "scratch-source", b"same") as source:
             async with factory() as seed_session:
@@ -1184,13 +1204,27 @@ async def test_same_content_distinct_operations_deduplicate_scope_bytes(
                     source.commitment.byte_count,
                     source.commitment.media_type,
                 )
-                _, _, item_ids = await _seed_contributor_items(
-                    seed_session,
-                    context=context,
-                    commitments=(commitment, commitment),
+                item_ids = []
+                for context in contexts:
+                    _, _, context_item_ids = await _seed_contributor_items(
+                        seed_session,
+                        context=context,
+                        commitments=(commitment,),
+                    )
+                    item_ids.append(context_item_ids[0])
+                seed_session.add(
+                    ArtifactStorageNamespace(
+                        id="primary",
+                        backend=namespace.backend,
+                        adapter=namespace.adapter,
+                        provider_profile=namespace.provider_profile,
+                        namespace_descriptor=namespace.namespace_descriptor,
+                        namespace_fingerprint=namespace.namespace_fingerprint,
+                    )
                 )
+                await seed_session.commit()
 
-            async def admit(item_id: str):
+            async def admit(item_id: str, context: AuthorizationContext):
                 async with factory() as session:
                     return await ArtifactAdmissionService(
                         session,
@@ -1204,7 +1238,9 @@ async def test_same_content_distinct_operations_deduplicate_scope_bytes(
                         )
                     )
 
-            results = await asyncio.gather(*(admit(item_id) for item_id in item_ids))
+            results = await asyncio.gather(
+                *(admit(item_id, context) for item_id, context in zip(item_ids, contexts))
+            )
 
         async with factory() as session:
             assert all(result.replayed is False for result in results)
@@ -1212,7 +1248,7 @@ async def test_same_content_distinct_operations_deduplicate_scope_bytes(
                 await session.execute(select(ArtifactAdmissionScope))
             ).scalars().all()
             assert {counter.counted_bytes for counter in counters} == {4}
-            assert await _count(session, ArtifactAdmissionCharge) == 4
+            assert await _count(session, ArtifactAdmissionCharge) == 7
             assert await _count(session, ArtifactPutAttempt) == 2
             assert await _count(session, ArtifactPutAttemptCharge) == 8
     finally:
@@ -1309,40 +1345,66 @@ async def test_completed_charge_deduplicates_and_released_charge_is_reacquired(
 async def test_concurrent_distinct_content_cannot_oversubscribe_any_scope(
     admission_database_env: str,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     settings = _settings(tmp_path, maximum_bytes=6)
     namespace = _namespace(settings)
-    context = _context()
+    contexts = (_context(), _context())
     engine = create_async_engine(admission_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
+    original_reserve = ArtifactRepository.ensure_and_lock_admission_scopes
+    ready_count = 0
+    ready_lock = asyncio.Lock()
+    start = asyncio.Event()
+
+    async def synchronized_reserve(repository, scopes):
+        nonlocal ready_count
+        async with ready_lock:
+            ready_count += 1
+            if ready_count == 2:
+                start.set()
+        await start.wait()
+        return await original_reserve(repository, scopes)
+
+    monkeypatch.setattr(
+        ArtifactRepository,
+        "ensure_and_lock_admission_scopes",
+        synchronized_reserve,
+    )
     try:
         async with minted_source(tmp_path / "scratch-a", b"aaaa") as first_source:
             async with minted_source(tmp_path / "scratch-b", b"bbbb") as second_source:
                 async with factory() as seed_session:
-                    _, _, item_ids = await _seed_contributor_items(
-                        seed_session,
-                        context=context,
-                        commitments=(
-                            (
-                                first_source.commitment.sha256,
-                                first_source.commitment.byte_count,
-                                first_source.commitment.media_type,
+                    item_ids = []
+                    for context, source in zip(
+                        contexts,
+                        (first_source, second_source),
+                    ):
+                        _, _, context_item_ids = await _seed_contributor_items(
+                            seed_session,
+                            context=context,
+                            commitments=(
+                                (
+                                    source.commitment.sha256,
+                                    source.commitment.byte_count,
+                                    source.commitment.media_type,
+                                ),
                             ),
-                            (
-                                second_source.commitment.sha256,
-                                second_source.commitment.byte_count,
-                                second_source.commitment.media_type,
-                            ),
-                        ),
+                        )
+                        item_ids.append(context_item_ids[0])
+                    seed_session.add(
+                        ArtifactStorageNamespace(
+                            id="primary",
+                            backend=namespace.backend,
+                            adapter=namespace.adapter,
+                            provider_profile=namespace.provider_profile,
+                            namespace_descriptor=namespace.namespace_descriptor,
+                            namespace_fingerprint=namespace.namespace_fingerprint,
+                        )
                     )
+                    await seed_session.commit()
 
-                async def admit(item_id: str, source):
-                    async with ready_lock:
-                        nonlocal ready_count
-                        ready_count += 1
-                        if ready_count == 2:
-                            start.set()
-                    await start.wait()
+                async def admit(item_id: str, source, context: AuthorizationContext):
                     async with factory() as session:
                         return await ArtifactAdmissionService(
                             session,
@@ -1356,12 +1418,9 @@ async def test_concurrent_distinct_content_cannot_oversubscribe_any_scope(
                             )
                         )
 
-                ready_count = 0
-                ready_lock = asyncio.Lock()
-                start = asyncio.Event()
                 outcomes = await asyncio.gather(
-                    admit(item_ids[0], first_source),
-                    admit(item_ids[1], second_source),
+                    admit(item_ids[0], first_source, contexts[0]),
+                    admit(item_ids[1], second_source, contexts[1]),
                     return_exceptions=True,
                 )
 
