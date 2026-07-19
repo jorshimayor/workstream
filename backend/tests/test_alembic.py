@@ -1364,11 +1364,11 @@ def test_actor_profile_lifecycle_fresh_and_prior_head_upgrade(
             command.downgrade(config, "base")
             command.upgrade(config, "0025_artifact_store_v2")
             assert asyncio.run(shape()) == ("0025_artifact_store_v2", False, False)
-            command.upgrade(config, "head")
+            command.upgrade(config, "0026_actor_profile_lifecycle")
             assert asyncio.run(shape()) == ("0026_actor_profile_lifecycle", True, True)
             command.downgrade(config, "0025_artifact_store_v2")
             assert asyncio.run(shape()) == ("0025_artifact_store_v2", False, False)
-            command.upgrade(config, "head")
+            command.upgrade(config, "0026_actor_profile_lifecycle")
             assert asyncio.run(shape()) == ("0026_actor_profile_lifecycle", True, True)
         finally:
             command.downgrade(config, "base")
@@ -1805,10 +1805,10 @@ def test_actor_profile_lifecycle_safe_downgrade_and_reupgrade(
     with migration_lock():
         try:
             command.downgrade(config, "base")
-            command.upgrade(config, "head")
+            command.upgrade(config, "0026_actor_profile_lifecycle")
             command.downgrade(config, "0025_artifact_store_v2")
             assert asyncio.run(_current_revision(isolated_database_env)) == "0025_artifact_store_v2"
-            command.upgrade(config, "head")
+            command.upgrade(config, "0026_actor_profile_lifecycle")
             assert asyncio.run(_current_revision(isolated_database_env)) == "0026_actor_profile_lifecycle"
         finally:
             command.downgrade(config, "base")
@@ -2020,7 +2020,7 @@ def test_actor_profile_lifecycle_downgrade_refuses_forward_evidence(
     with migration_lock():
         try:
             command.downgrade(config, "base")
-            command.upgrade(config, "head")
+            command.upgrade(config, "0026_actor_profile_lifecycle")
             asyncio.run(seed_actor())
             asyncio.run(write_profile_reactivation())
             refuse_downgrade_without_change()
