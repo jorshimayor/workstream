@@ -4186,13 +4186,11 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in auth_map
         assert stale_text not in work_queue
     assert (
-        "Explicitly started from trusted `main` `8d5eb15b`; refreshed contract "
-        "passed all nine L1 preimplementation tracks; implementation active"
+        "Runtime, focused evidence, and all nine internal tracks pass after "
+        "repair; hosted Backend CI and human review remain"
         in work_queue
     )
-    assert (
-        "Active implementation chunk: `WS-AUTH-001-09E`" in loop_state
-    )
+    assert "PR-gate chunk: `WS-AUTH-001-09E`" in loop_state
     assert "ActionIds, with 17 active actions" in loop_state
     assert "candidate total of 17" not in loop_state
     assert "with 12 active actions" not in loop_state
@@ -4205,18 +4203,18 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Merged |" in auth_status
     assert (
         "| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | "
-        "Explicitly started from `8d5eb15b`; refreshed contract passed all nine "
-        "L1 preimplementation tracks; implementation active"
+        "Runtime, focused evidence, and all nine internal tracks pass after "
+        "repair; hosted Backend CI and human review remain"
         in auth_map
     )
-    assert "| `WS-AUTH-001-09E` | Active |" in auth_status
+    assert "| `WS-AUTH-001-09E` | PR gate |" in auth_status
     assert (
         "| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | "
-        "Explicitly started from trusted `main` `8d5eb15b`; refreshed contract "
-        "passed all nine L1 preimplementation tracks; implementation active"
+        "Runtime, focused evidence, and all nine internal tracks pass after "
+        "repair; hosted Backend CI and human review remain"
         in work_queue
     )
-    assert "no feature action or call site becomes active" in " ".join(loop_state.split())
+    assert "No feature action or call site becomes active" in " ".join(loop_state.split())
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Merged through PR #141 as `a10d901`" in artifact_map
     assert "Active after 02A3 merged through PR #141" in artifact_map

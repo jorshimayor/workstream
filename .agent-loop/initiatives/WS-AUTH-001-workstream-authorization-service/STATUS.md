@@ -153,7 +153,7 @@ feature action availability.
 | `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
 | `WS-AUTH-001-09D-B` | Merged | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | #152 | Merged as `93dd392`; signed memory `912a6254` passed and stopped. |
 | `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Merged | `codex/ws-auth-001-contributor-foundation` | #153 | Merged as `8d5eb15b`; signed memory `66ab58d` passed and stopped. |
-| `WS-AUTH-001-09E` | Active | `codex/ws-auth-001-09e-fixed-service-runtime-admission` | - | Explicitly started 2026-07-19; refreshed contract passed all nine L1 preimplementation tracks; implementation in progress. |
+| `WS-AUTH-001-09E` | PR gate | `codex/ws-auth-001-09e-fixed-service-runtime-admission` | - | Runtime, focused evidence, and all nine internal tracks pass after repair; hosted Backend CI and human review remain. |
 | `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
 | `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |
 | `WS-AUTH-001-PREP` | Proposed | - | - | AUTH-first prepared mutation protocol after 09E. |

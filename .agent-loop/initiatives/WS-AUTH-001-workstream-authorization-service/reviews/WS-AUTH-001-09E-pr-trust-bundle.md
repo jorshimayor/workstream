@@ -1,0 +1,66 @@
+# WS-AUTH-001-09E PR Trust Bundle
+
+## Goal
+
+Admit only explicitly provisioned fixed service actors into central AUTH while
+keeping every feature action unavailable and every human authority path
+separate.
+
+## Changes And Design
+
+- Introduces structurally distinct human and service authorization contexts.
+- Resolves service tokens through the existing exact actor lookup with no first
+  access, human rate control, role grant, or fallback path.
+- Dispatches services before human/admin evaluation, checks exact ActionId
+  matrix membership before availability, and revalidates locked actor rows in
+  the caller transaction.
+- Stages timestamps only for initially active service rows and rolls them back
+  on denial, cancellation, or persistence failure.
+- Adds focused unit, PostgreSQL, and real HTTP lifecycle/drift proof plus current
+  specification and operations guidance.
+
+## Scope Control
+
+No service feature action, ART/REV/CON call site, migration, schema, role,
+grant, payment, review, revision, or reputation behavior is activated. ART
+retains migration `0028`; AUTH creates no migration until that independent PR
+has merged and trusted main provides the next allocation.
+
+## Proof And CI Integrity
+
+- 312 focused actor/auth/API-control tests passed on isolated PostgreSQL.
+- 10 repair tests passed for inactive observation suppression and real
+  revalidation drift.
+- Real isolated API contract E2E passed.
+- Ruff, 90.3 percent docstring coverage, stale scans, Markdown links, diff
+  integrity, and 88 agent gates passed.
+- No tests, assertions, skips, xfails, workflows, exclusions, or coverage
+  thresholds were weakened.
+- GitHub Backend remains the authoritative mandatory proof for the full 78
+  percent repository floor and actor/authorization 90 percent subsystem gates.
+
+## Internal Review
+
+Candidate `881ac7fc` and docs repair `d859af3d`, against trusted main
+`8d5eb15b`, pass senior engineering, QA/test, security/auth, product/ops,
+architecture, CI integrity, docs, reuse/dedup, and test-delta review after all
+valid findings were repaired.
+
+## Remaining Risk And Follow-up
+
+Hosted Backend CI and external review remain. The same-initiative
+`WS-AUTH-001-ART-CUSTODY` successor is only a recorded next gate; it must not
+start until this PR, the relevant ART PR, and signed memory are complete and
+the user explicitly starts it.
+
+## Human Review Focus
+
+Review service-before-human dispatch, exact matrix-before-availability order,
+active-only observation staging, lock-time drift denial, bounded evidence, and
+the absence of feature activation or migration changes.
+
+## Human Merge Ownership
+
+The agent may publish and repair this branch but may not merge it. Only the
+human may approve this PR for merge. Trusted-main automation owns post-merge
+schema-v2 memory generation when the workflow succeeds.

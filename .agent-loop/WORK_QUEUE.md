@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Explicitly started from trusted `main` `8d5eb15b`; refreshed contract passed all nine L1 preimplementation tracks; implementation active |
+| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Runtime, focused evidence, and all nine internal tracks pass after repair; hosted Backend CI and human review remain |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
