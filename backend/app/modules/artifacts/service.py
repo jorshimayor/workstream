@@ -291,6 +291,8 @@ class ArtifactAdmissionService:
             raise TypeError("invalid artifact admission authorization context")
         if type(request.source) is not CommittedArtifactSource:
             raise TypeError("invalid artifact admission source")
+        if type(request) is CheckerOutputArtifactAdmissionRequest:
+            ArtifactAdmissionService._validate_logical_role(request.logical_role)
         context = request.authorization_context
         if (
             context.actor_status is not ActorStatus.ACTIVE
@@ -399,7 +401,7 @@ class ArtifactAdmissionService:
             raise ArtifactAdmissionRelationshipError(
                 "checker output producer must be a service actor"
             )
-        logical_role = self._validate_logical_role(request.logical_role)
+        logical_role = request.logical_role
         service_actor = await self._repo.lock_service_actor(
             str(context.actor_profile_id)
         )

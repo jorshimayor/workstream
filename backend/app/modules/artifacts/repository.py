@@ -25,7 +25,7 @@ from app.modules.artifacts.models import (
 )
 from app.modules.checkers.models import CheckerRun
 from app.modules.projects.models import GuideSourceSnapshot, GuideSourceSnapshotItem
-from app.modules.tasks.models import WorkstreamTask
+from app.modules.tasks.models import Submission, WorkstreamTask
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,9 +189,16 @@ class ArtifactRepository:
         """Load canonical project/task ownership for one checker run."""
         row = (
             await self._session.execute(
-                select(CheckerRun.id, CheckerRun.task_id, WorkstreamTask.project_id)
-                .join(WorkstreamTask, WorkstreamTask.id == CheckerRun.task_id)
+                select(CheckerRun.id, Submission.task_id, WorkstreamTask.project_id)
+                .join(
+                    Submission,
+                    (Submission.id == CheckerRun.submission_id)
+                    & (Submission.version == CheckerRun.submission_version)
+                    & (Submission.task_id == CheckerRun.task_id),
+                )
+                .join(WorkstreamTask, WorkstreamTask.id == Submission.task_id)
                 .where(CheckerRun.id == checker_run_id)
+                .with_for_update(of=(CheckerRun, Submission, WorkstreamTask))
             )
         ).one_or_none()
         if row is None:

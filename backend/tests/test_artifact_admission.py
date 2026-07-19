@@ -1084,26 +1084,65 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
                 )
             )
             await session.commit()
+            canonical_task = await session.get(WorkstreamTask, task_id)
+            assert canonical_task is not None
+            unrelated_task_id = str(uuid4())
+            session.add(
+                WorkstreamTask(
+                    id=unrelated_task_id,
+                    project_id=project_id,
+                    locked_guide_version=canonical_task.locked_guide_version,
+                    locked_post_submit_checker_policy_id=(
+                        canonical_task.locked_post_submit_checker_policy_id
+                    ),
+                    locked_post_submit_checker_policy_version=(
+                        canonical_task.locked_post_submit_checker_policy_version
+                    ),
+                    locked_post_submit_checker_policy_hash=(
+                        canonical_task.locked_post_submit_checker_policy_hash
+                    ),
+                    locked_post_submit_checker_policy_body=(
+                        canonical_task.locked_post_submit_checker_policy_body
+                    ),
+                    locked_review_policy_version=canonical_task.locked_review_policy_version,
+                    locked_revision_policy_version=(
+                        canonical_task.locked_revision_policy_version
+                    ),
+                    locked_payment_policy_version=(
+                        canonical_task.locked_payment_policy_version
+                    ),
+                    locked_guide_source_snapshot_id=(
+                        canonical_task.locked_guide_source_snapshot_id
+                    ),
+                    locked_guide_source_snapshot_hash=(
+                        canonical_task.locked_guide_source_snapshot_hash
+                    ),
+                    locked_effective_project_submission_artifact_policy_id=(
+                        canonical_task.locked_effective_project_submission_artifact_policy_id
+                    ),
+                    locked_effective_project_submission_artifact_policy_hash=(
+                        canonical_task.locked_effective_project_submission_artifact_policy_hash
+                    ),
+                    locked_pre_submit_checker_policy_id=(
+                        canonical_task.locked_pre_submit_checker_policy_id
+                    ),
+                    locked_pre_submit_checker_bundle_hash=(
+                        canonical_task.locked_pre_submit_checker_bundle_hash
+                    ),
+                    title="Unrelated checker task",
+                    description="Must not own the checker output.",
+                    status="draft",
+                    created_by="setup-actor",
+                )
+            )
+            await session.flush()
+            checker_run = await session.get(CheckerRun, checker_run_id)
+            assert checker_run is not None
+            checker_run.task_id = unrelated_task_id
+            await session.commit()
+
             async with minted_source(tmp_path / "scratch-source", b"checker") as source:
                 service = ArtifactAdmissionService(session, settings, namespace)
-                with pytest.raises(
-                    ArtifactAdmissionRelationshipError,
-                    match="logical role is invalid",
-                ):
-                    await service.admit(
-                        CheckerOutputArtifactAdmissionRequest(
-                            authorization_context=context,
-                            checker_run_id=UUID(checker_run_id),
-                            logical_role="é" * 100,
-                            source=source,
-                        )
-                    )
-                assert await _count(session, ArtifactStorageNamespace) == 0
-                assert await _count(session, ArtifactAdmissionScope) == 0
-                assert await _count(session, ArtifactAdmissionCharge) == 0
-                assert await _count(session, ArtifactPutAttempt) == 0
-                await session.rollback()
-
                 forged = context.model_copy(update={"identity_link_id": uuid4()})
                 with pytest.raises(
                     ArtifactAdmissionRelationshipError,
@@ -1122,6 +1161,29 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
                 assert await _count(session, ArtifactAdmissionCharge) == 0
                 assert await _count(session, ArtifactPutAttempt) == 0
                 await session.rollback()
+
+                with pytest.raises(
+                    ArtifactAdmissionRelationshipError,
+                    match="checker run relationship is unavailable",
+                ):
+                    await service.admit(
+                        CheckerOutputArtifactAdmissionRequest(
+                            authorization_context=context,
+                            checker_run_id=UUID(checker_run_id),
+                            logical_role="platform-review",
+                            source=source,
+                        )
+                    )
+                assert await _count(session, ArtifactStorageNamespace) == 0
+                assert await _count(session, ArtifactAdmissionScope) == 0
+                assert await _count(session, ArtifactAdmissionCharge) == 0
+                assert await _count(session, ArtifactPutAttempt) == 0
+                await session.rollback()
+
+                checker_run = await session.get(CheckerRun, checker_run_id)
+                assert checker_run is not None
+                checker_run.task_id = task_id
+                await session.commit()
 
                 request = CheckerOutputArtifactAdmissionRequest(
                     authorization_context=context,
@@ -1175,6 +1237,48 @@ async def test_checker_output_requires_exact_active_fixed_service_identity(
             assert await _count(session, ArtifactContent) == 0
             assert await _count(session, ArtifactReplica) == 0
             assert await _count(session, ArtifactOperationReceipt) == 0
+    finally:
+        await engine.dispose()
+
+
+async def test_invalid_checker_role_precedes_namespace_drift(
+    admission_database_env: str,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path)
+    namespace = _namespace(settings)
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as session:
+            session.add(
+                ArtifactStorageNamespace(
+                    id="primary",
+                    backend=namespace.backend,
+                    adapter=namespace.adapter,
+                    provider_profile=namespace.provider_profile,
+                    namespace_descriptor=namespace.namespace_descriptor,
+                    namespace_fingerprint="sha256:" + "f" * 64,
+                )
+            )
+            await session.commit()
+            async with minted_source(tmp_path / "scratch-source", b"checker") as source:
+                with pytest.raises(
+                    ArtifactAdmissionRelationshipError,
+                    match="logical role is invalid",
+                ):
+                    await ArtifactAdmissionService(session, settings, namespace).admit(
+                        CheckerOutputArtifactAdmissionRequest(
+                            authorization_context=_context(actor_kind=ActorKind.SERVICE),
+                            checker_run_id=uuid4(),
+                            logical_role="é" * 100,
+                            source=source,
+                        )
+                    )
+            assert await _count(session, ArtifactStorageNamespace) == 1
+            assert await _count(session, ArtifactAdmissionScope) == 0
+            assert await _count(session, ArtifactAdmissionCharge) == 0
+            assert await _count(session, ArtifactPutAttempt) == 0
     finally:
         await engine.dispose()
 
