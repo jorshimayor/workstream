@@ -1,13 +1,13 @@
 # WS-AUTH-001-09D-B Internal Review Evidence
 
-Reviewed code SHA: `59f1bf00b58313bbe2bd17d0a085ebf88cdd1de8`
+Reviewed code SHA: `ab6669ebde0d5947ab8b4631667c9ec552ba7687`
 
 Reviewed implementation SHA: `4bd377fb`
 
 Reviewed against trusted main:
-`983b9e534b84f1590fafecc0ce1355cf131257ce`
+`1b5422fcaa361152af7c2b1f82a763d99c0e6db5`
 
-Reviewed at: `2026-07-18T23:20:39Z`
+Reviewed at: `2026-07-19T02:06:03Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`,
 `auth_xint_rev_con`
@@ -25,6 +25,10 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
   three-administrator, and actor-self GET/PATCH races without timing sleeps.
 - The isolated authorization selection passed 112 tests in 543.89 seconds at
   90.11 percent branch coverage, above the required 90 percent subsystem floor.
+- After integrating ART-02B1 from trusted main, the exact focused PostgreSQL
+  behavior selection passed 167 tests in 299.64 seconds. ART provider,
+  workflow, storage, and initiative files are byte-identical to trusted main in
+  this PR's final diff.
 - Failure injection proves exact rollback of profile, link, grant, audit,
   idempotency, and verification-timestamp state with reusable losing keys and
   the stable retryable 503 response.
@@ -32,9 +36,15 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
   conflict preservation, self-revoke denial, missing-target concealment,
   final-Access-Administrator protection, service-target handling, and exact
   success, invalidation, and denial evidence.
-- The isolated real HTTP API contract drill passed. Ruff, stale Workstream and
-  authorization scans, Markdown links, all 87 agent-gate tests, merge-intent
-  validation, and diff integrity also passed.
+- The old PR-head Backend run passed 1,334 tests at 85.09 percent global
+  coverage, then exposed an 89.39 percent authorization slice. A five-case
+  behavior test now proves route success, replay, mismatch, conflict, and SQL
+  failure ordering and executes 29 previously uncounted lifecycle-route
+  statements, exceeding the measured 12-statement deficit. All five cases pass;
+  replacement CI remains authoritative for the final percentage.
+- The isolated real HTTP API contract drill passed. Ruff, stale Workstream,
+  authorization, and artifact scans, Markdown links, all 88 agent-gate tests,
+  merge-intent validation, and diff integrity also passed.
 - No test was skipped or marked xfail, and no coverage threshold, workflow
   gate, or production behavior was weakened after the deterministic proof.
 - The planning repair inserts inactive
@@ -47,11 +57,11 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
 | senior engineering | PASS AFTER FIXES | none | The lifecycle orchestration, transaction ownership, exact resource binding, and contributor-foundation sequence are coherent. |
-| QA/test | PASS AFTER FIXES | none | The repaired tests observe real database locks and assert exact final state, evidence, rollback, timestamps, and idempotency disposition. |
+| QA/test | PASS AFTER FIXES | none | Real database locks and route outcomes assert exact final state, ordering, evidence, rollback, timestamps, and idempotency disposition. |
 | security/auth | PASS AFTER FIXES | none | Authority is revalidated before disclosure; privacy-safe denial, final-admin preservation, and fail-closed rollback are proved. |
 | product/ops | PASS AFTER FIXES | none | Only an effective system Access Administrator may mutate a link; reactivation restores neither a grant nor service admission. |
 | architecture | PASS AFTER FIXES | none | AUTH retains centralized catalogue, evaluator, guard, evidence, and activation ownership without compatibility paths. |
-| CI integrity | PASS AFTER FIXES | none | The 90 percent authorization floor, repository floor, isolated database runner, and deterministic gates remain intact. |
+| CI integrity | PASS AFTER FIXES | none | The genuine route behavior repair addresses the measured coverage deficit without changing the 90 percent authorization floor, repository floor, or isolated runner. |
 | docs | PASS AFTER FIXES | none | API, operations, data model, lifecycle state, and successor gates match the implemented behavior. |
 | reuse/dedup | PASS AFTER FIXES | none | The implementation reuses the canonical locks, authorization decision, evidence, idempotency, limiter, and route-owned commit paths. |
 | test delta | PASS AFTER FIXES | none | Assertions were strengthened around lock observation, exact row snapshots, privacy, replay, and denial rather than relaxed to fit the code. |
@@ -68,8 +78,11 @@ snapshots, and binding denial/replay timestamp behavior. Architecture and docs
 findings added the immutable merge intent, retired fixed future migration
 reservations, and aligned the public specification and data model. The
 contributor-foundation contract was narrowed to exact files and lifecycle
-guards. Final state review at `59f1bf00` confirmed one coherent PR-ready state
-and deterministic rejection of the retired implementation-state wording.
+guards. ART-main integration review corrected the exact 15-plus-2 action
+arithmetic and strengthened deterministic rejection of retired AUTH and ART
+state wording. Final test-delta review at `ab6669eb` confirmed that the CI
+repair covers five real public route outcomes without production or threshold
+changes.
 
 ## Remaining Risk And Gate
 

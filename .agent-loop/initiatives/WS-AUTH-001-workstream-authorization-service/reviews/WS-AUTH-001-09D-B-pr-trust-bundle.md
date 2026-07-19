@@ -48,15 +48,29 @@ evidence failures return the stable retryable 503 with no partial state.
 - Mandatory PostgreSQL lifecycle/concurrency nodes: 2 passed in 241.09 seconds.
 - Isolated authorization behavior and coverage selection: 112 passed in 543.89
   seconds at 90.11 percent branch coverage.
+- ART-integrated focused PostgreSQL selection: 167 passed in 299.64 seconds.
+- Direct route outcome matrix: 5 passed, covering success, replay, mismatch,
+  conflict, and retryable SQL failure with exact transaction ordering.
 - Isolated real HTTP API contract drill: passed.
-- Ruff, stale Workstream and authorization scans, Markdown links, all 87 agent
+- Ruff, stale Workstream, authorization, and artifact scans, Markdown links,
+  all 88 agent
   gates, merge-intent validation, and diff integrity: passed.
 - No skips, xfails, threshold reductions, or workflow-gate weakening.
 
 Exact reviewed code SHA
-`59f1bf00b58313bbe2bd17d0a085ebf88cdd1de8` passed senior engineering,
+`ab6669ebde0d5947ab8b4631667c9ec552ba7687` against trusted main
+`1b5422fcaa361152af7c2b1f82a763d99c0e6db5` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after every valid finding was repaired.
+
+## External CI Repair
+
+The old PR head passed 1,334 Backend tests at 85.09 percent repository-wide
+coverage, then failed the unchanged authorization floor at 89.39 percent. The
+repair adds no exclusion, skip, xfail, threshold change, or production branch.
+Its five behavior cases execute 29 lifecycle-route statements that the old
+full-suite dataset did not count, exceeding the measured 12-statement deficit.
+Replacement GitHub Backend remains the authoritative final percentage.
 
 ## Reviewer Results
 
@@ -78,7 +92,9 @@ The review loop repaired real lock observation, exact race outcomes, complete
 rollback snapshots, denial and replay timestamp assertions, merge-intent and
 documentation gaps, stale migration reservations, contributor-foundation
 scope, and contradictory lifecycle-state wording. No production compatibility
-path or broader authority was introduced.
+path or broader authority was introduced. ART-main reconciliation then fixed
+stale shared-state assertions and exact action arithmetic; the CI repair added
+only genuine route behavior coverage.
 
 ## Follow-up
 
