@@ -2,9 +2,11 @@
 
 ## Status
 
-Proposed and inactive. It may start only after AUTH-09D-B merges, automated
-memory records this same-initiative successor, trusted `main` is refreshed, and
-the user gives a separate explicit start.
+Active contract review. PR #152 merged AUTH-09D-B as `93dd392`; signed
+schema-v2 memory at `912a6254` stopped and named this same-initiative
+successor. The user explicitly started this chunk on 2026-07-19. Its branch
+starts from trusted `main` at `93dd392`, whose single Alembic head is
+`0026_actor_profile_lifecycle`.
 
 ## Parent initiative
 
@@ -127,6 +129,36 @@ compatibility aliases, dual fields, fallback reads/writes, or data duplication
   one Alembic head.
 - Changed actor, authorization, and task modules remain at or above 90 percent
   focused coverage; repository-wide coverage does not fall below 78 percent.
+
+## Proposed implementation
+
+1. Allocate migration `0027_contributor_foundation` from the confirmed single
+   head. Under an access-exclusive lock on `actor_profiles`,
+   `task_assignments`, and `submissions`, preflight bounded identifiers and
+   attribution consistency, rename both columns and their generated indexes,
+   and add non-null foreign keys to `actor_profiles.id` without rewriting
+   values.
+2. Install one reusable PostgreSQL trigger function whose column name is an
+   explicit trigger argument. Its table-specific triggers reject any new or
+   changed contributor reference whose referenced profile is not human. The
+   foreign keys own existence; the trigger owns kind. Actor status is not part
+   of historical lineage, so later suspension or deactivation remains valid.
+3. Add one authorization repository/service operation that locks the exact
+   `ActorProfile` row with `FOR UPDATE`, refreshes it in the current
+   transaction, and returns only success/failure for `human` plus `active`.
+   It does not inspect identity links, grants, roles, actions, token claims, or
+   permissions.
+4. Invoke that guard after the existing coarse role check but before loading
+   task or assignment resources in claim and submission creation. Map failure
+   to one stable task-layer 403 and keep caller-owned commit/rollback behavior.
+5. Clean-cut ORM, response, audit, checker-context, script, test, and current
+   documentation reads to `contributor_id`. Keep `worker_attestation` and
+   legacy role/eligibility cutover fields unchanged because AUTH-13/14 own
+   those separate compatibility removals.
+6. Prove migration refusal and preservation, direct-SQL lineage enforcement,
+   claim/submission behavior and rollback, and both lock orders against profile
+   suspension/deactivation before the focused and repository-wide evidence
+   gates.
 
 ## Verification commands
 

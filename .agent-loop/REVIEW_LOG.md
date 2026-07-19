@@ -1,5 +1,14 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Explicitly Started
+
+- PR #152 merged AUTH-09D-B as `93dd392`; signed schema-v2 memory `912a6254`
+  stopped and named this chunk as the same-initiative successor.
+- The user explicitly started the contributor foundation. Trusted `main` has
+  one Alembic head, `0026_actor_profile_lifecycle`; exact migration, lineage,
+  lock-order, rollback, and clean-cut behavior are undergoing required L1
+  preimplementation review before runtime edits.
+
 ## 2026-07-18 - WS-AUTH-001-09D-B Internal Review Passed
 
 - Identity-link revoke/reactivate implementation, real PostgreSQL concurrency,
