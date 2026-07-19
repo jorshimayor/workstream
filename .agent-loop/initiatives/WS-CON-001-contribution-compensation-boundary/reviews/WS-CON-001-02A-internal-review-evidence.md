@@ -11,7 +11,7 @@ Risk: L1 infrastructure, schema, concurrency, audit, and data-integrity risk.
 Trusted main SHA: `3b1d63796c086f53fc2b0aeefe096387b82485ec`
 
 The implementation is limited to one linear PostgreSQL migration after
-AUTH-owned revision `0027_contributor_foundation`, the generic outbox persistence/append module, shared
+ART-owned revision `0028_artifact_admission`, the generic outbox persistence/append module, shared
 metadata registration, focused tests,
 initiative evidence, and exactly one merge intent. It adds no dispatcher,
 delivery executor, Celery registration, broker, route, feature handler, AUTH
@@ -176,6 +176,35 @@ downgrade writer behavior. Shared secret-retention helper tests prove dict,
 list, and string subclasses plus slotted dataclass state cannot bypass deep
 inspection through the tested override paths.
 Existing assertions, skips, coverage settings, and test commands are unchanged.
+
+## Current Exact-SHA Internal Review
+
+Reviewed code SHA: `949f8865aa99e39cdbd91623ce54d98199592124`
+
+Reviewed against trusted main:
+`3b1d63796c086f53fc2b0aeefe096387b82485ec`
+
+Reviewer runs: `/root/con02a_senior_arch_reuse`,
+`/root/con02a_qa_product_docs`, `/root/con02a_security_ci`
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes. The repair loop corrected the ART-parent
+downgrade target, closed separated and compact sensitive-key-name bypasses,
+preserved benign key-like words, and refreshed the active status baseline and
+bounded evidence. The final evidence-only confirmation passed all nine tracks.
+
+| Reviewer | Result | Blocking findings |
+|---|---|---|
+| Senior engineering | PASS | none |
+| QA/test | PASS | none |
+| Security/auth | PASS | none |
+| Product/ops | PASS | none |
+| Architecture | PASS | none |
+| Docs | PASS | none |
+| Reuse/dedup | PASS | none |
+| Test delta | PASS | none |
+| CI integrity | PASS | none |
 
 ## Superseded Pre-PR #153 Internal Review
 

@@ -67,7 +67,12 @@ ART-02C1 PR #154 subsequently merged at trusted main `44f2467c` and owns
 `0029_shared_transactional_outbox`. After REV-02A PR #156 advanced trusted main
 to `3b1d6379`, the exact bounded `0029` row passes 73 selected tests with 32
 deselected and 95.90 percent focused outbox coverage;
-all nine exact-SHA reviewers remain required before publication.
+all nine exact-SHA reviewers were required before publication.
+
+Exact candidate `949f8865aa99e39cdbd91623ce54d98199592124`
+subsequently passed all nine internal tracks against trusted main `3b1d6379`
+with no open findings or reviewer sessions. GitHub Backend, Agent Gates, and
+fresh CodeRabbit state remain external post-push gates.
 
 ## Remaining risks
 

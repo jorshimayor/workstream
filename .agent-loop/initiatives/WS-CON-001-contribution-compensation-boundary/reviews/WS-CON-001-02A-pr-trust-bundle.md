@@ -184,12 +184,14 @@ isolation control, or coverage threshold is waived.
 
 ## Reviewer Results
 
+- Exact candidate `949f8865aa99e39cdbd91623ce54d98199592124`
+  passed senior engineering, QA/test, security/auth, product/ops,
+  architecture, docs, reuse/dedup, test-delta, and CI-integrity review against
+  trusted main `3b1d63796c086f53fc2b0aeefe096387b82485ec` with no open findings and no
+  open reviewer sessions.
 - The pre-PR #153 implementation passed all nine tracks at historical code SHA
   `460573287270965d730c83f5f1e52f3acf1c0671`.
-- That review is superseded for publication by the `8d5eb15b` / `0028`
-  reconciliation. Fresh exact-SHA senior engineering, QA/test, security/auth,
-  product/ops, architecture, docs, reuse/dedup, test-delta, and CI-integrity
-  results must be recorded before push.
+- That historical review is superseded by the current exact-SHA result above.
 
 ## External Review
 
