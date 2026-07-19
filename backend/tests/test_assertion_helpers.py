@@ -109,3 +109,29 @@ def test_nested_mapping_can_mutate_parent_dict_during_inspection() -> None:
     parent["framework_state"] = ParentMutatingMapping()
 
     assert_secret_not_retained(parent, "forbidden")
+
+
+def test_mapping_proxy_that_spoofs_dict_uses_mapping_protocol() -> None:
+    """Do not apply built-in dict descriptors to framework proxy objects."""
+
+    class DictSpoofingProxy(Mapping[str, str]):
+        @property
+        def __class__(self):
+            return dict
+
+        def __getitem__(self, key: str) -> str:
+            if key != "payload":
+                raise KeyError(key)
+            return "forbidden"
+
+        def __iter__(self) -> Iterator[str]:
+            return iter(("payload",))
+
+        def __len__(self) -> int:
+            return 1
+
+    proxy = DictSpoofingProxy()
+    assert isinstance(proxy, dict)
+
+    with pytest.raises(AssertionError):
+        assert_secret_not_retained(proxy, "forbidden")
