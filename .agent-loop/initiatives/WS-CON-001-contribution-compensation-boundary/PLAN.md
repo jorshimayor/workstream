@@ -416,8 +416,9 @@ for the exact runtime predecessor on then-current trusted main.
 
 - Isolated PostgreSQL migration, constraint, rollback, idempotency, and both-
   order concurrency tests.
-- Same-run repository coverage at or above 78 percent and each new/materially
-  changed subsystem at or above 90 percent.
+- Bounded local focused coverage for each new/materially changed subsystem at
+  or above 90 percent; after PR push, GitHub CI runs the repository-wide suite
+  and enforces repository coverage at or above 78 percent.
 - Exact contribution cardinality for all three decisions and repeated/revision
   Reviews; accept-only FinalAcceptance one-to-one constraints; mutually
   exclusive reviewer/submitter source shapes; automated checks create none.

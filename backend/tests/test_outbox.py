@@ -10,7 +10,6 @@ from uuid import UUID, uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
-from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -101,13 +100,30 @@ def _unsafe_event(project_id: UUID, payload: object) -> OutboxAppendInput:
     return OutboxAppendInput.model_construct(**values)
 
 
+def _assert_marker_unreachable(error: BaseException, marker: str) -> None:
+    pending: list[BaseException] = [error]
+    seen: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        assert marker not in str(current)
+        assert marker not in repr(current)
+        assert marker not in repr(getattr(current, "params", None))
+        if current.__context__ is not None:
+            pending.append(current.__context__)
+        if current.__cause__ is not None:
+            pending.append(current.__cause__)
+
+
 def test_outbox_input_requires_closed_tokens_and_object_payload() -> None:
     project_id = uuid4()
-    with pytest.raises(ValidationError):
+    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$"):
         _event(project_id, event_type="bad event")
-    with pytest.raises(ValidationError):
+    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$"):
         _event(project_id, aggregate_type="BadAggregate")
-    with pytest.raises(ValidationError):
+    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$"):
         _event(project_id, payload=[])
 
 
@@ -135,16 +151,17 @@ async def test_outbox_invalid_payload_errors_never_echo_values(
     assert "secret" not in str(raised.value)
 
 
-def test_outbox_normal_validation_hides_rejected_secret_input() -> None:
+def test_outbox_normal_validation_detaches_rejected_secret_input() -> None:
     values = _event(uuid4()).model_dump()
     marker = f"private-marker-{uuid4()}"
     values["payload"] = {"authorization": marker}
-    with pytest.raises(ValidationError) as raised:
+    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
         OutboxAppendInput(**values)
     rendered = "".join(traceback.format_exception(raised.value))
-    assert marker not in str(raised.value)
-    assert marker not in repr(raised.value)
     assert marker not in rendered
+    _assert_marker_unreachable(raised.value, marker)
+    assert raised.value.__context__ is None
+    assert raised.value.__cause__ is None
 
 
 @pytest.mark.asyncio
@@ -326,9 +343,10 @@ async def test_outbox_database_error_never_reflects_payload(
         ) as raised:
             await OutboxService(session).append(value)
         rendered = "".join(traceback.format_exception(raised.value))
-        assert marker not in str(raised.value)
-        assert marker not in repr(raised.value)
         assert marker not in rendered
+        _assert_marker_unreachable(raised.value, marker)
+        assert raised.value.__context__ is None
+        assert raised.value.__cause__ is None
         await transaction.rollback()
 
 

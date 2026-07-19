@@ -8,7 +8,7 @@ import re
 from typing import Any, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 _KEY = re.compile(r"^[a-z][a-z0-9_]{0,127}$")
 _SECRET_KEYS = frozenset(
@@ -131,6 +131,16 @@ class OutboxAppendInput(BaseModel):
     causation_event_id: UUID | None = None
     idempotency_key: str = Field(pattern=r"^[A-Za-z0-9._:-]{1,200}$")
     payload: dict[str, Any]
+
+    def __init__(self, **data: Any) -> None:
+        """Map ordinary validation failures to one payload-free domain error."""
+        invalid = False
+        try:
+            super().__init__(**data)
+        except ValidationError:
+            invalid = True
+        if invalid:
+            raise OutboxInputError("outbox_invalid_input")
 
     @model_validator(mode="after")
     def validate_payload(self) -> Self:

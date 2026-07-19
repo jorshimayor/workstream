@@ -38,7 +38,8 @@ feature chunks own execution behavior.
   deterministically, and uses only the supplied `AsyncSession`.
 - The service reuses the existing repository-wide `app.core.hashing` canonical
   JSON helper, takes one defensive deep payload snapshot before its first await,
-  and emits only stable non-reflective input, conflict, or persistence errors.
+  and emits only stable input, conflict, or persistence errors with detached
+  payload-bearing validation/database exception contexts.
 - Retention is one-way terminal archival; event truth cannot be deleted or
   truncated.
 - No route, dispatcher, delivery executor, broker, Celery task, handler,
@@ -55,8 +56,8 @@ feature chunks own execution behavior.
 
 ## Proof
 
-- Post-review exact bounded row: 38 passed, 30 deselected in 120.67 seconds,
-  with 95.58% outbox coverage against the 90% subsystem floor.
+- Post-review exact bounded row: 38 passed, 30 deselected in 92.29 seconds,
+  with 95.45% outbox coverage against the 90% subsystem floor.
 - Reconciled exact contract selector: 8 passed, 56 deselected.
 - Current-main outbox plus migration/lifecycle-guard suite: 36 passed in
   156.17 seconds; the reconciled outbox implementation retains 95.43% focused

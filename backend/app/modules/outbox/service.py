@@ -21,12 +21,15 @@ from app.modules.outbox.schemas import (
 
 def _validated_input(value: object) -> OutboxAppendInput:
     """Revalidate a typed input without reflecting payload details in failures."""
+    validated: OutboxAppendInput | None = None
     try:
         fields = dict(object.__getattribute__(value, "__dict__"))
         validated = OutboxAppendInput.model_validate(fields)
-        return validated.model_copy(deep=True)
     except (AttributeError, TypeError, ValueError, ValidationError):
-        raise OutboxInputError("outbox_invalid_input") from None
+        pass
+    if validated is None:
+        raise OutboxInputError("outbox_invalid_input")
+    return validated.model_copy(deep=True)
 
 
 def _matches(record: OutboxEvent, value: OutboxAppendInput, digest: str) -> bool:
@@ -57,14 +60,20 @@ class OutboxService:
     async def append(self, value: OutboxAppendInput) -> OutboxAppendResult:
         """Create one event or return its exact idempotent replay."""
         validated = _validated_input(value)
+        digest: str | None = None
         try:
             digest = canonical_json_hash(validated.payload)
         except (TypeError, ValueError):
-            raise OutboxInputError("outbox_invalid_input") from None
+            pass
+        if digest is None:
+            raise OutboxInputError("outbox_invalid_input")
+        reservation = None
         try:
             reservation = await self._repository.reserve(validated, payload_digest=digest)
         except SQLAlchemyError:
-            raise OutboxPersistenceError("outbox_persistence_failed") from None
+            pass
+        if reservation is None:
+            raise OutboxPersistenceError("outbox_persistence_failed")
         if len(reservation.records) != 1 or not _matches(
             reservation.records[0], validated, digest
         ):

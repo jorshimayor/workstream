@@ -55,8 +55,9 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 - Terminal retention is archival-in-place. A guarded downgrade takes an
   `ACCESS EXCLUSIVE` lock and refuses durable rows.
 - Payload input is strict, bounded, lower-snake-case JSON with recursive secret
-  key rejection, hidden Pydantic input rendering, one defensive deep snapshot,
-  and stable non-reflective input/persistence errors.
+  key rejection, ordinary validation mapped to a detached domain error, one
+  defensive deep snapshot, and stable input/persistence errors with no
+  payload-bearing cause or context.
 - Append reuses `canonical_json_hash`, reserves with PostgreSQL conflict
   handling, locks both identities in deterministic order, flushes only the
   caller session, and never commits or publishes.
@@ -66,8 +67,8 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 ## Current Reconciliation Verification Results
 
 ```text
-38 passed, 30 deselected in 120.67s (exact bounded isolated outbox row after review repair)
-outbox coverage after review repair: 95.58% (required: at least 90%)
+38 passed, 30 deselected in 92.29s (exact bounded isolated outbox row after final review repair)
+outbox coverage after final review repair: 95.45% (required: at least 90%)
 78 passed in 378.36s on current main's outbox/migration, real-MinIO ART, and AUTH-09D-B suite
 pre-repair outbox coverage: 95.43%
 8 passed, 56 deselected in 50.92s (exact contract selector)
