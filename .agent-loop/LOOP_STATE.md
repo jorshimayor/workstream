@@ -19,13 +19,18 @@
 - AUTH-09C merged through PR #146 as `0ffdabf`; signed schema-v2 memory at
   `eeb3dc2` recorded its two administrative reads and stopped.
 - PR #141 merged `WS-ART-001-02A3` into `main` as `a10d901` on 2026-07-18.
-  PR #151 then merged `WS-ART-001-02B1` as `1b5422f` on 2026-07-19;
-  ART-02C1 remains inactive pending signed memory and a separate explicit start.
+  PR #151 then merged `WS-ART-001-02B1` as `1b5422f`, and PR #154 merged
+  `WS-ART-001-02C1` as `44f2467c` on 2026-07-19 with ART-owned migration
+  `0028_artifact_admission`.
+- The ART worktree consumes merged AUTH, REV, and CON contracts without
+  editing or activating their independently owned runtime behavior.
 - AUTH-09D-A merged through PR #148 as `99ae4c9`; signed schema-v2 memory at
   `cf8a3e8` recorded the stopped gate and exact 09D-B successor.
 - AUTH-09D-B merged through PR #152 as `93dd392`; signed schema-v2 memory at
   `912a6254` stopped and named the contributor foundation as its exact
   successor.
+- PR #153 merged `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` as `8d5eb15`; ART-02C1
+  now integrates that trusted `main` state without activating AUTH-09E.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
@@ -55,10 +60,9 @@
   AUTH planning requires availability-neutral ART custody transfer, fixed-service
   admission, prepared mutation authority, and exact AUTH-only activation chunks;
   neither reconciliation PR activates feature behavior.
-- Parallel artifact checkpoint: ART-02A1, ART-02A2, ART-02A3, and ART-02B1
-  merged through PRs #127, #129, #141, and #151. ART-02B1 adds real MinIO
-  protocol proof plus a fail-closed, runtime-ineligible native AWS profile;
-  ART-02C1 remains inactive.
+- Parallel artifact checkpoint: ART-02A1 through ART-02C1 merged through PRs
+  #127, #129, #141, #151, and #154. ART-02C1 owns durable admission, prepared
+  put-attempt state, and migration `0028_artifact_admission`.
 - Authorization checkpoint: AUTH-07B through AUTH-09D-B merged through PRs
   #130, #131, #132, #143, #146, #148, and #152. Contributor foundation PR #153
   merged as `8d5eb15b`; AUTH-09E is now the sole active AUTH implementation
