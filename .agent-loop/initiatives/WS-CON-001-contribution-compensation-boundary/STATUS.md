@@ -143,17 +143,16 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation is reconciled with trusted main `8d5eb15b`
-after the explicit human start. It adds one linear migration, the shared outbox
-model/schema/repository/service, metadata registration, and PostgreSQL-focused
-migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
-but AUTH-09D-A changed backend runtime, tests, and the migration head, so
-repository-wide evidence must rerun on the `0028` chain in GitHub CI. Fresh
-bounded proof passes 43 selected tests with 32 deselected and 95.73 percent
-outbox coverage; the exact AUTH revision-specific lifecycle test and the
-assertion-helper regression suite also pass. All nine exact-SHA internal tracks
-must pass after the `0028` reconciliation before the PR is republished; GitHub
-CI then owns the full-suite gate. The first reconciled
+`WS-CON-001-02A` implementation is reconciled with trusted main `3b1d6379`
+after the explicit human start. It adds one linear
+`0029_shared_transactional_outbox` migration after ART-owned
+`0028_artifact_admission`, the shared outbox model/schema/repository/service,
+metadata registration, and PostgreSQL-focused migration/append tests. Fresh
+bounded proof passes 73 selected tests with 32 deselected in 170.87 seconds and
+95.90 percent outbox coverage; the exact AUTH revision-specific lifecycle test
+and assertion-helper regression suite also remain recorded independently. All
+nine exact-SHA internal tracks must pass before the PR is republished; GitHub
+CI owns the full repository suite and 78 percent coverage gate. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
 because ART PR #151 advanced trusted main; a third was stopped after one hour
