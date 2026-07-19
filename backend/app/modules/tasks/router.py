@@ -201,7 +201,7 @@ async def get_task_work_context(
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> TaskWorkContextResponse | JSONResponse:
-    """Return worker-safe locked guide, policy, and lifecycle context."""
+    """Return contributor-safe locked guide, policy, and lifecycle context."""
     try:
         return await TaskService(session).get_task_work_context(actor, task_id)
     except PermissionDenied as exc:

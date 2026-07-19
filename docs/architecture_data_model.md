@@ -1157,12 +1157,14 @@ Fields:
 - `released_at`
 - `status`
 
-Migration `0027_contributor_foundation` clean-cuts the persisted human owner
-from `worker_id` to `contributor_id`. The non-null `varchar(36)` value is a
-foreign key to `ActorProfile.id`; an invoker-rights PostgreSQL trigger rejects
-service profiles. The trigger deliberately permits suspended and deactivated
-human profiles because this column preserves historical attribution rather
-than current authority.
+Migration `0027_contributor_foundation` clean-cuts the retired persisted human
+owner to `contributor_id`. The non-null `varchar(36)` value is protected by
+foreign key `fk_task_assignments_contributor_id_actor_profiles`, index
+`ix_task_assignments_contributor_id`, and trigger
+`task_assignments_contributor_human`. The trigger reuses invoker-rights function
+`public.require_human_actor_profile_reference()` to reject service profiles.
+It deliberately permits suspended and deactivated human profiles because this
+column preserves historical attribution rather than current authority.
 
 ## Submission
 
@@ -1200,6 +1202,11 @@ Fields:
 - `supersedes_submission_id`
 - `remediation_source_checker_run_id` (checker-remediation submissions only)
 - `revision_context_preparation_id` (human-Review revision submissions only)
+
+The submission contributor uses foreign key
+`fk_submissions_contributor_id_actor_profiles`, index
+`ix_submissions_contributor_id`, and trigger
+`submissions_contributor_human`, backed by the same reusable lineage function.
 
 The current Submission `contributor_id` uses the same migration, foreign-key,
 and canonical-human trigger contract as TaskAssignment. Claim and submission

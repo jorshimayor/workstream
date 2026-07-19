@@ -2,14 +2,16 @@
 
 ## Status
 
-Exact-SHA internal review. PR #152 merged AUTH-09D-B as `93dd392`; signed
+Fresh exact-SHA internal review. PR #152 merged AUTH-09D-B as `93dd392`; signed
 schema-v2 memory at `912a6254` stopped and named this same-initiative
 successor. The user explicitly started this chunk on 2026-07-19. Its branch
 starts from trusted `main` at `93dd392`, whose single Alembic head is
 `0026_actor_profile_lifecycle`. Exact contract `2a21166d` passed all required
 L1 preimplementation reviewer tracks before runtime edits began.
-Implementation and deterministic evidence are complete; GitHub Backend remains
-authoritative for the full-suite 78 percent and actor/task 90 percent reports.
+Initial candidate `e41c33c0` failed diagnostic-privacy, exact proof, docs, and
+evidence review. Bounded repair and deterministic evidence are complete; GitHub
+Backend must still prove the full-suite 78 percent and actor/task 90 percent
+reports before merge.
 
 ## Parent initiative
 
@@ -115,8 +117,10 @@ coverage-threshold reduction
   well-formed existing service ActorProfile. There is no assignment/submission
   cross-table inference in this chunk; REV-02C owns exact assignment lineage.
   One deterministic diagnostic contains total count plus at most 20 sorted
-  `(row_id, actor_profile_id)` pairs per table/class and no issuer, subject,
-  email, display name, or token data. Any class aborts atomically.
+  `(row_id, actor_profile_id)` pairs per table/class. Malformed source values
+  are replaced with `<redacted-malformed>`; well-formed missing/service UUIDs
+  remain actionable. No issuer, subject, email, display name, or token data is
+  emitted. Any class aborts atomically.
 - Preflight refusal from exact head `0026` leaves the Alembic revision, both old
   column names/types/values, old index names/definitions, and the absence of
   new foreign keys, functions, and triggers unchanged. It never guesses an
@@ -192,7 +196,7 @@ coverage-threshold reduction
   Historical migrations `0003`/`0004`, immutable pre-0027 audit rows, archived
   loop/reference evidence, migration tests that exercise the prior schema,
   legacy role/eligibility tokens, `WorkstreamTask.assigned_to`, and the
-  separately owned `worker_attestation` are explicit exclusions. Existing
+  separately owned attestation field is an explicit exclusion. Existing
   audit rows are never rewritten; every new assignment/submission audit payload
   uses `contributor_id`.
 
@@ -217,9 +221,10 @@ coverage-threshold reduction
    evidence and OpenAPI. Preserve the enumerated historical/legacy exclusions;
    AUTH-13/14 and REV retain their separately declared work.
 6. Prove migration refusal/preservation, direct-SQL behavior, the 12 observed
-   lock races, existing task/revision behavior, focused 90 percent actor/task
-   coverage, unchanged authorization coverage, and whole-app 78 percent before
-   reviewer fanout.
+   lock races, and existing task/revision behavior before reviewer fanout.
+   GitHub Backend is the mandatory pre-merge proof for focused 90 percent
+   actor/task coverage, unchanged authorization coverage, and whole-app 78
+   percent; do not merge unless every report passes.
 
 ## Verification commands
 

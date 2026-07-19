@@ -1,19 +1,46 @@
 # Review Log
 
-## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Evidence Complete
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Review Repair Evidenced
+
+- Malformed preflight values are now replaced with a fixed redacted marker;
+  realistic email/token-like inputs never appear, and each 22-row unsafe class
+  reports its total with only 20 sorted rows.
+- The repaired migration matrix passed two tests in 102.35 seconds, including
+  zero/extra/absent trigger arguments, nullable delegation, and missing/service
+  INSERT/UPDATE parity on both contributor tables.
+- All 12 repaired PostgreSQL races passed in 636.24 seconds. Lifecycle-first
+  submission cases prove zero checker/enqueue calls; task-write-first cases
+  prove exactly one of each after the valid contributor write commits.
+- Current docs name the reusable function, triggers, foreign keys, and indexes
+  without stale human-worker wording. Fresh exact-SHA internal review is the
+  current gate; Backend remains mandatory for aggregate 78/90 coverage.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Implementation Review Failed
+
+- Exact candidate `e41c33c0db501152694e862d9f3a02877e42cfce` failed required
+  internal review. A malformed legacy attribution value could leak through the
+  migration refusal diagnostic, direct-SQL trigger branches and invocation
+  counts were not fully proved, two current docs used stale human terminology,
+  and aggregate coverage had not yet been produced by GitHub Backend.
+- Repair redacts malformed values, bounds each class, closes the PostgreSQL and
+  race-test matrix, names every database object for operators/REV, and treats
+  the unchanged 78/90 percent reports as mandatory external pre-merge gates.
+
+## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Targeted Evidence Collected
 
 - The clean `contributor_id` migration, canonical-human database guard,
   transaction-local actor revalidation, task/assignment locks, API mappings,
   current docs, persistent task coverage gate, and merge intent are implemented.
-- Two comprehensive migration tests passed in 89.20 seconds. All 12 named real
-  PostgreSQL lifecycle/task interleavings passed in 601.93 seconds, and the
+- The repaired migration matrix passed two comprehensive tests in 102.35
+  seconds. The repaired 12 named real PostgreSQL lifecycle/task interleavings
+  passed in 636.24 seconds, and the
   repaired canonical API-error test passed in 63.79 seconds.
 - Actor/task focused unit and database behavior tests passed, the real HTTP API
-  contract drill passed, and Ruff, docstring coverage, stale-wording scans,
-  Markdown links, diff integrity, one Alembic head, and all 88 agent gates pass.
-- GitHub Backend remains authoritative for the unchanged 78 percent global and
-  persistent 90 percent actor/task subsystem reports. Exact-SHA internal review
-  is the current gate; AUTH-09E remains inactive.
+  contract drill passed, and Ruff, docstring coverage, Markdown links, diff
+  integrity, and one Alembic head passed before reviewer repair.
+- GitHub Backend must still prove the unchanged 78 percent global and persistent
+  90 percent actor/task subsystem reports before merge. AUTH-09E remains
+  inactive.
 
 ## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Plan Review Passed
 

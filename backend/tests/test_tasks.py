@@ -40,6 +40,7 @@ from app.modules.actors.service import (
     ActorService,
     CanonicalWriteActorUnavailable,
 )
+from app.modules.checkers.service import CheckerService
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
@@ -1170,6 +1171,8 @@ async def test_contributor_task_writes_serialize_with_lifecycle_changes(
     project = await create_active_project(task_client)
     subject = f"race-{operation}-{transition}-{ordering}"
     contributor_id = actor_id(subject)
+    checker_calls: list[str] = []
+    enqueue_calls: list[str] = []
     if operation == "claim":
         task = await create_ready_task(task_client, project["id"])
         await seed_worker_profile(subject)
@@ -1180,9 +1183,31 @@ async def test_contributor_task_writes_serialize_with_lifecycle_changes(
             monkeypatch,
             subject,
         )
+        original_pre_submit_check = CheckerService.pre_submit_check
+
+        async def count_pre_submit_check(self, *args, **kwargs):
+            checker_calls.append(task["id"])
+            return await original_pre_submit_check(self, *args, **kwargs)
+
+        def count_pre_review_enqueue(
+            *,
+            checker_run_id: str,
+            requester_provenance: dict,
+        ) -> str:
+            enqueue_calls.append(checker_run_id)
+            return hold_pre_review_enqueue(
+                checker_run_id=checker_run_id,
+                requester_provenance=requester_provenance,
+            )
+
+        monkeypatch.setattr(
+            CheckerService,
+            "pre_submit_check",
+            count_pre_submit_check,
+        )
         monkeypatch.setattr(
             "app.modules.tasks.service.enqueue_pre_review_gate",
-            hold_pre_review_enqueue,
+            count_pre_review_enqueue,
         )
 
     async with db_session.get_session_factory()() as session:
@@ -1267,6 +1292,9 @@ async def test_contributor_task_writes_serialize_with_lifecycle_changes(
             task_database_env,
             task_id,
         ) == before
+        if operation == "submission":
+            assert checker_calls == []
+            assert enqueue_calls == []
     else:
         task_locked = asyncio.Event()
         release_task = asyncio.Event()
@@ -1349,6 +1377,8 @@ async def test_contributor_task_writes_serialize_with_lifecycle_changes(
             assert assignments[0][1] == contributor_id
         else:
             assert task_result.contributor_id == contributor_id
+            assert checker_calls == [task_id]
+            assert len(enqueue_calls) == 1
             assert observed_after_task_commit["task"] == (
                 "submitted",
                 contributor_id,

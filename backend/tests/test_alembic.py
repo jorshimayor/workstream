@@ -2094,12 +2094,25 @@ def test_contributor_foundation_upgrade_guards_and_reversible_preservation(
             assert direct_sql == {
                 "missing_assignment": "23503",
                 "service_assignment": "23514",
+                "missing_assignment_update": "23503",
                 "service_assignment_update": "23514",
                 "missing_submission": "23503",
                 "service_submission": "23514",
+                "missing_submission_update": "23503",
+                "service_submission_update": "23514",
                 "suspended_human_inserted": True,
                 "deactivated_human_inserted": True,
                 "unrelated_update_preserved": True,
+            }
+            assert asyncio.run(
+                _exercise_contributor_lineage_function_contract(
+                    isolated_database_env
+                )
+            ) == {
+                "zero_arguments": "55000",
+                "extra_arguments": "55000",
+                "absent_field": "55000",
+                "nullable_field_accepted": True,
             }
 
             asyncio.run(_add_contributor_function_dependency(isolated_database_env))
@@ -2136,6 +2149,13 @@ def test_contributor_foundation_preflight_refuses_all_unsafe_classes_atomically(
     """Classify both source tables without guessing or partially changing schema."""
     config = _alembic_config()
     missing_ids = (str(uuid4()), str(uuid4()))
+    assignment_malformed = tuple(
+        f"private.person.{index}@example.test" for index in range(22)
+    )
+    submission_malformed = tuple(
+        f"eyJhbGciOiJSUzI1NiJ9.secret-token-material-{index}"
+        for index in range(22)
+    )
 
     with migration_lock():
         try:
@@ -2144,8 +2164,10 @@ def test_contributor_foundation_preflight_refuses_all_unsafe_classes_atomically(
             fixture = asyncio.run(
                 _seed_contributor_prior_head(
                     isolated_database_env,
-                    assignment_values=("not-a-uuid", missing_ids[0], "service"),
-                    submission_values=("also-not-a-uuid", missing_ids[1], "service"),
+                    assignment_values=assignment_malformed
+                    + (missing_ids[0], "service"),
+                    submission_values=submission_malformed
+                    + (missing_ids[1], "service"),
                 )
             )
             service_id = str(fixture["service_id"])
@@ -2159,11 +2181,32 @@ def test_contributor_foundation_preflight_refuses_all_unsafe_classes_atomically(
             assert "missing" in message
             assert "service" in message
             assert service_id in message
-            for row_id in fixture["assignment_ids"] + fixture["submission_ids"]:
-                assert row_id in message
+            assert all(missing_id in message for missing_id in missing_ids)
+            diagnostic = json.loads(message.split("preflight failed: ", 1)[1])
+            for table in ("task_assignments", "submissions"):
+                malformed = diagnostic[table]["malformed"]
+                assert malformed["total"] == 22
+                assert len(malformed["rows"]) == 20
+                assert [row[0] for row in malformed["rows"]] == sorted(
+                    row[0] for row in malformed["rows"]
+                )
+                assert all(
+                    row[1] == "<redacted-malformed>"
+                    for row in malformed["rows"]
+                )
+            assert all(
+                value not in message
+                for value in assignment_malformed + submission_malformed
+            )
+            assert all(
+                row_id in message
+                for row_id in (
+                    tuple(fixture["assignment_ids"])[-2:]
+                    + tuple(fixture["submission_ids"])[-2:]
+                )
+            )
             assert "issuer" not in message
             assert "subject" not in message
-            assert "email" not in message
             assert asyncio.run(_contributor_foundation_shape(isolated_database_env)) == before
         finally:
             command.downgrade(config, "0023_service_actor_identity")
@@ -6678,6 +6721,7 @@ async def _exercise_contributor_lineage_guards(
     assignment_task = str(fixture["assignment_task"])
     submission_task = str(fixture["submission_task"])
     assignment_id = str(tuple(fixture["assignment_ids"])[0])
+    submission_id = str(tuple(fixture["submission_ids"])[0])
     missing_id = str(uuid4())
     suspended_id = str(uuid4())
     deactivated_id = str(uuid4())
@@ -6697,6 +6741,11 @@ async def _exercise_contributor_lineage_guards(
                 "(id,task_id,contributor_id,assigned_by,status) values "
                 "(:id,:task,:actor,'test','released')",
                 {"id": str(uuid4()), "task": assignment_task, "actor": service_id},
+            ),
+            (
+                "missing_assignment_update",
+                "update task_assignments set contributor_id=:actor where id=:id",
+                {"id": assignment_id, "actor": missing_id},
             ),
             (
                 "service_assignment_update",
@@ -6764,6 +6813,16 @@ async def _exercise_contributor_lineage_guards(
                 "locked_pre_submit_checker_policy_id,locked_pre_submit_checker_bundle_hash,"
                 "submitted_at,locked_at,null from submissions where task_id=:task",
                 {"id": str(uuid4()), "task": submission_task, "actor": service_id},
+            ),
+            (
+                "missing_submission_update",
+                "update submissions set contributor_id=:actor where id=:id",
+                {"id": submission_id, "actor": missing_id},
+            ),
+            (
+                "service_submission_update",
+                "update submissions set contributor_id=:actor where id=:id",
+                {"id": submission_id, "actor": service_id},
             ),
         ):
             try:
@@ -6839,6 +6898,64 @@ async def _exercise_contributor_lineage_guards(
                     {"id": str(uuid4()), "task": assignment_task, "actor": actor_id},
                 )
                 results[f"{status}_human_inserted"] = True
+        return results
+    finally:
+        await engine.dispose()
+
+
+async def _exercise_contributor_lineage_function_contract(
+    database_url: str,
+) -> dict[str, object]:
+    """Prove closed trigger arguments and nullable-field delegation."""
+    engine = create_async_engine(database_url)
+    results: dict[str, object] = {}
+    try:
+        for name, arguments in (
+            ("zero_arguments", ""),
+            ("extra_arguments", "'contributor_id','extra'"),
+            ("absent_field", "'missing_field'"),
+        ):
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text("create temporary table lineage_probe (contributor_id text)")
+                    )
+                    await connection.execute(
+                        text(
+                            "create trigger lineage_probe_guard before insert on "
+                            "lineage_probe for each row execute function public."
+                            f"require_human_actor_profile_reference({arguments})"
+                        )
+                    )
+                    await connection.execute(
+                        text(
+                            "insert into lineage_probe (contributor_id) values "
+                            "('not-a-canonical-id')"
+                        )
+                    )
+            except DBAPIError as error:
+                results[name] = _database_error_sqlstate(error)
+            else:
+                results[name] = None
+
+        async with engine.begin() as connection:
+            await connection.execute(
+                text("create temporary table lineage_nullable (contributor_id text)")
+            )
+            await connection.execute(
+                text(
+                    "create trigger lineage_nullable_guard before insert on "
+                    "lineage_nullable for each row execute function public."
+                    "require_human_actor_profile_reference('contributor_id')"
+                )
+            )
+            await connection.execute(
+                text("insert into lineage_nullable (contributor_id) values (null)")
+            )
+            results["nullable_field_accepted"] = (
+                await connection.scalar(text("select count(*) from lineage_nullable"))
+                == 1
+            )
         return results
     finally:
         await engine.dispose()

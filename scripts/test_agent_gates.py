@@ -4188,8 +4188,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         assert stale_text not in auth_map
         assert stale_text not in work_queue
     assert (
-        "Implementation and deterministic evidence complete; exact-SHA internal "
-        "review active" in work_queue
+        "Review findings repaired with deterministic proof; fresh exact-SHA "
+        "review active; aggregate coverage pending Backend" in work_queue
     )
     assert (
         "Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`"
@@ -4201,8 +4201,8 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "five 09D-A/09D-B lifecycle actions" not in loop_state
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And "
-        "Canonical-Human Lineage | L1 | Implementation/evidence complete; "
-        "exact-SHA internal review active" in auth_map
+        "Canonical-Human Lineage | L1 | Findings repaired/proved; fresh exact-SHA "
+        "review active; aggregate coverage pending Backend" in auth_map
     )
     assert (
         "| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | In review |" in auth_status

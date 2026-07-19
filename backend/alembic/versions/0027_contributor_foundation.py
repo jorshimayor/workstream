@@ -66,8 +66,13 @@ def _preflight() -> None:
             bucket["total"] = int(bucket["total"]) + 1
             bounded_rows = bucket["rows"]
             if isinstance(bounded_rows, list) and len(bounded_rows) < 20:
+                actor_profile_id = (
+                    "<redacted-malformed>"
+                    if failure_class == "malformed"
+                    else str(row["actor_profile_id"])
+                )
                 bounded_rows.append(
-                    [str(row["row_id"]), str(row["actor_profile_id"])]
+                    [str(row["row_id"]), actor_profile_id]
                 )
         if table_failures:
             failures[table] = table_failures

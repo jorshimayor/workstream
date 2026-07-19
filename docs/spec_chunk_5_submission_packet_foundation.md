@@ -232,7 +232,7 @@ Repair outcomes:
 
 ## Evidence Identity
 
-Workstream generates evidence item ids at persistence time. Worker-provided manifest rows may include artifact paths or URIs, but the persisted evidence item id is the stable Workstream evidence id for later checker and review records.
+Workstream generates evidence item ids at persistence time. Contributor-provided manifest rows may include artifact paths or URIs, but the persisted evidence item id is the stable Workstream evidence id for later checker and review records.
 
 ## Audit Scope
 
