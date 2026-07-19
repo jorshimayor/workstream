@@ -123,7 +123,7 @@ def test_outbox_migration_schema_and_downgrade_writer_guard(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove exact 0026 schema plus ACCESS EXCLUSIVE commit/rollback behavior."""
+    """Prove exact 0027 schema plus ACCESS EXCLUSIVE commit/rollback behavior."""
     config = _alembic_config()
     committed_project_id = str(uuid4())
     rolled_back_project_id = str(uuid4())

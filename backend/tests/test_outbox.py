@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
+import traceback
 from typing import Any, cast
 from uuid import UUID, uuid4
 
@@ -19,7 +20,9 @@ from app.modules.outbox.schemas import (
     OutboxAppendInput,
     OutboxIdempotencyConflict,
     OutboxInputError,
+    OutboxPersistenceError,
 )
+from app.modules.outbox.repository import OutboxRepository
 from app.modules.outbox.service import OutboxService
 
 
@@ -130,6 +133,18 @@ async def test_outbox_invalid_payload_errors_never_echo_values(
         await service.append(_unsafe_event(uuid4(), payload))
     assert str(raised.value) == "outbox_invalid_input"
     assert "secret" not in str(raised.value)
+
+
+def test_outbox_normal_validation_hides_rejected_secret_input() -> None:
+    values = _event(uuid4()).model_dump()
+    marker = f"private-marker-{uuid4()}"
+    values["payload"] = {"authorization": marker}
+    with pytest.raises(ValidationError) as raised:
+        OutboxAppendInput(**values)
+    rendered = "".join(traceback.format_exception(raised.value))
+    assert marker not in str(raised.value)
+    assert marker not in repr(raised.value)
+    assert marker not in rendered
 
 
 @pytest.mark.asyncio
@@ -263,6 +278,101 @@ async def test_outbox_caller_rollback_removes_flushed_event(
             text("select count(*) from outbox_events where event_id=:id"),
             {"id": value.event_id},
         ) == 0
+
+
+@pytest.mark.asyncio
+async def test_outbox_post_reservation_failure_rolls_back_caller_transaction(
+    outbox_factory: tuple[async_sessionmaker[AsyncSession], UUID],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    factory, project_id = outbox_factory
+    value = _event(project_id)
+    original_reserve = OutboxRepository.reserve
+
+    async def fail_after_reservation(
+        repository: OutboxRepository,
+        event: OutboxAppendInput,
+        *,
+        payload_digest: str,
+    ) -> None:
+        await original_reserve(repository, event, payload_digest=payload_digest)
+        raise RuntimeError("injected_outbox_failure")
+
+    monkeypatch.setattr(OutboxRepository, "reserve", fail_after_reservation)
+    async with factory() as session:
+        transaction = await session.begin()
+        with pytest.raises(RuntimeError, match="^injected_outbox_failure$"):
+            await OutboxService(session).append(value)
+        await transaction.rollback()
+    async with factory() as observer:
+        assert await observer.scalar(
+            text("select count(*) from outbox_events where event_id=:id"),
+            {"id": value.event_id},
+        ) == 0
+
+
+@pytest.mark.asyncio
+async def test_outbox_database_error_never_reflects_payload(
+    outbox_factory: tuple[async_sessionmaker[AsyncSession], UUID],
+) -> None:
+    factory, _ = outbox_factory
+    marker = f"private-marker-{uuid4()}"
+    value = _event(uuid4(), payload={"private_marker": marker})
+    async with factory() as session:
+        transaction = await session.begin()
+        with pytest.raises(
+            OutboxPersistenceError,
+            match="^outbox_persistence_failed$",
+        ) as raised:
+            await OutboxService(session).append(value)
+        rendered = "".join(traceback.format_exception(raised.value))
+        assert marker not in str(raised.value)
+        assert marker not in repr(raised.value)
+        assert marker not in rendered
+        await transaction.rollback()
+
+
+@pytest.mark.asyncio
+async def test_outbox_snapshots_nested_payload_before_first_await(
+    outbox_factory: tuple[async_sessionmaker[AsyncSession], UUID],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    factory, project_id = outbox_factory
+    value = _event(project_id, payload={"nested": {"state": "before"}})
+    reserve_started = asyncio.Event()
+    release_reserve = asyncio.Event()
+    original_reserve = OutboxRepository.reserve
+
+    async def blocked_reserve(
+        repository: OutboxRepository,
+        event: OutboxAppendInput,
+        *,
+        payload_digest: str,
+    ):
+        reserve_started.set()
+        await release_reserve.wait()
+        return await original_reserve(repository, event, payload_digest=payload_digest)
+
+    monkeypatch.setattr(OutboxRepository, "reserve", blocked_reserve)
+    async with factory() as session:
+        async with session.begin():
+            append_task = asyncio.create_task(OutboxService(session).append(value))
+            await reserve_started.wait()
+            value.payload["nested"]["state"] = "after"
+            release_reserve.set()
+            result = await append_task
+            row = (
+                await session.execute(
+                    text(
+                        "select payload, payload_digest from outbox_events "
+                        "where event_id=:event_id"
+                    ),
+                    {"event_id": value.event_id},
+                )
+            ).one()
+    assert result.disposition is OutboxAppendDisposition.CREATED
+    assert row.payload == {"nested": {"state": "before"}}
+    assert row.payload_digest == result.payload_digest
 
 
 @pytest.mark.asyncio

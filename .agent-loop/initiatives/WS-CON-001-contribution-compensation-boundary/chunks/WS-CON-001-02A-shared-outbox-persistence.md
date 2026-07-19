@@ -41,7 +41,10 @@ Execute the bounded local CON-02A row in `../RUNTIME_VERIFICATION.md`, replace
 its migration placeholder with the one new revision, then run:
 
 ```bash
-(cd backend && .venv/bin/python -m pytest -q tests/test_outbox.py tests/test_alembic.py -k 'outbox and (migration or append or idempotency or duplicate or race or rollback)')
+metadata_dir="$(mktemp -d)"
+trap 'rm -rf "$metadata_dir"' EXIT
+(cd backend && .venv/bin/python -m coverage erase)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 900 -- .venv/bin/python -m pytest -q tests/test_outbox.py tests/test_alembic.py -k outbox --cov=app --cov-report=)
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/outbox/*' --fail-under=90)
 (cd backend && .venv/bin/ruff check app/modules/outbox app/db/models.py tests/test_outbox.py tests/test_alembic.py)
 ```

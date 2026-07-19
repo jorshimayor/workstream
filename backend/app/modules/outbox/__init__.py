@@ -6,6 +6,7 @@ from app.modules.outbox.schemas import (
     OutboxAppendResult,
     OutboxIdempotencyConflict,
     OutboxInputError,
+    OutboxPersistenceError,
 )
 from app.modules.outbox.service import OutboxService
 
@@ -15,5 +16,6 @@ __all__ = [
     "OutboxAppendResult",
     "OutboxIdempotencyConflict",
     "OutboxInputError",
+    "OutboxPersistenceError",
     "OutboxService",
 ]

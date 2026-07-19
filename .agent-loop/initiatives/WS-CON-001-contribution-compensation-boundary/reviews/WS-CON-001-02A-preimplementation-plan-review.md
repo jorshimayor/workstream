@@ -59,10 +59,11 @@ through AUTH-09D-A PR #148 before publication. AUTH now owns
 `0026_actor_profile_lifecycle`. AUTH-09D-A activates only three actor-profile
 lifecycle actions; it adds no CON/outbox identifier, evaluator, service
 identity, static row, fixed-service admission, or product behavior.
-The exact full-suite safety ceiling is 25,200 seconds because the prior
-pre-AUTH-09D-A suite consumed 17,741.96 of 18,000 seconds and PR #148 added
-substantial backend/migration tests. This changes no selection, assertion,
-isolation control, or 78/90 coverage threshold.
+Historical local evidence used a 25,200-second full-suite safety ceiling after
+the pre-AUTH-09D-A suite consumed 17,741.96 of 18,000 seconds. Human direction
+D20 supersedes that local execution location: repository-wide proof now runs
+in GitHub CI, with no selection, assertion, isolation control, or 78/90
+coverage threshold change.
 
 ## Exact baseline and scope
 
@@ -85,11 +86,10 @@ isolation control, or 78/90 coverage threshold.
 - Trusted `main` later advanced to `f18b620` through planning-only REV-02 PR
   #147. Its future REV chunk decomposition adds no runtime, migration, test
   runner, CON, or outbox behavior and leaves this plan unchanged.
-- The canonical isolated full-suite command later reached 90 percent with no
-  failures but hit its 12,600-second process ceiling. The ceiling is raised to
-  18,000 seconds for the unchanged complete test set and unchanged 78/90
-  percent coverage gates; no test, assertion, or CI policy is skipped or
-  weakened.
+- Historical local full-suite execution reached 90 percent with no failures
+  before its process ceiling. D20 now assigns the unchanged complete test set
+  and 78 percent repository coverage floor to GitHub CI; local proof is bounded
+  to focused real-service tests and the 90 percent subsystem floor.
 
 ## Proposed implementation
 
@@ -120,10 +120,11 @@ isolation control, or 78/90 coverage threshold.
    exact replay, the full collision/race matrix, canonical key-order replay,
    payload/error privacy bounds, and caller rollback proving no independent
    commit or publication.
-6. Run the exact isolated CON-02A evidence row, focused coverage at or above 90
-   percent, repository coverage at or above 78 percent, Ruff, stale-wording and
-   link checks, then fan out all required internal reviewer tracks on one exact
-   commit SHA. Repair and rerun evidence/review before opening the full PR.
+6. Run the exact bounded isolated CON-02A row, focused coverage at or above 90
+   percent, Ruff, stale-wording and link checks, then fan out all required
+   internal reviewer tracks on one exact commit SHA. After the full PR is
+   pushed, GitHub CI owns repository-wide tests and coverage at or above 78
+   percent. Repair and rerun evidence/review after any implementation change.
 
 ## Explicit non-goals
 
@@ -290,7 +291,7 @@ unrelated operational facts.
 
 ## Migration and transaction proof details
 
-- Upgrade from exact revision `0025_artifact_store_v2` and verify
+- Upgrade from exact revision `0026_actor_profile_lifecycle` and verify
   columns, constraints, indexes, triggers, metadata, and head identity.
 - Attempt direct SQL mutation of every immutable column and physical delete/
   truncate; each must fail. Exercise every operational column through at least

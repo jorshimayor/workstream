@@ -8,8 +8,9 @@ PostgreSQL selectors, focused coverage, Ruff, and repository static gates.
 Every runtime chunk executes the local template below after replacing
 `<CHUNK_ID>`, `<FOCUSED_TEST_COMMAND>`, and `<RUFF_TARGETS>` with its reviewed
 contract. The focused test command must start from an erased coverage file,
-must use the real required local services, and must select a non-empty test
-set. A pre-existing `.coverage` file is never accepted.
+must use the isolated database runner and real required local services, must
+select a non-empty test set, and must generate fresh coverage with
+`--cov=app --cov-report=`. A pre-existing `.coverage` file is never accepted.
 
 ```bash
 (cd backend && .venv/bin/python -m coverage erase)

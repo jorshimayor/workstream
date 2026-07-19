@@ -55,7 +55,8 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 - Terminal retention is archival-in-place. A guarded downgrade takes an
   `ACCESS EXCLUSIVE` lock and refuses durable rows.
 - Payload input is strict, bounded, lower-snake-case JSON with recursive secret
-  key rejection and stable non-reflective errors.
+  key rejection, hidden Pydantic input rendering, one defensive deep snapshot,
+  and stable non-reflective input/persistence errors.
 - Append reuses `canonical_json_hash`, reserves with PostgreSQL conflict
   handling, locks both identities in deterministic order, flushes only the
   caller session, and never commits or publishes.
@@ -65,8 +66,10 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 ## Current Reconciliation Verification Results
 
 ```text
+38 passed, 30 deselected in 120.67s (exact bounded isolated outbox row after review repair)
+outbox coverage after review repair: 95.58% (required: at least 90%)
 78 passed in 378.36s on current main's outbox/migration, real-MinIO ART, and AUTH-09D-B suite
-outbox coverage: 95.43% (required: at least 90%)
+pre-repair outbox coverage: 95.43%
 8 passed, 56 deselected in 50.92s (exact contract selector)
 2 passed in 88.51s (affected AUTH lifecycle downgrade tests)
 16 passed in 102.10s (isolated database runner self-tests with admin URL)
@@ -120,10 +123,13 @@ superseded when AUTH-09D-A changed the backend and migration head.
 
 ## Test Delta
 
-Tests add strict schema/privacy bounds, caller rollback, exact replay, immutable
-drift, split identity, concurrent commit/rollback races, direct-SQL custody,
-legal and illegal delivery transitions, terminal archival, delete/truncate
-denial, exact migration surface, and concurrent downgrade writer behavior.
+Tests add strict schema/privacy bounds, normal-construction error redaction,
+defensive nested-payload snapshotting across the first await, stable database
+error redaction, caller rollback including injected post-reservation failure,
+exact replay, immutable drift, split identity, concurrent commit/rollback races,
+direct-SQL custody, legal and illegal delivery transitions, terminal archival,
+delete/truncate denial, exact migration surface, and concurrent downgrade
+writer behavior.
 Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Required Internal Review

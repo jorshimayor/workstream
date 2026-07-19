@@ -37,7 +37,8 @@ feature chunks own execution behavior.
 - The repository inserts with conflict suppression, locks matching identities
   deterministically, and uses only the supplied `AsyncSession`.
 - The service reuses the existing repository-wide `app.core.hashing` canonical
-  JSON helper and emits only stable error codes.
+  JSON helper, takes one defensive deep payload snapshot before its first await,
+  and emits only stable non-reflective input, conflict, or persistence errors.
 - Retention is one-way terminal archival; event truth cannot be deleted or
   truncated.
 - No route, dispatcher, delivery executor, broker, Celery task, handler,
@@ -54,6 +55,8 @@ feature chunks own execution behavior.
 
 ## Proof
 
+- Post-review exact bounded row: 38 passed, 30 deselected in 120.67 seconds,
+  with 95.58% outbox coverage against the 90% subsystem floor.
 - Reconciled exact contract selector: 8 passed, 56 deselected.
 - Current-main outbox plus migration/lifecycle-guard suite: 36 passed in
   156.17 seconds; the reconciled outbox implementation retains 95.43% focused
@@ -102,6 +105,12 @@ feature chunks own execution behavior.
 No existing test was deleted, skipped, weakened, or rewritten to accept broken
 behavior. No workflow, dependency, package script, test runner, lint/typecheck
 command, coverage threshold, or CI configuration changed.
+
+Internal-review repairs add regression proof for ordinary validation error
+redaction, nested payload mutation while reservation is blocked, payload-free
+database failures, and caller rollback after an injected post-reservation
+failure. The exact documented focused command now generates fresh coverage
+before enforcing the subsystem floor.
 
 Repository-wide tests and the 78 percent repository coverage floor run only in
 the existing GitHub Backend full-suite job. Local proof is bounded to focused

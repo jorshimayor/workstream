@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.hashing import canonical_json_hash
@@ -14,6 +15,7 @@ from app.modules.outbox.schemas import (
     OutboxAppendResult,
     OutboxIdempotencyConflict,
     OutboxInputError,
+    OutboxPersistenceError,
 )
 
 
@@ -21,7 +23,8 @@ def _validated_input(value: object) -> OutboxAppendInput:
     """Revalidate a typed input without reflecting payload details in failures."""
     try:
         fields = dict(object.__getattribute__(value, "__dict__"))
-        return OutboxAppendInput.model_validate(fields)
+        validated = OutboxAppendInput.model_validate(fields)
+        return validated.model_copy(deep=True)
     except (AttributeError, TypeError, ValueError, ValidationError):
         raise OutboxInputError("outbox_invalid_input") from None
 
@@ -58,7 +61,10 @@ class OutboxService:
             digest = canonical_json_hash(validated.payload)
         except (TypeError, ValueError):
             raise OutboxInputError("outbox_invalid_input") from None
-        reservation = await self._repository.reserve(validated, payload_digest=digest)
+        try:
+            reservation = await self._repository.reserve(validated, payload_digest=digest)
+        except SQLAlchemyError:
+            raise OutboxPersistenceError("outbox_persistence_failed") from None
         if len(reservation.records) != 1 or not _matches(
             reservation.records[0], validated, digest
         ):

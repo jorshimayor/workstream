@@ -48,6 +48,10 @@ class OutboxIdempotencyConflict(RuntimeError):
     """Raised without payload details when either event identity drifts."""
 
 
+class OutboxPersistenceError(RuntimeError):
+    """Raised without statement parameters when database persistence fails."""
+
+
 class OutboxAppendDisposition(StrEnum):
     """Closed caller-visible outcomes for append or exact replay."""
 
@@ -110,7 +114,12 @@ def validate_outbox_payload(value: object) -> dict[str, Any]:
 class OutboxAppendInput(BaseModel):
     """Immutable logical event facts accepted by the append participant."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        hide_input_in_errors=True,
+        strict=True,
+    )
 
     event_id: UUID
     event_type: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9._:-]{0,127}$")
