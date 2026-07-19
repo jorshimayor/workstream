@@ -5,10 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 import re
-from typing import Any, Self
+from typing import Any, NoReturn, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, GetCoreSchemaHandler, model_validator
+from pydantic_core import SchemaValidator, core_schema
 
 _KEY = re.compile(r"^[a-z][a-z0-9_]{0,127}$")
 _SECRET_KEYS = frozenset(
@@ -40,7 +41,7 @@ _MAX_ENCODING_BUDGET = 262_144
 _MAX_INTEGER_MAGNITUDE = 10**38 - 1
 
 
-class OutboxInputError(ValueError):
+class OutboxInputError(TypeError):
     """Raised without payload details when append input is invalid."""
 
 
@@ -57,6 +58,11 @@ class OutboxAppendDisposition(StrEnum):
 
     CREATED = "created"
     REPLAYED = "replayed"
+
+
+def _raise_input_error() -> NoReturn:
+    """Raise the public input error from a payload-free frame."""
+    raise OutboxInputError("outbox_invalid_input")
 
 
 def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
@@ -104,7 +110,7 @@ def _encoding_budget(value: object, *, depth: int, nodes: list[int]) -> int:
 
 def validate_outbox_payload(value: object) -> dict[str, Any]:
     """Validate generic structure, privacy, and resource bounds without encoding."""
-    if not isinstance(value, dict):
+    if type(value) is not dict:
         raise ValueError("payload_object")
     if _encoding_budget(value, depth=1, nodes=[0]) > _MAX_ENCODING_BUDGET:
         raise ValueError("payload_size")
@@ -132,55 +138,38 @@ class OutboxAppendInput(BaseModel):
     idempotency_key: str = Field(pattern=r"^[A-Za-z0-9._:-]{1,200}$")
     payload: dict[str, Any]
 
-    def __init__(self, **data: Any) -> None:
-        """Map ordinary validation failures to one payload-free domain error."""
-        admitted = True
-        try:
-            super().__init__(**data)
-        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
-            admitted = False
-        if not admitted:
-            raise OutboxInputError("outbox_invalid_input")
-
     @classmethod
-    def model_validate(cls, obj: object, **kwargs: Any) -> Self:
-        """Validate an object while replacing detailed diagnostics with one error."""
-        admitted = None
-        try:
-            admitted = super().model_validate(obj, **kwargs)
-        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
-            admitted = None
-        if admitted is None:
-            raise OutboxInputError("outbox_invalid_input")
-        return admitted
-
-    @classmethod
-    def model_validate_json(
+    def __get_pydantic_core_schema__(
         cls,
-        json_data: str | bytes | bytearray,
-        **kwargs: Any,
-    ) -> Self:
-        """Validate JSON while replacing detailed diagnostics with one error."""
-        admitted = None
-        try:
-            admitted = super().model_validate_json(json_data, **kwargs)
-        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
-            admitted = None
-        if admitted is None:
-            raise OutboxInputError("outbox_invalid_input")
-        return admitted
+        source_type: Any,
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        """Apply payload-free failure translation at the Pydantic core boundary."""
+        inner_schema = handler(source_type)
+        string_validator = SchemaValidator(inner_schema)
 
-    @classmethod
-    def model_validate_strings(cls, obj: object, **kwargs: Any) -> Self:
-        """Validate string input while replacing detailed diagnostics with one error."""
-        admitted = None
-        try:
-            admitted = super().model_validate_strings(obj, **kwargs)
-        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+        def admit(
+            value: object,
+            validator: core_schema.ValidatorFunctionWrapHandler,
+            info: core_schema.ValidationInfo,
+        ) -> object:
+            """Preserve validation mode while detaching every rejected input."""
             admitted = None
-        if admitted is None:
-            raise OutboxInputError("outbox_invalid_input")
-        return admitted
+            try:
+                admitted = (
+                    string_validator.validate_strings(value)
+                    if info.mode == "string"
+                    else validator(value)
+                )
+            except Exception:  # noqa: BLE001 - rejected input must not escape diagnostics
+                admitted = None
+            if admitted is None:
+                value = None
+                validator = None
+                _raise_input_error()
+            return admitted
+
+        return core_schema.with_info_wrap_validator_function(admit, inner_schema)
 
     @model_validator(mode="after")
     def validate_payload(self) -> Self:

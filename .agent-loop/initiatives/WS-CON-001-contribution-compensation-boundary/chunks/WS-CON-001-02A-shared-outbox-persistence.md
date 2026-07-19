@@ -11,7 +11,7 @@ L1 infrastructure/audit/data risk.
 backend/app/modules/outbox/{__init__,models,schemas,repository,service}.py
 backend/app/db/models.py
 backend/alembic/versions/<next>_shared_transactional_outbox.py
-backend/tests/{test_outbox,test_alembic}.py
+backend/tests/{test_outbox,test_alembic,assertion_helpers,test_assertion_helpers}.py
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**
 .agent-loop/merge-intents/WS-CON-001-02A.json
 ```

@@ -29,3 +29,19 @@ def test_public_object_state_rejects_nested_forbidden_value() -> None:
 
     with pytest.raises(AssertionError):
         assert_secret_not_retained(value, "forbidden")
+
+
+def test_builtin_container_subclasses_cannot_hide_forbidden_values() -> None:
+    """Inspect builtin storage without invoking hostile iteration overrides."""
+
+    class HostileDict(dict[str, str]):
+        def items(self):
+            raise RuntimeError("hostile items")
+
+    class HostileList(list[str]):
+        def __iter__(self):
+            raise RuntimeError("hostile iterator")
+
+    for value in (HostileDict(value="forbidden"), HostileList(["forbidden"])):
+        with pytest.raises(AssertionError):
+            assert_secret_not_retained(value, "forbidden")

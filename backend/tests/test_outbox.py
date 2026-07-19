@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
+import json
 from pathlib import Path
 import traceback
 from typing import Any, cast
@@ -10,6 +11,7 @@ from uuid import UUID, uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
+from pydantic import TypeAdapter
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -143,7 +145,11 @@ def test_outbox_normal_validation_detaches_rejected_secret_input() -> None:
         OutboxAppendInput(**values)
     rendered = "".join(traceback.format_exception(raised.value))
     assert marker not in rendered
-    assert_secret_not_retained(raised.value, marker)
+    assert_secret_not_retained(
+        raised.value,
+        marker,
+        traceback_module_prefixes=("app.modules.outbox",),
+    )
     assert raised.value.__context__ is None
     assert raised.value.__cause__ is None
 
@@ -155,22 +161,57 @@ def test_outbox_all_validation_entry_points_detach_rejected_input() -> None:
         def items(self):
             raise RuntimeError(marker)
 
-    values = _event(uuid4()).model_dump()
-    values["payload"] = {"nested": ExplodingDict({"value": "safe"})}
-    calls = (
-        lambda: OutboxAppendInput(**values),
-        lambda: OutboxAppendInput.model_validate(values),
-        lambda: OutboxAppendInput.model_validate_json(
-            '{"payload":{"authorization":"' + marker + '"}}'
-        ),
-        lambda: OutboxAppendInput.model_validate_strings(values),
+    class ExplodingList(list[object]):
+        def __iter__(self):
+            raise RuntimeError(marker)
+
+    class ExplodingString(str):
+        def encode(self, *args: object, **kwargs: object):
+            raise RuntimeError(marker)
+
+    adapter = TypeAdapter(OutboxAppendInput)
+    hostile_payloads = (
+        {"nested": ExplodingDict({"value": "safe"})},
+        {"nested": ExplodingList(["safe"])},
+        {"nested": ExplodingString("safe")},
     )
-    for call in calls:
+    for payload in hostile_payloads:
+        values = _event(uuid4()).model_dump()
+        values["payload"] = payload
+        calls = (
+            lambda: OutboxAppendInput(**values),
+            lambda: OutboxAppendInput.model_validate(values),
+            lambda: OutboxAppendInput.model_validate_strings(values),
+            lambda: adapter.validate_python(values),
+        )
+        for call in calls:
+            with pytest.raises(
+                OutboxInputError,
+                match="^outbox_invalid_input$",
+            ) as raised:
+                call()
+            assert_secret_not_retained(
+                raised.value,
+                marker,
+                traceback_module_prefixes=("app.modules.outbox",),
+            )
+            assert raised.value.__context__ is None
+            assert raised.value.__cause__ is None
+
+    json_values = _event(uuid4()).model_dump(mode="json")
+    json_values["payload"] = {"authorization": marker}
+    document = json.dumps(json_values)
+    for call in (
+        lambda: OutboxAppendInput.model_validate_json(document),
+        lambda: adapter.validate_json(document),
+    ):
         with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
             call()
-        assert_secret_not_retained(raised.value, marker)
-        assert raised.value.__context__ is None
-        assert raised.value.__cause__ is None
+        assert_secret_not_retained(
+            raised.value,
+            marker,
+            traceback_module_prefixes=("app.modules.outbox",),
+        )
 
 
 @pytest.mark.asyncio
@@ -181,12 +222,55 @@ async def test_outbox_service_detaches_hostile_nested_container_failure() -> Non
         def items(self):
             raise RuntimeError(marker)
 
-    value = _unsafe_event(uuid4(), {"nested": ExplodingDict({"value": "safe"})})
-    with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
-        await OutboxService(cast(AsyncSession, None)).append(value)
-    assert_secret_not_retained(raised.value, marker)
-    assert raised.value.__context__ is None
-    assert raised.value.__cause__ is None
+    class ExplodingList(list[object]):
+        def __iter__(self):
+            raise RuntimeError(marker)
+
+    class ExplodingString(str):
+        def encode(self, *args: object, **kwargs: object):
+            raise RuntimeError(marker)
+
+    for payload in (
+        {"nested": ExplodingDict({"value": "safe"})},
+        {"nested": ExplodingList(["safe"])},
+        {"nested": ExplodingString("safe")},
+    ):
+        value = _unsafe_event(uuid4(), payload)
+        with pytest.raises(OutboxInputError, match="^outbox_invalid_input$") as raised:
+            await OutboxService(cast(AsyncSession, None)).append(value)
+        assert_secret_not_retained(
+            raised.value,
+            marker,
+            traceback_module_prefixes=("app.modules.outbox",),
+        )
+        assert raised.value.__context__ is None
+        assert raised.value.__cause__ is None
+
+
+def test_outbox_validation_entry_points_preserve_valid_modes() -> None:
+    expected = _event(uuid4(), payload={"marker": "safe"})
+    adapter = TypeAdapter(OutboxAppendInput)
+    python_value = OutboxAppendInput.model_validate(expected.model_dump())
+    json_value = OutboxAppendInput.model_validate_json(
+        json.dumps(expected.model_dump(mode="json"))
+    )
+    strings = expected.model_dump(mode="json")
+    strings["event_version"] = str(strings["event_version"])
+    string_value = OutboxAppendInput.model_validate_strings(strings)
+    adapter_python = adapter.validate_python(expected.model_dump())
+    adapter_json = adapter.validate_json(json.dumps(expected.model_dump(mode="json")))
+    adapter_strings = adapter.validate_strings(strings)
+    assert all(
+        value == expected
+        for value in (
+            python_value,
+            json_value,
+            string_value,
+            adapter_python,
+            adapter_json,
+            adapter_strings,
+        )
+    )
 
 
 @pytest.mark.asyncio
@@ -369,7 +453,11 @@ async def test_outbox_database_error_never_reflects_payload(
             await OutboxService(session).append(value)
         rendered = "".join(traceback.format_exception(raised.value))
         assert marker not in rendered
-        assert_secret_not_retained(raised.value, marker)
+        assert_secret_not_retained(
+            raised.value,
+            marker,
+            traceback_module_prefixes=("app.modules.outbox",),
+        )
         assert raised.value.__context__ is None
         assert raised.value.__cause__ is None
         await transaction.rollback()

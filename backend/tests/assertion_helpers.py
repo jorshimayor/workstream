@@ -52,6 +52,20 @@ def assert_secret_not_retained(
                     traceback_module_prefixes=traceback_module_prefixes,
                 )
             traceback = traceback.tb_next
+    elif isinstance(value, dict):
+        for key, item in dict.items(value):
+            assert_secret_not_retained(
+                key,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+            assert_secret_not_retained(
+                item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
     elif isinstance(value, Mapping):
         for key, item in value.items():
             assert_secret_not_retained(
@@ -60,6 +74,22 @@ def assert_secret_not_retained(
                 seen,
                 traceback_module_prefixes=traceback_module_prefixes,
             )
+            assert_secret_not_retained(
+                item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+    elif isinstance(value, list):
+        for item in list.__iter__(value):
+            assert_secret_not_retained(
+                item,
+                secret,
+                seen,
+                traceback_module_prefixes=traceback_module_prefixes,
+            )
+    elif isinstance(value, (tuple, set)):
+        for item in value:
             assert_secret_not_retained(
                 item,
                 secret,
@@ -88,11 +118,3 @@ def assert_secret_not_retained(
             seen,
             traceback_module_prefixes=traceback_module_prefixes,
         )
-    elif isinstance(value, (list, tuple, set)):
-        for item in value:
-            assert_secret_not_retained(
-                item,
-                secret,
-                seen,
-                traceback_module_prefixes=traceback_module_prefixes,
-            )

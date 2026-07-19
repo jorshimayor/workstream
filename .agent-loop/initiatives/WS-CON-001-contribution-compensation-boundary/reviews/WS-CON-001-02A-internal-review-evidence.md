@@ -67,8 +67,8 @@ and requires the existing GitHub Backend full-suite job on the pushed PR.
 ## Current Reconciliation Verification Results
 
 ```text
-40 passed, 30 deselected in 146.65s (exact bounded isolated outbox row after final review repair)
-outbox coverage after final review repair: 95.15% (required: at least 90%)
+41 passed, 30 deselected in 184.58s (exact bounded isolated outbox row after final review repair)
+outbox coverage after final review repair: 95.61% (required: at least 90%)
 78 passed in 378.36s on current main's outbox/migration, real-MinIO ART, and AUTH-09D-B suite
 pre-repair outbox coverage: 95.43%
 8 passed, 56 deselected in 50.92s (exact contract selector)
@@ -124,14 +124,16 @@ superseded when AUTH-09D-A changed the backend and migration head.
 
 ## Test Delta
 
-Tests add strict schema/privacy bounds; detached errors across constructor and
-all exported Pydantic validation entry points, including hostile container
-subclasses; defensive nested-payload snapshotting across the first await;
-stable database error redaction; caller rollback including injected
-post-reservation failure; exact replay; immutable drift; split identity;
-concurrent commit/rollback races; direct-SQL custody; legal and illegal delivery
-transitions; terminal archival; delete/truncate denial; exact migration surface;
-and concurrent downgrade writer behavior.
+Tests add strict schema/privacy bounds; one core-schema error boundary across
+constructor, model methods, and `TypeAdapter` Python/JSON/string modes; valid
+mode parity; hostile dict/list/string subclasses; payload-free outbox traceback
+locals; defensive nested-payload snapshotting across the first await; stable
+database error redaction; caller rollback including injected post-reservation
+failure; exact replay; immutable drift; split identity; concurrent commit/
+rollback races; direct-SQL custody; legal and illegal delivery transitions;
+terminal archival; delete/truncate denial; exact migration surface; and
+concurrent downgrade writer behavior. Shared secret-retention helper tests prove
+built-in subclasses cannot bypass deep inspection.
 Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Required Internal Review
