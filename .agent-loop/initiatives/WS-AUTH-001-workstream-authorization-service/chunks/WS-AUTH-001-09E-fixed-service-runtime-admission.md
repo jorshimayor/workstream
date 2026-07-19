@@ -67,8 +67,9 @@ client-supplied service identity, ActionId, PermissionId, role, or matrix member
 dynamic service grants, shared catch-all service identity, or permission union
 feature resource composition, lifecycle behavior, adapter I/O, or action activation
 application startup failure solely because a provisionable service row is absent
-any Alembic migration or migration-number allocation; ART owns `0028`, and AUTH
-must wait for its PR to merge before a later chunk allocates from trusted main
+any Alembic migration or migration-number allocation; ART-owned
+`0028_artifact_admission` is merged, AUTH-09E adds no revision, and any later
+AUTH migration must allocate after `0028` from then-current trusted main
 ```
 
 ## Admission contract

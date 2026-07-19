@@ -4,7 +4,11 @@ Reviewed code SHA: `7b8f2033a406f7f873a70433cdd1920606e840e0`
 
 Reviewed implementation SHA: `881ac7fc`
 
+Reviewed integrated implementation SHA: `98376fd1`
+
 Reviewed against trusted main: `8d5eb15b384fd75787ce98a099400a1d335d2560`
+
+Integrated implementation reviewed against trusted main: `44f2467c`
 
 Reviewed at: `2026-07-19T17:13:41Z`
 
@@ -21,6 +25,9 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
   seconds after two repaired expectation failures were rerun successfully.
 - Ten direct repair tests pass for inactive observation suppression and real
   lock-time lifecycle, identity, matrix, and availability drift denial.
+- Four isolated PostgreSQL ART admission tests pass after the trusted-main
+  integration repair, proving exact human and checker-service context
+  composition while preserving locked identity validation.
 - The real isolated HTTP API contract drill passed, including unprovisioned,
   provisioned, suspended, reactivated, revoked-link, and repaired-link service
   states.
@@ -60,11 +67,16 @@ gates observations on active rows, fails malformed locked reconstruction
 closed, and directly proves lifecycle, identity, matrix, and availability
 drift. Documentation candidate `d859af3d` removes one stale pre-09E operations
 sentence and corrects the dependency docstring. All required tracks pass with
-no remaining blocking finding.
+no remaining blocking finding. Trusted main then advanced through ART PR #154.
+Security review rejected merge candidate `d2d974eb` because ART admission still
+checked the former concrete `AuthorizationContext`; integrated candidate
+`98376fd1` repairs that boundary with exact membership in the two closed
+concrete context types and passes all nine tracks after the stale timing docs
+were corrected.
 
 ## Remaining Risk And Gate
 
 GitHub Backend, Agent Gates, external review, and explicit human review remain.
 No feature action is active. ART owns migration `0028`; this chunk adds no
 migration, and its same-initiative successor still requires a separate explicit
-start after the relevant ART PR and this PR have merged with signed memory.
+start after this PR and signed memory, subject to its own contract prerequisites.

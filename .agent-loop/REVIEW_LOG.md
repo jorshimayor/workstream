@@ -1,5 +1,21 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-09E Integrated Review Passed
+
+Trusted main advanced through ART PR #154 as `44f2467c`, bringing ART-owned
+`0028_artifact_admission` and a strict artifact-admission boundary. Merge
+candidate `d2d974eb` passed senior and QA integration review but security found
+that ART's exact check against the former concrete `AuthorizationContext` could
+never accept AUTH-09E's closed human/service union. Integrated candidate
+`98376fd1` accepts only the two exact concrete context types, updates the test
+fixture to construct the matching discriminated context, and changes no
+artifact lifecycle, persistence, capacity, provider I/O, or action availability.
+Four isolated PostgreSQL admission tests, Ruff, diff integrity, and all 88 agent
+gates pass. Senior engineering, QA/test, security/auth, product/ops,
+architecture, CI integrity, reuse/dedup, and test-delta review pass; the stale
+pre-ART-merge documentation finding was then repaired. AUTH-09E adds or
+allocates no migration after ART's merged `0028`.
+
 ## 2026-07-19 - WS-AUTH-001-09E Implementation Review Passed
 
 Exact implementation SHA `881ac7fc` and documentation repair `d859af3d` passed
@@ -12,7 +28,7 @@ lifecycle, identity, matrix, and availability drift denial. One stale
 pre-09E operations sentence and the human-only dependency docstring were also
 corrected. Focused PostgreSQL and HTTP evidence passes; GitHub Backend remains
 the authoritative full-suite coverage gate. No migration is added or allocated;
-ART retains migration `0028` until its independent PR merges.
+ART owns merged migration `0028_artifact_admission`.
 
 ## 2026-07-19 - WS-AUTH-001-09E Preimplementation Review Passed
 

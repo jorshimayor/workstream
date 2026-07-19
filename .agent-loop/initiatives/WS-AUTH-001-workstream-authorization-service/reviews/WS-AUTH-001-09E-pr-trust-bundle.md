@@ -22,9 +22,9 @@ separate.
 ## Scope Control
 
 No service feature action, ART/REV/CON call site, migration, schema, role,
-grant, payment, review, revision, or reputation behavior is activated. ART
-retains migration `0028`; AUTH creates no migration until that independent PR
-has merged and trusted main provides the next allocation.
+grant, payment, review, revision, or reputation behavior is activated. ART PR
+#154 and its owned `0028_artifact_admission` are already merged; AUTH-09E adds
+or allocates no migration.
 
 ## Proof And CI Integrity
 
@@ -44,14 +44,16 @@ has merged and trusted main provides the next allocation.
 Candidate `881ac7fc` and docs repair `d859af3d`, against trusted main
 `8d5eb15b`, pass senior engineering, QA/test, security/auth, product/ops,
 architecture, CI integrity, docs, reuse/dedup, and test-delta review after all
-valid findings were repaired.
+valid findings were repaired. Integrated candidate `98376fd1`, against trusted
+main `44f2467c`, passes the same nine tracks after repairing ART admission's
+stale exact-type check for the new closed human/service context union.
 
 ## Remaining Risk And Follow-up
 
 Hosted Backend CI and external review remain. The same-initiative
 `WS-AUTH-001-ART-CUSTODY` successor is only a recorded next gate; it must not
-start until this PR, the relevant ART PR, and signed memory are complete and
-the user explicitly starts it.
+start until this PR and signed memory are complete, its own contract
+prerequisites pass, and the user explicitly starts it.
 
 ## Human Review Focus
 
