@@ -10,8 +10,9 @@
 
 ## Trusted baseline
 
-- `origin/main` at `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`, merging ART-02B1
-  PR #151 after planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02
+- `origin/main` at `93dd392484b397cfdfaaa833631dc2c27f591ed7`, merging AUTH-09D-B
+  PR #152 and ART-02B1 PR #151 after planning-only REV PLAN2 PR #150,
+  AUTH-09D-A PR #148, REV-02
   PR #147, REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143,
   reviewed REV planning PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
 - PR #128 remains planning authority, not Review runtime implementation.
@@ -21,11 +22,12 @@
 - ART-02B1 PR #151 adds the S3-compatible ArtifactStore adapter and real MinIO
   proof plus inactive AWS-profile support. It adds no migration or outbox seam,
   and remains outside the core Review-to-CON transaction.
-- Runtime AUTH is 74 PermissionIds, 65 ActionIds, 15 active, 50 planned.
+- Runtime AUTH is 74 PermissionIds, 65 ActionIds, 17 active, 48 planned.
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
   `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates
-  only the three actor-profile lifecycle actions. Identity-link lifecycle and
-  fixed-service admission remain planned. No CON or task-claim ActionId exists,
+  only the three actor-profile lifecycle actions; AUTH-09D-B activates only
+  identity-link revoke/reactivate. The contributor foundation and fixed-service
+  admission remain planned. No CON or task-claim ActionId exists,
   and these administrative operations grant no service runtime authority.
 - PR #140 remains the source for AUTH activation-custody, prepared-protocol,
   revised chunk,

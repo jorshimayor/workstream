@@ -1,5 +1,20 @@
 # WS-CON-001-02A Preimplementation Plan Review
 
+## AUTH-09D-B Current-Main Reconciliation
+
+Trusted main advanced to `93dd392484b397cfdfaaa833631dc2c27f591ed7`
+through AUTH-09D-B PR #152. The canonical catalogue remains 74 PermissionIds
+and 65 ActionIds, now 17 active and 48 planned. The merge activates exactly
+`actor.identity_link.revoke` and `actor.identity_link.reactivate`; it adds no
+CON/task-claim ActionId, fixed-service admission, migration, or outbox seam.
+The contributor-field/canonical-human foundation is proposed next, with
+AUTH-09E still later. CON-02A therefore remains authorization-neutral at
+`0027`, while the expanded AUTH backend suite requires fresh evidence.
+
+The exact isolated PostgreSQL plus MinIO suite on the prior `1b5422fc`
+baseline was stopped after one hour solely because PR #152 advanced trusted
+main. Its metadata was removed and it is not accepted evidence.
+
 ## ART-02B1 Current-Main Reconciliation
 
 Trusted main advanced to `1b5422fcaa361152af7c2b1f82a763d99c0e6db5`

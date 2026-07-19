@@ -13,8 +13,9 @@ The canonical cross-boundary source is merged
 `0302bcf`; REV-01 PR #145 canonically published it, REV-02 PR #147 decomposed
 the first runtime parent, and planning-only REV PLAN2 PR #150 refreshed the
 remaining runtime child gates. They remain the reviewed owner contract in
-current main `1b5422fc`; ART-02B1 PR #151 changes ArtifactStore provider
-implementation and proof only and does not enter this transaction;
+current main `93dd3924`; ART-02B1 PR #151 changes ArtifactStore provider
+implementation and proof only, while AUTH-09D-B PR #152 changes administrative
+identity-link lifecycle only; neither enters this transaction;
 runtime REV behavior remains
 unimplemented.
 

@@ -2,8 +2,8 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` refreshed to `1b5422fc`, including ART-02B1 PR #151,
-  planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147,
+- trusted `origin/main` refreshed to `93dd3924`, including AUTH-09D-B PR #152,
+  ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147,
   REV-01 PR #145, AUTH-09C PR #146, ART PR #141, CON-01 PR #144, AUTH-09B PR
   #143, REV planning PR #128, AUTH-09A, AUTH PR #140, and the earlier WS-XINT
   PR #139 boundary;
@@ -36,7 +36,10 @@
   actions are active and 50 are planned. AUTH-09B activates only
   `actor.service.provision`; AUTH-09C activates only `actor.profile.read` and
   `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
-  lifecycle actions. No WS-CON or task-claim ActionId is registered.
+  lifecycle actions; AUTH-09D-B activates only `actor.identity_link.revoke`
+  and `actor.identity_link.reactivate`. No WS-CON or task-claim ActionId is
+  registered. The contributor-field/canonical-human foundation and AUTH-09E
+  fixed-service admission remain proposed.
 - Current AUTH supports actor-self, AdminRoleGrant evaluation, and controlled
   human-administrator provisioning of an approved fixed service
   ActorProfile/ActorIdentityLink. Independent ProjectRoleGrant runtime,
@@ -53,7 +56,7 @@
 
 ## CON-02A focused discovery
 
-- Trusted `main` at `1b5422fc` still ends its migration chain at AUTH-owned
+- Trusted `main` at `93dd3924` still ends its migration chain at AUTH-owned
   `0026_actor_profile_lifecycle`; CON-02A owns linear revision
   `0027_shared_transactional_outbox` and must import its model through
   `backend/app/db/models.py` so metadata and migration truth agree.
@@ -107,6 +110,10 @@
   core CON dependency. It therefore leaves 02A's implementation boundary
   unchanged while requiring fresh repository-wide evidence on the larger
   dependency and test tree.
+- AUTH-09D-B PR #152 activates exactly the two identity-link lifecycle
+  mutations and expands AUTH routes/tests without adding a migration, CON
+  action, task-claim action, fixed-service admission, or outbox seam. The
+  reviewed contributor foundation follows it; AUTH-09E remains a later gate.
 
 ## Canonical merged changes affecting CON
 
@@ -176,7 +183,7 @@
 | `backend/app/modules/projects/{models,schemas,repository,service}.py` | Current guide-bound economic fields and consumers to cut over/remove |
 | `backend/app/modules/tasks/**` | TaskAssignment creation and future submitter policy freeze seam |
 | `backend/app/modules/tasks/models.py::Submission` | Existing immutable version identity: `id`, integer `version`, and `supersedes_submission_id`; no SubmissionVersion table |
-| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/65/15/50 runtime and stable PermissionIds; only AUTH administrative actor/profile/service lifecycle actions are active; no CON/task-claim ActionId |
+| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/65/17/48 runtime and stable PermissionIds; only AUTH administrative actor/profile/service/link lifecycle actions are active; no CON/task-claim ActionId |
 | `backend/app/modules/audit/**` | Shared append-only audit extension point |
 | `backend/app/modules/artifacts/{preparation,sources}.py` | Inactive ART-only preparation; no core CON import |
 

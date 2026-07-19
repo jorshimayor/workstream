@@ -53,6 +53,10 @@ S3-compatible ArtifactStore adapter, real MinIO integration, inactive AWS
 profile support, dependency pins, CI changes, and substantial tests. It adds no
 migration or outbox seam and does not change CON-02A behavior, but it requires
 fresh repository-wide evidence on the combined tree.
+AUTH-09D-B PR #152 then advanced trusted main to `93dd3924`, activating only
+identity-link revoke/reactivate and expanding AUTH lifecycle proof. It adds no
+migration, CON/task-claim identifier, fixed-service admission, or outbox seam;
+the contributor foundation and AUTH-09E remain later gates.
 
 ## Inspected and already aligned
 

@@ -2,9 +2,9 @@
 
 ## Proposed approach
 
-Adopt ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148,
+Adopt AUTH-09D-B PR #152, ART-02B1 PR #151, planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148,
 merged REV-02 PR #147, REV-01 PR #145, and the underlying REV planning PR #128
-plus trusted main `1b5422fc`, including
+plus trusted main `93dd3924`, including
 AUTH-09C PR #146, ART PR #141, AUTH-09A, AUTH-09B PR #143, AUTH PR #140, and
 the underlying WS-XINT PR #139 boundary before runtime work, then deliver WS-CON through
 hidden, reviewable chunks. The
@@ -164,16 +164,18 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `1b5422fc`, merging ART-02B1 PR #151 after planning-only REV
+Trusted `main` is `93dd3924`, merging AUTH-09D-B PR #152 and ART-02B1 PR #151 after planning-only REV
 PLAN2 PR #150, AUTH-09D-A PR #148 and REV-02 PR #147,
 REV-01 PR #145, AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143, REV planning
 PR #128, AUTH-09A, AUTH PR #140, and WS-XINT PR #139.
-Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 15 active actions,
-and 50 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
+Runtime catalogue counts are 74 PermissionIds, 65 ActionIds, 17 active actions,
+and 48 planned actions. No WS-CON or task-claim ActionId is registered. AUTH-09B
 activates only the controlled human `actor.service.provision` operation;
 AUTH-09C activates only administrative `actor.profile.read` and
 `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
-lifecycle actions. None grants service execution or runtime admission. PR #140 adds reviewed AUTH
+lifecycle actions; AUTH-09D-B activates only identity-link revoke/reactivate.
+None grants service execution or runtime admission. The contributor foundation
+and AUTH-09E remain proposed. PR #140 adds reviewed AUTH
 custody/PREP/activation contracts only; the custody transfers and prepared
 protocol remain proposed runtime work.
 

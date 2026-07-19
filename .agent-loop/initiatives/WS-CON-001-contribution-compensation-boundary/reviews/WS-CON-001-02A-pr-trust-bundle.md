@@ -60,6 +60,8 @@ feature chunks own execution behavior.
   coverage.
 - After ART-02B1 merged, the combined outbox/migration plus real-MinIO S3
   focused suite passed 76 tests in 243.28 seconds on the current tree.
+- After AUTH-09D-B merged, the combined outbox/migration, real-MinIO S3, and
+  identity-link lifecycle/concurrency suite passed 78 tests in 378.36 seconds.
 - Affected AUTH lifecycle downgrade tests: 2 passed, including atomic rollback
   to the full `0027` head when AUTH refuses `0026 -> 0025`.
 - Alembic reports exactly one head: `0027_shared_transactional_outbox`.
@@ -72,7 +74,7 @@ feature chunks own execution behavior.
   `workstream_test_d513fb2f03b1`, and the superseded Alembic head
   `0026_shared_transactional_outbox`; exact `0027` evidence must replace it
   before publication.
-- Agent-loop gates: 88 passed after ART-02B1.
+- Agent-loop gates: 88 passed after AUTH-09D-B.
 - Ruff, 90.9% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
 - AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
@@ -88,6 +90,10 @@ feature chunks own execution behavior.
   backend test delta without changing 02A code or migration. The 3-hour
   7-minute run on the prior tree was stopped and discarded; exact-head
   PostgreSQL plus real-MinIO evidence remains pending.
+- AUTH-09D-B PR #152 then advanced trusted main to `93dd3924`. It activates
+  only identity-link revoke/reactivate and adds AUTH route/test coverage, with
+  no migration or 02A boundary change. The one-hour run on the prior tree was
+  stopped and discarded; exact-head evidence remains pending.
 
 ## Test And CI Integrity
 

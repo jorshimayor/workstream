@@ -43,6 +43,12 @@ pins, CI MinIO service, and substantial backend tests. It adds no migration,
 outbox seam, CON identifier, or core transaction dependency, so CON-02A remains
 the same `0027` implementation. Because it materially changes dependencies,
 CI, and repository tests, full-suite evidence must be regenerated.
+Trusted `main` then advanced to `93dd3924` through AUTH-09D-B PR #152. It
+activates exactly `actor.identity_link.revoke` and
+`actor.identity_link.reactivate`, expands AUTH routes/tests, and adds the
+reviewed but inactive contributor-foundation contract. It adds no migration,
+CON/task-claim action, fixed-service admission, or outbox seam. CON-02A remains
+the same `0027` implementation, but repository-wide evidence must rerun.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -98,10 +104,11 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 - CON-09A/09B are deferred optional successors and do not gate the core release.
 - AUTH PR #140 registers no CON ActionId and activates no feature action. Its
   exact custody and prepared-protocol contracts remain upstream gates.
-- Current main has 74 PermissionIds and 65 ActionIds: 15 active and 50 planned.
+- Current main has 74 PermissionIds and 65 ActionIds: 17 active and 48 planned.
   AUTH-09B activates only `actor.service.provision`; AUTH-09C activates only
   `actor.profile.read` and `actor.identity_link.read`; AUTH-09D-A activates only
-  the three actor-profile lifecycle actions. These administrative capabilities
+  the three actor-profile lifecycle actions; AUTH-09D-B activates only
+  identity-link revoke/reactivate. These administrative capabilities
   grant no fixed-service runtime admission or feature authority.
   No CON or task-claim ActionId exists, and the current fixed identities are
   ART-only.
@@ -116,7 +123,7 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 
 ## Active chunk
 
-`WS-CON-001-02A` implementation is reconciled with trusted main `1b5422fc`
+`WS-CON-001-02A` implementation is reconciled with trusted main `93dd3924`
 after the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
@@ -125,8 +132,9 @@ repository-wide evidence must rerun on the `0027` chain before exact-SHA
 internal review. Current focused evidence already passes. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
-because ART PR #151 advanced trusted main. Neither is counted as evidence. It
-stops before dispatcher mechanics and CON-02B.
+because ART PR #151 advanced trusted main; a third was stopped after one hour
+solely because AUTH PR #152 advanced trusted main. None is counted as evidence.
+It stops before dispatcher mechanics and CON-02B.
 
 | Chunk | Status | Notes |
 |---|---|---|
@@ -147,7 +155,7 @@ stops before dispatcher mechanics and CON-02B.
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
 | Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
-| Fixed service runtime | AUTH | AUTH-09A through 09D-A are merged; approve/register any new CON identity/static row, then complete AUTH-09D-B/09E before protected service calls |
+| Fixed service runtime | AUTH | AUTH-09A through 09D-B are merged; merge the contributor foundation, approve/register any new CON identity/static row, then complete AUTH-09E before protected service calls |
 | Feature handler authority | Human + AUTH + CON | Approve exact identities/actions/static rows; no dispatcher inheritance |
 | AUTH prepared protocol | AUTH | Merge AUTH-PREP after AUTH-09E; all CON-sensitive mutations consume its exact opaque handle contract |
 | task.claim | AUTH + task + CON | Only PermissionId exists; after AUTH-10/PREP and stable task seam, merge CON-05A freeze and task-owned composition; AUTH-13 enumerates/registers/evaluates/activates afterward |

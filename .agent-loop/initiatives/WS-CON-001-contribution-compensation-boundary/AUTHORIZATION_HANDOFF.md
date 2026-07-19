@@ -2,14 +2,15 @@
 
 ## Current baseline
 
-Trusted `main` is `1b5422fc` after ART-02B1 PR #151 and planning-only REV PLAN2 PR #150,
-AUTH-09D-A PR #148, REV-02 PR #147 and
+Trusted `main` is `93dd3924` after AUTH-09D-B PR #152, ART-02B1 PR #151,
+planning-only REV PLAN2 PR #150, AUTH-09D-A PR #148, REV-02 PR #147 and
 REV-01 PR #145, layered on AUTH-09C PR #146, ART PR #141, AUTH-09B PR #143,
 merged REV planning PR #128, AUTH-09A/AUTH PR #140, and the earlier WS-XINT PR
 #139 boundary. The runtime catalogue contains 74 PermissionIds and 65 ActionIds:
-15 active and 50 planned. AUTH-09B activates only `actor.service.provision`;
+17 active and 48 planned. AUTH-09B activates only `actor.service.provision`;
 AUTH-09C activates only `actor.profile.read` and `actor.identity_link.read`;
-AUTH-09D-A activates only the three actor-profile lifecycle actions. No
+AUTH-09D-A activates only the three actor-profile lifecycle actions;
+AUTH-09D-B activates only identity-link revoke/reactivate. No
 WS-CON-specific or task-claim ActionId below is registered. PR #140 still defines the
 prepared/custody plan; it does not implement AUTH-PREP, transfer ART/REV custody,
 register a CON action, or activate a CON feature action.
