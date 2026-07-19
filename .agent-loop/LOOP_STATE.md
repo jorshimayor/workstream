@@ -31,13 +31,13 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`, explicitly
-  started by the user on 2026-07-19 from trusted `main` at `93dd392`. Current
-  exact contract `2a21166d` passed required L1 preimplementation review;
-  initial findings are repaired, and exact code SHA `4d1fc507` passed all nine
-  required internal tracks. PR publication and external checks are the current
-  gate; Backend must still prove 78/90 percent aggregate coverage. It changes no action
-  availability, and no service caller becomes executable before AUTH-09E.
+- Active implementation chunk: `WS-AUTH-001-09E`, explicitly started by the
+  user on 2026-07-19 from trusted `main` at `8d5eb15b` after contributor
+  foundation PR #153 and signed memory `66ab58d`. Its refreshed contract passed
+  all nine required L1 preimplementation tracks after resolving context,
+  feature-boundary, transaction, verification, coverage, docs, and reuse
+  findings. Runtime implementation is the current gate; no feature action or
+  call site becomes active in this chunk.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -59,9 +59,9 @@
   protocol proof plus a fail-closed, runtime-ineligible native AWS profile;
   ART-02C1 remains inactive.
 - Authorization checkpoint: AUTH-07B through AUTH-09D-B merged through PRs
-  #130, #131, #132, #143, #146, #148, and #152. The contributor foundation is
-  internally approved at code SHA `4d1fc507`; AUTH-09E remains
-  inactive.
+  #130, #131, #132, #143, #146, #148, and #152. Contributor foundation PR #153
+  merged as `8d5eb15b`; AUTH-09E is now the sole active AUTH implementation
+  chunk.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

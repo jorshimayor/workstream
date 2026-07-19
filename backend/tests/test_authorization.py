@@ -22,7 +22,7 @@ from sqlalchemy.exc import DBAPIError, IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from starlette.requests import Request
 
-from app.api.deps.authorization import get_authorization_service
+from app.api.deps.authorization import get_authorization_actor, get_authorization_service
 from app.core.api_controls import StructuredHTTPException
 from app.core.config import get_settings
 from app.modules.audit.schemas import (
@@ -121,10 +121,12 @@ from app.modules.authorization.runtime import (
     AuthorizationDecision,
     AuthorizationDenied,
     AuthorizationDenialCode,
+    HumanAuthorizationContext,
     IdentityLinkStatus,
     MatchedAuthorityKind,
     PermissionCatalogueResourceContext,
     ServiceActorProvisionResourceContext,
+    ServiceAuthorizationContext,
     SystemResourceContext,
     authorization_resource_digest,
 )
@@ -966,7 +968,17 @@ def _runtime_context(
     link_status: IdentityLinkStatus = IdentityLinkStatus.ACTIVE,
     actor_kind: ActorKind = ActorKind.HUMAN,
 ) -> AuthorizationContext:
-    return AuthorizationContext(
+    context_type = (
+        ServiceAuthorizationContext
+        if actor_kind is ActorKind.SERVICE
+        else HumanAuthorizationContext
+    )
+    service_fields = (
+        {"service_identity": ServiceIdentity.ARTIFACT_VERIFIER}
+        if actor_kind is ActorKind.SERVICE
+        else {}
+    )
+    return context_type(
         actor_profile_id=uuid4(),
         actor_kind=actor_kind,
         actor_status=actor_status,
@@ -974,6 +986,7 @@ def _runtime_context(
         identity_link_status=link_status,
         request_id=uuid4(),
         correlation_id=uuid4(),
+        **service_fields,
     )
 
 
@@ -992,13 +1005,19 @@ def _runtime_service(
     context: AuthorizationContext,
     *,
     revalidate=_DEFAULT_REVALIDATOR,
+    revalidate_service=None,
 ) -> tuple[AuthorizationService, _DecisionEvidence]:
     if revalidate is _DEFAULT_REVALIDATOR:
 
         async def revalidate(current, _resource):
             return current
 
-    service = AuthorizationService(object(), context, revalidate_actor_self=revalidate)  # type: ignore[arg-type]
+    service = AuthorizationService(
+        object(),  # type: ignore[arg-type]
+        context,
+        revalidate_actor_self=revalidate,
+        revalidate_service=revalidate_service,
+    )
     evidence = _DecisionEvidence()
     service._audit = evidence  # type: ignore[assignment]
     return service, evidence
@@ -2631,6 +2650,177 @@ async def test_authorization_dependency_rolls_back_a_forgotten_route_transaction
     assert session.rollback_count == 1
 
 
+async def test_authorization_dependency_admits_service_without_human_rate_control(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = SimpleNamespace(subject_kind="service")
+    admitted = SimpleNamespace(profile=object(), identity_link=object())
+    calls: list[object] = []
+
+    async def resolve_service(_self, current):
+        calls.append(current)
+        return admitted
+
+    async def forbidden_human_lookup(*_args, **_kwargs):
+        raise AssertionError("service admission entered the human path")
+
+    monkeypatch.setattr(ActorService, "resolve_service_for_authorization", resolve_service)
+    monkeypatch.setattr(
+        ActorService,
+        "find_actor_for_authorization",
+        forbidden_human_lookup,
+    )
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    result = SimpleNamespace(token=token)
+
+    resolved = await get_authorization_actor(
+        request,
+        result,  # type: ignore[arg-type]
+        object(),  # type: ignore[arg-type]
+        object(),  # type: ignore[arg-type]
+    )
+
+    assert resolved is admitted
+    assert calls == [token]
+
+
+async def test_service_denial_rolls_back_observations_before_clean_restage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Session:
+        rollback_count = 0
+        commit_count = 0
+
+        async def rollback(self):
+            self.rollback_count += 1
+
+        async def commit(self):
+            self.commit_count += 1
+
+        def in_transaction(self):
+            return True
+
+    session = Session()
+    actor_id, link_id = uuid4(), uuid4()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(actor_id),
+            actor_kind="service",
+            status="active",
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER.value,
+        ),
+        identity_link=SimpleNamespace(id=str(link_id), status="active"),
+    )
+    observations: list[str] = []
+
+    async def stage_observation(_self, _resolved):
+        observations.append("staged")
+        return _resolved
+
+    monkeypatch.setattr(ActorService, "touch_after_authorization", stage_observation)
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, session)  # type: ignore[arg-type]
+    service = await anext(dependency)
+
+    class Evidence:
+        rollback_counts: list[int] = []
+
+        async def add_authority_event(self, _event):
+            self.rollback_counts.append(session.rollback_count)
+
+    evidence = Evidence()
+    service._audit = evidence  # type: ignore[assignment]
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(ActionId.ARTIFACT_VERIFICATION_EXECUTE, resource)
+    with pytest.raises(StructuredHTTPException) as public:
+        await dependency.athrow(exc_info.value)
+
+    assert public.value.error_code == "permission_not_granted"
+    assert observations == ["staged"]
+    assert evidence.rollback_counts == [0, 1]
+    assert session.rollback_count == 1
+    assert session.commit_count == 1
+
+
+async def test_service_dependency_cancellation_rolls_back_staged_observation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Session:
+        rollback_count = 0
+
+        async def rollback(self):
+            self.rollback_count += 1
+
+        def in_transaction(self):
+            return True
+
+    session = Session()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(uuid4()),
+            actor_kind="service",
+            status="active",
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER.value,
+        ),
+        identity_link=SimpleNamespace(id=str(uuid4()), status="active"),
+    )
+    observations: list[str] = []
+
+    async def stage_observation(_self, _resolved):
+        observations.append("staged")
+        return _resolved
+
+    monkeypatch.setattr(ActorService, "touch_after_authorization", stage_observation)
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, session)  # type: ignore[arg-type]
+    await anext(dependency)
+
+    with pytest.raises(asyncio.CancelledError):
+        await dependency.athrow(asyncio.CancelledError())
+
+    assert observations == ["staged"]
+    assert session.rollback_count == 1
+
+
+async def test_service_observation_persistence_failure_is_retryable_and_private(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_subject = "private-service-subject"
+
+    class Session:
+        rollback_count = 0
+
+        async def rollback(self):
+            self.rollback_count += 1
+
+    session = Session()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(uuid4()),
+            actor_kind="service",
+            status="active",
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER.value,
+        ),
+        identity_link=SimpleNamespace(id=str(uuid4()), status="active"),
+    )
+
+    async def fail_observation(_self, _resolved):
+        raise SQLAlchemyError(private_subject)
+
+    monkeypatch.setattr(ActorService, "touch_after_authorization", fail_observation)
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, session)  # type: ignore[arg-type]
+
+    with pytest.raises(StructuredHTTPException) as exc_info:
+        await anext(dependency)
+
+    assert exc_info.value.status_code == 503
+    assert exc_info.value.error_code == "service_unavailable"
+    assert private_subject not in str(exc_info.value)
+    assert session.rollback_count == 1
+
+
 def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
     context = _runtime_context()
     public_methods = {
@@ -2654,9 +2844,18 @@ def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
         assert "request_id" not in inspect.signature(method).parameters
         assert "correlation_id" not in inspect.signature(method).parameters
     with pytest.raises(ValidationError):
-        AuthorizationContext(
+        HumanAuthorizationContext(
             **context.model_dump(),
             roles=("admin",),
+        )
+    with pytest.raises(ValidationError):
+        HumanAuthorizationContext(
+            **context.model_dump(),
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
+        )
+    with pytest.raises(ValidationError):
+        ServiceAuthorizationContext(
+            **{**context.model_dump(), "actor_kind": ActorKind.SERVICE},
         )
     with pytest.raises(ValidationError):
         ActorSelfResourceContext(
@@ -2736,6 +2935,134 @@ async def test_authorization_kernel_denies_planned_and_system_actions(
     assert exc_info.value.decision.denial_code is expected
     assert exc_info.value.public_code in {"permission_not_granted", "resource_guard_denied"}
     assert evidence.events[0].event_type is AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED
+
+
+async def test_fixed_service_kernel_selects_exact_action_before_availability() -> None:
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+    for identity, own_actions in SERVICE_ACTIONS_BY_IDENTITY.items():
+        context = ServiceAuthorizationContext(
+            actor_profile_id=uuid4(),
+            actor_kind=ActorKind.SERVICE,
+            actor_status=ActorStatus.ACTIVE,
+            identity_link_id=uuid4(),
+            identity_link_status=IdentityLinkStatus.ACTIVE,
+            service_identity=identity,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        service, _ = _runtime_service(context)
+        for action in set().union(*SERVICE_ACTIONS_BY_IDENTITY.values()):
+            with pytest.raises(AuthorizationDenied) as exc_info:
+                await service.require(action, resource)
+            expected = (
+                AuthorizationDenialCode.ACTION_UNAVAILABLE
+                if action in own_actions
+                else AuthorizationDenialCode.PERMISSION_NOT_GRANTED
+            )
+            assert exc_info.value.decision.denial_code is expected
+
+
+async def test_fixed_service_kernel_never_enters_human_grant_evaluation() -> None:
+    context = _runtime_context(actor_kind=ActorKind.SERVICE)
+    service, _ = _runtime_service(context)
+
+    class HumanFacts:
+        async def find_effective_grant(self, *_args, **_kwargs):
+            raise AssertionError("service context entered human grant evaluation")
+
+    service._admin = HumanFacts()  # type: ignore[assignment]
+    resource = PermissionCatalogueResourceContext(
+        resource_type="permission_catalogue",
+        resource_id="workstream:permission_catalogue",
+    )
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ, resource)
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.PERMISSION_NOT_GRANTED
+
+
+async def test_fixed_service_active_candidate_uses_one_revalidation_seam(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _runtime_context(actor_kind=ActorKind.SERVICE)
+    calls: list[tuple[ServiceIdentity, ActionId]] = []
+
+    async def revalidate(current: ServiceAuthorizationContext, action: ActionId):
+        calls.append((current.service_identity, action))
+        return current
+
+    service, _ = _runtime_service(context, revalidate_service=revalidate)
+    action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
+    definition = ACTION_BY_ID[action]
+    monkeypatch.setattr(
+        authorization_kernel,
+        "ACTION_BY_ID",
+        {
+            **ACTION_BY_ID,
+            action: replace(definition, availability=ActionAvailability.ACTIVE),
+        },
+    )
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource)
+
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.RESOURCE_GUARD_DENIED
+    assert exc_info.value.decision.revalidated is True
+    assert calls == [(ServiceIdentity.ARTIFACT_VERIFIER, action)]
+
+
+@pytest.mark.parametrize(
+    ("actor_status", "link_status", "expected"),
+    [
+        (ActorStatus.ACTIVE, IdentityLinkStatus.REVOKED, AuthorizationDenialCode.IDENTITY_LINK_REVOKED),
+        (ActorStatus.SUSPENDED, IdentityLinkStatus.ACTIVE, AuthorizationDenialCode.ACTOR_SUSPENDED),
+        (ActorStatus.DEACTIVATED, IdentityLinkStatus.ACTIVE, AuthorizationDenialCode.ACTOR_DEACTIVATED),
+    ],
+)
+async def test_fixed_service_lifecycle_denies_before_matrix_evaluation(
+    actor_status: ActorStatus,
+    link_status: IdentityLinkStatus,
+    expected: AuthorizationDenialCode,
+) -> None:
+    context = _runtime_context(
+        actor_kind=ActorKind.SERVICE,
+        actor_status=actor_status,
+        link_status=link_status,
+    )
+    service, _ = _runtime_service(context)
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(ActionId.ARTIFACT_VERIFICATION_EXECUTE, resource)
+
+    assert exc_info.value.decision.denial_code is expected
+
+
+async def test_fixed_service_revalidation_rejects_locked_identity_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _runtime_context(actor_kind=ActorKind.SERVICE)
+
+    async def drifted(_current: ServiceAuthorizationContext, _action: ActionId):
+        return None
+
+    service, _ = _runtime_service(context, revalidate_service=drifted)
+    action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
+    monkeypatch.setattr(
+        authorization_kernel,
+        "ACTION_BY_ID",
+        {
+            **ACTION_BY_ID,
+            action: replace(ACTION_BY_ID[action], availability=ActionAvailability.ACTIVE),
+        },
+    )
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource)
+
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.PERMISSION_NOT_GRANTED
+    assert exc_info.value.decision.revalidated is True
 
 
 async def test_authorization_kernel_denies_active_action_without_implemented_authority(

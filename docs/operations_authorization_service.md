@@ -706,6 +706,31 @@ manifest followed by AUTH-owned enum/constraint/matrix, provisioning, admission,
 and cross-service denial proof. Do not create a shared review service or a
 database service-grant table.
 
+Fixed-service admission is request-local. Resolve only the verified issuer and
+opaque subject through the exact stored link and active service profile; never
+accept a service identity, action, permission, or matrix row from request or
+token claims. An unknown or absent provisioned row returns bounded
+`service_actor_not_provisioned` and does not block startup or Access
+Administrator provisioning. Static catalogue/matrix mismatch is instead a
+code invariant and may fail startup.
+
+For an admitted service, AUTH selects its exact static `ActionId` row before
+availability. Cross-service actions deny without human grant lookup, including
+actions sharing a `PermissionId`; own rows remain unavailable while planned.
+Revoked links and suspended or deactivated profiles deny from current database
+state. Failed admission creates no first-access row, invokes no human rate
+control, and advances no timestamp. If exact active resolution staged
+observation timestamps before a later denial, cancellation, or evidence
+failure, the request transaction rolls them back before secret-free denial
+evidence is restaged from a clean transaction.
+
+Diagnose fixed-service denials only through request/correlation ID, local actor
+reference, exact ActionId, and bounded denial facts. Never log or export issuer,
+opaque subject, bearer material, claims, scopes, provider payloads, mapping-file
+contents, or service credentials. Lifecycle or immutable-identity drift during
+the profile-then-link lock/revalidation step is a denial, not a fallback to
+human grants.
+
 ## Actor Self Decision Operations
 
 `GET /api/v1/actors/me` declares `actor.profile.read_self`; it permits an

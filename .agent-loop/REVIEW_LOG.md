@@ -1,5 +1,24 @@
 # Review Log
 
+## 2026-07-19 - WS-AUTH-001-09E Preimplementation Review Passed
+
+- The user explicitly started AUTH-09E from trusted `main` `8d5eb15b` after
+  contributor foundation PR #153 and signed memory `66ab58d` completed.
+- Initial review rejected missing deterministic verification commands and an
+  acceptance criterion that overclaimed feature-owned locked resource
+  recomposition while feature call sites were forbidden.
+- The repaired contract defines a discriminated human/service context union,
+  exact ActionId matrix-before-availability dispatch, one AUTH-owned
+  transaction-local service revalidation seam, rollback-safe observations,
+  separate 90 percent actor/authorization/dependency coverage, and explicit
+  feature-boundary, privacy, cancellation, and persistence-failure proof.
+- Senior engineering, QA/test, security/auth, product/ops, architecture, CI
+  integrity, docs, reuse/dedup, and test-delta tracks passed. Implementation may
+  begin for AUTH-09E only; no feature action or call site may activate.
+- The human confirmed ART owns migration `0028`. AUTH-09E contains no migration
+  and allocates no revision; later AUTH migration work must wait for the ART PR
+  to merge and then allocate from trusted main.
+
 ## 2026-07-19 - WS-AUTH-001-CONTRIBUTOR-FOUNDATION Internal Review Passed
 
 - Exact code SHA `4d1fc507c343d483677a332c2a91885e32571693` passed senior,

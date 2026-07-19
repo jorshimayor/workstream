@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Internal review passed at `4d1fc507`; PR/external checks pending; aggregate coverage mandatory in Backend |
+| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Explicitly started from trusted `main` `8d5eb15b`; refreshed contract passed all nine L1 preimplementation tracks; implementation active |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,6 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until contributor-foundation merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until signed 02B1 merge memory and explicit user start |
