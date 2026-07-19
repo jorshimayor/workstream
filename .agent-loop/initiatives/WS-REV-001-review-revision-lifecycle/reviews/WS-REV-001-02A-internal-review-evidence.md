@@ -2,8 +2,8 @@
 
 ## Candidate
 
-- Trusted base: `8d5eb15b384fd75787ce98a099400a1d335d2560`
-- Reviewed planning candidate: `c545cd10272e10709a13b6212ef62fd1adc4f39f`
+- Trusted base: `44f2467cedc266d2efe261119cfff436ac6b7715`
+- Reviewed planning candidate: `6613f0611acd4682e54c4175065a34e65fc62942`
 - Scope: 21 REV initiative Markdown paths and the one required schema-v2 merge
   intent, including internal/external review publication artifacts
 - Runtime status: prohibited; no backend runtime, model, schema, migration,
@@ -16,16 +16,16 @@ Valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: c545cd10272e10709a13b6212ef62fd1adc4f39f
+Reviewed code SHA: 6613f0611acd4682e54c4175065a34e65fc62942
 
-Reviewed at: 2026-07-19T15:33:17Z
+Reviewed at: 2026-07-19T16:53:21Z
 
-Reviewer run IDs: /root/rev02a_external_senior@c545cd10272e10709a13b6212ef62fd1adc4f39f; /root/rev02a_external_qa@c545cd10272e10709a13b6212ef62fd1adc4f39f; /root/rev02a_external_security@c545cd10272e10709a13b6212ef62fd1adc4f39f
+Reviewer run IDs: /root/rev02a_external_senior@6613f0611acd4682e54c4175065a34e65fc62942; /root/rev02a_external_qa@6613f0611acd4682e54c4175065a34e65fc62942; /root/rev02a_external_security@6613f0611acd4682e54c4175065a34e65fc62942
 
 ## Circuit breaker
 
 PASS with a documented planning-only size exception. The candidate changes 22
-paths with 1,389 insertions and 283 deletions, above the default review-size
+paths with 1,498 insertions and 290 deletions, above the default review-size
 guideline, but it changes no runtime, schema, migration, workflow, dependency,
 test, or product-document behavior. It replaces one unreviewable L1 runtime
 contract with three independently gated executable child contracts. Each child
@@ -76,6 +76,11 @@ No Critical, High, or Medium finding remains.
   restated then-current-head allocation for every executable child.
 - Corrected the trust bundle after review to distinguish the original 19-path
   planning candidate from the full 22-path PR scope.
+- Rebased without conflict onto ART PR #154 merge `44f2467c`, updated the sole
+  head from historical `0027_contributor_foundation` to current
+  `0028_artifact_admission`, and proved ART added no Project/setup writer.
+- Kept ART's generic admission/put-attempt foundation separate from the still
+  unmerged packet-read, review-evidence finalize, and Submission digest gates.
 
 ## Deterministic evidence
 
@@ -90,9 +95,9 @@ No Critical, High, or Medium finding remains.
 - `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 backend/.venv/bin/python scripts/test_agent_gates.py`:
   PASS, 88 tests.
 - `(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)`: PASS,
-  90.3 percent overall.
+  90.5 percent overall.
 - `(cd backend && .venv/bin/alembic heads)`: PASS, one head,
-  `0027_contributor_foundation`.
+  `0028_artifact_admission`.
 - `backend/.venv/bin/python scripts/update_post_merge_memory.py
   validate-merge-intent --base-ref origin/main`: PASS for
   `WS-REV-001-02A -> WS-REV-001-02A1` with explicit start required.
@@ -100,7 +105,8 @@ No Critical, High, or Medium finding remains.
 - Scope proof: exactly 22 candidate paths, all within the REV initiative except
   `.agent-loop/merge-intents/WS-REV-001-02A.json`.
 - Ancestry proof: AUTH reviewed candidate `0ca5a632` is an ancestor of PR head
-  `6a70b33f`, which is an ancestor of trusted merge/base `8d5eb15b`.
+  `6a70b33f`, which is an ancestor of AUTH merge `8d5eb15b`; ART final head
+  `c93f1a24` is an ancestor of trusted merge/base `44f2467c`.
 
 The backend runtime suite, focused Project/Task coverage, and migration
 upgrade/downgrade suites were not run because this candidate changes planning
@@ -111,8 +117,9 @@ commands.
 
 ## Remaining gates
 
-- GitHub CI and CodeRabbit passed on prior pushed head `8f12f656`; fresh external
-  checks must pass after the repaired candidate and rebound evidence are pushed.
+- All prior GitHub and CodeRabbit results are historical after the ART rebase;
+  fresh external checks must pass after the rebased candidate and evidence are
+  force-pushed.
 - Human PR review remains required.
 - Only the user may approve and merge the specific PR.
 - Merge does not start 02A1; every child requires a new explicit instruction.
@@ -144,6 +151,19 @@ The trust bundle's initially stale path count was repaired from the original
 19-path planning-candidate count to the full 22-path PR count and re-reviewed to
 PASS. No Critical, High, Medium, or Low finding remains; all reviewer sessions
 completed.
+
+## ART #154 rebase review
+
+The branch rebased all six commits without conflict onto trusted ART merge
+`44f2467cedc266d2efe261119cfff436ac6b7715`. Exact-SHA review of candidate
+`6613f0611acd4682e54c4175065a34e65fc62942` verified the sole migration lineage
+`0026_actor_profile_lifecycle -> 0027_contributor_foundation ->
+0028_artifact_admission`, exact AUTH/ART ancestry, and no Project/setup writer
+addition in ART #154. All nine required tracks passed. QA found that the
+external-response artifact still described pre-rebase `c545cd10`/`ebb8db88`
+evidence as current; the evidence-only repair now labels it historical and was
+re-reviewed to PASS. No finding remains, and no runtime or child implementation
+started.
 
 ## Disposition
 

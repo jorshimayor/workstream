@@ -28,14 +28,17 @@ explicit start.
 
 ### Publication evidence status
 
-CodeRabbit's current-head re-review correctly found that the first response
+CodeRabbit's pre-rebase re-review correctly found that the first response
 mixed the historical stale-SHA gate with repaired-candidate evidence and pending
 republish checks. The stale-SHA failure below is now explicitly historical.
-Internal evidence is rebound to reviewed candidate
+Before the ART #154 rebase, internal evidence was rebound to reviewed candidate
 `c545cd10272e10709a13b6212ef62fd1adc4f39f` and passed at evidence head
-`ebb8db88550c623d87296681581e81e5bc6ef426`. Merge remains blocked until every
-GitHub and CodeRabbit check on the final pushed head passes with no unresolved
-finding, followed by the user's approval of PR #156.
+`ebb8db88550c623d87296681581e81e5bc6ef426`. Those SHAs and results are now
+historical because the conflict-free ART #154 rebase rewrote the branch. The
+rebased candidate requires fresh exact-SHA review and evidence rebinding. Merge
+remains blocked until that evidence passes and every GitHub and CodeRabbit check
+on the final pushed head passes with no unresolved finding, followed by the
+user's approval of PR #156.
 
 ## Comments deferred
 
@@ -58,9 +61,11 @@ not start 02A1 or change product, architecture, security, or migration behavior.
   `0027_contributor_foundation`. After conflict-free rebase onto ART PR #154:
   PASS, one head, `0028_artifact_admission`.
 - Diff integrity: PASS.
-- Internal-review evidence: PASS after exact-SHA review and rebind. The earlier
-  stale-SHA failure was the expected historical result before candidate
-  `c545cd10` was reviewed and evidence head `ebb8db88` was committed.
+- Internal-review evidence before ART #154 rebase: historical PASS after review
+  of candidate `c545cd10` and evidence head `ebb8db88`. Rebased candidate
+  `6613f0611acd4682e54c4175065a34e65fc62942` passed all required tracks and its
+  evidence is rebound against base
+  `44f2467cedc266d2efe261119cfff436ac6b7715`.
 
 ## Remaining risks
 

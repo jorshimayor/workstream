@@ -102,8 +102,9 @@ subsystems remain explicit in the executable child contracts.
 ## Reviewer results
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
-reuse/dedup, test delta, and CI integrity all pass on repaired planning SHA
-`c545cd10272e10709a13b6212ef62fd1adc4f39f`. The circuit breaker approved the
+reuse/dedup, test delta, and CI integrity all pass on rebased planning SHA
+`6613f0611acd4682e54c4175065a34e65fc62942` against ART-merged trusted base
+`44f2467cedc266d2efe261119cfff436ac6b7715`. The circuit breaker approved the
 planning-only size exception because every executable boundary is split and
 separately gated.
 
@@ -111,8 +112,9 @@ separately gated.
 
 After the prior review cycle passed, ART PR #154 merged and PR #156 rebased
 without conflict onto trusted main `44f2467c`. This rewrote every branch SHA;
-all prior GitHub/CodeRabbit and exact-SHA internal results are historical until
-the rebased candidate is reviewed, rebound, force-pushed, and rechecked.
+all prior GitHub/CodeRabbit results are historical. The rebased candidate has
+now passed exact-SHA internal review and evidence rebinding; it must still be
+force-pushed and pass fresh final-head external checks.
 
 On prior pushed head `8f12f656`, GitHub Backend and Agent Gates passed, and
 CodeRabbit passed with one actionable source-manifest finding: a historical
