@@ -1,7 +1,7 @@
 """add durable-byte admission and prepared put attempts
 
-Revision ID: 0027_artifact_admission
-Revises: 0026_actor_profile_lifecycle
+Revision ID: 0028_artifact_admission
+Revises: 0027_contributor_foundation
 Create Date: 2026-07-19
 """
 
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "0027_artifact_admission"
-down_revision = "0026_actor_profile_lifecycle"
+revision = "0028_artifact_admission"
+down_revision = "0027_contributor_foundation"
 branch_labels = depends_on = None
 
 _ADMISSION_TABLES = (

@@ -1683,11 +1683,11 @@ def test_artifact_admission_migration_preserves_prior_rows_and_round_trips_empty
             asyncio.run(_reset_admission_test_schema(isolated_database_env))
             command.upgrade(config, "0026_actor_profile_lifecycle")
             asyncio.run(seed_prior_namespace())
-            command.upgrade(config, "0027_artifact_admission")
+            command.upgrade(config, "0028_artifact_admission")
             assert asyncio.run(state()) == (1, True)
             command.downgrade(config, "0026_actor_profile_lifecycle")
             assert asyncio.run(state()) == (1, False)
-            command.upgrade(config, "0027_artifact_admission")
+            command.upgrade(config, "0028_artifact_admission")
             assert asyncio.run(state()) == (1, True)
             asyncio.run(cleanup())
         finally:
@@ -1768,7 +1768,7 @@ def test_artifact_admission_migration_refuses_populated_downgrade(
     with migration_lock():
         try:
             asyncio.run(_reset_admission_test_schema(isolated_database_env))
-            command.upgrade(config, "0027_artifact_admission")
+            command.upgrade(config, "0028_artifact_admission")
             asyncio.run(seed_attempt_only())
             with pytest.raises(
                 RuntimeError,
