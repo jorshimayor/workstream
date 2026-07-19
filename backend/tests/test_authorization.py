@@ -2684,6 +2684,42 @@ async def test_authorization_dependency_admits_service_without_human_rate_contro
     assert calls == [token]
 
 
+@pytest.mark.parametrize(
+    ("profile_status", "link_status"),
+    [("suspended", "active"), ("deactivated", "active"), ("active", "revoked")],
+)
+async def test_inactive_service_dependency_stages_no_observation(
+    monkeypatch: pytest.MonkeyPatch,
+    profile_status: str,
+    link_status: str,
+) -> None:
+    class Session:
+        async def rollback(self):
+            return None
+
+        def in_transaction(self):
+            return True
+
+    async def forbidden_touch(*_args, **_kwargs):
+        raise AssertionError("inactive service staged an observation")
+
+    monkeypatch.setattr(ActorService, "touch_after_authorization", forbidden_touch)
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(uuid4()),
+            actor_kind="service",
+            status=profile_status,
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER.value,
+        ),
+        identity_link=SimpleNamespace(id=str(uuid4()), status=link_status),
+    )
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, Session())  # type: ignore[arg-type]
+
+    await anext(dependency)
+    await dependency.aclose()
+
+
 async def test_service_denial_rolls_back_observations_before_clean_restage(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3038,15 +3074,59 @@ async def test_fixed_service_lifecycle_denies_before_matrix_evaluation(
     assert exc_info.value.decision.denial_code is expected
 
 
-async def test_fixed_service_revalidation_rejects_locked_identity_drift(
+@pytest.mark.parametrize(
+    ("profile_status", "link_status", "service_identity", "expected"),
+    [
+        ("suspended", "active", ServiceIdentity.ARTIFACT_VERIFIER.value, AuthorizationDenialCode.ACTOR_SUSPENDED),
+        ("deactivated", "active", ServiceIdentity.ARTIFACT_VERIFIER.value, AuthorizationDenialCode.ACTOR_DEACTIVATED),
+        ("active", "revoked", ServiceIdentity.ARTIFACT_VERIFIER.value, AuthorizationDenialCode.IDENTITY_LINK_REVOKED),
+        ("active", "active", ServiceIdentity.ARTIFACT_SCHEDULER.value, AuthorizationDenialCode.PERMISSION_NOT_GRANTED),
+        ("active", "active", "malformed-service-identity", AuthorizationDenialCode.PERMISSION_NOT_GRANTED),
+    ],
+)
+async def test_fixed_service_real_revalidation_rejects_locked_drift(
     monkeypatch: pytest.MonkeyPatch,
+    profile_status: str,
+    link_status: str,
+    service_identity: str,
+    expected: AuthorizationDenialCode,
 ) -> None:
-    context = _runtime_context(actor_kind=ActorKind.SERVICE)
+    class Session:
+        async def rollback(self):
+            return None
 
-    async def drifted(_current: ServiceAuthorizationContext, _action: ActionId):
-        return None
+        def in_transaction(self):
+            return True
 
-    service, _ = _runtime_service(context, revalidate_service=drifted)
+    actor_id, link_id = uuid4(), uuid4()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(actor_id),
+            actor_kind="service",
+            status="active",
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER.value,
+        ),
+        identity_link=SimpleNamespace(id=str(link_id), status="active"),
+    )
+    locked = SimpleNamespace(
+        profile=SimpleNamespace(
+            id=str(actor_id),
+            actor_kind="service",
+            status=profile_status,
+            service_identity=service_identity,
+        ),
+        identity_link=SimpleNamespace(id=str(link_id), status=link_status),
+    )
+
+    async def no_observation(_self, current):
+        return current
+
+    async def lock_drifted(_self, _resolved):
+        return locked
+
+    monkeypatch.setattr(ActorService, "touch_after_authorization", no_observation)
+    monkeypatch.setattr(ActorService, "lock_actor_for_authorization", lock_drifted)
+
     action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
     monkeypatch.setattr(
         authorization_kernel,
@@ -3056,6 +3136,57 @@ async def test_fixed_service_revalidation_rejects_locked_identity_drift(
             action: replace(ACTION_BY_ID[action], availability=ActionAvailability.ACTIVE),
         },
     )
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, Session())  # type: ignore[arg-type]
+    service = await anext(dependency)
+
+    class Evidence:
+        async def add_authority_event(self, _event):
+            return None
+
+    service._audit = Evidence()  # type: ignore[assignment]
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource)
+
+    assert exc_info.value.decision.denial_code is expected
+    assert exc_info.value.decision.revalidated is True
+    await dependency.aclose()
+
+
+@pytest.mark.parametrize("drift", ["matrix", "availability"])
+async def test_fixed_service_revalidation_rejects_matrix_or_availability_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    drift: str,
+) -> None:
+    context = _runtime_context(actor_kind=ActorKind.SERVICE)
+    action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
+    active_actions = {
+        **ACTION_BY_ID,
+        action: replace(ACTION_BY_ID[action], availability=ActionAvailability.ACTIVE),
+    }
+    monkeypatch.setattr(authorization_kernel, "ACTION_BY_ID", active_actions)
+
+    async def revalidate(current: ServiceAuthorizationContext, _action: ActionId):
+        if drift == "matrix":
+            monkeypatch.setattr(
+                authorization_kernel,
+                "SERVICE_ACTIONS_BY_IDENTITY",
+                {**SERVICE_ACTIONS_BY_IDENTITY, current.service_identity: frozenset()},
+            )
+        else:
+            monkeypatch.setattr(
+                authorization_kernel,
+                "ACTION_BY_ID",
+                {
+                    **active_actions,
+                    action: replace(active_actions[action], availability=ActionAvailability.PLANNED),
+                },
+            )
+        return current
+
+    service, _ = _runtime_service(context, revalidate_service=revalidate)
     resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
 
     with pytest.raises(AuthorizationDenied) as exc_info:

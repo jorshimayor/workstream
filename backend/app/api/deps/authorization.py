@@ -159,9 +159,9 @@ async def get_authorization_service(
         """Rebuild fixed-service authority from exact locked actor rows."""
         try:
             locked = await actor_service.lock_actor_for_authorization(resolved)
-        except RuntimeError:
+            refreshed = _authorization_context(locked, request_id, correlation_id)
+        except (RuntimeError, ValueError):
             return None
-        refreshed = _authorization_context(locked, request_id, correlation_id)
         if not isinstance(refreshed, ServiceAuthorizationContext):
             return None
         if refreshed.service_identity is not context.service_identity:
@@ -176,7 +176,11 @@ async def get_authorization_service(
         revalidate_service=revalidate_service,
     )
     try:
-        if isinstance(context, ServiceAuthorizationContext):
+        if (
+            isinstance(context, ServiceAuthorizationContext)
+            and context.actor_status is ActorStatus.ACTIVE
+            and context.identity_link_status is IdentityLinkStatus.ACTIVE
+        ):
             await actor_service.touch_after_authorization(resolved)
         yield service
     except AuthorizationDenied as exc:
