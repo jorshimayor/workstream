@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | Implemented; deterministic proof and required internal review pass; ready PR publication |
+| `WS-AUTH-001-09D-B` | Identity-Link Lifecycle And Race Closure | L1 | PR #152 open; trusted main `1b5422f` integrated; refreshed checks and explicit human review pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -18,8 +18,7 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until contributor-foundation merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
-| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
+| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until signed 02B1 merge memory and explicit user start |
 | `WS-ART-001-02C2` | Verification Publication And Fencing | L1 | Inactive until 02C1 merge and explicit user start |
 | `WS-ART-001-02C3` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C2 merge and explicit user start |
 | `WS-ART-001-02D` | Operator Artifact Operations And AWS Readiness | L1 | Inactive until 02C3 and exact AUTH prerequisites |
@@ -28,6 +27,9 @@ output. This authored queue records the separately approved parallel chunks.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Merged through PR #151 as `1b5422f` on 2026-07-19 |
+| `WS-AUTH-001-09D-A` | Profile Lifecycle And Evidence Repair | L1 | Merged through PR #148 as `99ae4c9` on 2026-07-18 |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Merged through PR #146 as `0ffdabf` on 2026-07-18 |
 | `WS-ENG-001-01` | Codex-native zero-trust loop bootstrap | L1 | Merged through PR #23 on 2026-06-20 |
 | `EXAMPLE-TERMINAL-BENCHMARK` | Terminal Benchmark example drill | L3 | Merged through PR #25 on 2026-06-21 |
 | `WS-POL-001-PLAN` | Submission Artifact Policy Foundation planning | L1 | Merged through PR #26 on 2026-06-27 |
@@ -95,16 +97,18 @@ stopped. The user explicitly started AUTH-09D, and required review split it
 before runtime edits. PR #148 merged 09D-A as `99ae4c9`; signed memory
 `cf8a3e8` stopped and named 09D-B. The user explicitly started 09D-B; exact
 contract `9ec6390b` passed required L1 review. Implementation, deterministic
-proof, and required internal review now pass; ready PR publication is the current
-gate. The contributor foundation is the next AUTH gate; 09E and POL-002-04
-remain inactive pending their own gates and explicit starts.
+proof, and required internal review pass. PR #152 is open and integrates trusted
+main at `1b5422f`; refreshed external checks and explicit human review are the
+current gate. The contributor foundation is the next AUTH gate; 09E and
+POL-002-04 remain inactive pending their own gates and explicit starts.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
-`WS-ART-001-01`, the AWS-first planning amendment, `02A1`, `02A2`, and `02A3`
-are merged; PR #141 merged `02A3` as `a10d901`. R2 and Flow Node are deferred.
-`02B1` remains inactive until a separate explicit user start.
+`WS-ART-001-01`, the AWS-first planning amendment, `02A1`, `02A2`, `02A3`, and
+`02B1` are merged; PR #151 merged `02B1` as `1b5422f`. R2 and Flow Node are
+deferred. `02C1` remains inactive until signed merge memory and a separate
+explicit start.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.
