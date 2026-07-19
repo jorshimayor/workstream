@@ -28,8 +28,9 @@ this evidence and requires a new exact-SHA review cycle.
   server-owned limits and unique content charges.
 - Added closed guide, contributor, and checker-output admission requests whose
   relationships and producer authority are resolved and locked by Workstream.
-- Atomically claims the storage namespace, reserves capacity, writes audit
-  evidence, and creates one `prepared` `ArtifactPutAttempt` before provider I/O.
+- Atomically claims the storage namespace, reserves capacity, writes durable
+  admission evidence, and creates one `prepared` `ArtifactPutAttempt` before
+  provider I/O.
 - Deduplicates exact replay while reacquiring released charges only after
   capacity and linked-charge revalidation.
 - Locks guide source items and snapshots during authoritative admission so the

@@ -18,8 +18,8 @@ inactive.
 - Added unique provisional/completed/released content charges with exact replay
   deduplication and concurrent oversubscription protection.
 - Added closed guide, contributor, and checker-output admission commands.
-- Added one atomic namespace-claim, capacity-reservation, audit, and prepared
-  `ArtifactPutAttempt` transaction.
+- Added one atomic namespace-claim, capacity-reservation, durable admission
+  evidence, and prepared `ArtifactPutAttempt` transaction.
 - Added exact human and service identity revalidation, canonical relationship
   checks, guide-source row locking, and replay charge-set validation.
 - Added migration and real PostgreSQL concurrency, rollback, and downgrade
@@ -36,7 +36,7 @@ cutover, task claim, reviewer lease, R2 path, or Flow Node path.
 - [x] Callers cannot supply or weaken admission scopes.
 - [x] Same content is charged once per applicable scope.
 - [x] Concurrent reservations cannot double-charge or oversubscribe.
-- [x] Reservation failure leaves no attempt, charge, audit success, or provider call.
+- [x] Reservation failure leaves no attempt, charge, admission evidence, or provider call.
 - [x] One committed prepared attempt is required before later provider work.
 - [x] Guide facts, human authority, service identity, and producer relationships are revalidated transactionally.
 - [x] Provider execution fields remain inactive and no product route exposes admission.
@@ -87,7 +87,7 @@ this candidate.
 - Can a caller omit a scope, bypass a limit, or substitute producer context?
 - Does every successful admission create exactly one durable prepared attempt
   before any provider side effect?
-- Do rollback and exact replay preserve byte accounting and audit integrity?
+- Do rollback and exact replay preserve byte accounting and admission-ledger integrity?
 - Are provider execution, verification, recovery, and product routes still absent?
 
 ## Human Merge Ownership
