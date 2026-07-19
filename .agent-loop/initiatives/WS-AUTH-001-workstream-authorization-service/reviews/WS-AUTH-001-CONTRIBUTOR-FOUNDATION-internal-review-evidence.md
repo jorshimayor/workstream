@@ -1,13 +1,13 @@
 # WS-AUTH-001-CONTRIBUTOR-FOUNDATION Internal Review Evidence
 
-Reviewed code SHA: `b48aa3dd8ba5ddc74b89524169a7df0a52a3fb27`
+Reviewed code SHA: `0ca5a6326a893e6671848dacde484b7c784b7bd0`
 
 Reviewed implementation SHA: `4d1fc507c343d483677a332c2a91885e32571693`
 
 Reviewed against trusted main:
 `93dd392484b397cfdfaaa833631dc2c27f591ed7`
 
-Reviewed at: `2026-07-19T07:14:31Z`
+Reviewed at: `2026-07-19T08:13:01Z`
 
 Reviewer run IDs: `auth_xint_roles`, `auth_xint_art_service`
 
@@ -34,6 +34,12 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
   lifecycle tests also passed independently in 339.89 seconds. Lifecycle tests
   now target their owned `0026` revision; general-head and dedicated `0027`
   contributor-foundation coverage remain unchanged.
+- The second Backend run passed the full 1,567-test suite and the global,
+  actor, and authorization coverage gates, then correctly failed the new task
+  subsystem gate at 84.14 percent. Twenty-four direct task-service behavior
+  cases now pass in 16.62 seconds and execute 92 statements from that exact CI
+  missing set, projecting the unchanged task gate to about 90.90 percent.
+  GitHub Backend remains the authority for the combined result.
 - Ruff, 90.3 percent repository docstring coverage, both stale-wording scans,
   Markdown links, diff integrity, one Alembic head, and all 88 agent gates pass.
 - No skip, xfail, assertion weakening, test deletion, coverage exclusion,
@@ -83,6 +89,15 @@ guard refused, so the asserted revision remained `0027`. Test-only repair
 security/auth, product/ops, architecture, CI-integrity, docs, reuse/dedup, and
 test-delta review passed with no findings and confirmed that `0027` behavior is
 still covered by full-head and contributor-foundation tests.
+The next Backend run passed every test but exposed the newly persistent task
+subsystem floor at 84.14 percent. Test-only candidate `0ca5a632` adds direct
+service-boundary proof for canonical attribution, visibility and operator
+scope, transaction ownership, exact assignment-based start, locked-submission
+repair, bounded dispatch-failure evidence, lock-conflict recovery, provenance
+failure, and malformed locked-policy types. Fresh exact-SHA review passed all
+nine tracks with no findings and confirmed that mocks stop at established
+repository, queue, checker, and response seams while production authorization
+and fail-closed decisions execute unchanged.
 
 ## Remaining Risk And Gate
 

@@ -33,6 +33,10 @@ attestation/profile route cleanup remain AUTH-13/14 work. AUTH-09E stays inactiv
 - All eight Alembic tests implicated by the first Backend run passed in CI order
   on one isolated PostgreSQL database in 959.71 seconds; the three root
   lifecycle tests passed independently in 339.89 seconds.
+- The second Backend run passed all 1,567 tests and every earlier coverage gate,
+  then exposed task subsystem coverage at 84.14 percent. Twenty-four new direct
+  task-service behavior cases pass and execute 92 statements from the exact CI
+  missing set, projecting the unchanged task gate to about 90.90 percent.
 - Real HTTP API contract drill: passed.
 - Focused actor/task unit and database behavior tests: passed.
 - Ruff, docstring gate (90.3 percent), stale scanners, Markdown links, diff
@@ -53,6 +57,11 @@ Test-only Backend repair `b48aa3dd8ba5ddc74b89524169a7df0a52a3fb27`
 then passed fresh exact-SHA review across the same tracks with no findings. The
 review confirmed that revision-specific lifecycle tests no longer conflate
 `head` with `0026`, while general-head and dedicated `0027` coverage remain.
+Task-coverage repair `0ca5a6326a893e6671848dacde484b7c784b7bd0`
+also passed fresh exact-SHA review across all nine tracks with no findings.
+Reviewers confirmed that the tests exercise production authorization,
+attribution, fail-closed parsing, evidence bounds, and lock-conflict decisions;
+mocks remain limited to existing orchestration seams.
 
 ## Human Review Focus
 
