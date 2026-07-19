@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.adapters.artifacts.references import artifact_provider_object_ref
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.db.session import get_session_factory
@@ -15,6 +14,7 @@ from app.interfaces.artifacts import (
     ArtifactStore,
     ArtifactStoreBootstrap,
     ArtifactStoreNamespaceClaim,
+    artifact_provider_object_ref,
     artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity

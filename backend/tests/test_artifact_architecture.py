@@ -127,6 +127,26 @@ def test_artifact_domain_has_no_provider_execution_during_admission_foundation()
     assert violations == []
 
 
+def test_artifact_domain_does_not_import_adapter_modules() -> None:
+    """Keep provider-neutral artifact rules independent from adapters."""
+    violations: list[str] = []
+    for path in _python_files(APP_ROOT / "modules" / "artifacts"):
+        for node in ast.walk(_tree(path)):
+            if isinstance(node, ast.ImportFrom) and (
+                node.module or ""
+            ).startswith("app.adapters.artifacts"):
+                violations.append(
+                    f"{path.relative_to(BACKEND_ROOT)} imports {node.module}"
+                )
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.startswith("app.adapters.artifacts"):
+                        violations.append(
+                            f"{path.relative_to(BACKEND_ROOT)} imports {alias.name}"
+                        )
+    assert violations == []
+
+
 def test_concrete_adapter_construction_has_one_composition_path() -> None:
     factory_calls: list[Path] = []
     adapter_calls: list[Path] = []
