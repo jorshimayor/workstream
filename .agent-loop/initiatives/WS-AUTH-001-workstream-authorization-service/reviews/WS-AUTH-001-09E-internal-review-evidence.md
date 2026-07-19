@@ -1,0 +1,70 @@
+# WS-AUTH-001-09E Internal Review Evidence
+
+Reviewed code SHA: `7b8f2033a406f7f873a70433cdd1920606e840e0`
+
+Reviewed implementation SHA: `881ac7fc`
+
+Reviewed against trusted main: `8d5eb15b384fd75787ce98a099400a1d335d2560`
+
+Reviewed at: `2026-07-19T17:13:41Z`
+
+Reviewer run IDs: `review_senior`, `review_qa`, `review_security`,
+`review_product_ops`, `review_architecture`, `review_ci`, `review_docs`,
+`review_reuse`, `review_test_delta`
+
+Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
+architecture, CI integrity, docs, reuse/dedup, and test delta
+
+## Deterministic Evidence
+
+- Fresh isolated PostgreSQL focused evidence passed 312 tests in 2,626.88
+  seconds after two repaired expectation failures were rerun successfully.
+- Ten direct repair tests pass for inactive observation suppression and real
+  lock-time lifecycle, identity, matrix, and availability drift denial.
+- The real isolated HTTP API contract drill passed, including unprovisioned,
+  provisioned, suspended, reactivated, revoked-link, and repaired-link service
+  states.
+- Ruff, 90.3 percent repository docstring coverage, both stale scanners,
+  Markdown links, diff integrity, and all 88 agent gates pass.
+- No workflow, dependency manifest, Alembic revision, migration allocation,
+  skip, xfail, test deletion, coverage exclusion, or threshold reduction was
+  introduced. Migration `0028` remains owned by the independent ART work.
+- GitHub Backend is the mandatory hosted proof for the unchanged 78 percent
+  repository-wide floor and the persistent 90 percent actor and authorization
+  subsystem reports. The intentionally stopped local full run is not claimed
+  as evidence.
+
+## Reviewer Results
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS AFTER FIXES | none | Inactive subjects no longer stage observations; maintainability is sound. |
+| QA/test | PASS AFTER FIXES | none | Real revalidation proves lifecycle, identity, matrix, and availability drift denial. |
+| security/auth | PASS | none | Exact identity resolution, fail-closed dispatch, rollback, and evidence privacy hold. |
+| product/ops | PASS | none | No feature action, human workflow, payment, review, or reputation behavior activates. |
+| architecture | PASS | none | Typed AUTH boundaries and the reusable actor lock seam remain closed. |
+| CI integrity | PASS | none | Hosted full coverage retains every existing threshold and failure gate. |
+| docs | PASS AFTER FIXES | none | Operations now describe present central AUTH admission and legacy rejection. |
+| reuse/dedup | PASS | none | Existing lookup, lock, matrix, timestamp, and evidence paths are reused. |
+| test delta | PASS | none | No weakened, removed, skipped, or xfailed test; integration proof complements mocks. |
+
+## Findings Resolved
+
+Valid findings addressed: yes
+
+Open sub-agent sessions: none
+
+Candidate `65ee8887` staged service observations before lifecycle denial and
+tested drift through an overly shallow callback. Repaired candidate `881ac7fc`
+gates observations on active rows, fails malformed locked reconstruction
+closed, and directly proves lifecycle, identity, matrix, and availability
+drift. Documentation candidate `d859af3d` removes one stale pre-09E operations
+sentence and corrects the dependency docstring. All required tracks pass with
+no remaining blocking finding.
+
+## Remaining Risk And Gate
+
+GitHub Backend, Agent Gates, external review, and explicit human review remain.
+No feature action is active. ART owns migration `0028`; this chunk adds no
+migration, and its same-initiative successor still requires a separate explicit
+start after the relevant ART PR and this PR have merged with signed memory.
