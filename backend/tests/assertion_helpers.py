@@ -54,7 +54,9 @@ def assert_secret_not_retained(
                 )
             traceback = traceback.tb_next
     elif isinstance(value, dict):
-        for key, item in dict.items(value):
+        # Snapshot before recursive inspection: traversing nested framework state
+        # can lazily import modules and mutate a module-globals dictionary.
+        for key, item in tuple(dict.items(value)):
             assert_secret_not_retained(
                 key,
                 secret,
