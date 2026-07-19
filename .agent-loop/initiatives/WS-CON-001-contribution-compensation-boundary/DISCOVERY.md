@@ -32,8 +32,8 @@
 - No FinalAcceptance runtime exists yet. Merged REV PR #128 plus PLAN2 PR #150
   are reviewed planning authority and define the exact schema/transaction, but
   CON-03C still waits for the REV-04B runtime target.
-- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Fifteen
-  actions are active and 50 are planned. AUTH-09B activates only
+- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Seventeen
+  actions are active and 48 are planned. AUTH-09B activates only
   `actor.service.provision`; AUTH-09C activates only `actor.profile.read` and
   `actor.identity_link.read`; AUTH-09D-A activates only the three actor-profile
   lifecycle actions; AUTH-09D-B activates only `actor.identity_link.revoke`

@@ -171,8 +171,13 @@ isolation control, or coverage threshold is waived.
 
 ## External Review
 
-CodeRabbit and GitHub checks start after this full PR is published. Actionable
-findings will be repaired and re-reviewed; they do not replace internal review.
+CodeRabbit review `8be695bd-33ce-4847-8bf1-905a130804ec` posted five actionable
+documentation-consistency threads. The repair adds explicit reviewer tracks,
+aligns AUTH counts, defines REV parent/child aliases, fixes REV-13C release
+ownership, and fixes the REV-04B prerequisite. Its physical-purge suggestion is
+deferred to separately started 02B because 02A forbids retention behavior and
+its custody contract prohibits physical delete/truncate. GitHub Backend remains
+in progress; external review does not replace internal review.
 
 ## Remaining Risks
 
@@ -182,6 +187,8 @@ findings will be repaired and re-reviewed; they do not replace internal review.
   contract; arbitrary per-call runtime option overrides are not a 02A API.
 - Dispatcher mechanics, service authority, and recovery remain excluded and
   require a separately started 02B chunk.
+- Sustained-volume archival/retention behavior remains a reviewed 02B concern;
+  no trigger-disable purge path is introduced into immutable 02A event truth.
 
 ## Human Review Focus
 

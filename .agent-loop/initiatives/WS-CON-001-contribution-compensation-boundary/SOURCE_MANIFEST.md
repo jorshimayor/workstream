@@ -108,7 +108,7 @@
   and 05B own semantic then physical removal after a human migration decision.
 - No ContributionPolicy, ContributionRecord, CompensationAward, fulfillment, or
   WS-CON action runtime exists yet.
-- No FinalAcceptance runtime exists yet; merged planning assigns it to REV-04
+- No FinalAcceptance runtime exists yet; merged planning assigns it to REV-04B
   and makes that exact schema a prerequisite for CON-03C/07.
 - Existing `Submission` is the versioned identity; no new SubmissionVersion is
   required.

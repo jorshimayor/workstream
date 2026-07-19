@@ -37,6 +37,11 @@ new JSON canonicalizer, idempotency framework, dependency or CI weakening
 
 ## Verification and reviewers
 
+Required reviewers are senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, reuse/dedup, test delta, and CI integrity.
+Every track must review the exact implementation SHA and resolve or document
+all valid findings before publication.
+
 Execute the bounded local CON-02A row in `../RUNTIME_VERIFICATION.md`, replace
 its migration placeholder with the one new revision, then run:
 

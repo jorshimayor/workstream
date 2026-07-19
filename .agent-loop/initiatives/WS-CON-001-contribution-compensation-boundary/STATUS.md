@@ -119,9 +119,10 @@ with no findings. Both prior CodeRabbit threads remain resolved and outdated.
 - Merged REV planning requires the CON reviewer operation before the decision
   branch and the accept-only submitter operation afterward; it rejects one
   nullable omnibus participant input.
-- REV-12A requires every CON fulfillment-obligation writer to fence before
+- REV-12A3 requires every CON fulfillment-obligation writer to fence before
   monotonic ordinal allocation and requires same-session maximum-ordinal/drain
-  observation for the immutable delivery cutoff.
+  observation for the immutable delivery cutoff. REV-12A is only the canonical
+  non-executable parent split record; REV-12A1 persists the sole controller.
 
 ## Active chunk
 
@@ -149,7 +150,7 @@ It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Reconciled implementation; internal review passes | Generic persistence/append only; GitHub full-suite, CodeRabbit, and human PR checks remain |
+| `WS-CON-001-02A` | PR #155 external repair in progress | Generic persistence/append only; five CodeRabbit documentation findings repaired, retention deferred to 02B; exact-SHA re-review and GitHub full-suite remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -169,7 +170,7 @@ It stops before dispatcher mechanics and CON-02B.
 | review.claim/review.decision | AUTH + REV + CON | Complete REV custody transfer and AUTH-PREP; merge hidden CON participants and REV composition; AUTH-REV-06/08 activate afterward |
 | Shared outbox | CON-02A/B | Land generic persistence/dispatcher after approval |
 | Joint release | REV + CON + AUTH | Consume exact hidden manifest; optional evidence and ART are not prerequisites |
-| Fulfillment cutoff/drain | CON + REV-12A | CON-03D ordinal; all writer/dispatch/callback hooks; CON-10B observation; CON-11 manifest -> REV-12A1/12A3 shared controller and CON fence composition |
+| Fulfillment cutoff/drain | CON + REV-12A1/12A3 | CON-03D ordinal; all writer/dispatch/callback hooks; CON-10B observation; CON-11 manifest -> REV-12A1 controller persistence -> REV-12A3 CON fence composition |
 
 ## Stop condition
 

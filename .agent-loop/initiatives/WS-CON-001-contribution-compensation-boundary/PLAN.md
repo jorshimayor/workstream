@@ -373,11 +373,16 @@ subsystem owns no contribution, award, adapter, review, or provider semantics.
     port returning outbox/fulfillment counts and the maximum root ordinal. REV-
     12A injects the one shared `JointLifecycleMutationFence`, persists the
     generation cutoff, and owns release-control state; CON creates no second
-    controller. REV-13 owns final public release and the joint live drill.
+    controller. REV-13C owns final public release and the joint live drill.
 
 Every chunk refreshes trusted-main SHA, migration custody, exact port/action
 symbols, and merged dependency evidence. No cross-initiative successor starts
 automatically.
+
+`REV-12A` and `REV-13` are canonical non-executable parent split records. Their
+concrete runtime children control this plan: REV-12A1 persists the sole joint
+controller, REV-12A3 composes the CON writer/dispatcher/callback/cutoff/drain
+fences, and REV-13C alone releases the public product surface.
 
 ### Merged REV interleaving
 

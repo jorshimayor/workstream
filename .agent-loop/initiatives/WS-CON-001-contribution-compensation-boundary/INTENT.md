@@ -35,9 +35,10 @@ and the underlying WS-XINT-001 boundary from PR #139.
 - Core contribution creation copies stabilized artifact-hash lineage supplied
   by REV and has no ART or provider dependency.
 - Downstream adapters fulfill awards but never determine eligibility.
-- Every fulfillment-obligation writer uses REV-12A's one shared lifecycle fence
-  before monotonic root-ordinal allocation; drain dispatch/callback completes
-  only same-generation roots at or below the persisted cutoff.
+- Every fulfillment-obligation writer uses the one shared lifecycle fence
+  composed with CON by REV-12A3 before monotonic root-ordinal allocation; drain
+  dispatch/callback completes only same-generation roots at or below the
+  persisted cutoff.
 - Every protected human/service surface uses AUTH's exact grant or
   ServiceIdentity/static-matrix path, prepared mutation protocol when needed,
   and AUTH-owned activation.
