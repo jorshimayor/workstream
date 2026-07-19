@@ -131,8 +131,9 @@ model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
 but AUTH-09D-A changed backend runtime, tests, and the migration head, so
 repository-wide evidence must rerun on the `0027` chain in GitHub CI. Current
-focused evidence already passes and is the gate before exact-SHA internal
-review. The first reconciled
+focused evidence passes at 43 selected tests with 95.73 percent outbox coverage,
+and all nine required internal tracks pass exact code SHA `46057328`. GitHub CI
+is now the remaining automated publication gate. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
 because ART PR #151 advanced trusted main; a third was stopped after one hour
@@ -148,7 +149,7 @@ It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Reconciled implementation; focused proof passes | Generic persistence/append only; exact-SHA internal review plus GitHub full-suite/PR checks remain |
+| `WS-CON-001-02A` | Reconciled implementation; internal review passes | Generic persistence/append only; GitHub full-suite, CodeRabbit, and human PR checks remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 

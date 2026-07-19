@@ -1,5 +1,9 @@
 # PR Trust Bundle: WS-CON-001-02A
 
+## Chunk
+
+`WS-CON-001-02A` - Shared Transactional Outbox Persistence.
+
 ## Goal
 
 Land feature-neutral shared PostgreSQL outbox truth and a caller-transaction
@@ -15,6 +19,13 @@ generic and authorization-neutral: AUTH owns every action, permission,
 evaluator, service admission, and activation decision, while 02B and later
 feature chunks own execution behavior.
 
+## Why It Changed
+
+REV-owned lifecycle transactions need one generic durable event participant
+that can flush into the caller's transaction without publishing, committing,
+or inheriting feature authority. No such shared persistence boundary existed on
+trusted main.
+
 ## What Changed
 
 - Added one linear `0027_shared_transactional_outbox` migration after the
@@ -27,7 +38,7 @@ feature chunks own execution behavior.
 - Updated the WS-CON chunk ledger and added exactly one schema-v2 merge intent
   naming 02B with a separate explicit start.
 
-## Design And Boundary
+## Design Chosen
 
 - Immutable event truth and mutable operational delivery state are separate.
 - PostgreSQL, not the caller, owns producer, occurrence time, initial state,
@@ -45,6 +56,19 @@ feature chunks own execution behavior.
 - No route, dispatcher, delivery executor, broker, Celery task, handler,
   authorization identifier, or product-domain mutation is present.
 
+## Scope Control
+
+The committed diff is limited to the reviewed 02A migration, outbox module,
+metadata registration, focused tests, initiative evidence, and one merge
+intent. The user-owned local PDF deletion is excluded. No 02B dispatcher work
+or protected product behavior is included.
+
+## Product Behavior
+
+There is no new public or protected product surface. Existing review,
+contribution, compensation, authorization, artifact, task, and project behavior
+is unchanged; the new participant is infrastructure for later callers.
+
 ## Alternatives Rejected
 
 - A new canonicalizer or generic idempotency framework.
@@ -54,7 +78,7 @@ feature chunks own execution behavior.
 - A schema too small for 02B that would force a second delivery-state migration.
 - Dispatcher authority inherited by protected feature handlers.
 
-## Proof
+## Acceptance Criteria Proof
 
 - Post-review exact bounded row: 43 passed, 30 deselected in 60.22 seconds,
   with 95.73% outbox coverage against the 90% subsystem floor.
@@ -82,8 +106,8 @@ feature chunks own execution behavior.
 - Ruff, 90.4% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
 - AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
-  above is current, while exact-SHA internal reviewer results must pass before
-  publication and GitHub CI must pass afterward.
+  above is current, exact-SHA internal reviewers pass, and GitHub CI must pass
+  after publication.
 - REV PLAN2 PR #150 then advanced trusted main to `983b9e53`. It changes only
   planning/specification files, preserves the 02A runtime boundary, and updates
   future CON/REV child gates. A two-hour suite on the prior head was stopped,
@@ -101,11 +125,18 @@ feature chunks own execution behavior.
   GitHub CI. Its metadata was removed and it is not counted. The existing
   Backend full-suite job is the required exact-head repository proof.
 
-## Test And CI Integrity
+## Tests And Checks Run
+
+The exact isolated PostgreSQL selector covers migration custody, rollback,
+replay, collision races, payload privacy, and delivery-state constraints. The
+separate helper suite covers deep secret-retention assertions. Ruff, Alembic
+head, Markdown links, stale-contract scans, agent-loop tests, docstrings, and
+`git diff --check` also pass.
+
+## Test Delta
 
 No existing test was deleted, skipped, weakened, or rewritten to accept broken
-behavior. No workflow, dependency, package script, test runner, lint/typecheck
-command, coverage threshold, or CI configuration changed.
+behavior.
 
 Internal-review repairs add regression proof for one detached Pydantic
 core-schema boundary across model methods and `TypeAdapter`, valid Python/JSON/
@@ -118,11 +149,39 @@ dataclass state without invoking the tested hostile overrides. The exact
 documented focused command generates fresh coverage before enforcing the
 subsystem floor.
 
+## CI Integrity
+
+No workflow, dependency, package script, test runner, lint/typecheck command,
+coverage threshold, or CI configuration changed.
+
 Repository-wide tests and the 78 percent repository coverage floor run only in
 the existing GitHub Backend full-suite job. Local proof is bounded to focused
 real-service tests, the 90 percent outbox coverage floor, Ruff, migrations, and
 static gates. This changes execution location only: no test, assertion,
 isolation control, or coverage threshold is waived.
+
+## Reviewer Results
+
+- Senior engineering: PASS WITH LOW RISKS.
+- QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test
+  delta, and CI integrity: PASS.
+- Reviewed code SHA: `460573287270965d730c83f5f1e52f3acf1c0671`.
+- Every prior blocking finding is resolved and no sub-agent session remains
+  open.
+
+## External Review
+
+CodeRabbit and GitHub checks start after this full PR is published. Actionable
+findings will be repaired and re-reviewed; they do not replace internal review.
+
+## Remaining Risks
+
+- GitHub still must prove the full backend suite and repository-wide 78 percent
+  coverage floor on the published exact head.
+- The Pydantic string-mode wrapper supports the model's fixed strict/default
+  contract; arbitrary per-call runtime option overrides are not a 02A API.
+- Dispatcher mechanics, service authority, and recovery remain excluded and
+  require a separately started 02B chunk.
 
 ## Human Review Focus
 
@@ -137,11 +196,13 @@ isolation control, or coverage threshold is waived.
 5. Does append remain entirely inside the caller-owned transaction with no AUTH
    or product-domain boundary expansion?
 
-## Follow-Up And Ownership
+## Follow-Up Work
 
 The same-initiative successor is `WS-CON-001-02B`, Shared Outbox Dispatcher And
 Recovery. It requires a separate explicit start after this PR merges and after
 its AUTH/service prerequisites refresh from trusted main.
+
+## Human Merge Ownership
 
 Only the human owner may approve and merge the specific 02A PR. Passing
 reviewers, CI, or CodeRabbit do not authorize merge or the next chunk.
