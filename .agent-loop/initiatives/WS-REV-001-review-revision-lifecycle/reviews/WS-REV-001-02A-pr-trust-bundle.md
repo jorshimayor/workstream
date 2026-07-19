@@ -127,6 +127,10 @@ candidate. At evidence head `ebb8db88`, Agent Gates passed, Backend remained
 pending, and CodeRabbit's evidence-status comment required this repair. Merge is
 blocked until all GitHub and CodeRabbit checks pass on the final pushed head with
 no unresolved actionable comment. Human review remains pending.
+On the ART-rebased head, CodeRabbit also found that the Revision-context
+conformance row omitted deferred owner 02A2. The row now includes 02A2 and its
+prepared `If-Match`-protected superseded-guide reactivation proof; runtime and
+the explicit-start gate are unchanged.
 
 ## Remaining risks
 

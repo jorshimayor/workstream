@@ -1,5 +1,15 @@
 # Internal Plan Review Log: WS-REV-001
 
+## WS-REV-001-02A Post-Rebase Conformance Repair - 2026-07-19
+
+CodeRabbit's review of rebased PR #156 found that the conformance matrix's
+`Revision context` row omitted deferred owner 02A2 even though the Guide
+chronology row, plan, decisions, chunk map, and 02A2 contract assign prepared
+`If-Match`-protected superseded-guide reactivation to it. The repair adds 02A2
+and its exact reactivation proof to the Revision context row without starting
+the chunk or changing runtime. Because the matrix is a candidate artifact,
+fresh exact-SHA internal review and evidence rebinding are required again.
+
 ## WS-REV-001-02A ART #154 Main Reconciliation - 2026-07-19
 
 ART admission foundation PR #154 merged at trusted main

@@ -40,6 +40,15 @@ Merge remains blocked until the rebased branch is force-pushed and every GitHub
 and CodeRabbit check on the final pushed head passes with no unresolved finding,
 followed by the user's approval of PR #156.
 
+### Revision-context conformance ownership
+
+After the ART rebase, CodeRabbit correctly found that the conformance matrix's
+`Revision context` row omitted deferred chunk 02A2. Other initiative artifacts
+already assign prepared `If-Match`-protected superseded-guide reactivation to
+02A2 so backward context reachability cannot be silently removed by a stale
+retry. The matrix now includes 02A2 and that exact proof. The chunk remains
+deferred after 02A4 and 08 and requires its own explicit start.
+
 ## Comments deferred
 
 None.
