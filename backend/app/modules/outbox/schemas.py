@@ -42,6 +42,15 @@ _SECRET_KEYS = frozenset(
 _SECRET_KEY_PARTS = frozenset(
     {"credential", "credentials", "password", "secret", "token"}
 )
+_SECRET_KEY_SUFFIXES = (
+    "credential",
+    "credentials",
+    "key",
+    "passphrase",
+    "password",
+    "secret",
+    "token",
+)
 _MAX_DEPTH = 16
 _MAX_MEMBERS = 1024
 _MAX_NODES = 4096
@@ -82,8 +91,8 @@ def _is_sensitive_key(value: str) -> bool:
     return (
         normalized in _SECRET_KEYS
         or bool(parts & _SECRET_KEY_PARTS)
-        or normalized == "key"
-        or normalized.endswith("_key")
+        or normalized == "jwt"
+        or normalized.endswith(_SECRET_KEY_SUFFIXES)
     )
 
 
