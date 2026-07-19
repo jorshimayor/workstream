@@ -134,6 +134,13 @@ def test_outbox_input_requires_closed_tokens_and_object_payload() -> None:
         {"providercredential": "secret"},
         {"jwt": "secret"},
         {"passphrase": "secret"},
+        {"providertokenvalue": "secret"},
+        {"sessiontokendata": "secret"},
+        {"clientsecretvalue": "secret"},
+        {"providercredentialvalue": "secret"},
+        {"passwordvalue": "secret"},
+        {"jwtvalue": "secret"},
+        {"keymaterial": "secret"},
         {"ratio": 1.5},
         {"blob": b"secret"},
         {"huge_integer": 10**38},
@@ -149,6 +156,13 @@ async def test_outbox_invalid_payload_errors_never_echo_values(
         await service.append(_unsafe_event(uuid4(), payload))
     assert str(raised.value) == "outbox_invalid_input"
     assert "secret" not in str(raised.value)
+
+
+@pytest.mark.parametrize("key", ["hockey", "monkey", "turnkey"])
+def test_outbox_allows_benign_words_ending_in_key_letters(key: str) -> None:
+    """Keep ordinary generic payload names outside the credential-key policy."""
+    value = _event(uuid4(), payload={key: "safe"})
+    assert value.payload == {key: "safe"}
 
 
 def test_outbox_normal_validation_detaches_rejected_secret_input() -> None:

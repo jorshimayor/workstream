@@ -42,14 +42,23 @@ _SECRET_KEYS = frozenset(
 _SECRET_KEY_PARTS = frozenset(
     {"credential", "credentials", "password", "secret", "token"}
 )
-_SECRET_KEY_SUFFIXES = (
+_COMPACT_SECRET_LEXEMES = (
     "credential",
-    "credentials",
-    "key",
+    "jwt",
     "passphrase",
     "password",
     "secret",
     "token",
+)
+_COMPACT_KEY_LEXEMES = (
+    "accesskey",
+    "apikey",
+    "encryptionkey",
+    "keymaterial",
+    "privatekey",
+    "providerkey",
+    "secretkey",
+    "signingkey",
 )
 _MAX_DEPTH = 16
 _MAX_MEMBERS = 1024
@@ -91,8 +100,10 @@ def _is_sensitive_key(value: str) -> bool:
     return (
         normalized in _SECRET_KEYS
         or bool(parts & _SECRET_KEY_PARTS)
-        or normalized == "jwt"
-        or normalized.endswith(_SECRET_KEY_SUFFIXES)
+        or normalized == "key"
+        or normalized.endswith("_key")
+        or any(lexeme in normalized for lexeme in _COMPACT_SECRET_LEXEMES)
+        or any(lexeme in normalized for lexeme in _COMPACT_KEY_LEXEMES)
     )
 
 
