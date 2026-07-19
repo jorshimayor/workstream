@@ -72,28 +72,30 @@ feature chunks own execution behavior.
   (4:55:41), with 85.35% repository coverage against the 78% floor.
 - The pre-reconciliation isolated evidence records tree `f72bb6e`, database
   `workstream_test_d513fb2f03b1`, and the superseded Alembic head
-  `0026_shared_transactional_outbox`; exact `0027` evidence must replace it
-  before publication.
+  `0026_shared_transactional_outbox`; current `0027` focused proof is recorded
+  above and GitHub CI must supply repository-wide proof after publication.
 - Agent-loop gates: 88 passed after AUTH-09D-B.
 - Ruff, 90.9% docstring coverage, Markdown links, stale Workstream/AUTH/ART/REV
   scans, and diff hygiene pass.
 - AUTH-09D-A reconciliation moved the migration to `0027`; the focused evidence
-  above is current, while full-suite evidence and exact-SHA internal reviewer
-  results must rerun before publication.
+  above is current, while exact-SHA internal reviewer results must pass before
+  publication and GitHub CI must pass afterward.
 - REV PLAN2 PR #150 then advanced trusted main to `983b9e53`. It changes only
   planning/specification files, preserves the 02A runtime boundary, and updates
   future CON/REV child gates. A two-hour suite on the prior head was stopped,
-  discarded, and is not counted; exact-head full-suite evidence remains
-  pending.
+  discarded, and is not counted.
 - ART-02B1 PR #151 then advanced trusted main to `1b5422fc`. It adds the real
   S3-compatible adapter, MinIO service, SDK pins, CI gates, and a substantial
   backend test delta without changing 02A code or migration. The 3-hour
-  7-minute run on the prior tree was stopped and discarded; exact-head
-  PostgreSQL plus real-MinIO evidence remains pending.
+  7-minute run on the prior tree was stopped and discarded.
 - AUTH-09D-B PR #152 then advanced trusted main to `93dd3924`. It activates
   only identity-link revoke/reactivate and adds AUTH route/test coverage, with
   no migration or 02A boundary change. The one-hour run on the prior tree was
-  stopped and discarded; exact-head evidence remains pending.
+  stopped and discarded.
+- A fourth local run on the frozen current head was stopped after approximately
+  4 hours 15 minutes by human direction that repository-wide suites must run in
+  GitHub CI. Its metadata was removed and it is not counted. The existing
+  Backend full-suite job is the required exact-head repository proof.
 
 ## Test And CI Integrity
 
@@ -101,15 +103,11 @@ No existing test was deleted, skipped, weakened, or rewritten to accept broken
 behavior. No workflow, dependency, package script, test runner, lint/typecheck
 command, coverage threshold, or CI configuration changed.
 
-The measured full-suite runtime completed under an 18,000-second fail-closed
-safety ceiling. The prior 12,600-second ceiling stopped the same clean command
-at approximately 90 percent; extending only the ceiling preserved every test,
-assertion, isolation control, and coverage requirement.
-
-For the reconciled AUTH-09D-A baseline, the ceiling is 25,200 seconds because
-that prior run consumed 17,741.96 of 18,000 seconds and main added substantial
-backend/migration coverage. Tests, assertions, isolation, and the 78/90
-coverage thresholds remain unchanged.
+Repository-wide tests and the 78 percent repository coverage floor run only in
+the existing GitHub Backend full-suite job. Local proof is bounded to focused
+real-service tests, the 90 percent outbox coverage floor, Ruff, migrations, and
+static gates. This changes execution location only: no test, assertion,
+isolation control, or coverage threshold is waived.
 
 ## Human Review Focus
 

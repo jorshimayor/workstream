@@ -42,13 +42,15 @@ adds the S3-compatible ArtifactStore adapter, MinIO/AWS configuration, exact SDK
 pins, CI MinIO service, and substantial backend tests. It adds no migration,
 outbox seam, CON identifier, or core transaction dependency, so CON-02A remains
 the same `0027` implementation. Because it materially changes dependencies,
-CI, and repository tests, full-suite evidence must be regenerated.
+CI, and repository tests, the pushed PR must receive fresh GitHub full-suite
+evidence.
 Trusted `main` then advanced to `93dd3924` through AUTH-09D-B PR #152. It
 activates exactly `actor.identity_link.revoke` and
 `actor.identity_link.reactivate`, expands AUTH routes/tests, and adds the
 reviewed but inactive contributor-foundation contract. It adds no migration,
 CON/task-claim action, fixed-service admission, or outbox seam. CON-02A remains
-the same `0027` implementation, but repository-wide evidence must rerun.
+the same `0027` implementation, but repository-wide evidence must rerun in
+GitHub CI after the full PR is pushed.
 
 `WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
@@ -128,12 +130,16 @@ after the explicit human start. It adds one linear migration, the shared outbox
 model/schema/repository/service, metadata registration, and PostgreSQL-focused
 migration/append tests. The pre-reconciliation exact suite passed 1347 tests,
 but AUTH-09D-A changed backend runtime, tests, and the migration head, so
-repository-wide evidence must rerun on the `0027` chain before exact-SHA
-internal review. Current focused evidence already passes. The first reconciled
+repository-wide evidence must rerun on the `0027` chain in GitHub CI. Current
+focused evidence already passes and is the gate before exact-SHA internal
+review. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
 because ART PR #151 advanced trusted main; a third was stopped after one hour
 solely because AUTH PR #152 advanced trusted main. None is counted as evidence.
+A fourth current-head local attempt was stopped after approximately 4 hours 15
+minutes by human direction that repository-wide suites run in GitHub CI; its
+metadata was removed and it is not evidence.
 It stops before dispatcher mechanics and CON-02B.
 
 | Chunk | Status | Notes |
@@ -142,7 +148,7 @@ It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | Reconciled implementation; full-suite rerun pending | Generic persistence/append only; exact-SHA internal review and PR checks remain |
+| `WS-CON-001-02A` | Reconciled implementation; focused proof passes | Generic persistence/append only; exact-SHA internal review plus GitHub full-suite/PR checks remain |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 

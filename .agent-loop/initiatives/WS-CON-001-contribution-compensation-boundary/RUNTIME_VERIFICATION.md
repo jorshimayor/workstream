@@ -1,18 +1,19 @@
 # Runtime Verification Contract: WS-CON-001
 
-Every runtime chunk executes this template exactly after replacing
-`<CHUNK_ID>` and `<RUFF_TARGETS>` with its row. It then runs one separate focused
-report command for every concrete subsystem pattern in that row. The initial
-erase, isolated PostgreSQL run, repository threshold, and all focused reports
-are one evidence run; a pre-existing `.coverage` file is never accepted.
+Repository-wide tests and repository coverage run in the existing GitHub
+`Backend full-suite coverage` job after the full PR is pushed. Do not run that
+multi-hour suite locally. Local verification is bounded to the chunk's focused
+PostgreSQL selectors, focused coverage, Ruff, and repository static gates.
+
+Every runtime chunk executes the local template below after replacing
+`<CHUNK_ID>`, `<FOCUSED_TEST_COMMAND>`, and `<RUFF_TARGETS>` with its reviewed
+contract. The focused test command must start from an erased coverage file,
+must use the real required local services, and must select a non-empty test
+set. A pre-existing `.coverage` file is never accepted.
 
 ```bash
-ATTEMPT_ID="${ATTEMPT_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
-EVIDENCE_JSON="$(pwd)/.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/evidence/<CHUNK_ID>-${ATTEMPT_ID}-isolated-tests.json"
-mkdir -p "$(dirname "$EVIDENCE_JSON")"
-test ! -e "$EVIDENCE_JSON"
 (cd backend && .venv/bin/python -m coverage erase)
-(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$EVIDENCE_JSON" --timeout-seconds 25200 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(cd backend && <FOCUSED_TEST_COMMAND>)
 (cd backend && .venv/bin/python -m coverage report --include='<EACH SUBSYSTEM PATTERN FROM THE ROW>' --fail-under=90)
 (cd backend && .venv/bin/ruff check <RUFF_TARGETS>)
 python3 scripts/check_markdown_links.py
@@ -48,9 +49,8 @@ git diff --check
 If a named path differs after prerequisite merges, the chunk stops and its
 contract is re-reviewed; it may not silently broaden a glob or skip the target.
 
-The 25,200-second runner cap is a fail-closed process ceiling, not a test or
-coverage relaxation. The prior 12,600-second ceiling terminated a clean CON-02A
-attempt after 90 percent of the expanded suite had passed, and the succeeding
-pre-AUTH-09D-A run required 17,741.96 seconds of its 18,000-second ceiling.
-AUTH-09D-A then added substantial backend and migration coverage. No test
-selection, assertion, isolation rule, or coverage threshold changed.
+The GitHub job remains responsible for the unchanged full test selection,
+isolated PostgreSQL database, real MinIO service, and repository 78 percent
+coverage floor. Focused local evidence does not replace that job and may not be
+used to waive a failing or missing GitHub full-suite result. The subsystem 90
+percent coverage floor remains a local and CI review requirement.

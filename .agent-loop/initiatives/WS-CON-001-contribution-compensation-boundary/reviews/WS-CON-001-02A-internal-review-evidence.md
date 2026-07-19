@@ -36,6 +36,12 @@ identity-link lifecycle actions and adds substantial AUTH route/test coverage.
 A third full-suite attempt was stopped after one hour when that PR advanced
 trusted main; its metadata was removed and it is not evidence.
 
+A fourth local full-suite attempt on the frozen `93dd3924` baseline was stopped
+after approximately 4 hours 15 minutes by human direction to keep
+repository-wide suites in GitHub CI. Its metadata was removed and it is not
+evidence. The active verification rule now uses bounded focused proof locally
+and requires the existing GitHub Backend full-suite job on the pushed PR.
+
 ## Implemented Contract
 
 - One immutable event envelope contains caller-provided event, aggregate,
@@ -72,16 +78,16 @@ Markdown links: passed for 15 changed Markdown files
 Workstream/AUTH/ART/REV stale-contract scans: passed after PR #152 reconciliation
 merge intent and git diff --check: passed
 Alembic heads: one head, 0027_shared_transactional_outbox after PR #152
-full-suite fail-closed ceiling: 25,200s; tests/isolation/coverage unchanged
-repository-wide isolated PostgreSQL plus real-MinIO suite: pending on frozen `93dd3924` SHA
+repository-wide isolated PostgreSQL plus real-MinIO suite: required in GitHub CI after push
 ```
 
 ## Pre-Reconciliation Verification Results
 
 These results were produced on the former `f18b620` / outbox-0026 chain. They
 prove the implementation before AUTH-09D-A but are not publication evidence for
-the reconciled `93dd3924` / outbox-0027 chain. Current focused evidence is
-recorded above; the exact full suite must rerun before reviewer fanout.
+the reconciled `93dd3924` / outbox-0027 chain. Current bounded focused evidence
+is recorded above; GitHub CI owns exact-head repository-wide proof after the
+full PR is pushed.
 
 ```text
 33 passed in 151.73s on the former ART 0025 -> CON 0026 chain
@@ -107,11 +113,10 @@ git diff --check: passed
 local roadmap workbook: absent, so the one-sheet export check is not applicable
 ```
 
-The full suite used the unchanged test command, isolation rule, assertions, and
-coverage thresholds. Its measured 4:55:41 runtime completed under the repaired
-18,000-second fail-closed safety ceiling; the earlier 12,600-second ceiling had
-terminated the same clean suite at approximately 90 percent. Exact-SHA reviewer
-results were superseded when AUTH-09D-A changed the backend and migration head.
+The historical full suite used the unchanged test command, isolation rule,
+assertions, and coverage thresholds. Its measured 4:55:41 runtime explains why
+repository-wide proof is now CI-owned. Exact-SHA reviewer results were
+superseded when AUTH-09D-A changed the backend and migration head.
 
 ## Test Delta
 
