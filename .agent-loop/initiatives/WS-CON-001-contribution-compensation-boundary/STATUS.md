@@ -148,13 +148,14 @@ after the explicit human start. It adds one linear
 `0029_shared_transactional_outbox` migration after ART-owned
 `0028_artifact_admission`, the shared outbox model/schema/repository/service,
 metadata registration, and PostgreSQL-focused migration/append tests. Fresh
-bounded proof passes 73 selected tests with 32 deselected in 234.91 seconds and
+bounded proof passes 73 selected tests with 32 deselected after the Proxy repair and
 95.90 percent outbox coverage; the exact AUTH revision-specific lifecycle test
 and assertion-helper regression suite also remain recorded independently. A
 GitHub full-suite run reached 87.19 percent coverage and 1665 passing tests,
 then exposed a mutable-dictionary race in that assertion helper; exact repair
-candidate `a9c83949` snapshots entries, adds deterministic regression coverage,
-and passes all nine internal tracks. GitHub CI must rerun the full repository
+candidate `9be9c88a` snapshots entries, distinguishes real dict storage from
+framework Mapping proxies, adds deterministic regression coverage, and passes
+all nine internal tracks. GitHub CI must rerun the full repository
 suite and 78 percent coverage gate after publication. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely

@@ -65,9 +65,9 @@ remain unchanged; fresh exact-SHA proof and review bind to this baseline.
 ## Current PR #154 Reconciliation Verification Results
 
 ```text
-73 passed, 32 deselected in 234.91s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029` after CI repair)
+73 passed, 32 deselected (exact bounded isolated outbox/migration row on ART `0028` / CON `0029` after Proxy repair)
 outbox coverage: 95.90% (244 statements, 10 missed; required: at least 90%)
-9 passed in 0.30s (security-sensitive assertion helper suite after CI-race regression repair)
+10 passed in 0.09s (security-sensitive assertion helper suite after CI Proxy regression repair)
 1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
 Alembic heads: one head, `0029_shared_transactional_outbox`
 Ruff on CON-02A, ART `0028`, CON `0029`, and reconciliation tests: passed
@@ -88,6 +88,13 @@ nested import mutated it. The assertion now snapshots built-in dictionary
 entries before recursion. A deterministic nested-mapping regression proves the
 old live iteration failure and the repaired traversal; no product or CI
 threshold behavior changed.
+
+The next GitHub Backend run on PR head `2fba5bab` reached the same 87.19
+percent repository coverage and 1665 passing tests, then exposed a Celery
+`Proxy` that reports `isinstance(proxy, dict)` without owning built-in dict
+storage. Real dict subclasses are now identified from their concrete type;
+framework proxies use the Mapping protocol. The exact regression proves the
+Proxy path still detects a retained secret rather than bypassing inspection.
 
 ## Implemented Contract
 
@@ -187,13 +194,13 @@ Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Current Exact-SHA Internal Review
 
-Reviewed code SHA: `a9c83949ced6980b7dd57f4d1ee0e2b1e1b016be`
+Reviewed code SHA: `9be9c88a19c4301f2b7ac606b6782604a48472bb`
 
 Reviewed against trusted main:
 `3b1d63796c086f53fc2b0aeefe096387b82485ec`
 
-Reviewer runs: `/root/ci_repair_senior_arch_reuse`,
-`/root/ci_repair_qa_product_docs`, `/root/ci_repair_security_ci`
+Reviewer runs: `/root/proxy_repair_senior_arch_reuse`,
+`/root/proxy_repair_qa_product_docs`, `/root/proxy_repair_security_ci`
 
 Open sub-agent sessions: none
 

@@ -69,13 +69,16 @@ to `3b1d6379`, the exact bounded `0029` row passes 73 selected tests with 32
 deselected and 95.90 percent focused outbox coverage;
 all nine exact-SHA reviewers were required before publication.
 
-Exact repair candidate `a9c83949ced6980b7dd57f4d1ee0e2b1e1b016be`
+Exact repair candidate `9be9c88a19c4301f2b7ac606b6782604a48472bb`
 passed all nine internal tracks against trusted main `3b1d6379` with no open
 findings or reviewer sessions. The prior GitHub Backend run reached 87.19
 percent coverage and 1665 passing tests, but exposed a test-helper dictionary
 mutation race in two outbox secrecy tests. The helper now snapshots entries and
-a deterministic regression covers the failure. GitHub Backend and fresh
-CodeRabbit state must rerun after publication.
+a deterministic regression covers the mutation failure. A subsequent run
+exposed a Celery Mapping Proxy that spoofs `dict` identity without dict
+storage; concrete-type dispatch plus an exact secret-detection regression now
+cover that path. GitHub Backend and fresh CodeRabbit state must rerun after
+publication.
 
 ## Remaining risks
 
