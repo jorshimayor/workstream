@@ -99,18 +99,31 @@ No Critical, High, or Medium finding remains.
 
 The backend runtime suite, focused Project/Task coverage, and migration
 upgrade/downgrade suites were not run because this candidate changes planning
-only. Every future executable child contains its own exact real-PostgreSQL,
-race, direct-SQL, rollback, downgrade, Ruff, coverage, and migration commands.
+only. 02A1 carries exact real-PostgreSQL race, lock, rollback, Ruff, and
+coverage proof for its non-migration boundary. Migration-owning children 02A3
+and 02A4 additionally carry direct-SQL, upgrade, downgrade, and migration
+commands.
 
 ## Remaining gates
 
-- This evidence and the PR trust bundle must pass the final evidence gates and
-  be committed without changing the reviewed candidate.
-- The evidence-only delta/final branch head requires internal review for exact
-  binding and scope integrity.
 - GitHub CI, CodeRabbit, and human PR review remain external publication gates.
 - Only the user may approve and merge the specific PR.
 - Merge does not start 02A1; every child requires a new explicit instruction.
+
+## Evidence-only delta review
+
+The committed evidence-only delta at `5ac86263` added only this evidence file
+and the PR trust bundle. Senior engineering/architecture/reuse and
+security/docs/CI review passed with no findings. QA/product/test-delta review
+found one Medium documentation-accuracy issue: two universal claims incorrectly
+implied that non-migration child 02A1 carried migration-specific commands. The
+repair now assigns PostgreSQL race, lock, rollback, Ruff, and coverage proof to
+02A1 and reserves direct-SQL, upgrade, downgrade, and migration proof for
+migration-owning children 02A3 and 02A4. QA re-review passed with no remaining
+finding. All reviewer sessions completed and no reviewed planning-candidate
+file changed.
+
+Evidence-delta reviewer run IDs: /root/rev02a_evidence_senior; /root/rev02a_evidence_qa; /root/rev02a_evidence_security
 
 ## Disposition
 

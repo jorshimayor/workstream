@@ -69,11 +69,12 @@ unchanged. Stored Review decisions remain only `accept`, `needs_revision`, and
 ## Acceptance criteria proof
 
 The parent records exact merged AUTH dependencies and the sole migration head.
-Each child specifies allowed and prohibited files, database objects, lock order,
-migration refusal, direct-SQL parity, race and rollback proof, downgrade rules,
-coverage floors, required reviewers, human focus, and a stop condition. The
-merge intent names only same-initiative successor 02A1 and requires a separate
-human start.
+Every child specifies allowed and prohibited files, lock order, race and
+rollback proof, coverage floors, required reviewers, human focus, and a stop
+condition. Migration-owning children 02A3 and 02A4 additionally specify their
+database objects, migration refusal, direct-SQL parity, and downgrade rules.
+The merge intent names only same-initiative successor 02A1 and requires a
+separate human start.
 
 ## Tests/checks run
 
