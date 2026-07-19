@@ -104,8 +104,13 @@ separately gated.
 
 ## External review
 
-GitHub CI, CodeRabbit, and human review are pending. They supplement but do not
-replace the completed internal review evidence.
+GitHub Backend and Agent Gates passed. CodeRabbit passed with one actionable
+source-manifest finding: a historical PLAN2 AUTH-09D-A/`0026` review-base
+sentence could be mistaken for the later parent 02A start. The repair labels
+that snapshot as historical and restates the full 02A trusted-main SHA,
+`0027_contributor_foundation` head, and then-current-head child allocation rule.
+Fresh deterministic and internal review evidence is required for the repaired
+candidate. Human review remains pending.
 
 ## Remaining risks
 

@@ -257,7 +257,12 @@ After the initial exact-SHA review, the branch pulled merged CON PR #142 at
 archive-integrity proofs remain fixed. The branch then pulled merged AUTH-09B
 PR #143 at `053242b90d927ace3fab92eeca72da27a61cecec` and merged CON-01 PR
 #144 at `e118e33afcd89b8ee78ecfc8f0e0d585ae0ee4b9`; final PR scope and
-exact-SHA review use the newest merged-main boundary. The branch then rebased
-cleanly onto merged AUTH-09D-A PR #148 at
-`99ae4c963e53f317175dcb308b9e47c93ccf19ed`; the post-rebase review base is
-that trusted commit.
+exact-SHA review use the newest merged-main boundary. The PLAN2 branch then
+rebased cleanly onto merged AUTH-09D-A PR #148 at
+`99ae4c963e53f317175dcb308b9e47c93ccf19ed`; that historical PLAN2 post-rebase
+review base had the single head `0026_actor_profile_lifecycle`. Parent 02A later
+started from trusted main
+`8d5eb15b384fd75787ce98a099400a1d335d2560`, after the contributor foundation
+merged with the single head `0027_contributor_foundation`. Every 02A executable
+child must allocate from the then-current trusted-main head at its own explicit
+start, never from the historical PLAN2 base.

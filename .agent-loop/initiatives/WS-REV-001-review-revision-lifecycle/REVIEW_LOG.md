@@ -1,5 +1,22 @@
 # Internal Plan Review Log: WS-REV-001
 
+## WS-REV-001-02A External Review Repair - 2026-07-19
+
+CodeRabbit passed PR #156 with one actionable source-manifest finding. The
+manifest correctly recorded `8d5eb15b384fd75787ce98a099400a1d335d2560`
+and `0027_contributor_foundation` as the parent 02A start, but a later historical
+timeline sentence called the older AUTH-09D-A/`0026_actor_profile_lifecycle`
+snapshot "the post-rebase review base" without limiting that statement to the
+PLAN2 branch. The repair labels it as historical PLAN2 evidence and restates
+the full 02A trusted-main SHA, `0027` head, and then-current-head allocation rule
+for every executable child. No runtime, migration, child start, or owner file
+changes.
+
+Because `SOURCE_MANIFEST.md` is a planning-candidate file, the earlier exact-SHA
+review is historical after this repair. Deterministic gates and all required
+internal reviewer tracks must pass on the repaired committed candidate before
+the internal evidence is rebound and PR #156 is republished.
+
 ## WS-REV-001-02A L1 Preimplementation Review Failed And Split - 2026-07-19
 
 The user explicitly started parent 02A from trusted main
