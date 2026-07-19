@@ -37,10 +37,16 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current ART gate: repair the Backend migration-head assertions found by PR
-  #154 CI, rerun deterministic proof and all nine exact-SHA internal reviewer
-  tracks, then return to external checks and explicit human review. No later
-  ART chunk starts automatically.
+- Active implementation chunk: `WS-AUTH-001-CONTRIBUTOR-FOUNDATION`, explicitly
+  started by the user on 2026-07-19 from trusted `main` at `93dd392`. Current
+  exact contract `2a21166d` passed required L1 preimplementation review;
+  initial findings are repaired, and exact code SHA `4d1fc507` passed all nine
+  required internal tracks. PR publication and external checks are the current
+  gate; Backend must still prove 78/90 percent aggregate coverage. It changes no action
+  availability, and no service caller becomes executable before AUTH-09E.
+- Current ART gate: integrate trusted `main`, complete deterministic 02C1
+  proof, and pass all nine exact-SHA internal reviewer tracks before opening
+  the ART PR. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

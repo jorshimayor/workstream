@@ -4,7 +4,8 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | PR #154 open; current-main integration and Backend migration-head CI repair in progress |
+| `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Contributor Fields And Canonical-Human Lineage | L1 | Internal review passed at `4d1fc507`; PR/external checks pending; aggregate coverage mandatory in Backend |
+| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Active after PR #151 and explicit user start; implementation and deterministic proof in progress |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
