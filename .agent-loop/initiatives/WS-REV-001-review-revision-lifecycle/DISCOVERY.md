@@ -3,15 +3,15 @@
 ## Baseline
 
 Discovery was refreshed read-only from trusted main
-`8d5eb15b384fd75787ce98a099400a1d335d2560` after REV PLAN2 merged through PR
-#150, AUTH-09D-B merged through PR #152, and the AUTH contributor foundation
-merged through PR #153. The active parent-split repair makes no backend/runtime
-changes.
+`44f2467cedc266d2efe261119cfff436ac6b7715` after ART admission foundation PR
+#154 merged on top of REV PLAN2 PR #150, AUTH-09D-B PR #152, and the AUTH
+contributor foundation PR #153. The active parent-split repair makes no
+backend/runtime changes.
 
 ## Current backend
 
 - FastAPI/Python, async SQLAlchemy 2.x, Alembic, Pydantic, PostgreSQL.
-- Single Alembic head: `0027_contributor_foundation`.
+- Single Alembic head: `0028_artifact_admission`.
 - `Submission` is the existing versioned submission entity; no separate
   SubmissionVersion is needed.
 - TaskAssignment and Submission now expose only `contributor_id`; each has an
@@ -51,9 +51,14 @@ changes.
 
 ## ART discovery
 
-- ART v2 LocalStorage clean cut merged through PR #141 at `a10d901` despite
-  stale ART owner status wording.
-- S3/MinIO and ART 02B1 onward remain proposed.
+- ART v2 LocalStorage clean cut merged through PR #141 at `a10d901`, S3/MinIO
+  preparation merged through PR #151 at `1b5422fc`, and admission/put-attempt
+  foundation merged through PR #154 at
+  `44f2467cedc266d2efe261119cfff436ac6b7715` from final head `c93f1a24`.
+- PR #154 adds `0028_artifact_admission` and no Project/setup writer file, so
+  the 02A1 writer inventory is unchanged by that merge. Provider execution,
+  verification publication, recovery, routes, and product cutover remain later
+  ART work.
 - Current ART map does not schedule an exact lease-scoped review packet-read
   capability, review-evidence candidate/finalize capability, or server-derived
   stabilized Submission artifact digest. REV-03B, 07A/07B, 09A3/09A4, 10, and

@@ -2,9 +2,9 @@
 
 ## Current status
 
-Trusted main is `8d5eb15b384fd75787ce98a099400a1d335d2560`, which includes REV
-PLAN2 through PR #150, AUTH-09D-B through PR #152, and
-`WS-AUTH-001-CONTRIBUTOR-FOUNDATION` through PR #153. The user explicitly
+Trusted main is `44f2467cedc266d2efe261119cfff436ac6b7715`, which additionally
+includes ART admission foundation PR #154 after REV PLAN2 PR #150, AUTH-09D-B
+PR #152, and `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` PR #153. The user explicitly
 started parent 02A on 2026-07-19. L1 preimplementation review returned FAIL
 before runtime edits because the contract combined three separately reviewable
 database/concurrency boundaries. Parent 02A is therefore the active planning-
@@ -13,7 +13,7 @@ authorized in this PR.
 
 ## Trusted dependency truth
 
-- Single Alembic head: `0027_contributor_foundation`.
+- Single Alembic head: `0028_artifact_admission`.
 - TaskAssignment and Submission expose canonical `contributor_id` with
   ActorProfile foreign keys and human-kind database guards.
 - All 24 REV lifecycle action dependencies remain unavailable.
@@ -26,9 +26,11 @@ authorized in this PR.
   code candidate `0ca5a632`, and successful Backend, Agent Gates, and CodeRabbit
   checks. Its field clean cut, human lineage, and active-human transaction
   revalidation satisfy the former external 02A gate.
-- ART v2 LocalStorage merged through PR #141 at `a10d901`, but ART has no
-  scheduled review packet-read, review-evidence candidate/finalize, or
-  server-derived Submission artifact-digest owner chunk.
+- ART admission/put-attempt foundation merged through PR #154 at `44f2467c`
+  from final head `c93f1a24`, advancing the sole migration head to
+  `0028_artifact_admission`. It changes no Project/setup writer and does not
+  supply review packet-read, review-evidence candidate/finalize, or
+  server-derived Submission artifact-digest capability.
 - CON-01 merged its specification. CON runtime chunks 02A onward remain
   proposed on trusted main. Any unmerged CON migration must rebase from the
   then-current head before it is consumable.

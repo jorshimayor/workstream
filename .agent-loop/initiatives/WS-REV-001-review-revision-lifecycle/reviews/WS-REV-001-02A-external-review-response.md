@@ -54,7 +54,9 @@ not start 02A1 or change product, architecture, security, or migration behavior.
 - Agent gates: PASS, 88 tests.
 - Merge-intent validation: PASS.
 - Docstring coverage: PASS, 90.3 percent overall.
-- Alembic heads: PASS, one head, `0027_contributor_foundation`.
+- Alembic heads before the ART rebase: PASS, one head,
+  `0027_contributor_foundation`. After conflict-free rebase onto ART PR #154:
+  PASS, one head, `0028_artifact_admission`.
 - Diff integrity: PASS.
 - Internal-review evidence: PASS after exact-SHA review and rebind. The earlier
   stale-SHA failure was the expected historical result before candidate
@@ -62,7 +64,8 @@ not start 02A1 or change product, architecture, security, or migration behavior.
 
 ## Remaining risks
 
-ART PR #154 remains unmerged and owns its own migration rebase. Every future REV
-child must refresh trusted main and the sole Alembic head before implementation.
+ART PR #154 merged at `44f2467c` and owns `0028_artifact_admission`; it changes
+no Project/setup writer. Every future REV child must still refresh trusted main,
+the writer inventory, and the sole Alembic head before implementation.
 PR #156 must not merge while any current-head GitHub or CodeRabbit check is
 pending or failed, or while any actionable comment remains unresolved.

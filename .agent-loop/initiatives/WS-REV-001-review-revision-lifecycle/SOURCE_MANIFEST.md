@@ -168,6 +168,16 @@ review-evidence candidate/finalize, projection, and live-proof contracts,
 including a separately approved `WS-ART-001-REV-EVIDENCE` owner chunk, remain
 dependency gates.
 
+ART admission foundation PR #154 later merged at trusted main
+`44f2467cedc266d2efe261119cfff436ac6b7715` from final branch head
+`c93f1a246ddbc595aa0676a63c2926bf26fc1612`, with migration
+`0028_artifact_admission`. It adds the durable-byte admission ledger and one
+prepared `ArtifactPutAttempt` before provider I/O, while keeping provider
+execution, verification publication, recovery, routes, and product cutover
+inactive. Its merge changes no Project/setup writer file; it therefore advances
+the publication migration base without expanding 02A1's writer inventory or
+satisfying REV's later packet-read, evidence-finalize, or digest gates.
+
 The merged ART plan also leaves the narrow active-lease packet-read port and
 server-derived `Submission.artifact_hash` field unassigned to an approved chunk.
 REV-07/10 require exact merged ART/task-owner amendments for those capabilities;

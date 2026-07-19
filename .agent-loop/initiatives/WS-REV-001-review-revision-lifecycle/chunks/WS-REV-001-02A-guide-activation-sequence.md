@@ -41,6 +41,16 @@ authorization-lineage, and CI work.
   `0027_contributor_foundation`. No child reserves a later revision before its
   own current-main start refresh.
 
+## Publication Rebase Proof
+
+Before merge, this planning branch rebased without conflict onto ART PR #154
+merge `44f2467cedc266d2efe261119cfff436ac6b7715`. The sole publication-base head
+is now `0028_artifact_admission`. ART #154 changes no Project/setup writer file,
+so the planned 02A1 inventory remains complete for this publication snapshot.
+This does not pre-authorize a child: 02A1 and every migration-owning successor
+must refresh the then-current writer inventory and Alembic head at its own
+explicit start.
+
 ## Child Sequence
 
 ```text

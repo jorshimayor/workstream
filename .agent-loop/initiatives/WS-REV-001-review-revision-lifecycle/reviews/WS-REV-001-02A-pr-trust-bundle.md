@@ -71,6 +71,9 @@ unchanged. Stored Review decisions remain only `accept`, `needs_revision`, and
 ## Acceptance criteria proof
 
 The parent records exact merged AUTH dependencies and the sole migration head.
+Its historical start head was `0027_contributor_foundation`; the conflict-free
+publication rebase onto ART PR #154 advances the current sole head to
+`0028_artifact_admission` without adding a Project/setup writer.
 Every child specifies allowed and prohibited files, lock order, race and
 rollback proof, coverage floors, required reviewers, human focus, and a stop
 condition. Migration-owning children 02A3 and 02A4 additionally specify their
@@ -106,6 +109,11 @@ separately gated.
 
 ## External review
 
+After the prior review cycle passed, ART PR #154 merged and PR #156 rebased
+without conflict onto trusted main `44f2467c`. This rewrote every branch SHA;
+all prior GitHub/CodeRabbit and exact-SHA internal results are historical until
+the rebased candidate is reviewed, rebound, force-pushed, and rechecked.
+
 On prior pushed head `8f12f656`, GitHub Backend and Agent Gates passed, and
 CodeRabbit passed with one actionable source-manifest finding: a historical
 PLAN2 AUTH-09D-A/`0026` review-base sentence could be mistaken for the later
@@ -121,7 +129,8 @@ no unresolved actionable comment. Human review remains pending.
 ## Remaining risks
 
 Historical chronology or Task context ambiguity must fail closed in future
-migrations. ART and CON capabilities remain dependency-owned future work. All
+migrations. ART's generic admission foundation is merged, while remaining ART
+review capabilities and CON capabilities remain dependency-owned future work. All
 24 planned REV action dependencies remain unavailable. Later duration and human
 revision exhaustion semantics still require explicit human decisions.
 

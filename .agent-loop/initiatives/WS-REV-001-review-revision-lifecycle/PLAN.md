@@ -3,22 +3,23 @@
 ## Planning authority
 
 This plan is reconciled from trusted main
-`8d5eb15b384fd75787ce98a099400a1d335d2560`, which contains merged REV PLAN2
-through PR #150, AUTH-09D-B through PR #152, and the AUTH contributor foundation
-through PR #153. Worktree branches, unmerged PRs, and proposed owner changes are
-discovery evidence only.
+`44f2467cedc266d2efe261119cfff436ac6b7715`, which additionally contains ART
+admission foundation PR #154 after REV PLAN2 PR #150, AUTH-09D-B PR #152, and
+the AUTH contributor foundation PR #153. Worktree branches, unmerged PRs, and
+proposed owner changes are discovery evidence only.
 They are not runtime dependencies until their exact owner chunk, PR, merge SHA,
 schema head, typed contract, and tests exist on trusted main.
 
 Current merged facts are:
 
-- the single Alembic head is `0027_contributor_foundation`;
+- the single Alembic head is `0028_artifact_admission`;
 - TaskAssignment and Submission attribution use canonical `contributor_id`
   ActorProfile foreign keys and database-enforced human lineage;
 - the AUTH catalogue contains 74 PermissionIds and 65 ActionIds, with 15 active
   and 50 planned;
 - all 24 REV lifecycle action dependencies remain unavailable;
-- ART v2 LocalStorage is merged, but review packet reads, review-evidence
+- ART admission and prepared put-attempt foundation is merged through PR #154,
+  but provider execution/publication, review packet reads, review-evidence
   candidate/finalize, and server-derived stabilized Submission artifact lineage
   do not have merged owner contracts;
 - CON has merged its canonical specification, but its outbox, audit,
@@ -34,6 +35,9 @@ both task-subsystem owner fields, adds canonical-human constraints, and exposes
 transaction-local active-human revalidation without changing authorization
 availability. That external runtime gate is satisfied. Each REV migration still
 allocates only the then-current next revision at its own explicit start.
+ART PR #154 later advanced the sole head to `0028_artifact_admission` without
+changing a Project/setup writer. It creates no REV migration conflict; every
+future REV child still refreshes from then-current trusted main.
 
 ## Shipping boundary
 

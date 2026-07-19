@@ -1,5 +1,22 @@
 # Internal Plan Review Log: WS-REV-001
 
+## WS-REV-001-02A ART #154 Main Reconciliation - 2026-07-19
+
+ART admission foundation PR #154 merged at trusted main
+`44f2467cedc266d2efe261119cfff436ac6b7715` from final head
+`c93f1a246ddbc595aa0676a63c2926bf26fc1612`. The user required a current-main
+conflict check before any PR #156 merge. REV rebased all six commits without
+conflict; the sole Alembic head is now `0028_artifact_admission`.
+
+ART #154 changes no Project/setup writer file. It therefore does not expand the
+02A1 publication-fence inventory, but its migration becomes the publication
+base for every later child refresh. The merge supplies generic durable-byte
+admission and prepared put-attempt persistence only; it does not satisfy REV's
+later packet-read, review-evidence finalize, or stabilized Submission digest
+gates. The rebase rewrote every PR #156 SHA, so all earlier exact-SHA evidence
+is historical. Deterministic gates, full internal review, evidence rebinding,
+force-push, and current-head external checks are required before human merge.
+
 ## WS-REV-001-02A External Review Repair - 2026-07-19
 
 CodeRabbit passed PR #156 with one actionable source-manifest finding. The
