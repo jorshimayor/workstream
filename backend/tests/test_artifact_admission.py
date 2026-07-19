@@ -12,6 +12,7 @@ from alembic import command
 from alembic.config import Config
 import pytest
 from sqlalchemy import func, select, text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
@@ -32,6 +33,7 @@ from app.modules.artifacts.models import (
     ArtifactUploadItem,
     ArtifactUploadSession,
 )
+from app.modules.artifacts.repository import ArtifactRepository
 from app.modules.artifacts.schemas import (
     CheckerOutputArtifactAdmissionRequest,
     ContributorArtifactAdmissionRequest,
@@ -64,7 +66,7 @@ from app.modules.projects.models import (
     RevisionPolicy,
     SubmissionArtifactPolicy,
 )
-from app.modules.tasks.models import Submission, WorkstreamTask
+from app.modules.tasks.models import AuditEvent, Submission, WorkstreamTask
 from tests.artifact_store_helpers import (
     artifact_admission_limit_settings,
     minted_source,
@@ -795,6 +797,65 @@ async def test_human_admission_revalidates_exact_active_profile_and_link(
         await engine.dispose()
 
 
+async def test_guide_admission_facts_lock_snapshot_and_item(
+    admission_database_env: str,
+    tmp_path: Path,
+) -> None:
+    context = _context()
+    engine = create_async_engine(admission_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as seed_session:
+            _, item_id = await _seed_guide(
+                seed_session,
+                context=context,
+                content_hash="sha256:" + "a" * 64,
+                media_type="text/markdown",
+            )
+
+        async with factory() as lock_session:
+            async with lock_session.begin():
+                facts = await ArtifactRepository(
+                    lock_session
+                ).get_guide_admission_facts(item_id)
+                assert facts is not None
+
+                mutations = (
+                    (
+                        "update guide_source_snapshot_items "
+                        "set media_type = 'application/json' where id = :item_id",
+                        {"item_id": item_id},
+                    ),
+                    (
+                        "update guide_source_snapshots set captured_by = :captured_by "
+                        "where id = (select source_snapshot_id "
+                        "from guide_source_snapshot_items where id = :item_id)",
+                        {
+                            "captured_by": str(uuid4()),
+                            "item_id": item_id,
+                        },
+                    ),
+                )
+                for statement, parameters in mutations:
+                    async with factory() as mutation_session:
+                        with pytest.raises(DBAPIError, match="lock timeout"):
+                            async with mutation_session.begin():
+                                await mutation_session.execute(
+                                    text("set local lock_timeout = '200ms'")
+                                )
+                                await mutation_session.execute(
+                                    text(statement),
+                                    parameters,
+                                )
+
+        async with factory() as assertion_session:
+            assert await _count(assertion_session, ArtifactAdmissionScope) == 0
+            assert await _count(assertion_session, ArtifactAdmissionCharge) == 0
+            assert await _count(assertion_session, ArtifactPutAttempt) == 0
+    finally:
+        await engine.dispose()
+
+
 async def test_exact_replay_returns_one_attempt_and_one_charge_set(
     admission_database_env: str,
     tmp_path: Path,
@@ -1027,6 +1088,7 @@ async def test_contributor_admission_rejects_cross_project_task_relationship(
             assert await _count(session, ArtifactAdmissionScope) == 0
             assert await _count(session, ArtifactAdmissionCharge) == 0
             assert await _count(session, ArtifactPutAttempt) == 0
+            assert await _count(session, AuditEvent) == 0
     finally:
         await engine.dispose()
 
@@ -1638,17 +1700,54 @@ def test_artifact_admission_migration_refuses_populated_downgrade(
 ) -> None:
     config = _alembic_config()
 
-    async def seed_scope() -> None:
+    async def seed_attempt_only() -> None:
         engine = create_async_engine(isolated_database_env)
         try:
-            async with engine.begin() as connection:
-                await connection.execute(
-                    text(
-                        "insert into artifact_admission_scopes "
-                        "(scope_type,scope_id,limit_bytes,counted_bytes,cas_version) "
-                        "values ('deployment','primary',10,0,0)"
-                    )
+            factory = async_sessionmaker(engine, expire_on_commit=False)
+            async with factory() as session:
+                context = _context()
+                project_id, item_id = await _seed_guide(
+                    session,
+                    context=context,
+                    content_hash="sha256:" + "b" * 64,
+                    media_type="text/markdown",
                 )
+                namespace_fingerprint = "sha256:" + "c" * 64
+                await session.execute(
+                    text(
+                        "insert into artifact_storage_namespaces "
+                        "(id,backend,adapter,provider_profile,namespace_descriptor,"
+                        "namespace_fingerprint) values "
+                        "('primary','local','local','local-v2','{}',:fingerprint)"
+                    ),
+                    {"fingerprint": namespace_fingerprint},
+                )
+                await session.execute(
+                    text(
+                        "insert into artifact_put_attempts "
+                        "(id,producer_request_type,producer_type,producer_ref,"
+                        "project_id,guide_source_item_id,sha256,byte_count,media_type,"
+                        "storage_namespace_id,namespace_fingerprint,canonical_target,"
+                        "operation_identity,request_digest,status,next_run_at,"
+                        "execution_generation,cas_version,prepared_at) values "
+                        "(:id,'guide','actor_profile',:producer_ref,:project_id,"
+                        ":item_id,:sha256,1,'text/markdown','primary',:fingerprint,"
+                        ":target,:operation_identity,:request_digest,'prepared',now(),"
+                        "0,0,now())"
+                    ),
+                    {
+                        "id": str(uuid4()),
+                        "producer_ref": str(context.actor_profile_id),
+                        "project_id": project_id,
+                        "item_id": item_id,
+                        "sha256": "sha256:" + "b" * 64,
+                        "fingerprint": namespace_fingerprint,
+                        "target": "sha256/bb/" + "b" * 62,
+                        "operation_identity": "sha256:" + "d" * 64,
+                        "request_digest": "sha256:" + "e" * 64,
+                    },
+                )
+                await session.commit()
         finally:
             await engine.dispose()
 
@@ -1657,7 +1756,11 @@ def test_artifact_admission_migration_refuses_populated_downgrade(
         try:
             async with engine.begin() as connection:
                 await connection.execute(
-                    text("truncate table artifact_admission_scopes cascade")
+                    text(
+                        "truncate table artifact_put_attempt_charges, "
+                        "artifact_put_attempts, artifact_admission_charges, "
+                        "artifact_admission_scopes cascade"
+                    )
                 )
         finally:
             await engine.dispose()
@@ -1666,7 +1769,7 @@ def test_artifact_admission_migration_refuses_populated_downgrade(
         try:
             asyncio.run(_reset_admission_test_schema(isolated_database_env))
             command.upgrade(config, "0027_artifact_admission")
-            asyncio.run(seed_scope())
+            asyncio.run(seed_attempt_only())
             with pytest.raises(
                 RuntimeError,
                 match="cannot downgrade populated artifact admission ledger",

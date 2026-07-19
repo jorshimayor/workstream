@@ -126,6 +126,9 @@ class ArtifactRepository:
                     GuideSourceSnapshot.id == GuideSourceSnapshotItem.source_snapshot_id,
                 )
                 .where(GuideSourceSnapshotItem.id == guide_source_item_id)
+                .with_for_update(
+                    of=(GuideSourceSnapshotItem, GuideSourceSnapshot)
+                )
             )
         ).one_or_none()
         if row is None:
