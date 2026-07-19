@@ -91,13 +91,16 @@ make the whole actor effective.
 An identity link binds one canonical external issuer and opaque subject to one
 ActorProfile. It has active/revoked state plus state-transition-guarded current
 revocation and reactivation attribution. AUTH-09D-A migration `0026` enforces
-complete attribution and bounded lifecycle reasons before AUTH-09D-B activates
-link mutations. Append-only audit evidence preserves immutable transition
-history; the current row carries only the latest state-compatible attribution.
+complete attribution and bounded lifecycle reasons. AUTH-09D-B activates exact
+link revoke/reactivate mutations. Append-only audit evidence preserves immutable
+transition history; the current row carries only the latest state-compatible attribution.
 Raw tokens, provider credentials, and full claim payloads are not stored.
 The database enforces a unique `(issuer, subject)` pair across all links and, in
 v0.1, at most one active identity link per ActorProfile. Revocation preserves
 the immutable link and provenance; it does not free the pair for rebinding.
+Link reactivation is component-scoped: it restores only that exact credential
+binding, does not reactivate its ActorProfile or restore grants, and cannot
+bypass final-effective-Access-Administrator preservation.
 
 ### AdminRoleGrant
 

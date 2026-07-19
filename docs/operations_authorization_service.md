@@ -564,11 +564,11 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 ### Catalogue And Action-Evidence Staging
 
 The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
-AUTH-09D-A. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
-actions, `actor.service.provision`, `actor.profile.read`, and
-`actor.identity_link.read`, plus the three profile lifecycle actions are active;
-the other 50 entries remain planned and non-executable. The two identity-link
-lifecycle rows introduced by `0023` remain planned for AUTH-09D-B. The target post-custody
+AUTH-09D-B. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
+actions, `actor.service.provision`, `actor.profile.read`,
+`actor.identity_link.read`, the three profile lifecycle actions, and the two
+identity-link lifecycle actions are active; the other 48 entries remain planned
+and non-executable. The target post-custody
 invariant is that planned runtime entries contain only action, permission, exact
 AUTH activation owner, and availability. Until the availability-neutral custody
 transfers merge, the 25 ART and 19 REV rows retain their historical feature
@@ -665,12 +665,13 @@ database service-grant table.
 ## Actor Self Decision Operations
 
 `GET /api/v1/actors/me` declares `actor.profile.read_self`; it permits an
-active identity link with an active or suspended human actor and commits only
-the bounded read-decision evidence after authorization. `PATCH
-/api/v1/actors/me` declares `actor.profile.update_self`; it locks the exact
-actor profile first and its exact identity link second, rechecks current state, mutates
-only `display_name` or `contact_email`, and commits mutation plus allow evidence
-once. The authorization kernel never commits or rolls back.
+active identity link with an active or suspended human actor. Both self routes
+lock the exact actor profile first and its exact identity link second and
+recheck current state before deciding. GET then advances verification timestamps
+and commits bounded read-decision evidence. `PATCH /api/v1/actors/me` declares
+`actor.profile.update_self`; it additionally mutates only `display_name` or
+`contact_email` and commits mutation plus allow evidence once. The authorization
+kernel never commits or rolls back.
 
 Self routes return explicit 403 errors because the caller owns the target:
 `identity_link_revoked`, then `actor_deactivated`, then `actor_suspended` for an
@@ -836,19 +837,24 @@ resource IDs as metric labels.
 
 ## Authority Mutation Idempotency
 
-AUTH-09D-A exposes only:
+AUTH-09D-A and AUTH-09D-B expose:
 
 ```text
 POST /api/v1/actors/{actor_profile_id}/suspend
 POST /api/v1/actors/{actor_profile_id}/reactivate
 POST /api/v1/actors/{actor_profile_id}/deactivate
+POST /api/v1/actor-identity-links/{identity_link_id}/revoke
+POST /api/v1/actor-identity-links/{identity_link_id}/reactivate
 ```
 
 Each route requires an effective system Access Administrator, the administrative
 mutation limiter, a UUID `Idempotency-Key`, and exactly one normalized bounded
 `reason`. Conflicts do not consume the key. Deactivation is terminal, and a
 profile reactivation does not restore a revoked identity link, grant, or fixed
-service admission. Identity-link lifecycle routes remain unavailable.
+service admission. Link revoke/reactivate preserves the immutable issuer and
+subject binding, permits repair while its owner is suspended, refuses terminal
+owners, and never restores a grant or fixed-service admission. An administrator
+cannot revoke their own identity link.
 
 Service-actor creation, administrative/project grant issue or revocation,
 actor suspension/reactivation/deactivation, and identity-link
