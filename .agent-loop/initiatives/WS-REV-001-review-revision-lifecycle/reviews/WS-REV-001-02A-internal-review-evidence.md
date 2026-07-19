@@ -3,9 +3,9 @@
 ## Candidate
 
 - Trusted base: `8d5eb15b384fd75787ce98a099400a1d335d2560`
-- Reviewed planning candidate: `d5162648c3b6d8e045bac4c7f17c15589a06fabf`
-- Scope: 18 REV initiative planning/contract paths and the one required
-  schema-v2 merge intent
+- Reviewed planning candidate: `c545cd10272e10709a13b6212ef62fd1adc4f39f`
+- Scope: 21 REV initiative Markdown paths and the one required schema-v2 merge
+  intent, including internal/external review publication artifacts
 - Runtime status: prohibited; no backend runtime, model, schema, migration,
   route, worker, test, dependency, CI workflow, frozen reference specification,
   active product document, or AUTH/ART/CON owner file changed
@@ -16,16 +16,16 @@ Valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: d5162648c3b6d8e045bac4c7f17c15589a06fabf
+Reviewed code SHA: c545cd10272e10709a13b6212ef62fd1adc4f39f
 
-Reviewed at: 2026-07-19T14:20:36Z
+Reviewed at: 2026-07-19T15:33:17Z
 
-Reviewer run IDs: /root/rev01_senior_arch_reuse@d5162648c3b6d8e045bac4c7f17c15589a06fabf; /root/rev01_qa_product_test@d5162648c3b6d8e045bac4c7f17c15589a06fabf; /root/rev01_security_docs_ci@d5162648c3b6d8e045bac4c7f17c15589a06fabf
+Reviewer run IDs: /root/rev02a_external_senior@c545cd10272e10709a13b6212ef62fd1adc4f39f; /root/rev02a_external_qa@c545cd10272e10709a13b6212ef62fd1adc4f39f; /root/rev02a_external_security@c545cd10272e10709a13b6212ef62fd1adc4f39f
 
 ## Circuit breaker
 
-PASS with a documented planning-only size exception. The candidate changes 19
-paths with 1,040 insertions and 279 deletions, above the default review-size
+PASS with a documented planning-only size exception. The candidate changes 22
+paths with 1,389 insertions and 283 deletions, above the default review-size
 guideline, but it changes no runtime, schema, migration, workflow, dependency,
 test, or product-document behavior. It replaces one unreviewable L1 runtime
 contract with three independently gated executable child contracts. Each child
@@ -71,6 +71,11 @@ No Critical, High, or Medium finding remains.
   the chronology owner.
 - Preserved 02A2 as the later hidden prepared superseded-guide reactivation
   chunk instead of renumbering or implicitly starting it.
+- Distinguished the historical PLAN2 AUTH-09D-A/`0026` review base from parent
+  02A's full trusted-main `8d5eb15b...`/`0027_contributor_foundation` start and
+  restated then-current-head allocation for every executable child.
+- Corrected the trust bundle after review to distinguish the original 19-path
+  planning candidate from the full 22-path PR scope.
 
 ## Deterministic evidence
 
@@ -79,7 +84,7 @@ No Critical, High, or Medium finding remains.
 - `python3 scripts/check_stale_review_contracts.py`: PASS.
 - `python3 scripts/check_stale_artifact_contracts.py`: PASS at the
   `artifact_store_cutover` phase.
-- `python3 scripts/check_markdown_links.py`: PASS for all 18 changed Markdown
+- `python3 scripts/check_markdown_links.py`: PASS for all 21 changed Markdown
   files.
 - `python3 scripts/check_loop_memory_state.py`: PASS.
 - `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 backend/.venv/bin/python scripts/test_agent_gates.py`:
@@ -92,7 +97,7 @@ No Critical, High, or Medium finding remains.
   validate-merge-intent --base-ref origin/main`: PASS for
   `WS-REV-001-02A -> WS-REV-001-02A1` with explicit start required.
 - `git diff --check` and `git diff --check origin/main...HEAD`: PASS.
-- Scope proof: exactly 19 candidate paths, all within the REV initiative except
+- Scope proof: exactly 22 candidate paths, all within the REV initiative except
   `.agent-loop/merge-intents/WS-REV-001-02A.json`.
 - Ancestry proof: AUTH reviewed candidate `0ca5a632` is an ancestor of PR head
   `6a70b33f`, which is an ancestor of trusted merge/base `8d5eb15b`.
@@ -106,7 +111,9 @@ commands.
 
 ## Remaining gates
 
-- GitHub CI, CodeRabbit, and human PR review remain external publication gates.
+- GitHub CI and CodeRabbit passed on prior pushed head `8f12f656`; fresh external
+  checks must pass after the repaired candidate and rebound evidence are pushed.
+- Human PR review remains required.
 - Only the user may approve and merge the specific PR.
 - Merge does not start 02A1; every child requires a new explicit instruction.
 
@@ -124,6 +131,19 @@ finding. All reviewer sessions completed and no reviewed planning-candidate
 file changed.
 
 Evidence-delta reviewer run IDs: /root/rev02a_evidence_senior; /root/rev02a_evidence_qa; /root/rev02a_evidence_security
+
+## External-review repair review
+
+CodeRabbit's sole actionable finding was valid. Candidate `c545cd10` clarifies
+that `99ae4c...`/`0026_actor_profile_lifecycle` was the historical PLAN2
+post-rebase snapshot while parent 02A started from full trusted main
+`8d5eb15b...` with `0027_contributor_foundation`. Senior engineering,
+architecture, reuse/dedup, circuit breaker, QA/test, product/ops, test delta,
+security/auth, docs, and CI integrity reviewed that exact committed candidate.
+The trust bundle's initially stale path count was repaired from the original
+19-path planning-candidate count to the full 22-path PR count and re-reviewed to
+PASS. No Critical, High, Medium, or Low finding remains; all reviewer sessions
+completed.
 
 ## Disposition
 

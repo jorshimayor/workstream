@@ -54,10 +54,12 @@ after chunk 08 for hidden prepared superseded-guide reactivation.
 
 ## Scope control
 
-The candidate changes 18 files under the REV initiative and one merge-intent
-file. It changes no backend code, model, schema, migration, service, route,
-worker, test, dependency, CI workflow, frozen reference specification, active
-product document, or AUTH/ART/CON owner artifact.
+The full PR changes 21 Markdown files under the REV initiative and one
+merge-intent JSON file. This includes the internal evidence, trust bundle, and
+external-review response added after the original 19-path planning candidate.
+It changes no backend code, model, schema, migration, service, route, worker,
+test, dependency, CI workflow, frozen reference specification, active product
+document, or AUTH/ART/CON owner artifact.
 
 ## Product behavior
 
@@ -97,8 +99,8 @@ subsystems remain explicit in the executable child contracts.
 ## Reviewer results
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
-reuse/dedup, test delta, and CI integrity all pass on reviewed planning SHA
-`d5162648c3b6d8e045bac4c7f17c15589a06fabf`. The circuit breaker approved the
+reuse/dedup, test delta, and CI integrity all pass on repaired planning SHA
+`c545cd10272e10709a13b6212ef62fd1adc4f39f`. The circuit breaker approved the
 planning-only size exception because every executable boundary is split and
 separately gated.
 
@@ -109,8 +111,9 @@ source-manifest finding: a historical PLAN2 AUTH-09D-A/`0026` review-base
 sentence could be mistaken for the later parent 02A start. The repair labels
 that snapshot as historical and restates the full 02A trusted-main SHA,
 `0027_contributor_foundation` head, and then-current-head child allocation rule.
-Fresh deterministic and internal review evidence is required for the repaired
-candidate. Human review remains pending.
+Fresh deterministic and internal review evidence passes for the repaired
+candidate. GitHub and CodeRabbit must recheck the republished head; human review
+remains pending.
 
 ## Remaining risks
 
