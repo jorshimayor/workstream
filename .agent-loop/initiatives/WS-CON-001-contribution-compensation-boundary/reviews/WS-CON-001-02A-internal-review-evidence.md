@@ -65,9 +65,9 @@ remain unchanged; fresh exact-SHA proof and review bind to this baseline.
 ## Current PR #154 Reconciliation Verification Results
 
 ```text
-73 passed, 32 deselected in 170.87s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029`)
+73 passed, 32 deselected in 234.91s (exact bounded isolated outbox/migration row on ART `0028` / CON `0029` after CI repair)
 outbox coverage: 95.90% (244 statements, 10 missed; required: at least 90%)
-8 passed in 0.21s (security-sensitive assertion helper suite)
+9 passed in 0.30s (security-sensitive assertion helper suite after CI-race regression repair)
 1 passed in 63.77s (AUTH revision-specific 0026 lifecycle downgrade/reupgrade)
 Alembic heads: one head, `0029_shared_transactional_outbox`
 Ruff on CON-02A, ART `0028`, CON `0029`, and reconciliation tests: passed
@@ -80,6 +80,14 @@ traceback contained no secret. The helper now falls back to recursively
 inspecting concrete object state and fails closed when state is unavailable.
 Its dedicated regression test proves a raising mapping cannot hide a retained
 secret. The repaired exact bounded row passed as recorded above.
+
+The first GitHub Backend run on PR head `44fc78f3` completed the full suite at
+87.19 percent repository coverage but failed two outbox secrecy tests because
+recursive helper inspection traversed a live module-globals dictionary while a
+nested import mutated it. The assertion now snapshots built-in dictionary
+entries before recursion. A deterministic nested-mapping regression proves the
+old live iteration failure and the repaired traversal; no product or CI
+threshold behavior changed.
 
 ## Implemented Contract
 
@@ -179,20 +187,22 @@ Existing assertions, skips, coverage settings, and test commands are unchanged.
 
 ## Current Exact-SHA Internal Review
 
-Reviewed code SHA: `949f8865aa99e39cdbd91623ce54d98199592124`
+Reviewed code SHA: `a9c83949ced6980b7dd57f4d1ee0e2b1e1b016be`
 
 Reviewed against trusted main:
 `3b1d63796c086f53fc2b0aeefe096387b82485ec`
 
-Reviewer runs: `/root/con02a_senior_arch_reuse`,
-`/root/con02a_qa_product_docs`, `/root/con02a_security_ci`
+Reviewer runs: `/root/ci_repair_senior_arch_reuse`,
+`/root/ci_repair_qa_product_docs`, `/root/ci_repair_security_ci`
 
 Open sub-agent sessions: none
 
 Valid findings addressed: yes. The repair loop corrected the ART-parent
 downgrade target, closed separated and compact sensitive-key-name bypasses,
 preserved benign key-like words, and refreshed the active status baseline and
-bounded evidence. The final evidence-only confirmation passed all nine tracks.
+bounded evidence. The GitHub full-suite repair snapshots mutable framework
+state and adds deterministic regression coverage. The final confirmation
+passed all nine tracks.
 
 | Reviewer | Result | Blocking findings |
 |---|---|---|

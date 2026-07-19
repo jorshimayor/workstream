@@ -69,10 +69,13 @@ to `3b1d6379`, the exact bounded `0029` row passes 73 selected tests with 32
 deselected and 95.90 percent focused outbox coverage;
 all nine exact-SHA reviewers were required before publication.
 
-Exact candidate `949f8865aa99e39cdbd91623ce54d98199592124`
-subsequently passed all nine internal tracks against trusted main `3b1d6379`
-with no open findings or reviewer sessions. GitHub Backend, Agent Gates, and
-fresh CodeRabbit state remain external post-push gates.
+Exact repair candidate `a9c83949ced6980b7dd57f4d1ee0e2b1e1b016be`
+passed all nine internal tracks against trusted main `3b1d6379` with no open
+findings or reviewer sessions. The prior GitHub Backend run reached 87.19
+percent coverage and 1665 passing tests, but exposed a test-helper dictionary
+mutation race in two outbox secrecy tests. The helper now snapshots entries and
+a deterministic regression covers the failure. GitHub Backend and fresh
+CodeRabbit state must rerun after publication.
 
 ## Remaining risks
 

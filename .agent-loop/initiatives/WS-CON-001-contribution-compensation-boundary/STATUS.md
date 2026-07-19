@@ -148,11 +148,14 @@ after the explicit human start. It adds one linear
 `0029_shared_transactional_outbox` migration after ART-owned
 `0028_artifact_admission`, the shared outbox model/schema/repository/service,
 metadata registration, and PostgreSQL-focused migration/append tests. Fresh
-bounded proof passes 73 selected tests with 32 deselected in 170.87 seconds and
+bounded proof passes 73 selected tests with 32 deselected in 234.91 seconds and
 95.90 percent outbox coverage; the exact AUTH revision-specific lifecycle test
-and assertion-helper regression suite also remain recorded independently. All
-nine exact-SHA internal tracks must pass before the PR is republished; GitHub
-CI owns the full repository suite and 78 percent coverage gate. The first reconciled
+and assertion-helper regression suite also remain recorded independently. A
+GitHub full-suite run reached 87.19 percent coverage and 1665 passing tests,
+then exposed a mutable-dictionary race in that assertion helper; exact repair
+candidate `a9c83949` snapshots entries, adds deterministic regression coverage,
+and passes all nine internal tracks. GitHub CI must rerun the full repository
+suite and 78 percent coverage gate after publication. The first reconciled
 full-suite attempt was stopped after two hours solely because PR #150 advanced
 trusted main; a second attempt was stopped after 3 hours 7 minutes solely
 because ART PR #151 advanced trusted main; a third was stopped after one hour
@@ -168,7 +171,7 @@ It stops before dispatcher mechanics and CON-02B.
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` | Complete; merged | PR #144 merged at `e118e33` |
-| `WS-CON-001-02A` | PR #155 external repair in progress | Generic persistence/append only; five CodeRabbit documentation findings repaired, retention deferred to 02B; exact-SHA re-review and GitHub full-suite remain |
+| `WS-CON-001-02A` | PR #155 CI repair ready to publish | Generic persistence/append only; exact repair SHA passes all nine internal tracks; GitHub full-suite and CodeRabbit must rerun; retention remains deferred to 02B |
 | `WS-CON-001-02B` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 

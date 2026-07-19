@@ -91,7 +91,7 @@ is unchanged; the new participant is infrastructure for later callers.
 - Alembic reports exactly one head at `0029_shared_transactional_outbox`, with
   parent `0028_artifact_admission`.
 - The exact ART `0028` / CON `0029` bounded row passes 73 tests with 32
-  deselected in 170.87 seconds and 95.90 percent focused outbox coverage.
+  deselected in 234.91 seconds and 95.90 percent focused outbox coverage.
 - REV-02A PR #156 is reconciled at trusted main `3b1d6379`; it changes planning
   contracts only and adds no migration, runtime outbox seam, or CON authority.
 - The following `0027` rows are retained as historical pre-PR #153 evidence;
@@ -184,7 +184,7 @@ isolation control, or coverage threshold is waived.
 
 ## Reviewer Results
 
-- Exact candidate `949f8865aa99e39cdbd91623ce54d98199592124`
+- Exact repair candidate `a9c83949ced6980b7dd57f4d1ee0e2b1e1b016be`
   passed senior engineering, QA/test, security/auth, product/ops,
   architecture, docs, reuse/dedup, test-delta, and CI-integrity review against
   trusted main `3b1d63796c086f53fc2b0aeefe096387b82485ec` with no open findings and no
