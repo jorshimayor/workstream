@@ -67,11 +67,12 @@ evidence.
 The repair no longer executes raw cross-process node IDs. It executes validated
 whole modules, proves exact final collection equals exact completion inside the
 same pytest process, and binds stable test-base cardinalities to preflight. A
-hosted rerun at branch head `76b1d242878c49353178091e41f0435a6c9885d8`
-passed Agent Gates, CodeRabbit, preflight, API E2E, all four shards, complete
-fan-in, the 78 percent repository floor, and all twelve 90 percent subsystem
-floors. The Backend run completed in about 14 minutes 40 seconds versus about
-27 minutes on PR #161.
+hosted rerun associated with PR branch head
+`76b1d242878c49353178091e41f0435a6c9885d8`, executing authenticated checked-out
+merge tree `c2a0ce7c13bb76f6a769dcbca0726de8b244431e`, passed Agent Gates,
+CodeRabbit, preflight, API E2E, all four shards, complete fan-in, the 78 percent
+repository floor, and all twelve 90 percent subsystem floors. The Backend run
+completed in about 14 minutes 40 seconds versus about 27 minutes on PR #161.
 
 Authenticated fan-in recorded 31 modules and 1,775 nodes. Shard execution was
 711.782, 135.947, 130.978, and 411.147 seconds, with 580.804 seconds imbalance

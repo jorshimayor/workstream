@@ -64,6 +64,8 @@ real local shard diagnostic: 445 collected, 246 completed before deliberate inte
 diagnostic database and role cleanup: verified absent
 hosted repaired Backend run 29762868497: passed
 hosted Agent Gates run 29762868454: passed
+hosted PR branch head: 76b1d242878c49353178091e41f0435a6c9885d8
+hosted authenticated checked-out merge tree: c2a0ce7c13bb76f6a769dcbca0726de8b244431e
 hosted inventory: 31 modules / 1775 nodes
 hosted shard seconds: 711.782 / 135.947 / 130.978 / 411.147
 hosted imbalance: 580.804 seconds
