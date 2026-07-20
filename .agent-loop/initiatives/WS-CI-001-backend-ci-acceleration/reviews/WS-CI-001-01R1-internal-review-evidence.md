@@ -4,7 +4,11 @@ Open sub-agent sessions: none
 
 Valid findings addressed: yes
 
-Reviewed repair SHA: `bd75f5ef930e4a4cfe05dfd3073be05284d7d384`
+Reviewed code SHA: `bd75f5ef930e4a4cfe05dfd3073be05284d7d384`
+
+Reviewed at: 2026-07-20T18:28:58Z
+
+Reviewer run IDs: senior-engineering/architecture/docs/reuse-dedup=`timeout_senior_docs`; QA/test/CI-integrity/test-delta=`timeout_ci_qa`; security/auth/product/ops=`timeout_sec_ops`
 
 Final evidence head: `5ec228960392cb87cf35852392ba25971a991f6f`
 
@@ -23,9 +27,9 @@ Final evidence head: `5ec228960392cb87cf35852392ba25971a991f6f`
 | QA/test | PASS | None | Values and minimum configured gaps are regression-bound. |
 | security/auth | PASS | None | Cleanup remains exact; no auth, secret, or permission change. |
 | product/ops | PASS | None | Operational headroom is distinguished from guaranteed cleanup duration. |
-| architecture | PASS AFTER FIX | None | R1 was added to the durable chunk map after PR #163 merge state was corrected. |
+| architecture | PASS AFTER FIXES | None | R1 was added to the durable chunk map after PR #163 merge state was corrected. |
 | CI integrity | PASS | None | No threshold, selection, required-check, or propagation weakening. |
-| docs | PASS AFTER FIX | None | Contract, chunk map, external response, and trust bundle agree. |
+| docs | PASS AFTER FIXES | None | Contract, chunk map, external response, and trust bundle agree. |
 | reuse/dedup | PASS | None | Existing runner and workflow test boundary were reused. |
 | test delta | PASS | None | One assertion set strengthened; no tests removed or skipped. |
 
