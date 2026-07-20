@@ -6,9 +6,9 @@
   timeout exceeded its enclosing GitHub job timeout for both shard execution
   and API E2E.
 - Shard child timeout is now 4,800 seconds inside a 90-minute job, preserving a
-  10-minute cleanup margin.
+  10-minute configured budget gap and operational cleanup headroom.
 - API E2E child timeout is now 1,500 seconds inside a 30-minute job, preserving
-  a 5-minute cleanup margin.
+  a 5-minute configured budget gap and operational cleanup headroom.
 - Workflow regression tests assert both child timeouts remain below their job
   budgets.
 
@@ -27,10 +27,11 @@ None. The finding is a clear in-scope cleanup and failure-propagation defect.
 - Isolated database runner against local PostgreSQL: 16 passed.
 - Agent-gate workflow tests: 91 passed.
 - Markdown links, stale wording, loop-memory state, and diff integrity: passed.
-- Required internal review: pending exact-commit confirmation.
+- Required internal review: all applicable tracks passed at `af86b5f2`.
 
 ## Remaining risks
 
 GitHub may still terminate a runner for infrastructure reasons, but configured
-test timeouts now leave explicit time for the repository-owned isolation runner
-to terminate its child and drop its exact owned database and role.
+test timeouts now leave operational headroom for the repository-owned isolation
+runner to terminate its child and drop its exact owned database and role. The
+configured gaps are not guarantees because job setup also consumes wall time.
