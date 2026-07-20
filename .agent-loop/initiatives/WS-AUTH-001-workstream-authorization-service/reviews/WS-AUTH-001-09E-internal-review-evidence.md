@@ -1,6 +1,6 @@
 # WS-AUTH-001-09E Internal Review Evidence
 
-Reviewed code SHA: `5ae522bcaf77b4060baef78092a247cbbfc627e4`
+Reviewed code SHA: `4fd3537a1a9067bd8abcdf55e1e1e8cab8de3d76`
 
 Reviewed implementation SHA: `881ac7fc`
 
@@ -13,7 +13,10 @@ Integrated implementation reviewed against trusted main: `44f2467c`
 Final closeout reviewed against trusted main:
 `3b1d63796c086f53fc2b0aeefe096387b82485ec`
 
-Reviewed at: `2026-07-19T18:10:49Z`
+Latest closeout reviewed against trusted main:
+`cb9d5f9f9c311e644ed20a988c69843d3618a6b0`
+
+Reviewed at: `2026-07-20T04:08:53Z`
 
 Reviewer run IDs: `review_senior`, `review_qa`, `review_security`,
 `review_product_ops`, `review_architecture`, `review_ci`, `review_docs`,
@@ -75,7 +78,10 @@ Security review rejected merge candidate `d2d974eb` because ART admission still
 checked the former concrete `AuthorizationContext`; integrated candidate
 `98376fd1` repairs that boundary with exact membership in the two closed
 concrete context types and passes all nine tracks after the stale timing docs
-were corrected.
+were corrected. Current main then advanced through CON PR #155. Merge head
+`4fd3537a` inherits CON's shared outbox and `0029_shared_transactional_outbox`
+unchanged, has no conflict-resolution delta, and passes all nine integration
+tracks; AUTH still adds no outbox coupling or migration.
 
 ## Remaining Risk And Gate
 
