@@ -40,9 +40,10 @@ No path-based workflow suppression was added.
 
 ## Internal Review
 
-Exact SHA `14c50b464efca95da4f57b30272e0ce7e0435c11` passes senior engineering,
-QA/test, security/auth, product/ops, architecture, CI integrity, docs,
-reuse/dedup, and test-delta review after all valid findings were repaired.
+Implementation SHA `14c50b464efca95da4f57b30272e0ce7e0435c11` and final evidence head
+`a6141d5b7155c178d533e718404cb04576c900d7` pass senior engineering, QA/test,
+security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, and
+test-delta review after all valid findings were repaired.
 
 ## Remaining Risk
 
