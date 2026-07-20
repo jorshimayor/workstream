@@ -4,16 +4,16 @@ Open sub-agent sessions: none
 
 Valid findings addressed: yes
 
-Reviewed code SHA: `a6141d5b7155c178d533e718404cb04576c900d7`
+Reviewed code SHA: `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`
 
-Reviewed at: 2026-07-20T16:23:40Z
+Reviewed at: 2026-07-20T17:11:39Z
 
-Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_impl_arch`; QA/test/CI-integrity/test-delta=`ci_impl_qa`; security/auth/product/ops/docs=`ci_impl_sec_ops`
+Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_repair_arch`; QA/test/CI-integrity/test-delta=`ci_repair_qa`; security/auth/product/ops/docs=`ci_repair_sec_ops`
 
 ## Binding
 
 - Base: `c12ba1c8d4bbde86d0e2c19826f5791afc130489`
-- Final reviewed implementation: `14c50b464efca95da4f57b30272e0ce7e0435c11`
+- Final reviewed implementation: `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`
 - Contract: `WS-CI-001-01 — Parallel Full-Suite Coverage`
 - Scope: CI workflow, one shared shard tool, additive tests, operator runbook,
   initiative evidence, and exactly one merge intent; no product runtime change
@@ -25,20 +25,24 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_impl_arch`; QA
 | senior engineering | PASS | None | Cohesive inventory-to-fan-in trust boundary. |
 | QA/test | PASS AFTER FIXES | None | Exact runtime-finished node proof replaces pre-run collection claims. |
 | security/auth | PASS AFTER FIXES | None | Fixed artifacts, byte hashes, read-only permissions, safe hook path. |
-| product/ops | PASS AFTER FIXES | None | Authenticated timing/cost evidence now reaches operators. |
+| product/ops | PENDING CONFIRMATION | Stale trust bundle | This evidence-only correction discloses the hosted failure and repaired SHA. |
 | architecture | PASS | None | Shared Python policy boundary; YAML only orchestrates. |
 | CI integrity | PASS AFTER FIXES | None | Stable required check and unchanged 78/90 thresholds. |
-| docs | PASS AFTER FIXES | None | Runbook matches timing report and completed-node semantics. |
+| docs | PENDING CONFIRMATION | Stale trust bundle | Runbook is accurate; repaired PR evidence now requires confirmation. |
 | reuse/dedup | PASS | None | Existing isolated database runner remains sole DB owner. |
 | test delta | PASS AFTER FIXES | None | Additive tests; no skip, assertion, or threshold weakening. |
 
 ## Findings repaired
 
-- Replaced shard metadata derived from a second collection with exact manifest
-  node argv and a repository-owned pytest hook recording each node after its
-  actual runtime lifecycle finishes. A successful shard requires the completed
-  set to equal the canonical manifest exactly once.
-- Added a regression proving a collected-but-not-executed node fails.
+- Hosted run `29759523305` proved raw parameter display IDs can change across
+  pytest processes. Replaced cross-process raw-node execution with validated
+  whole-module execution, exact same-process collection/completion equality,
+  and stable preflight test-base cardinality binding.
+- Added regressions for changed UUID-like/nested parameter displays and for a
+  collected node that does not complete.
+- Disclosed the failed/cancelled hosted run and rebound the PR trust bundle to
+  the repaired implementation SHA; hosted rerun remains pending.
+
 - Added authenticated fan-in summary containing tree, manifest, per-shard
   duration/node/module balance, total runner seconds, and timing imbalance;
   the final check prints and uploads it through a pinned action.
@@ -50,13 +54,15 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_impl_arch`; QA
 ```text
 Ruff: passed
 Python compilation: passed
-planner + agent-gate + coverage-contract tests: 294 passed
-isolated-runner + coverage-contract tests: 188 passed
-clean-environment real collection/fan-in dry run: 31 modules, 1774 nodes
-shard weights: 443 / 444 / 443 / 444
+shard + coverage-contract tests at repaired head: 204 passed
+agent-gate tests at repaired head: 91 passed
+clean-environment collection/fan-in dry run: 31 modules, 1775 nodes
+shard weights: 445 / 444 / 443 / 443
+real local shard diagnostic: 445 collected, 246 completed before deliberate interrupt
+diagnostic database and role cleanup: verified absent
 merge-intent validation: passed
 loop-memory state validation: passed
-Markdown links: passed for 11 changed Markdown files
+Markdown links: passed for 13 changed Markdown files
 stale Workstream/authorization/artifact/review scans: passed
 git diff --check: passed
 ```
@@ -64,7 +70,8 @@ git diff --check: passed
 The static sensor reports `REVIEW_REQUIRED` for a large L1 CI diff and the moved
 global-threshold enforcement point. This is expected review routing, not a bypass:
 the final authenticated fan-in enforces the same 78 percent global floor and all
-twelve 90 percent subsystem floors, and all nine reviewer tracks passed.
+twelve 90 percent subsystem floors. Seven reviewer tracks passed; product/ops
+and docs require confirmation of this evidence-only correction.
 
 ## Remaining Gate
 

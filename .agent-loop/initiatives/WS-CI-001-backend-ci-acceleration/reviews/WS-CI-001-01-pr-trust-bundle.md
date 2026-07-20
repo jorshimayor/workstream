@@ -30,10 +30,18 @@ No path-based workflow suppression was added.
 
 ## Evidence
 
-- 294 focused planner/agent-gate/coverage-contract tests pass.
-- 188 isolated-runner/coverage-contract tests pass against local PostgreSQL.
-- Clean installed environment discovers 31 modules and 1,774 nodes and validates
-  complete four-shard fan-in at weights 443/444/443/444.
+- At repaired implementation SHA `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`,
+  204 shard/coverage-contract tests and 91 agent-gate tests pass; Ruff,
+  compilation, loop-state, stale scans, Markdown links, and diff integrity pass.
+- The repaired clean-environment dry run discovers 31 modules and 1,775 nodes
+  and validates complete four-shard fan-in at weights 445/444/443/443.
+- A real local shard proved 445 same-process nodes were collected and whole
+  module paths—not preflight parameter IDs—reached pytest. It was intentionally
+  interrupted after 246 completions because runtime was no longer a
+  proportionate local check; its exact owned database and role were removed and
+  verified absent. This is diagnostic evidence, not a passing full-shard claim.
+- Earlier unchanged isolated-runner/coverage-contract proof passed 188 tests
+  against local PostgreSQL before the hosted repair.
 - Ruff, compilation, merge-intent, loop-state, stale scans, Markdown links, and
   diff integrity pass.
 - Actions are SHA-pinned; PostgreSQL and MinIO are digest-pinned.
@@ -41,14 +49,30 @@ No path-based workflow suppression was added.
 
 ## Internal Review
 
-Implementation SHA `14c50b464efca95da4f57b30272e0ce7e0435c11` and final evidence head
-`a6141d5b7155c178d533e718404cb04576c900d7` pass senior engineering, QA/test,
-security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, and
-test-delta review after all valid findings were repaired.
+Repaired implementation SHA `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`
+passes senior engineering, QA/test, security/auth, architecture, CI integrity,
+reuse/dedup, and test-delta review. Product/ops and docs identified this stale
+trust bundle as blocking; this evidence-only correction records their finding
+and requires exact-head confirmation before push.
+
+## Hosted Failure and Repair
+
+GitHub Actions run `29759523305` reached green preflight and API E2E, then shard
+jobs failed because import-time UUID parameter display values changed between
+the preflight and shard pytest processes. The invalid run was cancelled after
+root cause confirmation to avoid wasting runner minutes. It is not success
+evidence.
+
+The repair no longer executes raw cross-process node IDs. It executes validated
+whole modules, proves exact final collection equals exact completion inside the
+same pytest process, and binds stable test-base cardinalities to preflight. A
+new hosted run has not started yet; exact-head hosted success and timing remain
+mandatory before human merge approval.
 
 ## Remaining Risk
 
-Collected-node counts may not predict runtime for migration-heavy modules.
+Collected-node counts may not predict runtime for migration-heavy modules; the
+partial local shard reinforced that risk without proving hosted wall time.
 Hosted execution must show actual per-shard durations, wall-clock improvement,
 and aggregate runner cost. The workflow fails closed rather than silently falling
 back if sharding is unstable.
