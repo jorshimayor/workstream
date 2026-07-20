@@ -120,6 +120,10 @@ generated state and signatures remain rejected; no schema-v1 intent is parsed
 or normalized. Invalid immutable schema-v2 intent requires an explicit corrective
 engineering PR; generated files must not be edited by hand.
 
+If the automation branch is absent, the same trusted workflow creates a signed
+generated root commit. Existing branches always retain their prior tip as the
+new commit's parent and update by fast-forward only.
+
 ## Review Policy
 
 Implementation, specification, generator, workflow, policy, and hand-edited

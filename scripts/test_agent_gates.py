@@ -2068,6 +2068,19 @@ def test_loop_memory_projects_latest_gate_for_interleaved_initiatives() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         auth_first = loop_record(updater)
+        auth_first["completed_chunk"].update(
+            chunk_id="WS-AUTH-001-09E",
+            chunk_title="Fixed Service Runtime Admission",
+            next_chunk_id="WS-AUTH-001-ART-CUSTODY",
+            next_chunk_title="ART Activation Custody Transfer",
+        )
+        auth_first["source"]["intent_path"] = (
+            ".agent-loop/merge-intents/WS-AUTH-001-09E.json"
+        )
+        auth_first["gate"].update(
+            next_chunk_id="WS-AUTH-001-ART-CUSTODY",
+            next_chunk_title="ART Activation Custody Transfer",
+        )
         art = loop_record(
             updater,
             sha="b" * 40,
@@ -2095,23 +2108,25 @@ def test_loop_memory_projects_latest_gate_for_interleaved_initiatives() -> None:
             merged_at="2026-07-14T21:00:00Z",
         )
         auth_second["completed_chunk"].update(
-            chunk_id="WS-AUTH-001-07",
-            chunk_title="Authorization Kernel",
-            next_chunk_id="WS-AUTH-001-08",
-            next_chunk_title="Bootstrap Grants",
+            chunk_id="WS-AUTH-001-ART-CUSTODY",
+            chunk_title="ART Activation Custody Transfer",
+            next_chunk_id="WS-AUTH-001-REV-CUSTODY",
+            next_chunk_title="REV Activation Custody Transfer",
         )
         auth_second["source"]["intent_path"] = (
-            ".agent-loop/merge-intents/WS-AUTH-001-07.json"
+            ".agent-loop/merge-intents/WS-AUTH-001-ART-CUSTODY.json"
         )
         auth_second["gate"].update(
-            next_chunk_id="WS-AUTH-001-08", next_chunk_title="Bootstrap Grants"
+            next_chunk_id="WS-AUTH-001-REV-CUSTODY",
+            next_chunk_title="REV Activation Custody Transfer",
         )
         for record in (auth_first, art, auth_second):
             assert updater.apply_merge_record(root, record) is True
         updater.validate_generated_state(root)
         assert checker.generated_state_failures(root) == []
         queue = (root / updater.WORK_QUEUE_PATH).read_text(encoding="utf-8")
-        assert "`WS-AUTH-001-07`" in queue
+        assert "`WS-AUTH-001-ART-CUSTODY`" in queue
+        assert "`WS-AUTH-001-REV-CUSTODY`" in queue
         assert "`WS-ART-001-02C1`" in queue
         assert queue.index("`WS-ART-001`") < queue.index("`WS-AUTH-001`")
         assert (root / updater.INITIATIVE_STATE_ROOT / "WS-AUTH-001.md").is_file()
@@ -2177,6 +2192,181 @@ def test_prepare_output_migrates_authenticated_legacy_tree_without_traversal() -
             updater.MANIFEST_PATH.as_posix(),
             updater.SIGNATURE_PATH.as_posix(),
         }
+
+
+def test_generated_tree_publication_is_exact_fast_forward_and_bootstrappable() -> None:
+    """Real Git plumbing preserves signed bytes, parentage, and root bootstrap."""
+    updater = load_module(
+        "post_merge_git_tree_publication", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        output = root / "output"
+        private_key = root / "private.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+        )
+        updater.apply_merge_record(output, loop_record(updater))
+        updater.sign_generated_state(output, private_key)
+        sentinel = root / "outside-sentinel"
+        sentinel.write_text("preserve\n", encoding="utf-8")
+
+        def initialize_repository(path: Path, *, with_parent: bool) -> str | None:
+            subprocess.run(
+                ["git", "init", "--initial-branch", updater.STATE_BRANCH, str(path)],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+            subprocess.run(
+                ["git", "-C", str(path), "config", "user.email", "test@example.test"],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(path), "config", "user.name", "Test"], check=True
+            )
+            if not with_parent:
+                return None
+            legacy = path / "backend/legacy.py"
+            legacy.parent.mkdir()
+            legacy.write_text("legacy\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(path), "add", "."], check=True)
+            subprocess.run(
+                ["git", "-C", str(path), "commit", "-m", "legacy"],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+            return subprocess.run(
+                ["git", "-C", str(path), "rev-parse", "HEAD"],
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout.strip()
+
+        def stage_tree(repository: Path, index: Path) -> str:
+            env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+            subprocess.run(
+                ["git", "-C", str(repository), "read-tree", "--empty"],
+                check=True,
+                env=env,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    f"--git-dir={repository / '.git'}",
+                    f"--work-tree={output}",
+                    "add",
+                    "-f",
+                    "--",
+                    ".agent-loop",
+                ],
+                check=True,
+                env=env,
+            )
+            return subprocess.run(
+                ["git", "-C", str(repository), "write-tree"],
+                check=True,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout.strip()
+
+        repository = root / "state"
+        parent = initialize_repository(repository, with_parent=True)
+        index = root / "generated.index"
+        tree = stage_tree(repository, index)
+        updater.validate_generated_git_tree(repository, tree, output)
+        env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        executable = updater.STATE_PATH.as_posix()
+        object_sha = subprocess.run(
+            ["git", "-C", str(repository), "ls-files", "-s", "--", executable],
+            check=True,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.split()[1]
+        subprocess.run(
+            ["git", "-C", str(repository), "update-index", "--index-info"],
+            input=f"100755 {object_sha}\t{executable}\n",
+            check=True,
+            env=env,
+            text=True,
+        )
+        unsafe_tree = subprocess.run(
+            ["git", "-C", str(repository), "write-tree"],
+            check=True,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_git_tree(
+                repository, unsafe_tree, output
+            ),
+            "unsafe file mode",
+        )
+        index.unlink()
+        tree = stage_tree(repository, index)
+        commit = subprocess.run(
+            ["git", "-C", str(repository), "commit-tree", tree, "-p", parent],
+            input="generated\n",
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert (
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "merge-base",
+                    "--is-ancestor",
+                    parent,
+                    commit,
+                ]
+            ).returncode
+            == 0
+        )
+        assert subprocess.run(
+            ["git", "-C", str(repository), "ls-tree", "-r", "--name-only", commit],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.splitlines() == sorted(
+            path.relative_to(output).as_posix()
+            for path in output.rglob("*")
+            if path.is_file()
+        )
+        assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+
+        root_repository = root / "root-state"
+        initialize_repository(root_repository, with_parent=False)
+        root_tree = stage_tree(root_repository, root / "root.index")
+        updater.validate_generated_git_tree(root_repository, root_tree, output)
+        root_commit = subprocess.run(
+            ["git", "-C", str(root_repository), "commit-tree", root_tree],
+            input="generated root\n",
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root_repository),
+                "rev-list",
+                "--parents",
+                "-n",
+                "1",
+                root_commit,
+            ],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.split() == [root_commit]
 
 
 def test_post_merge_reconciliation_bootstraps_and_recovers_every_commit() -> None:
@@ -3192,8 +3382,11 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "trap 'rm -f \"${private_key}\"' EXIT" in workflow
     assert "prepare-state" in workflow
     assert "prepare-output" in workflow
+    assert "validate-tree" in workflow
     assert "read-tree --empty" in workflow
-    assert 'commit-tree "${generated_tree}" -p "${parent_sha}"' in workflow
+    assert 'commit_args=(commit-tree "${generated_tree}")' in workflow
+    assert 'commit_args+=(-p "${parent_sha}")' in workflow
+    assert "rev-parse --verify HEAD" in workflow
     assert '"${generated_commit}:refs/heads/${STATE_BRANCH}"' in workflow
     assert "--expected-main-sha" in workflow
     assert "HEAD:refs/heads/${STATE_BRANCH}" not in workflow

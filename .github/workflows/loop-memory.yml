@@ -154,8 +154,12 @@ jobs:
           set -euo pipefail
           state_dir="${{ steps.state.outputs.state_dir }}"
           output_dir="${{ steps.state.outputs.output_dir }}"
-          parent_sha=$(git -C "${state_dir}" rev-parse HEAD)
-          parent_tree=$(git -C "${state_dir}" rev-parse 'HEAD^{tree}')
+          parent_sha=""
+          parent_tree=""
+          if git -C "${state_dir}" rev-parse --verify HEAD >/dev/null 2>&1; then
+            parent_sha=$(git -C "${state_dir}" rev-parse HEAD)
+            parent_tree=$(git -C "${state_dir}" rev-parse 'HEAD^{tree}')
+          fi
           generated_index="${RUNNER_TEMP}/loop-memory-generated.index"
           GIT_INDEX_FILE="${generated_index}" git -C "${state_dir}" read-tree --empty
           GIT_INDEX_FILE="${generated_index}" git \
@@ -163,7 +167,11 @@ jobs:
             --work-tree="${output_dir}" add -f -- .agent-loop
           generated_tree=$(GIT_INDEX_FILE="${generated_index}" \
             git -C "${state_dir}" write-tree)
-          if [[ "${generated_tree}" == "${parent_tree}" ]]; then
+          python3 scripts/update_post_merge_memory.py validate-tree \
+            --repository-root "${state_dir}" \
+            --tree-sha "${generated_tree}" \
+            --output-root "${output_dir}"
+          if [[ -n "${parent_tree}" && "${generated_tree}" == "${parent_tree}" ]]; then
             echo "Loop memory is already current."
             exit 0
           fi
@@ -173,7 +181,11 @@ jobs:
           git -C "${state_dir}" config user.name "workstream-loop-memory[bot]"
           git -C "${state_dir}" config user.email \
             "workstream-loop-memory[bot]@users.noreply.github.com"
+          commit_args=(commit-tree "${generated_tree}")
+          if [[ -n "${parent_sha}" ]]; then
+            commit_args+=(-p "${parent_sha}")
+          fi
           generated_commit=$(printf 'chore(loop-memory): record PR #%s\n' "${pr_number}" | \
-            git -C "${state_dir}" commit-tree "${generated_tree}" -p "${parent_sha}")
+            git -C "${state_dir}" "${commit_args[@]}")
           git -C "${state_dir}" push origin \
             "${generated_commit}:refs/heads/${STATE_BRANCH}"
