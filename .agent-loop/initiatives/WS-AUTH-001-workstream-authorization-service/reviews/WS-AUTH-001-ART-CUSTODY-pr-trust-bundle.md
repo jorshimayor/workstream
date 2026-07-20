@@ -39,11 +39,14 @@ remains planned and independently gated.
 
 ## Internal Review
 
-Final reviewed SHA `125e018b8fa13b38a0cc66dfa9c724c040d84ae1`, containing
+Final reviewed SHA `a20ab6b2004e2f7a13e1e0d600595f0af7d67985`, containing
 reviewed implementation `abb3fb1a035f544f5ee07b7d725451dfa2d90864`, against
 trusted main `42a89b2deac8fc7672556a567a6124f8a4e5d423` passes senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after all valid proof findings were repaired.
+The final CI repair preserves four authored trusted-main status fixtures
+byte-for-byte rather than weakening their gate; all 88 agent-gate regression
+tests pass. Canonical live state remains automation-owned.
 
 ## Remaining Risk And Follow-up
 

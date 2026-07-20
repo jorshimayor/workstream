@@ -1,12 +1,14 @@
 # WS-AUTH-001-ART-CUSTODY Internal Review Evidence
 
-Reviewed code SHA: `125e018b8fa13b38a0cc66dfa9c724c040d84ae1`
+Reviewed code SHA: `a20ab6b2004e2f7a13e1e0d600595f0af7d67985`
 
 Reviewed implementation SHA: `abb3fb1a035f544f5ee07b7d725451dfa2d90864`
 
+Reviewed pre-CI status SHA: `125e018b8fa13b38a0cc66dfa9c724c040d84ae1`
+
 Reviewed against trusted main: `42a89b2deac8fc7672556a567a6124f8a4e5d423`
 
-Reviewed at: `2026-07-20T10:28:21Z`
+Reviewed at: `2026-07-20T10:49:58Z`
 
 Reviewer run IDs: `plan_product`, `plan_qa`, `plan_security`
 
@@ -62,7 +64,11 @@ the bounded canonical tables exactly, asserts operations invariants, and fails
 if any planned ART action reaches a downstream authorization dependency. All
 nine implementation tracks pass with no remaining finding. Final candidate
 `125e018b` adds only deterministic status/review-log updates; all nine tracks
-confirmed that exact SHA without a remaining finding.
+confirmed that exact SHA without a remaining finding. GitHub Agent Gates then
+exposed a trusted-main fixture invariant for four authored status files. Repair
+`a20ab6b2` restores those files byte-for-byte to `origin/main` without changing
+the gate or implementation; all 88 agent-gate regression tests and all nine
+exact-SHA repair tracks pass.
 
 ## Remaining Risk And Gate
 
