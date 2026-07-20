@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Runtime, focused evidence, and all nine internal tracks pass after repair; hosted Backend CI and human review remain |
+| `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Exact code `abb3fb1a` passed all nine internal tracks; hosted checks and human review remain |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

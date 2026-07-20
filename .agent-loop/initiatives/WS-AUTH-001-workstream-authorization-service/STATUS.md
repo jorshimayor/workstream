@@ -115,14 +115,18 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09E` - Fixed Service Runtime Admission. Explicitly started from
-trusted `main` at `8d5eb15b`; the refreshed contract passed all nine required
-L1 preimplementation tracks. Runtime implementation is active and changes no
-feature action availability.
+`WS-AUTH-001-ART-CUSTODY` - ART Activation Custody Transfer. PR #157 merged
+AUTH-09E to trusted `main` as `42a89b2d`; signed schema-v2 memory `a5b9bad3`
+recorded completion and stopped at ART custody. The user explicitly started
+this chunk on 2026-07-20. Its repaired contract passed all nine required L1
+preimplementation tracks. Implementation changes only the 25 typed ART owner
+values and keeps every feature action planned. Exact code SHA `abb3fb1a` passes
+all nine internal implementation tracks after proof repair; PR publication and
+hosted checks remain.
 
 ## Current review branch
 
-`codex/ws-auth-001-09e-fixed-service-runtime-admission`
+`codex/ws-auth-001-art-custody`
 
 ## Chunk status
 
@@ -153,8 +157,8 @@ feature action availability.
 | `WS-AUTH-001-09D-A` | Merged | `codex/ws-auth-001-09d-actor-identity-lifecycle` | #148 | Merged as `99ae4c9`; signed memory `cf8a3e8` passed and stopped. |
 | `WS-AUTH-001-09D-B` | Merged | `codex/ws-auth-001-09d-b-identity-link-lifecycle` | #152 | Merged as `93dd392`; signed memory `912a6254` passed and stopped. |
 | `WS-AUTH-001-CONTRIBUTOR-FOUNDATION` | Merged | `codex/ws-auth-001-contributor-foundation` | #153 | Merged as `8d5eb15b`; signed memory `66ab58d` passed and stopped. |
-| `WS-AUTH-001-09E` | PR gate | `codex/ws-auth-001-09e-fixed-service-runtime-admission` | - | Runtime, focused evidence, and all nine internal tracks pass after repair; hosted Backend CI and human review remain. |
-| `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after 09E. |
+| `WS-AUTH-001-09E` | Merged | `codex/ws-auth-001-09e-fixed-service-runtime-admission` | #157 | Merged as `42a89b2d`; signed memory `a5b9bad3` passed and stopped. |
+| `WS-AUTH-001-ART-CUSTODY` | PR gate | `codex/ws-auth-001-art-custody` | - | Exact code `abb3fb1a` passed all nine internal tracks after proof repair; hosted checks and human review remain. |
 | `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after 09E. |
 | `WS-AUTH-001-PREP` | Proposed | - | - | AUTH-first prepared mutation protocol after 09E. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |

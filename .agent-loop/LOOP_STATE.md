@@ -36,14 +36,14 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- PR-gate chunk: `WS-AUTH-001-09E`, explicitly started by the
-  user on 2026-07-19 from trusted `main` at `8d5eb15b` after contributor
-  foundation PR #153 and signed memory `66ab58d`. Its refreshed contract passed
-  all nine required L1 preimplementation tracks after resolving context,
-  feature-boundary, transaction, verification, coverage, docs, and reuse
-  findings. Runtime implementation, focused evidence, and all nine internal
-  reviewer tracks pass after repair; hosted Backend CI and human review are the
-  current gates. No feature action or call site becomes active in this chunk.
+- PR #157 merged `WS-AUTH-001-09E` as `42a89b2d`; signed schema-v2 memory
+  `a5b9bad3` recorded completion and stopped at `WS-AUTH-001-ART-CUSTODY`.
+  The user explicitly started ART custody on 2026-07-20. Its repaired contract
+  passed all nine L1 preimplementation tracks and permits only the exact
+  availability-neutral 25-row typed owner transfer. Exact code `abb3fb1a`
+  passes all nine implementation tracks after proof repair; hosted checks and
+  human review remain. No feature action, call site, database row, or migration
+  changes in this chunk.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -65,8 +65,8 @@
   put-attempt state, and migration `0028_artifact_admission`.
 - Authorization checkpoint: AUTH-07B through AUTH-09D-B merged through PRs
   #130, #131, #132, #143, #146, #148, and #152. Contributor foundation PR #153
-  merged as `8d5eb15b`; AUTH-09E is now the sole active AUTH implementation
-  chunk.
+  merged as `8d5eb15b`; AUTH-09E merged through PR #157 as `42a89b2d`.
+  ART custody is now the sole active AUTH implementation chunk.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
