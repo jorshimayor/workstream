@@ -35,9 +35,10 @@ coverage threshold, PR approval, or merge authority changed. 04B is not started.
 
 ## Internal review
 
-Exact SHA `e5679d4c721f8fa829d61426063cd272c5f8d5f9` passes senior engineering,
-QA/test, security/auth, product/ops, architecture, CI integrity, docs,
-reuse/dedup, and test-delta review after all valid findings were repaired.
+Implementation SHA `e5679d4c721f8fa829d61426063cd272c5f8d5f9` and final evidence head
+`dcaa7091b8808acd086028bf517ffb9e5d2027d2` pass senior engineering, QA/test,
+security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, and
+test-delta review after all valid findings were repaired.
 
 ## Remaining risk and follow-up
 
