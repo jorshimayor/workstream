@@ -51,7 +51,7 @@ backend/pyproject.toml or dependency changes
 existing backend test behavior or assertions outside the new planner tests
 coverage threshold reductions
 test skips, deselection, sampling, or path-based workflow suppression
-shared-database parallel workers
+shared-database parallel test processes
 unpinned GitHub actions or container images
 repository write permissions
 changes to Agent Gates, human approval, or merge authority

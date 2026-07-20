@@ -44,7 +44,7 @@ The full-suite process is therefore the dominant wall-clock cost.
   `test_projects.py`, `test_tasks.py`, and `test_authorization.py`.
 - Database-heavy modules construct async engines against the isolated database
   URL. Migration and transaction tests make process-level database separation
-  safer than concurrent workers sharing one database.
+  safer than concurrent test processes sharing one database.
 - Artifact integration tests use the real MinIO endpoint exposed by the
   workflow.
 

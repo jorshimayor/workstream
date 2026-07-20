@@ -88,7 +88,7 @@ unchanged isolated runner intentionally buffers and redacts child output.
 
 - Test or coverage sampling.
 - Path-based Backend skipping in the first chunk.
-- Shared-database xdist workers.
+- Shared-database xdist processes.
 - Unpinned marketplace sharding actions.
 - Mutable external timing data without commit/inventory provenance.
 - Allowing the aggregator to pass when an upstream job is skipped or cancelled.
