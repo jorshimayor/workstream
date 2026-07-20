@@ -2,7 +2,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-CI-001-01` | Parallel Full-Suite Coverage | L1 | Plan reviewed; awaiting human implementation approval |
+| `WS-CI-001-01` | Parallel Full-Suite Coverage | L1 | Implementation in progress; evidence pending |
 | `WS-CI-001-02` | Safe Routing, Cache, and Timing Refinement | L1 | Future; not started and requires separate approval |
 
 Each chunk maps to one PR. Chunk 01 preserves the full suite and every coverage
