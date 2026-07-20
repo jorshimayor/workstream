@@ -1,6 +1,6 @@
 # WS-AUTH-001-09E Internal Review Evidence
 
-Reviewed code SHA: `4fd3537a1a9067bd8abcdf55e1e1e8cab8de3d76`
+Reviewed code SHA: `d5162ce717993d69bd6c4879f743bf6e24a4825d`
 
 Reviewed implementation SHA: `881ac7fc`
 
@@ -16,7 +16,7 @@ Final closeout reviewed against trusted main:
 Latest closeout reviewed against trusted main:
 `cb9d5f9f9c311e644ed20a988c69843d3618a6b0`
 
-Reviewed at: `2026-07-20T04:08:53Z`
+Reviewed at: `2026-07-20T04:43:38Z`
 
 Reviewer run IDs: `review_senior`, `review_qa`, `review_security`,
 `review_product_ops`, `review_architecture`, `review_ci`, `review_docs`,
@@ -82,6 +82,12 @@ were corrected. Current main then advanced through CON PR #155. Merge head
 `4fd3537a` inherits CON's shared outbox and `0029_shared_transactional_outbox`
 unchanged, has no conflict-resolution delta, and passes all nine integration
 tracks; AUTH still adds no outbox coupling or migration.
+CodeRabbit then identified unclear specification wording and an unguarded
+post-lock human actor-kind reconstruction. Repair `d5162ce7` clarifies the
+wording and returns bounded `permission_not_granted` before context
+reconstruction or grant lookup when the locked profile is no longer human.
+Ruff and 11 focused tests pass, and all nine exact-SHA repair tracks report no
+remaining finding.
 
 ## Remaining Risk And Gate
 
