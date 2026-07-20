@@ -51,9 +51,10 @@ No path-based workflow suppression was added.
 
 Repaired implementation SHA `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`
 passes senior engineering, QA/test, security/auth, architecture, CI integrity,
-reuse/dedup, and test-delta review. Product/ops and docs identified this stale
-trust bundle as blocking; this evidence-only correction records their finding
-and requires exact-head confirmation before push.
+reuse/dedup, and test-delta review. Product/ops and docs identified the stale
+trust bundle as blocking, then passed evidence SHA
+`f2f35493681ad45ff7e249de0e99b210639cf684` after the hosted failure, repaired
+proof model, diagnostic limitation, and remaining gate were recorded.
 
 ## Hosted Failure and Repair
 

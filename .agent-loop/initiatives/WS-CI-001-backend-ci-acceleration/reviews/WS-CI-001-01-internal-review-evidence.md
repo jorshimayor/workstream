@@ -6,6 +6,8 @@ Valid findings addressed: yes
 
 Reviewed code SHA: `ab75b96ba5eba3fad0f127dc1b892c3a804b2c7b`
 
+Reviewed evidence SHA: `f2f35493681ad45ff7e249de0e99b210639cf684`
+
 Reviewed at: 2026-07-20T17:11:39Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_repair_arch`; QA/test/CI-integrity/test-delta=`ci_repair_qa`; security/auth/product/ops/docs=`ci_repair_sec_ops`
@@ -25,10 +27,10 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=`ci_repair_arch`; 
 | senior engineering | PASS | None | Cohesive inventory-to-fan-in trust boundary. |
 | QA/test | PASS AFTER FIXES | None | Exact runtime-finished node proof replaces pre-run collection claims. |
 | security/auth | PASS AFTER FIXES | None | Fixed artifacts, byte hashes, read-only permissions, safe hook path. |
-| product/ops | PENDING CONFIRMATION | Stale trust bundle | This evidence-only correction discloses the hosted failure and repaired SHA. |
+| product/ops | PASS AFTER FIXES | None | Hosted failure, diagnostic limit, repair, and remaining gate are disclosed. |
 | architecture | PASS | None | Shared Python policy boundary; YAML only orchestrates. |
 | CI integrity | PASS AFTER FIXES | None | Stable required check and unchanged 78/90 thresholds. |
-| docs | PENDING CONFIRMATION | Stale trust bundle | Runbook is accurate; repaired PR evidence now requires confirmation. |
+| docs | PASS AFTER FIXES | None | Runbook and repaired PR evidence accurately describe current state. |
 | reuse/dedup | PASS | None | Existing isolated database runner remains sole DB owner. |
 | test delta | PASS AFTER FIXES | None | Additive tests; no skip, assertion, or threshold weakening. |
 
@@ -70,8 +72,8 @@ git diff --check: passed
 The static sensor reports `REVIEW_REQUIRED` for a large L1 CI diff and the moved
 global-threshold enforcement point. This is expected review routing, not a bypass:
 the final authenticated fan-in enforces the same 78 percent global floor and all
-twelve 90 percent subsystem floors. Seven reviewer tracks passed; product/ops
-and docs require confirmation of this evidence-only correction.
+twelve 90 percent subsystem floors, and all nine reviewer tracks passed after
+valid findings were repaired.
 
 ## Remaining Gate
 
