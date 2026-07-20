@@ -22,10 +22,36 @@ EXCLUDED_MODULE = "backend/tests/test_isolated_database_runner.py"
 MODULE_RE = re.compile(r"backend/tests/test_[a-z0-9_]+\.py")
 TREE_RE = re.compile(r"[0-9a-f]{40}")
 BUNDLE_FILES = {"coverage.data", "result.json"}
+OBSERVED_NODES_ENV = "WORKSTREAM_CI_OBSERVED_NODES"
+PYTEST_PLUGINS = (
+    "-p",
+    "pytest_asyncio.plugin",
+    "-p",
+    "pytest_cov.plugin",
+    "-p",
+    "scripts.ci_test_shards",
+)
 
 
 class ShardError(RuntimeError):
     """A stable CI shard planning or evidence failure."""
+
+
+def pytest_runtest_logfinish(nodeid: str, location: tuple[str, int | None, str]) -> None:
+    """Record a node only after its actual pytest lifecycle has finished."""
+    del location
+    destination = os.environ.get(OBSERVED_NODES_ENV)
+    if not destination:
+        return
+    data = (json.dumps(nodeid) + "\n").encode()
+    flags = os.O_WRONLY | os.O_APPEND
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(destination, flags)
+    try:
+        os.write(descriptor, data)
+    finally:
+        os.close(descriptor)
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -94,7 +120,15 @@ def collect_nodes(repository_root: Path, modules: list[str]) -> dict[str, list[s
     collection_env = os.environ.copy()
     collection_env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "--collect-only", "-q", *relative_modules],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            *PYTEST_PLUGINS,
+            *relative_modules,
+        ],
         cwd=backend_root,
         env=collection_env,
         text=True,
@@ -273,22 +307,22 @@ def run_shard(
     manifest = load_manifest(manifest_path)
     _assert_checked_out_tree(repository_root, manifest["tree_sha"])
     shard = _shard(manifest, shard_id)
-    observed = collect_nodes(repository_root, shard["modules"])
-    observed_nodes = sorted(node for nodes in observed.values() for node in nodes)
     expected_nodes = sorted(
         row["node_ids"] for row in manifest["modules"] if row["path"] in shard["modules"]
     )
     expected_flat = sorted(node for group in expected_nodes for node in group)
-    if observed_nodes != expected_flat:
-        raise ShardError("shard_collection_mismatch")
 
     _safe_empty_directory(bundle_dir)
     coverage_path = bundle_dir / "coverage.data"
-    relative_modules = [
-        str(PurePosixPath(module).relative_to("backend")) for module in shard["modules"]
-    ]
+    observed_path = database_metadata.with_name(f"observed-nodes-{shard_id}.jsonl")
+    if observed_path.exists() or observed_path.is_symlink():
+        raise ShardError("observed_nodes_path_exists")
+    descriptor = os.open(observed_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    os.close(descriptor)
     env = os.environ.copy()
     env["COVERAGE_FILE"] = str(coverage_path.resolve())
+    env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+    env[OBSERVED_NODES_ENV] = str(observed_path.resolve())
     started = time.monotonic()
     command = [
         sys.executable,
@@ -302,13 +336,27 @@ def run_shard(
         "-m",
         "pytest",
         "-q",
-        *relative_modules,
+        *PYTEST_PLUGINS,
+        *expected_flat,
         "--cov=app",
         "--cov-report=",
     ]
     result = subprocess.run(command, cwd=repository_root / "backend", env=env, check=False)
     if result.returncode != 0:
         raise ShardError("shard_tests_failed")
+    try:
+        observed_nodes = sorted(
+            json.loads(line)
+            for line in observed_path.read_text(encoding="utf-8").splitlines()
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ShardError("invalid_observed_nodes") from exc
+    if (
+        not all(isinstance(node, str) for node in observed_nodes)
+        or observed_nodes != expected_flat
+        or len(observed_nodes) != len(set(observed_nodes))
+    ):
+        raise ShardError("shard_execution_mismatch")
     if not _regular_file(coverage_path):
         raise ShardError("missing_coverage")
     coverage_digest = _sha256(coverage_path.read_bytes())
@@ -340,7 +388,10 @@ def _safe_bundle_files(bundle: Path) -> dict[str, Path]:
 
 
 def validate_fan_in(
-    manifest: dict[str, Any], bundles_root: Path, output_dir: Path
+    manifest: dict[str, Any],
+    bundles_root: Path,
+    output_dir: Path,
+    summary_output: Path | None = None,
 ) -> list[Path]:
     """Validate the exact shard set and copy authenticated coverage for combine."""
     if bundles_root.is_symlink() or not bundles_root.is_dir():
@@ -356,6 +407,7 @@ def validate_fan_in(
     observed_nodes: list[str] = []
     observed_modules: list[str] = []
     coverage_sources: list[Path] = []
+    durations: list[float] = []
     for shard_id in range(1, SHARD_COUNT + 1):
         files = _safe_bundle_files(bundles_root / f"shard-{shard_id}")
         try:
@@ -405,6 +457,7 @@ def validate_fan_in(
         observed_nodes.extend(nodes)
         observed_modules.extend(result["modules"])
         coverage_sources.append(coverage)
+        durations.append(float(result["duration_seconds"]))
     if sorted(observed_nodes) != expected_nodes or len(observed_nodes) != len(set(observed_nodes)):
         raise ShardError("fan_in_node_mismatch")
     expected_modules = sorted(module["path"] for module in manifest["modules"])
@@ -419,19 +472,32 @@ def validate_fan_in(
         target = output_dir / f".coverage.shard-{shard_id}"
         shutil.copyfile(source, target, follow_symlinks=False)
         outputs.append(target)
+    if summary_output is not None:
+        _write_json(
+            summary_output,
+            {
+                "manifest_sha256": manifest["manifest_sha256"],
+                "module_count": len(expected_modules),
+                "node_count": len(expected_nodes),
+                "schema_version": SCHEMA_VERSION,
+                "timing": {
+                    "imbalance_seconds": round(max(durations) - min(durations), 3),
+                    "maximum_seconds": max(durations),
+                    "total_runner_seconds": round(sum(durations), 3),
+                },
+                "shards": [
+                    {
+                        "duration_seconds": durations[index - 1],
+                        "id": index,
+                        "module_count": len(_shard(manifest, index)["modules"]),
+                        "node_count": _shard(manifest, index)["weight"],
+                    }
+                    for index in range(1, SHARD_COUNT + 1)
+                ],
+                "tree_sha": manifest["tree_sha"],
+            },
+        )
     return outputs
-
-
-def _read_json(path: Path) -> dict[str, Any]:
-    if not _regular_file(path):
-        raise ShardError("invalid_json_file")
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ShardError("invalid_json_file") from exc
-    if not isinstance(value, dict):
-        raise ShardError("invalid_json_file")
-    return value
 
 
 def _plan(repository_root: Path, tree_sha: str, shard_count: int) -> dict[str, Any]:
@@ -508,6 +574,7 @@ def main() -> int:
     fan_in.add_argument("--tree-sha", required=True)
     fan_in.add_argument("--bundles-root", type=Path, required=True)
     fan_in.add_argument("--output-dir", type=Path, required=True)
+    fan_in.add_argument("--summary-output", type=Path, required=True)
 
     dry_run = subparsers.add_parser("dry-run")
     dry_run.add_argument("--repository-root", type=Path, required=True)
@@ -535,7 +602,12 @@ def main() -> int:
             manifest = load_manifest(args.manifest)
             if manifest["tree_sha"] != _validate_tree_sha(args.tree_sha):
                 raise ShardError("checked_out_tree_mismatch")
-            validate_fan_in(manifest, args.bundles_root, args.output_dir)
+            validate_fan_in(
+                manifest,
+                args.bundles_root,
+                args.output_dir,
+                args.summary_output,
+            )
         else:
             _dry_run(args.repository_root.resolve(), args.shards)
     except (OSError, subprocess.SubprocessError, ShardError) as exc:

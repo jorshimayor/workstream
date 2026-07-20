@@ -42,9 +42,10 @@ Run four matrix jobs initially. Each validates its actual checked-out tree SHA
 against the manifest, provisions its own PostgreSQL service and independently
 owned migrated database through `run_isolated_tests.py`, starts MinIO, and runs
 only manifest modules through Python argv/subprocess construction rather than
-shell-expanded module strings. It writes a unique coverage file, independently
-collects the node IDs observed for its assigned modules, and uploads a fixed-name
-bundle containing shard ID, tree SHA, manifest digest, observed node IDs/counts,
+shell-expanded module strings. It executes the manifest's validated node IDs,
+uses a repository-owned pytest hook to record each node only after its runtime
+lifecycle finishes, writes a unique coverage file, and uploads a fixed-name
+bundle containing shard ID, tree SHA, manifest digest, completed node IDs/counts,
 allowlisted non-secret metadata, coverage, and SHA-256 of the coverage bytes.
 
 No shard shares a database, role, filesystem artifact, or coverage filename.

@@ -80,8 +80,9 @@ all evidence is authenticated.
 The preflight plan and four fixed shard bundles are retained for seven days.
 Their names include the actual checked-out tree SHA. Each shard bundle contains
 only `coverage.data` and allowlisted `result.json`; the result binds the tree,
-manifest, shard, modules, observed pytest node IDs, duration, and SHA-256 of the
-exact coverage bytes. Bundles never contain database URLs or passwords, MinIO
+manifest, shard, modules, completed pytest node IDs, duration, and SHA-256 of the
+exact coverage bytes. A repository-owned pytest hook records a node only after
+its runtime lifecycle finishes. Bundles never contain database URLs or passwords, MinIO
 credentials, environment dumps, or runner database metadata.
 
 The fan-in accepts exactly four expected regular-file bundles. It rejects stale

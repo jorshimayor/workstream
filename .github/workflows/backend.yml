@@ -18,7 +18,6 @@ jobs:
     timeout-minutes: 30
     outputs:
       tree_sha: ${{ steps.identity.outputs.tree_sha }}
-      manifest_sha256: ${{ steps.plan.outputs.manifest_sha256 }}
 
     services:
       postgres:
@@ -79,18 +78,16 @@ jobs:
           WORKSTREAM_TEST_ADMIN_DATABASE_URL: postgresql+asyncpg://workstream:workstream@localhost:5433/postgres
         run: python -m pytest -q tests/test_isolated_database_runner.py
 
-      - id: plan
-        name: Collect and plan exact test inventory
+      - name: Collect and plan exact test inventory
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .ci/plan
-          manifest_sha256=$(python3 backend/scripts/ci_test_shards.py plan \
+          python3 backend/scripts/ci_test_shards.py plan \
             --repository-root . \
             --tree-sha "${{ steps.identity.outputs.tree_sha }}" \
             --shards 4 \
-            --output .ci/plan/shard-manifest.json)
-          echo "manifest_sha256=${manifest_sha256}" >> "${GITHUB_OUTPUT}"
+            --output .ci/plan/shard-manifest.json
 
       - name: Upload immutable shard plan
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -307,9 +304,19 @@ jobs:
             --manifest .ci/plan/shard-manifest.json \
             --tree-sha "${{ needs.preflight.outputs.tree_sha }}" \
             --bundles-root .ci/bundles \
-            --output-dir .ci/combined-coverage
+            --output-dir .ci/combined-coverage \
+            --summary-output .ci/fan-in-summary.json
+          python3 -m json.tool .ci/fan-in-summary.json
           cd backend
           coverage combine ../.ci/combined-coverage
+
+      - name: Upload authenticated timing and balance report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: backend-fan-in-${{ needs.preflight.outputs.tree_sha }}
+          path: .ci/fan-in-summary.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Backend full-suite coverage
         working-directory: backend

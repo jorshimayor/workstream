@@ -79,8 +79,9 @@ WS-ENG-001-04B implementation or activation
       proves and reviewers approve a narrower fail-closed mapping.
 - [ ] The API contract E2E proof runs concurrently with shards using its own
       isolated database.
-- [ ] Test invocation uses validated Python argv/subprocess arguments, never a
-      shell-expanded module list; each shard records observed node IDs/counts.
+- [ ] Test invocation uses validated manifest node IDs through Python
+      argv/subprocess arguments, never a shell-expanded list; a repository-owned
+      pytest hook records each node only after its runtime lifecycle finishes.
 - [ ] Exactly four fixed-name artifacts bind checked-out tree SHA, canonical
       manifest digest, schema, shard ID, observed nodes, and SHA-256 of coverage.
 - [ ] Fan-in accepts only allowlisted regular files and rejects symlinks,

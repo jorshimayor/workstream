@@ -5219,7 +5219,7 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         assert jobs[job_name]["services"]["postgres"]["image"] == postgres_image
 
     preflight = jobs["preflight"]
-    assert set(preflight["outputs"]) == {"tree_sha", "manifest_sha256"}
+    assert set(preflight["outputs"]) == {"tree_sha"}
     assert any(
         step.get("name") == "Isolated database runner test"
         and step.get("run") == "python -m pytest -q tests/test_isolated_database_runner.py"
@@ -5286,7 +5286,7 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         for step in job["steps"]
         if "actions/upload-artifact@" in step.get("uses", "")
     ]
-    assert len(uploads) == 2
+    assert len(uploads) == 3
     assert all(
         step["uses"]
         == "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
