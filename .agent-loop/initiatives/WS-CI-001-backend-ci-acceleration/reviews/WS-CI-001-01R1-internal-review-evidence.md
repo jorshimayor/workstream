@@ -4,7 +4,7 @@ Open sub-agent sessions: none
 
 Valid findings addressed: yes
 
-Reviewed code SHA: `bd75f5ef930e4a4cfe05dfd3073be05284d7d384`
+Reviewed code SHA: `5ec228960392cb87cf35852392ba25971a991f6f`
 
 Reviewed at: 2026-07-20T18:28:58Z
 
