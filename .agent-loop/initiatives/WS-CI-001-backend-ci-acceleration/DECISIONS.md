@@ -28,3 +28,12 @@ exact observed-node fan-in, coverage-byte hashing, checked-out-tree provenance,
 fixed artifact sets, explicit read-only permissions, digest-pinned PostgreSQL,
 stable `Backend / test`, canonical operator documentation, and a real local dry
 run. The plan and 01 contract now include those boundaries; all tracks pass.
+
+## 2026-07-20 - Bind nondeterministic parameter IDs safely
+
+The first hosted run proved that parameter display IDs containing import-time
+UUID values are not stable across preflight and shard processes. Raw preflight
+node IDs are therefore not executable cross-process authority. Shards execute
+validated whole modules, record final collection and completion in the same
+pytest process, require those exact sets to match, and bind their stable
+test-base cardinalities to the authenticated preflight manifest.

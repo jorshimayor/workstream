@@ -71,7 +71,8 @@ WS-ENG-001-04B implementation or activation
 - [ ] A schema-versioned deterministic manifest assigns every module exactly
       once across four file-level shards using stable weights and tie-breaking;
       canonical serialization binds schema, actual checked-out tree SHA, ordered
-      modules, exclusion, node IDs/counts, shard count, weights, and assignments.
+      modules, exclusion, stable test-base cardinalities, shard count, weights,
+      and assignments.
 - [ ] Every shard validates and runs at the manifest's actual checked-out tree
       SHA with its own digest-pinned PostgreSQL service,
       isolated migrated database/role, coverage filename, and result metadata.
@@ -79,19 +80,22 @@ WS-ENG-001-04B implementation or activation
       proves and reviewers approve a narrower fail-closed mapping.
 - [ ] The API contract E2E proof runs concurrently with shards using its own
       isolated database.
-- [ ] Test invocation uses validated manifest node IDs through Python
-      argv/subprocess arguments, never a shell-expanded list; a repository-owned
-      pytest hook records each node only after its runtime lifecycle finishes.
+- [ ] Test invocation uses validated whole-module paths through Python
+      argv/subprocess arguments, never a shell-expanded list; repository-owned
+      pytest hooks prove exact same-process collection/completion equality and
+      bind stable test-base cardinalities back to preflight.
 - [ ] Exactly four fixed-name artifacts bind checked-out tree SHA, canonical
-      manifest digest, schema, shard ID, observed nodes, and SHA-256 of coverage.
+      manifest digest, schema, shard ID, collected/completed nodes, and SHA-256
+      of coverage.
 - [ ] Fan-in accepts only allowlisted regular files and rejects symlinks,
       traversal, unexpected files, wildcard surplus, coverage-name collisions,
       credentials, database URLs, environment dumps, and unnecessary DB metadata.
 - [ ] The final required Backend `test` job explicitly fails on any failed,
       cancelled, skipped, missing, extra, duplicate, malformed, or foreign
       prerequisite/artifact.
-- [ ] Fan-in recomputes manifest and coverage digests and proves shard-observed
-      node union equals canonical nodes exactly once, rejecting missing,
+- [ ] Fan-in recomputes manifest and coverage digests, proves each shard's exact
+      runtime collection equals its completions, and proves runtime stable
+      signatures equal the canonical preflight signatures, rejecting missing,
       duplicate, foreign nodes and count disagreement.
 - [ ] Coverage is combined only after complete fan-in and the exact existing 78
       percent global plus twelve 90 percent subsystem reports all pass.

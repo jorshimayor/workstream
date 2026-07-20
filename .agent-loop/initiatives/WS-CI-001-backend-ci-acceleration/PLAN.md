@@ -14,7 +14,7 @@ Add a repository-owned planner with one shared validation implementation.
 Canonical module completeness comes from symlink-safe filesystem discovery of
 `backend/tests/test_*.py`, with an explicit declaration excluding only
 `test_isolated_database_runner.py`. A successful pytest collection supplies the
-canonical executable node IDs and per-module weights; every node must map to one
+canonical per-test-base cardinality signatures and per-module weights; every node must map to one
 discovered canonical module. Collection errors, zero-test modules, foreign paths,
 malformed node IDs, and parameterized-node collisions fail.
 
@@ -22,7 +22,7 @@ Assign every non-excluded module exactly once using deterministic
 largest-weight-first bin packing with lexical tie-breaking. Emit canonical,
 schema-versioned JSON binding schema, actual checked-out tree SHA from
 `git rev-parse HEAD`, ordered normalized module paths, explicit exclusion,
-ordered node IDs, collected counts, shard count, weights, and assignments. Its
+ordered stable node signatures, collected counts, shard count, weights, and assignments. Its
 SHA-256 digest identifies the exact executable inventory and plan.
 
 The initial weight is collected test count per module. Runtime telemetry may
@@ -42,10 +42,12 @@ Run four matrix jobs initially. Each validates its actual checked-out tree SHA
 against the manifest, provisions its own PostgreSQL service and independently
 owned migrated database through `run_isolated_tests.py`, starts MinIO, and runs
 only manifest modules through Python argv/subprocess construction rather than
-shell-expanded module strings. It executes the manifest's validated node IDs,
-uses a repository-owned pytest hook to record each node only after its runtime
-lifecycle finishes, writes a unique coverage file, and uploads a fixed-name
-bundle containing shard ID, tree SHA, manifest digest, completed node IDs/counts,
+shell-expanded module strings. It executes the manifest's validated whole-module
+paths and uses repository-owned pytest hooks to record final collection and
+runtime completion in that same pytest process. It requires those exact runtime
+sets to match and their stable test-base cardinalities to match preflight, writes
+a unique coverage file, and uploads a fixed-name bundle containing shard ID,
+tree SHA, manifest digest, collected/completed node IDs and counts,
 allowlisted non-secret metadata, coverage, and SHA-256 of the coverage bytes.
 
 No shard shares a database, role, filesystem artifact, or coverage filename.

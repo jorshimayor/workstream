@@ -8,12 +8,13 @@ required coverage gates pass.
 
 ## Design
 
-- Preflight discovers every canonical test module and collected pytest node.
+- Preflight discovers every canonical test module and stable test-base cardinality.
 - Deterministic file-level bin packing keeps modules intact across four shards.
 - Every shard validates the checked-out tree, uses its own PostgreSQL database
-  and MinIO instance, executes exact manifest node IDs, and records nodes only
-  after their runtime lifecycle finishes.
-- Fixed bundles bind tree SHA, manifest digest, exact completed nodes, coverage
+  and MinIO instance, executes whole assigned modules, and proves exact
+  same-process runtime collection/completion equality against the preflight
+  cardinality signature.
+- Fixed bundles bind tree SHA, manifest digest, exact collected/completed nodes, coverage
   bytes, shard identity, and non-secret duration metadata.
 - Final `Backend / test` runs with `if: always()`, rejects every upstream or
   artifact inconsistency, combines coverage, and enforces 78 percent global plus

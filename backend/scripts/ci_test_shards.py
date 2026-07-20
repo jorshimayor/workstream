@@ -16,13 +16,14 @@ import tempfile
 import time
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SHARD_COUNT = 4
 EXCLUDED_MODULE = "backend/tests/test_isolated_database_runner.py"
 MODULE_RE = re.compile(r"backend/tests/test_[a-z0-9_]+\.py")
 TREE_RE = re.compile(r"[0-9a-f]{40}")
 BUNDLE_FILES = {"coverage.data", "result.json"}
-OBSERVED_NODES_ENV = "WORKSTREAM_CI_OBSERVED_NODES"
+COLLECTED_NODES_ENV = "WORKSTREAM_CI_COLLECTED_NODES"
+COMPLETED_NODES_ENV = "WORKSTREAM_CI_COMPLETED_NODES"
 PYTEST_PLUGINS = (
     "-p",
     "pytest_asyncio.plugin",
@@ -37,13 +38,8 @@ class ShardError(RuntimeError):
     """A stable CI shard planning or evidence failure."""
 
 
-def pytest_runtest_logfinish(nodeid: str, location: tuple[str, int | None, str]) -> None:
-    """Record a node only after its actual pytest lifecycle has finished."""
-    del location
-    destination = os.environ.get(OBSERVED_NODES_ENV)
-    if not destination:
-        return
-    data = (json.dumps(nodeid) + "\n").encode()
+def _append_node(destination: str, node_id: str) -> None:
+    data = (json.dumps(node_id) + "\n").encode()
     flags = os.O_WRONLY | os.O_APPEND
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
@@ -52,6 +48,24 @@ def pytest_runtest_logfinish(nodeid: str, location: tuple[str, int | None, str])
         os.write(descriptor, data)
     finally:
         os.close(descriptor)
+
+
+def pytest_collection_finish(session: Any) -> None:
+    """Record the final selected inventory from the executing pytest process."""
+    destination = os.environ.get(COLLECTED_NODES_ENV)
+    if not destination:
+        return
+    for item in session.items:
+        _append_node(destination, item.nodeid)
+
+
+def pytest_runtest_logfinish(nodeid: str, location: tuple[str, int | None, str]) -> None:
+    """Record a node only after its actual pytest lifecycle has finished."""
+    del location
+    destination = os.environ.get(COMPLETED_NODES_ENV)
+    if not destination:
+        return
+    _append_node(destination, nodeid)
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -113,6 +127,33 @@ def _module_from_node(node_id: str) -> str:
     return candidate
 
 
+def _node_base(node_id: str) -> str:
+    """Remove only pytest's final parameter display value from a node ID."""
+    _module_from_node(node_id)
+    leaf = node_id.rsplit("::", 1)[-1]
+    if leaf.endswith("]") and "[" in leaf:
+        return node_id[: -(len(leaf) - leaf.find("["))]
+    return node_id
+
+
+def _node_signature(nodes: list[str]) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for node in nodes:
+        base = _node_base(node)
+        counts[base] = counts.get(base, 0) + 1
+    return [{"base": base, "count": counts[base]} for base in sorted(counts)]
+
+
+def _read_node_log(path: Path) -> list[str]:
+    try:
+        nodes = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ShardError("invalid_runtime_nodes") from exc
+    if not nodes or not all(isinstance(node, str) for node in nodes):
+        raise ShardError("invalid_runtime_nodes")
+    return sorted(nodes)
+
+
 def collect_nodes(repository_root: Path, modules: list[str]) -> dict[str, list[str]]:
     """Collect canonical pytest node IDs for exactly the supplied modules."""
     backend_root = repository_root / "backend"
@@ -156,28 +197,46 @@ def collect_nodes(repository_root: Path, modules: list[str]) -> dict[str, list[s
 
 
 def _manifest_body(
-    tree_sha: str, modules_to_nodes: dict[str, list[str]], shard_count: int
+    tree_sha: str, module_rows: list[dict[str, Any]], shard_count: int
 ) -> dict[str, Any]:
     _validate_tree_sha(tree_sha)
     if shard_count != SHARD_COUNT:
         raise ShardError("invalid_shard_count")
-    ordered_modules = sorted(modules_to_nodes)
+    ordered_modules = sorted(row["path"] for row in module_rows)
     if not ordered_modules or len(ordered_modules) != len(set(ordered_modules)):
         raise ShardError("invalid_module_inventory")
-    for module, nodes in modules_to_nodes.items():
+    rows_by_module = {row["path"]: row for row in module_rows}
+    if len(rows_by_module) != len(module_rows):
+        raise ShardError("invalid_module_inventory")
+    for module, row in rows_by_module.items():
         if MODULE_RE.fullmatch(module) is None or module == EXCLUDED_MODULE:
             raise ShardError("invalid_test_module")
-        if not nodes or nodes != sorted(set(nodes)):
+        signature, weight = row.get("node_signature"), row.get("weight")
+        if not isinstance(signature, list) or not signature or not isinstance(weight, int):
             raise ShardError("invalid_node_inventory")
-        if any(_module_from_node(node) != module for node in nodes):
+        if any(
+            not isinstance(item, dict)
+            or set(item) != {"base", "count"}
+            or not isinstance(item["base"], str)
+            or not isinstance(item["count"], int)
+            or isinstance(item["count"], bool)
+            or item["count"] < 1
+            or _module_from_node(item["base"]) != module
+            for item in signature
+        ):
             raise ShardError("node_module_mismatch")
+        if signature != sorted(signature, key=lambda item: item["base"]):
+            raise ShardError("invalid_node_inventory")
+        if len({item["base"] for item in signature}) != len(signature) or weight != sum(
+            item["count"] for item in signature
+        ):
+            raise ShardError("invalid_node_inventory")
 
     bins: list[dict[str, Any]] = [
-        {"id": shard_id, "modules": [], "weight": 0}
-        for shard_id in range(1, shard_count + 1)
+        {"id": shard_id, "modules": [], "weight": 0} for shard_id in range(1, shard_count + 1)
     ]
     weighted = sorted(
-        ((len(modules_to_nodes[module]), module) for module in ordered_modules),
+        ((rows_by_module[module]["weight"], module) for module in ordered_modules),
         key=lambda item: (-item[0], item[1]),
     )
     for weight, module in weighted:
@@ -189,17 +248,10 @@ def _manifest_body(
         if not shard["modules"]:
             raise ShardError("empty_shard")
 
-    module_rows = [
-        {
-            "node_ids": modules_to_nodes[module],
-            "path": module,
-            "weight": len(modules_to_nodes[module]),
-        }
-        for module in ordered_modules
-    ]
+    canonical_rows = [rows_by_module[module] for module in ordered_modules]
     return {
         "excluded_modules": [EXCLUDED_MODULE],
-        "modules": module_rows,
+        "modules": canonical_rows,
         "schema_version": SCHEMA_VERSION,
         "shard_count": shard_count,
         "shards": bins,
@@ -211,7 +263,18 @@ def build_manifest(
     tree_sha: str, modules_to_nodes: dict[str, list[str]], shard_count: int
 ) -> dict[str, Any]:
     """Build a canonical manifest with a digest over its executable body."""
-    body = _manifest_body(tree_sha, modules_to_nodes, shard_count)
+    for module, nodes in modules_to_nodes.items():
+        if MODULE_RE.fullmatch(module) is None or module == EXCLUDED_MODULE:
+            raise ShardError("invalid_test_module")
+        if not nodes or nodes != sorted(set(nodes)):
+            raise ShardError("invalid_node_inventory")
+        if any(_module_from_node(node) != module for node in nodes):
+            raise ShardError("node_module_mismatch")
+    rows = [
+        {"node_signature": _node_signature(nodes), "path": module, "weight": len(nodes)}
+        for module, nodes in sorted(modules_to_nodes.items())
+    ]
+    body = _manifest_body(tree_sha, rows, shard_count)
     return {**body, "manifest_sha256": _sha256(_json_bytes(body))}
 
 
@@ -242,21 +305,15 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         or not isinstance(manifest.get("shards"), list)
     ):
         raise ShardError("invalid_manifest")
-    mapping: dict[str, list[str]] = {}
+    rows: list[dict[str, Any]] = []
     for row in modules:
-        if not isinstance(row, dict) or set(row) != {"node_ids", "path", "weight"}:
+        if not isinstance(row, dict) or set(row) != {"node_signature", "path", "weight"}:
             raise ShardError("invalid_manifest")
-        path, nodes, weight = row["path"], row["node_ids"], row["weight"]
-        if not isinstance(path, str) or not isinstance(nodes, list):
+        if not isinstance(row["path"], str):
             raise ShardError("invalid_manifest")
-        if not all(isinstance(node, str) for node in nodes) or weight != len(nodes):
-            raise ShardError("invalid_manifest")
-        if path in mapping:
-            raise ShardError("invalid_manifest")
-        mapping[path] = nodes
-    reproduced = build_manifest(
-        str(manifest.get("tree_sha", "")), mapping, shard_count
-    )
+        rows.append(row)
+    body = _manifest_body(str(manifest.get("tree_sha", "")), rows, shard_count)
+    reproduced = {**body, "manifest_sha256": _sha256(_json_bytes(body))}
     if manifest != reproduced or digest != reproduced["manifest_sha256"]:
         raise ShardError("manifest_digest_mismatch")
     return reproduced
@@ -307,22 +364,22 @@ def run_shard(
     manifest = load_manifest(manifest_path)
     _assert_checked_out_tree(repository_root, manifest["tree_sha"])
     shard = _shard(manifest, shard_id)
-    expected_nodes = sorted(
-        row["node_ids"] for row in manifest["modules"] if row["path"] in shard["modules"]
-    )
-    expected_flat = sorted(node for group in expected_nodes for node in group)
+    expected_rows = [row for row in manifest["modules"] if row["path"] in shard["modules"]]
 
     _safe_empty_directory(bundle_dir)
     coverage_path = bundle_dir / "coverage.data"
-    observed_path = database_metadata.with_name(f"observed-nodes-{shard_id}.jsonl")
-    if observed_path.exists() or observed_path.is_symlink():
-        raise ShardError("observed_nodes_path_exists")
-    descriptor = os.open(observed_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    os.close(descriptor)
+    collected_path = database_metadata.with_name(f"collected-nodes-{shard_id}.jsonl")
+    completed_path = database_metadata.with_name(f"completed-nodes-{shard_id}.jsonl")
+    for path in (collected_path, completed_path):
+        if path.exists() or path.is_symlink():
+            raise ShardError("runtime_nodes_path_exists")
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        os.close(descriptor)
     env = os.environ.copy()
     env["COVERAGE_FILE"] = str(coverage_path.resolve())
     env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
-    env[OBSERVED_NODES_ENV] = str(observed_path.resolve())
+    env[COLLECTED_NODES_ENV] = str(collected_path.resolve())
+    env[COMPLETED_NODES_ENV] = str(completed_path.resolve())
     started = time.monotonic()
     command = [
         sys.executable,
@@ -337,7 +394,7 @@ def run_shard(
         "pytest",
         "-q",
         *PYTEST_PLUGINS,
-        *expected_flat,
+        *(str(PurePosixPath(module).relative_to("backend")) for module in shard["modules"]),
         "--cov=app",
         "--cov-report=",
     ]
@@ -345,18 +402,28 @@ def run_shard(
     if result.returncode != 0:
         raise ShardError("shard_tests_failed")
     try:
-        observed_nodes = sorted(
-            json.loads(line)
-            for line in observed_path.read_text(encoding="utf-8").splitlines()
-        )
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ShardError("invalid_observed_nodes") from exc
-    if (
-        not all(isinstance(node, str) for node in observed_nodes)
-        or observed_nodes != expected_flat
-        or len(observed_nodes) != len(set(observed_nodes))
-    ):
+        collected_nodes = _read_node_log(collected_path)
+        completed_nodes = _read_node_log(completed_path)
+    except ShardError:
+        raise
+    if collected_nodes != completed_nodes or len(collected_nodes) != len(set(collected_nodes)):
         raise ShardError("shard_execution_mismatch")
+    runtime_by_module = {module: [] for module in shard["modules"]}
+    for node in collected_nodes:
+        module = _module_from_node(node)
+        if module not in runtime_by_module:
+            raise ShardError("shard_execution_mismatch")
+        runtime_by_module[module].append(node)
+    runtime_signatures = [
+        {
+            "node_signature": _node_signature(runtime_by_module[row["path"]]),
+            "path": row["path"],
+            "weight": len(runtime_by_module[row["path"]]),
+        }
+        for row in expected_rows
+    ]
+    if runtime_signatures != expected_rows:
+        raise ShardError("shard_signature_mismatch")
     if not _regular_file(coverage_path):
         raise ShardError("missing_coverage")
     coverage_digest = _sha256(coverage_path.read_bytes())
@@ -366,7 +433,8 @@ def run_shard(
         "duration_seconds": round(time.monotonic() - started, 3),
         "manifest_sha256": manifest["manifest_sha256"],
         "modules": shard["modules"],
-        "observed_node_ids": observed_nodes,
+        "collected_node_ids": collected_nodes,
+        "completed_node_ids": completed_nodes,
         "schema_version": SCHEMA_VERSION,
         "shard_id": shard_id,
         "tree_sha": manifest["tree_sha"],
@@ -401,10 +469,7 @@ def validate_fan_in(
     if entries != expected_dirs:
         raise ShardError("unexpected_bundle_set")
 
-    expected_nodes = sorted(
-        node for module in manifest["modules"] for node in module["node_ids"]
-    )
-    observed_nodes: list[str] = []
+    expected_node_count = sum(module["weight"] for module in manifest["modules"])
     observed_modules: list[str] = []
     coverage_sources: list[Path] = []
     durations: list[float] = []
@@ -420,7 +485,8 @@ def validate_fan_in(
             "duration_seconds",
             "manifest_sha256",
             "modules",
-            "observed_node_ids",
+            "collected_node_ids",
+            "completed_node_ids",
             "schema_version",
             "shard_id",
             "tree_sha",
@@ -440,26 +506,40 @@ def validate_fan_in(
             or result["duration_seconds"] < 0
         ):
             raise ShardError("result_provenance_mismatch")
-        nodes = result["observed_node_ids"]
-        if not isinstance(nodes, list) or not all(isinstance(node, str) for node in nodes):
-            raise ShardError("invalid_observed_nodes")
-        expected_shard_nodes = sorted(
-            node
-            for module in manifest["modules"]
-            if module["path"] in expected_shard["modules"]
-            for node in module["node_ids"]
-        )
-        if nodes != expected_shard_nodes:
+        collected = result["collected_node_ids"]
+        completed = result["completed_node_ids"]
+        if (
+            not isinstance(collected, list)
+            or not all(isinstance(node, str) for node in collected)
+            or collected != completed
+            or collected != sorted(set(collected))
+        ):
+            raise ShardError("shard_node_mismatch")
+        runtime_by_module = {module: [] for module in expected_shard["modules"]}
+        for node in collected:
+            module = _module_from_node(node)
+            if module not in runtime_by_module:
+                raise ShardError("shard_node_mismatch")
+            runtime_by_module[module].append(node)
+        expected_rows = [
+            row for row in manifest["modules"] if row["path"] in expected_shard["modules"]
+        ]
+        runtime_rows = [
+            {
+                "node_signature": _node_signature(runtime_by_module[row["path"]]),
+                "path": row["path"],
+                "weight": len(runtime_by_module[row["path"]]),
+            }
+            for row in expected_rows
+        ]
+        if runtime_rows != expected_rows:
             raise ShardError("shard_node_mismatch")
         coverage = files["coverage.data"]
         if result["coverage_sha256"] != _sha256(coverage.read_bytes()):
             raise ShardError("coverage_digest_mismatch")
-        observed_nodes.extend(nodes)
         observed_modules.extend(result["modules"])
         coverage_sources.append(coverage)
         durations.append(float(result["duration_seconds"]))
-    if sorted(observed_nodes) != expected_nodes or len(observed_nodes) != len(set(observed_nodes)):
-        raise ShardError("fan_in_node_mismatch")
     expected_modules = sorted(module["path"] for module in manifest["modules"])
     if sorted(observed_modules) != expected_modules or len(observed_modules) != len(
         set(observed_modules)
@@ -478,7 +558,7 @@ def validate_fan_in(
             {
                 "manifest_sha256": manifest["manifest_sha256"],
                 "module_count": len(expected_modules),
-                "node_count": len(expected_nodes),
+                "node_count": expected_node_count,
                 "schema_version": SCHEMA_VERSION,
                 "timing": {
                     "imbalance_seconds": round(max(durations) - min(durations), 3),
@@ -516,12 +596,14 @@ def _dry_run(repository_root: Path, shard_count: int) -> None:
             bundle.mkdir()
             coverage = bundle / "coverage.data"
             coverage.write_bytes(f"dry-run-{shard['id']}".encode())
-            nodes = sorted(
-                node
+            nodes = [
+                f"{item['base']}[{index}]" if item["count"] > 1 else item["base"]
                 for module in manifest["modules"]
                 if module["path"] in shard["modules"]
-                for node in module["node_ids"]
-            )
+                for item in module["node_signature"]
+                for index in range(item["count"])
+            ]
+            nodes.sort()
             _write_json(
                 bundle / "result.json",
                 {
@@ -530,7 +612,8 @@ def _dry_run(repository_root: Path, shard_count: int) -> None:
                     "duration_seconds": 0,
                     "manifest_sha256": manifest["manifest_sha256"],
                     "modules": shard["modules"],
-                    "observed_node_ids": nodes,
+                    "collected_node_ids": nodes,
+                    "completed_node_ids": nodes,
                     "schema_version": SCHEMA_VERSION,
                     "shard_id": shard["id"],
                     "tree_sha": manifest["tree_sha"],
@@ -542,7 +625,7 @@ def _dry_run(repository_root: Path, shard_count: int) -> None:
             {
                 "manifest_sha256": manifest["manifest_sha256"],
                 "modules": len(manifest["modules"]),
-                "nodes": sum(len(row["node_ids"]) for row in manifest["modules"]),
+                "nodes": sum(row["weight"] for row in manifest["modules"]),
                 "shard_weights": [row["weight"] for row in manifest["shards"]],
                 "tree_sha": manifest["tree_sha"],
             },

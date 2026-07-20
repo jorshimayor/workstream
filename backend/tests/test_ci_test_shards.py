@@ -42,7 +42,14 @@ def _nodes() -> dict[str, list[str]]:
 
 def _write_bundle_set(root: Path, manifest: dict) -> None:
     root.mkdir()
-    modules = {row["path"]: row["node_ids"] for row in manifest["modules"]}
+    modules = {
+        row["path"]: [
+            f"{item['base']}[runtime-{index}]" if item["count"] > 1 else item["base"]
+            for item in row["node_signature"]
+            for index in range(item["count"])
+        ]
+        for row in manifest["modules"]
+    }
     for shard in manifest["shards"]:
         bundle = root / f"shard-{shard['id']}"
         bundle.mkdir()
@@ -55,7 +62,8 @@ def _write_bundle_set(root: Path, manifest: dict) -> None:
             "duration_seconds": 1.25,
             "manifest_sha256": manifest["manifest_sha256"],
             "modules": shard["modules"],
-            "observed_node_ids": observed,
+            "collected_node_ids": observed,
+            "completed_node_ids": observed,
             "schema_version": shards.SCHEMA_VERSION,
             "shard_id": shard["id"],
             "tree_sha": manifest["tree_sha"],
@@ -159,9 +167,7 @@ def test_collect_nodes_accepts_parameterized_nodes_and_sets_safe_environment(
     class Result:
         returncode = 0
         stdout = (
-            "tests/test_alpha.py::test_a[value]\n"
-            "tests/test_alpha.py::test_b\n"
-            "2 tests collected\n"
+            "tests/test_alpha.py::test_a[value]\ntests/test_alpha.py::test_b\n2 tests collected\n"
         )
         stderr = ""
 
@@ -209,7 +215,7 @@ def test_manifest_file_round_trip_and_invalid_json(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("field", "value"),
     [
-        ("schema_version", 2),
+        ("schema_version", 99),
         ("shard_count", True),
         ("manifest_sha256", "bad"),
         ("excluded_modules", []),
@@ -230,13 +236,8 @@ def test_run_shard_uses_python_argv_and_writes_authenticated_bundle(
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     shard = manifest["shards"][0]
-    module_nodes = {row["path"]: row["node_ids"] for row in manifest["modules"]}
+    module_nodes = {module: nodes for module, nodes in _nodes().items()}
     monkeypatch.setattr(shards, "_assert_checked_out_tree", lambda *args: None)
-    monkeypatch.setattr(
-        shards,
-        "collect_nodes",
-        lambda root, modules: {module: module_nodes[module] for module in modules},
-    )
     captured: dict = {}
 
     class Result:
@@ -246,12 +247,11 @@ def test_run_shard_uses_python_argv_and_writes_authenticated_bundle(
         captured["command"] = command
         captured["env"] = kwargs["env"]
         Path(kwargs["env"]["COVERAGE_FILE"]).write_bytes(b"real-coverage")
-        Path(kwargs["env"][shards.OBSERVED_NODES_ENV]).write_text(
-            "".join(json.dumps(node) + "\n" for node in sorted(
-                node for module in shard["modules"] for node in module_nodes[module]
-            )),
-            encoding="utf-8",
-        )
+        runtime = sorted(node for module in shard["modules"] for node in module_nodes[module])
+        for variable in (shards.COLLECTED_NODES_ENV, shards.COMPLETED_NODES_ENV):
+            Path(kwargs["env"][variable]).write_text(
+                "".join(json.dumps(node) + "\n" for node in runtime), encoding="utf-8"
+            )
         return Result()
 
     monkeypatch.setattr(shards.subprocess, "run", fake_run)
@@ -265,10 +265,12 @@ def test_run_shard_uses_python_argv_and_writes_authenticated_bundle(
     )
     result = json.loads((bundle / "result.json").read_text(encoding="utf-8"))
     assert captured["command"][:2] == [shards.sys.executable, "scripts/run_isolated_tests.py"]
-    invoked_nodes = [argument for argument in captured["command"] if argument.startswith("tests/")]
-    assert invoked_nodes == sorted(
-        node for module in shard["modules"] for node in module_nodes[module]
-    )
+    invoked_modules = [
+        argument for argument in captured["command"] if argument.startswith("tests/")
+    ]
+    assert invoked_modules == [
+        str(Path(module).relative_to("backend")) for module in shard["modules"]
+    ]
     assert "scripts.ci_test_shards" in captured["command"]
     assert captured["env"]["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
     assert result["modules"] == shard["modules"]
@@ -282,13 +284,7 @@ def test_run_shard_rejects_failed_test_process(
     path = tmp_path / "manifest.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
     shard = manifest["shards"][0]
-    module_nodes = {row["path"]: row["node_ids"] for row in manifest["modules"]}
     monkeypatch.setattr(shards, "_assert_checked_out_tree", lambda *args: None)
-    monkeypatch.setattr(
-        shards,
-        "collect_nodes",
-        lambda root, modules: {module: module_nodes[module] for module in modules},
-    )
 
     class Result:
         returncode = 1
@@ -305,7 +301,7 @@ def test_run_shard_rejects_collected_but_not_executed_node(
     path = tmp_path / "manifest.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
     shard = manifest["shards"][0]
-    module_nodes = {row["path"]: row["node_ids"] for row in manifest["modules"]}
+    module_nodes = _nodes()
     monkeypatch.setattr(shards, "_assert_checked_out_tree", lambda *args: None)
 
     class Result:
@@ -313,10 +309,12 @@ def test_run_shard_rejects_collected_but_not_executed_node(
 
     def fake_run(command, **kwargs):
         Path(kwargs["env"]["COVERAGE_FILE"]).write_bytes(b"coverage")
-        expected = sorted(
-            node for module in shard["modules"] for node in module_nodes[module]
+        expected = sorted(node for module in shard["modules"] for node in module_nodes[module])
+        Path(kwargs["env"][shards.COLLECTED_NODES_ENV]).write_text(
+            "".join(json.dumps(node) + "\n" for node in expected),
+            encoding="utf-8",
         )
-        Path(kwargs["env"][shards.OBSERVED_NODES_ENV]).write_text(
+        Path(kwargs["env"][shards.COMPLETED_NODES_ENV]).write_text(
             "".join(json.dumps(node) + "\n" for node in expected[1:]),
             encoding="utf-8",
         )
@@ -327,17 +325,53 @@ def test_run_shard_rejects_collected_but_not_executed_node(
         shards.run_shard(tmp_path, path, shard["id"], tmp_path / "bundle", tmp_path / "db")
 
 
-def test_pytest_hook_records_only_when_execution_destination_exists(
+def test_pytest_hooks_record_runtime_collection_and_completion(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    destination = tmp_path / "observed.jsonl"
-    destination.write_text("", encoding="utf-8")
-    monkeypatch.setenv(shards.OBSERVED_NODES_ENV, str(destination))
+    collected = tmp_path / "collected.jsonl"
+    completed = tmp_path / "completed.jsonl"
+    collected.write_text("", encoding="utf-8")
+    completed.write_text("", encoding="utf-8")
+    monkeypatch.setenv(shards.COLLECTED_NODES_ENV, str(collected))
+    monkeypatch.setenv(shards.COMPLETED_NODES_ENV, str(completed))
+    session = type(
+        "Session", (), {"items": [type("Item", (), {"nodeid": "tests/test_alpha.py::test_a"})()]}
+    )()
+    shards.pytest_collection_finish(session)
     shards.pytest_runtest_logfinish("tests/test_alpha.py::test_a", ("file", 1, "test_a"))
-    assert destination.read_text(encoding="utf-8") == '"tests/test_alpha.py::test_a"\n'
-    monkeypatch.delenv(shards.OBSERVED_NODES_ENV)
-    shards.pytest_runtest_logfinish("tests/test_alpha.py::test_b", ("file", 2, "test_b"))
-    assert destination.read_text(encoding="utf-8") == '"tests/test_alpha.py::test_a"\n'
+    assert collected.read_text(encoding="utf-8") == '"tests/test_alpha.py::test_a"\n'
+    assert completed.read_text(encoding="utf-8") == '"tests/test_alpha.py::test_a"\n'
+
+
+def test_runtime_signature_tolerates_changed_parameter_display_values() -> None:
+    before = ["tests/test_alpha.py::test_a[550e8400-e29b-41d4-a716-446655440000]"]
+    after = ["tests/test_alpha.py::test_a[6ba7b810-9dad-11d1-80b4-00c04fd430c8]"]
+    assert shards._node_signature(before) == shards._node_signature(after)
+    first = shards.build_manifest(
+        TREE_SHA,
+        {
+            "backend/tests/test_alpha.py": before,
+            **{
+                key: value
+                for key, value in _nodes().items()
+                if key != "backend/tests/test_alpha.py"
+            },
+        },
+        4,
+    )
+    second = shards.build_manifest(
+        TREE_SHA,
+        {
+            "backend/tests/test_alpha.py": after,
+            **{
+                key: value
+                for key, value in _nodes().items()
+                if key != "backend/tests/test_alpha.py"
+            },
+        },
+        4,
+    )
+    assert first == second
 
 
 def test_fan_in_accepts_exact_authenticated_bundles(tmp_path: Path) -> None:
@@ -345,9 +379,7 @@ def test_fan_in_accepts_exact_authenticated_bundles(tmp_path: Path) -> None:
     bundles = tmp_path / "bundles"
     _write_bundle_set(bundles, manifest)
     summary_path = tmp_path / "fan-in-summary.json"
-    outputs = shards.validate_fan_in(
-        manifest, bundles, tmp_path / "combined", summary_path
-    )
+    outputs = shards.validate_fan_in(manifest, bundles, tmp_path / "combined", summary_path)
     assert [path.name for path in outputs] == [
         ".coverage.shard-1",
         ".coverage.shard-2",
@@ -367,9 +399,7 @@ def test_fan_in_accepts_exact_authenticated_bundles(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("mutation", ["missing", "extra", "coverage", "nodes", "tree"])
-def test_fan_in_rejects_incomplete_or_tampered_evidence(
-    tmp_path: Path, mutation: str
-) -> None:
+def test_fan_in_rejects_incomplete_or_tampered_evidence(tmp_path: Path, mutation: str) -> None:
     manifest = shards.build_manifest(TREE_SHA, _nodes(), 4)
     bundles = tmp_path / "bundles"
     _write_bundle_set(bundles, manifest)
@@ -383,7 +413,7 @@ def test_fan_in_rejects_incomplete_or_tampered_evidence(
         path = bundles / "shard-1/result.json"
         result = json.loads(path.read_text(encoding="utf-8"))
         if mutation == "nodes":
-            result["observed_node_ids"] = result["observed_node_ids"][1:]
+            result["completed_node_ids"] = result["completed_node_ids"][1:]
         else:
             result["tree_sha"] = "b" * 40
         path.write_text(json.dumps(result), encoding="utf-8")
@@ -406,15 +436,13 @@ def test_fan_in_rejects_symlink_and_unexpected_file(tmp_path: Path) -> None:
         shards.validate_fan_in(manifest, bundles, tmp_path / "combined")
 
 
-def test_fan_in_rejects_duplicate_node_across_shards(tmp_path: Path) -> None:
+def test_fan_in_rejects_runtime_collection_completion_mismatch(tmp_path: Path) -> None:
     manifest = shards.build_manifest(TREE_SHA, _nodes(), 4)
     bundles = tmp_path / "bundles"
     _write_bundle_set(bundles, manifest)
-    first = bundles / "shard-1/result.json"
     second = bundles / "shard-2/result.json"
-    one = json.loads(first.read_text(encoding="utf-8"))
     two = json.loads(second.read_text(encoding="utf-8"))
-    two["observed_node_ids"][0] = one["observed_node_ids"][0]
+    two["completed_node_ids"] = two["completed_node_ids"][1:]
     second.write_text(json.dumps(two), encoding="utf-8")
     with pytest.raises(shards.ShardError, match="shard_node_mismatch"):
         shards.validate_fan_in(manifest, bundles, tmp_path / "combined")

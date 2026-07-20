@@ -28,8 +28,9 @@ CI evidence.
 ## Target behavior
 
 - Every collected backend test still runs on every required Backend workflow.
-- Canonical filesystem test modules and collected pytest node IDs are each
-  assigned and observed exactly once across isolated parallel shards.
+- Canonical filesystem test modules are assigned exactly once. Stable test-base
+  cardinality signatures bind runtime inventory to preflight, while each shard
+  proves its exact same-process collection equals its completions.
 - Each shard receives an independently owned migrated PostgreSQL database.
 - Coverage artifacts are combined centrally before the unchanged 78 percent
   repository floor and 90 percent protected-subsystem floors are enforced.
@@ -91,8 +92,8 @@ pytest scheduling dependency.
 
 ## How this will be proven
 
-Unit tests will prove filesystem and node-ID inventory completeness, determinism,
-exact-once assignment and observation, stable ordering, malformed input
+Unit tests will prove filesystem and stable node-signature inventory completeness,
+determinism, exact same-process collection/completion, stable ordering, malformed input
 rejection, and fail-closed coverage-manifest validation. Workflow review will
 prove isolated services and databases, immutable action pins, checked-out-tree
 binding, byte-hashed artifacts, complete fan-in, unchanged thresholds, stable
