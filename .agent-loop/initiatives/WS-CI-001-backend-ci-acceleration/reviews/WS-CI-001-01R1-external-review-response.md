@@ -27,8 +27,8 @@ None. The finding is a clear in-scope cleanup and failure-propagation defect.
 - Isolated database runner against local PostgreSQL: 16 passed.
 - Agent-gate workflow tests: 91 passed.
 - Markdown links, stale wording, loop-memory state, and diff integrity: passed.
-- Required internal review: all nine tracks passed on the repair diff and
-  confirmed the rebased R1 head after the chunk-map finding was repaired.
+- Required internal review: all nine tracks passed the rebased repair; senior,
+  architecture, docs, and reuse/dedup then confirmed the chunk-map repair.
 
 ## Remaining risks
 

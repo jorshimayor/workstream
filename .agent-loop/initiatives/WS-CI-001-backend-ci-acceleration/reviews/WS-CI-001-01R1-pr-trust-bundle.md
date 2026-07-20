@@ -38,8 +38,8 @@ or merge authority changed. `WS-CI-001-02` remains inactive.
 
 ## Internal review
 
-All nine tracks passed on the repair diff and confirmed the rebased R1 head
-after the valid chunk-map finding was repaired.
+All nine tracks passed the rebased repair. Senior engineering, architecture,
+docs, and reuse/dedup then confirmed the valid chunk-map repair.
 
 ## Remaining gates
 
