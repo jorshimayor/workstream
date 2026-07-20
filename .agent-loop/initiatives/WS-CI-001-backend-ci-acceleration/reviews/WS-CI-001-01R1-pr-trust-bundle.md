@@ -38,14 +38,13 @@ or merge authority changed. `WS-CI-001-02` remains inactive.
 
 ## Internal review
 
-All nine tracks passed on the identical repair diff before rebasing it onto the
-merged PR #163 head. Exact rebased-head confirmation remains required before PR
-publication.
+All nine tracks passed on the repair diff and confirmed the rebased R1 head
+after the valid chunk-map finding was repaired.
 
 ## Remaining gates
 
-Exact rebased-head internal confirmation, hosted Backend, Agent Gates,
-CodeRabbit, human review, and explicit merge approval remain mandatory.
+Hosted Backend, Agent Gates, CodeRabbit, human review, and explicit merge
+approval remain mandatory.
 
 ## Human review focus
 

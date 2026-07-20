@@ -50,7 +50,7 @@ WS-CI-001-02 activation
 - [x] Workflow regression tests bind the timeout values and budget gaps.
 - [x] Real isolated-runner cleanup tests pass against PostgreSQL.
 - [x] External review response and PR trust evidence are updated.
-- [ ] Required internal reviewers confirm the exact rebased repair head.
+- [x] Required internal reviewers confirm the exact rebased repair head.
 - [ ] Hosted Backend, Agent Gates, and external review pass.
 
 ## Verification commands
