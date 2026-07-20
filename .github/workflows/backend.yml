@@ -228,7 +228,7 @@ jobs:
         run: >-
           python scripts/run_isolated_tests.py
           --metadata-json "${RUNNER_TEMP}/api-database.json"
-          --timeout-seconds 3600
+          --timeout-seconds 1500
           -- python scripts/api_contract_e2e.py
 
   test:

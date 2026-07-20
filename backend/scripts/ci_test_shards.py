@@ -386,7 +386,7 @@ def run_shard(
         "--metadata-json",
         str(database_metadata),
         "--timeout-seconds",
-        "12600",
+        "4800",
         "--",
         sys.executable,
         "-m",

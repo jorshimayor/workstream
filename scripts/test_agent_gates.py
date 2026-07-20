@@ -103,7 +103,7 @@ BACKEND_FULL_SUITE_COVERAGE_COMMAND = "\n".join(
         'metadata_dir="$(mktemp -d)"',
         "trap 'rm -rf \"$metadata_dir\"' EXIT",
         "python scripts/run_isolated_tests.py "
-        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- '
+        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 4800 -- '
         "python -m pytest -q --ignore=tests/test_isolated_database_runner.py "
         "--cov=app --cov-report=term-missing --cov-fail-under=78",
     )
@@ -113,7 +113,7 @@ BACKEND_API_CONTRACT_E2E_COMMAND = "\n".join(
         'metadata_dir="$(mktemp -d)"',
         "trap 'rm -rf \"$metadata_dir\"' EXIT",
         "python scripts/run_isolated_tests.py "
-        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- '
+        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 1500 -- '
         "python scripts/api_contract_e2e.py",
     )
 )
@@ -5258,6 +5258,11 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert len(api_e2e_steps) == 1
     assert "scripts/run_isolated_tests.py" in str(api_e2e_steps[0]["run"])
     assert "scripts/api_contract_e2e.py" in str(api_e2e_steps[0]["run"])
+    shard_tool = (ROOT / "backend/scripts/ci_test_shards.py").read_text(encoding="utf-8")
+    assert 4800 <= jobs["shards"]["timeout-minutes"] * 60 - 600
+    assert '"4800"' in shard_tool
+    assert 1500 <= jobs["api_e2e"]["timeout-minutes"] * 60 - 300
+    assert "--timeout-seconds 1500" in str(api_e2e_steps[0]["run"])
 
     test_job = parsed_workflow["jobs"]["test"]
     assert set(test_job) == {"if", "needs", "runs-on", "timeout-minutes", "steps"}
