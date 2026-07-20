@@ -67,16 +67,24 @@ evidence.
 The repair no longer executes raw cross-process node IDs. It executes validated
 whole modules, proves exact final collection equals exact completion inside the
 same pytest process, and binds stable test-base cardinalities to preflight. A
-new hosted run has not started yet; exact-head hosted success and timing remain
-mandatory before human merge approval.
+hosted rerun at branch head `76b1d242878c49353178091e41f0435a6c9885d8`
+passed Agent Gates, CodeRabbit, preflight, API E2E, all four shards, complete
+fan-in, the 78 percent repository floor, and all twelve 90 percent subsystem
+floors. The Backend run completed in about 14 minutes 40 seconds versus about
+27 minutes on PR #161.
+
+Authenticated fan-in recorded 31 modules and 1,775 nodes. Shard execution was
+711.782, 135.947, 130.978, and 411.147 seconds, with 580.804 seconds imbalance
+and 1,389.854 aggregate runner seconds. This proves the acceleration and also
+supports later, separately approved runtime-weight routing; it does not activate
+`WS-CI-001-02`.
 
 ## Remaining Risk
 
-Collected-node counts may not predict runtime for migration-heavy modules; the
-partial local shard reinforced that risk without proving hosted wall time.
-Hosted execution must show actual per-shard durations, wall-clock improvement,
-and aggregate runner cost. The workflow fails closed rather than silently falling
-back if sharding is unstable.
+Collected-node counts do not predict runtime well for migration-heavy modules:
+hosted shard durations ranged from about 131 to 712 seconds despite nearly equal
+node counts. The workflow still fails closed rather than silently falling back.
+Runtime-weight routing remains a separately approved follow-up decision.
 
 ## Human Review Focus
 

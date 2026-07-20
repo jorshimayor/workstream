@@ -62,6 +62,13 @@ clean-environment collection/fan-in dry run: 31 modules, 1775 nodes
 shard weights: 445 / 444 / 443 / 443
 real local shard diagnostic: 445 collected, 246 completed before deliberate interrupt
 diagnostic database and role cleanup: verified absent
+hosted repaired Backend run 29762868497: passed
+hosted Agent Gates run 29762868454: passed
+hosted inventory: 31 modules / 1775 nodes
+hosted shard seconds: 711.782 / 135.947 / 130.978 / 411.147
+hosted imbalance: 580.804 seconds
+hosted aggregate shard runner time: 1389.854 seconds
+hosted Backend wall time: approximately 14 minutes 40 seconds
 merge-intent validation: passed
 loop-memory state validation: passed
 Markdown links: passed for 13 changed Markdown files
@@ -77,6 +84,7 @@ valid findings were repaired.
 
 ## Remaining Gate
 
-The new GitHub matrix and actual latency/cost can only be proven on the pushed PR
-head. Hosted `Backend / test`, Agent Gates, external review, and human merge
-approval remain mandatory. `WS-CI-001-02` and `WS-ENG-001-04B` are inactive.
+Hosted `Backend / test`, Agent Gates, and CodeRabbit passed on the repaired
+branch. The evidence-only commit recording that result must receive final
+exact-head CI, then human review and explicit merge approval remain mandatory.
+`WS-CI-001-02` and `WS-ENG-001-04B` are inactive.
