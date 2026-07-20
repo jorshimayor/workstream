@@ -49,13 +49,15 @@ the four proposed lifecycle actions remain unregistered.
 
 ## Internal Review And CI Integrity
 
-Final reviewed status SHA `9150960ce1f4fdd1f7a02129401f97f43a5ec667`, containing
+Final reviewed CI-repair SHA `438c2bcf6a91b97f46264a1b6e5d0110a28f16d5`, containing
 reviewed implementation `baa86dfe94015f66570844ce81ed1310729cded1`, against
 trusted main `be2a79a243ec50049c37f1f634322a9b3ab895ba` passes senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after two documentation findings were fixed.
 No CI, coverage configuration, package command, workflow, or migration file
 changed.
+The repair only normalizes the PREP contract heading delimiter required by the
+schema-v2 successor parser; it does not start or change PREP.
 
 ## External Review And Remaining Risks
 

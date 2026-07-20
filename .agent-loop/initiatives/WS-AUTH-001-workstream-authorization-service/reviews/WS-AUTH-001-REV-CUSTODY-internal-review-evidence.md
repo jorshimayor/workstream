@@ -1,14 +1,16 @@
 # WS-AUTH-001-REV-CUSTODY Internal Review Evidence
 
-Reviewed code SHA: `9150960ce1f4fdd1f7a02129401f97f43a5ec667`
+Reviewed code SHA: `438c2bcf6a91b97f46264a1b6e5d0110a28f16d5`
 
 Reviewed implementation SHA: `baa86dfe94015f66570844ce81ed1310729cded1`
 
 Reviewed pre-CI status SHA: `9150960ce1f4fdd1f7a02129401f97f43a5ec667`
 
+Reviewed CI-repair SHA: `438c2bcf6a91b97f46264a1b6e5d0110a28f16d5`
+
 Reviewed against trusted main: `be2a79a243ec50049c37f1f634322a9b3ab895ba`
 
-Reviewed at: `2026-07-20T12:32:53Z`
+Reviewed at: `2026-07-20T12:42:54Z`
 
 Reviewer run IDs: `rev_plan_core`, `rev_plan_security_qa`,
 `rev_plan_ops_ci_docs`
@@ -68,6 +70,10 @@ all 19 REV rows now have AUTH custody while remaining planned. All nine tracks
 passed exact-SHA re-review with no remaining finding.
 Status candidate `9150960c` adds only the canonical review-log chronology; all
 nine tracks confirmed that exact SHA without a remaining finding.
+GitHub Agent Gates then found that the existing PREP successor heading used an
+em dash while the canonical schema-v2 parser requires ` - `. Repair
+`438c2bcf` normalizes only that delimiter, starts no PREP work, and passes exact
+merge-intent validation plus all nine exact-SHA repair tracks.
 
 ## Remaining Risk And Gate
 
