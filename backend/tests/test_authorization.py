@@ -1039,6 +1039,7 @@ class _AdminPolicyFacts:
             target_actor_profile_id=str(uuid4()),
         )
         self.request_actor_is_present = True
+        self.request_actor_kind = "human"
         self.lifecycle_target_is_present = True
         self.link_lifecycle_target_is_present = True
         self.control_locked = False
@@ -1053,7 +1054,11 @@ class _AdminPolicyFacts:
             return None
         return (
             SimpleNamespace(id=str(identity_link_id), status="active"),
-            SimpleNamespace(id=str(actor_profile_id), actor_kind="human", status="active"),
+            SimpleNamespace(
+                id=str(actor_profile_id),
+                actor_kind=self.request_actor_kind,
+                status="active",
+            ),
         )
 
     async def find_effective_grant(self, *args, **kwargs):
@@ -1123,6 +1128,25 @@ async def test_admin_kernel_allows_only_a_matched_registered_grant() -> None:
     with pytest.raises(AuthorizationDenied) as denied:
         await service.require(ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ, resource)
     assert denied.value.public_code == "permission_not_granted"
+
+
+async def test_admin_kernel_denies_locked_human_kind_drift_without_grant_lookup() -> None:
+    context = _runtime_context()
+    service, evidence, facts = _admin_runtime_service(context)
+    facts.request_actor_kind = "service"
+    resource = ActorProfileAdminReadResourceContext(
+        resource_type="actor_profile",
+        resource_id=uuid4(),
+        read_kind="profile",
+    )
+
+    with pytest.raises(AuthorizationDenied) as denied:
+        await service.require(ActionId.ACTOR_PROFILE_READ, resource)
+
+    assert denied.value.decision.denial_code is AuthorizationDenialCode.PERMISSION_NOT_GRANTED
+    assert denied.value.decision.revalidated is True
+    assert facts.find_calls == []
+    assert evidence.events[0].event_type is AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED
 
 
 @pytest.mark.parametrize(

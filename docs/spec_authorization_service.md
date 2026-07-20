@@ -503,7 +503,7 @@ For every protected operation:
    action's lifecycle guards.
 3. Build the closed request-scoped
    `HumanAuthorizationContext | ServiceAuthorizationContext` union without
-   token-role authority. Only the service variant carries a required closed
+   token-role authority. Only the service variant carries a required, closed
    `service_identity`.
 4. Load the canonical resource through its owning repository/service.
 5. Compose `ResourceContext` in the application service.

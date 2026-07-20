@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-20 - WS-AUTH-001-09E External Review Repair
+
+CodeRabbit raised two valid findings. The specification now says the service
+variant carries a “required, closed” identity. The serialized human
+administrative path now checks the locked profile remains human before
+reconstructing `HumanAuthorizationContext`; kind drift returns bounded
+`permission_not_granted` evidence and performs no grant lookup. Ruff and 11
+focused authorization tests pass. The repair requires fresh exact-SHA internal
+review, evidence rebinding, hosted CI, and CodeRabbit re-review before human
+merge review.
+
 ## 2026-07-19 - WS-AUTH-001-09E Integrated Review Passed
 
 Trusted main advanced through ART PR #154 as `44f2467c`, bringing ART-owned

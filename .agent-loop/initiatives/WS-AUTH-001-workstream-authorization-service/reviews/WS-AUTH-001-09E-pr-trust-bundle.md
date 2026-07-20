@@ -48,6 +48,14 @@ valid findings were repaired. Integrated candidate `98376fd1`, against trusted
 main `44f2467c`, passes the same nine tracks after repairing ART admission's
 stale exact-type check for the new closed human/service context union.
 
+## External Review
+
+CodeRabbit raised one wording issue and one post-lock human-kind drift issue.
+Both are repaired: the specification wording is clear, and human administrative
+revalidation now denies actor-kind drift before context reconstruction or grant
+lookup. The focused repair suite passes 11 tests; fresh external and hosted CI
+checks remain required on the repair head.
+
 ## Remaining Risk And Follow-up
 
 Hosted Backend CI and external review remain. The same-initiative

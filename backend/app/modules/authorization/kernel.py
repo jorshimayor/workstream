@@ -249,6 +249,8 @@ class AuthorizationService:
             if locked is None:
                 return AuthorizationDenialCode.IDENTITY_LINK_REVOKED, context, None, None, True
             link, profile = locked
+            if profile.actor_kind != ActorKind.HUMAN.value:
+                return AuthorizationDenialCode.PERMISSION_NOT_GRANTED, context, None, None, True
             context = HumanAuthorizationContext(
                 actor_profile_id=UUID(profile.id),
                 actor_kind=ActorKind(profile.actor_kind),
