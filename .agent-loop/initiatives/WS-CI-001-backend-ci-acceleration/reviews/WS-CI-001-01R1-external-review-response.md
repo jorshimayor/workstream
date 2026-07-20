@@ -1,4 +1,4 @@
-# External Review Response: WS-CI-001-01
+# External Review Response: WS-CI-001-01R1
 
 ## Comments addressed
 
@@ -27,7 +27,9 @@ None. The finding is a clear in-scope cleanup and failure-propagation defect.
 - Isolated database runner against local PostgreSQL: 16 passed.
 - Agent-gate workflow tests: 91 passed.
 - Markdown links, stale wording, loop-memory state, and diff integrity: passed.
-- Required internal review: all applicable tracks passed at `af86b5f2`.
+- Required internal review: all applicable tracks passed on the identical
+  repair diff before it was rebased onto merged `main`; exact rebased-head
+  confirmation is required before publication.
 
 ## Remaining risks
 

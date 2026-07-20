@@ -87,12 +87,6 @@ hosted shard durations ranged from about 131 to 712 seconds despite nearly equal
 node counts. The workflow still fails closed rather than silently falling back.
 Runtime-weight routing remains a separately approved follow-up decision.
 
-CodeRabbit identified that child-runner timeouts exceeded their GitHub job
-budgets. The reviewed repair sets shard execution to 4,800 seconds within a
-90-minute job and API E2E to 1,500 seconds within a 30-minute job. These
-configured budget gaps provide operational cleanup headroom before GitHub hard
-cancellation; they are not guaranteed durations because setup also uses job time.
-
 ## Human Review Focus
 
 Exact runtime-node evidence, action/plugin provenance, database/MinIO isolation,
