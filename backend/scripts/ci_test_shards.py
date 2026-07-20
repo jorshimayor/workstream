@@ -130,9 +130,8 @@ def _module_from_node(node_id: str) -> str:
 def _node_base(node_id: str) -> str:
     """Remove only pytest's final parameter display value from a node ID."""
     _module_from_node(node_id)
-    leaf = node_id.rsplit("::", 1)[-1]
-    if leaf.endswith("]") and "[" in leaf:
-        return node_id[: -(len(leaf) - leaf.find("["))]
+    if node_id.endswith("]") and "[" in node_id:
+        return node_id.split("[", 1)[0]
     return node_id
 
 

@@ -344,8 +344,8 @@ def test_pytest_hooks_record_runtime_collection_and_completion(
 
 
 def test_runtime_signature_tolerates_changed_parameter_display_values() -> None:
-    before = ["tests/test_alpha.py::test_a[550e8400-e29b-41d4-a716-446655440000]"]
-    after = ["tests/test_alpha.py::test_a[6ba7b810-9dad-11d1-80b4-00c04fd430c8]"]
+    before = ["tests/test_alpha.py::test_a[550e8400::nested[value]]"]
+    after = ["tests/test_alpha.py::test_a[6ba7b810::other[value]]"]
     assert shards._node_signature(before) == shards._node_signature(after)
     first = shards.build_manifest(
         TREE_SHA,
